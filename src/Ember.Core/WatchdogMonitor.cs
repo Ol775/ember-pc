@@ -31,6 +31,13 @@ public sealed class WatchdogMonitor
 
     public void OnDisconnected(DateTimeOffset now) => _started ??= now;
 
+    /// <summary>The worker stopped and started the service within one step, so Decide never saw it down: start a fresh grace.</summary>
+    public void OnServiceRestarted(DateTimeOffset now)
+    {
+        _started = now;
+        _lastSnapshot = null;
+    }
+
     public WatchdogAction Decide(DateTimeOffset now, bool serviceRunning)
     {
         _started ??= now;

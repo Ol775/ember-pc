@@ -55,9 +55,10 @@ internal sealed class WatchdogWorker(ILogger<WatchdogWorker> log) : BackgroundSe
                 break;
             case WatchdogAction.StopServiceThenRelease:
                 log.LogError("Ember service has stopped answering; stopping it and handing fans back to the board");
-                var cleanStop = StopService();
+                EndService();
                 ReleaseAll(now);
-                if (cleanStop) StartService(); // a clean stop exits with 0, so Windows recovery will not bring it back
+                StartServiceIfStopped(); // Windows recovery may bring it back too, after its own delay
+                _monitor.OnServiceRestarted(DateTimeOffset.UtcNow); // this step blocked, so Decide never saw it down
                 break;
         }
     }
@@ -72,34 +73,27 @@ internal sealed class WatchdogWorker(ILogger<WatchdogWorker> log) : BackgroundSe
         catch (Exception) { return false; } // not installed counts as not running
     }
 
-    /// <summary>Stops the hung service. A stop is a clean exit, so Windows will not restart it: the caller starts it again after the release.</summary>
-    bool StopService()
+    /// <summary>
+    /// Ends the hung service's process. A graceful stop is no use: a frozen service never answers it, and the request
+    /// blocks until the service is thawed, which would leave the fans unreleased.
+    /// </summary>
+    void EndService()
     {
-        var stoppedCleanly = false;
-        try
+        foreach (var p in Process.GetProcessesByName("Ember.Service"))
         {
-            using var sc = new ServiceController(EmberNames.ServiceName);
-            sc.Stop();
-            sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(10));
-            stoppedCleanly = true;
+            try { p.Kill(); p.WaitForExit(5000); }
+            catch (Exception ex) { log.LogError(ex, "Could not end the Ember service process"); }
+            finally { p.Dispose(); }
         }
-        catch (Exception ex)
-        {
-            log.LogError(ex, "Stopping the Ember service failed; ending its process");
-            foreach (var p in Process.GetProcessesByName("Ember.Service"))
-            {
-                try { p.Kill(); } catch (Exception) { /* already gone */ } finally { p.Dispose(); }
-            }
-        }
-        return stoppedCleanly;
     }
 
-    void StartService()
+    void StartServiceIfStopped()
     {
         try
         {
             using var sc = new ServiceController(EmberNames.ServiceName);
-            sc.Start();
+            for (var i = 0; i < 20 && sc.Status == ServiceControllerStatus.StopPending; i++) { Thread.Sleep(250); sc.Refresh(); }
+            if (sc.Status == ServiceControllerStatus.Stopped) sc.Start();
         }
         catch (Exception ex) { log.LogError(ex, "Restarting the Ember service failed"); }
     }

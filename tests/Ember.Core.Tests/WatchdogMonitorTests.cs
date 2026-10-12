@@ -102,4 +102,16 @@ public class WatchdogMonitorTests
         Assert.Equal(WatchdogAction.StopServiceThenRelease, m.Decide(At(11), true));
         Assert.Equal(WatchdogAction.None, m.Decide(At(12), true));
     }
+
+    [Fact]
+    public void Service_the_watchdog_restarted_itself_gets_a_fresh_grace_period()
+    {
+        var m = new WatchdogMonitor();
+        m.OnSnapshot(T0);
+        Assert.Equal(WatchdogAction.StopServiceThenRelease, m.Decide(At(11), true));
+        m.OnServiceRestarted(At(25)); // the worker stopped and started the service inside that one step
+        Assert.Equal(WatchdogAction.None, m.Decide(At(26), true));
+        Assert.Equal(WatchdogAction.None, m.Decide(At(60), true));
+        Assert.Equal(WatchdogAction.StopServiceThenRelease, m.Decide(At(86), true));
+    }
 }
