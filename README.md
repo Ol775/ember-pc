@@ -6,11 +6,11 @@ temperatures, a 10-minute temperature history and fan speeds.
 
 ## Status
 
-**Phase 2: monitoring and fan control (alpha, in verification).** Ember shows live sensors and can drive your motherboard fan
+**Phase 2 and the first lighting slice (alpha, in verification).** Ember shows live sensors and can drive your motherboard fan
 headers with Quiet, Normal, Performance and Extreme curves, or your own **Manual** curves for the CPU fan and the system fans, drawn and edited on the Fans page. **Game detection** (switching to a game mode, with a manual
 override and a "not a game" list) and **GPU fan control** are written and tested but are **beta features**: they are switched
-off in this alpha build and arrive in the beta build (`BuildFeatures.Channel` in `src/Ember.Core/BuildFeatures.cs`). AI mode,
-lighting and the rest come in later phases. Fan control has
+off in this alpha build and arrive in the beta build (`BuildFeatures.Channel` in `src/Ember.Core/BuildFeatures.cs`). AI mode
+and the rest come in later phases. The **Lights** page lights PC devices through OpenRGB (install it separately) and Govee lamps (LAN, or cloud with your own API key) with layered effects, scenes and screen sync. Fan control has
 been unit-tested but is still being verified on real hardware: see
 [`docs/windows-checklist.md`](docs/windows-checklist.md). Nothing is written to a fan until you test and enable that
 header yourself.

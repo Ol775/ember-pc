@@ -21,8 +21,9 @@ public partial class MainWindow : Window
     readonly DispatcherTimer _refresh;
     readonly Task _run;
     readonly GameDetection _detection = new([]);
-    readonly DispatcherTimer _gameTimer;
-    double? _gpuLoad, _cpuTemp, _caseTemp;
+    readonly DispatcherTimer _gameTimer, _screenTimer;
+    Ember.Lighting.Color[]? _screen;
+    double? _gpuLoad, _cpuTemp, _gpuTemp, _caseTemp;
     string? _announcedConnection, _announcedBanner, _announcedCompetitor, _announcedTest;
 
     public MainWindow()
@@ -48,7 +49,8 @@ public partial class MainWindow : Window
             if (s.Control is { } c) _detection.SetNotGames(c.NotGames);
             var sum = DashboardSummary.From(s);
             _cpuTemp = s.Stale ? null : sum.CpuTemp;
-            _lights.SetInputs(s.Stale ? null : sum.CpuTemp, s.Stale ? null : sum.GpuTemp, null);
+            _gpuTemp = s.Stale ? null : sum.GpuTemp;
+            _lights.SetInputs(s.Stale ? null : sum.CpuTemp, s.Stale ? null : sum.GpuTemp, _screen);
             _caseTemp = s.Stale ? null : new[] { sum.CpuTemp, sum.GpuTemp, sum.MotherboardTemp }.Where(v => v is not null).Max();
         });
 
@@ -59,6 +61,9 @@ public partial class MainWindow : Window
 
         // Game detection: once a second look at the foreground program and report start, end and heartbeat to the service.
         _gameTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (_, _) => DetectGame(), Dispatcher);
+        // Screen sync: look at the screen ten times a second, but only while an enabled Screen sync layer wants it.
+        _screenTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Background, (_, _) => GrabScreen(), Dispatcher);
+        _screenTimer.Start();
         if (BuildFeatures.Current.GameDetection) _gameTimer.Start(); // beta feature: off in the alpha build
 
         StartupSwitch.IsChecked = StartupRegistration.IsEnabled();
@@ -68,6 +73,18 @@ public partial class MainWindow : Window
 
         _run = Task.Run(() => connection.RunAsync(_cts.Token));
         Closed += OnClosed;
+    }
+
+    void GrabScreen()
+    {
+        try
+        {
+            if (!_lights.WantsScreen) { _screen = null; _lights.SetInputs(_cpuTemp, _gpuTemp, null); return; }
+            var zones = ScreenGrabber.Capture();
+            _screen = zones is null ? null : ScreenZones.Smooth(_screen, zones, 0.6);
+            _lights.SetInputs(_cpuTemp, _gpuTemp, _screen);
+        }
+        catch (Exception) { _screen = null; /* a failed grab must never take the window down */ }
     }
 
     async void DetectGame()
@@ -290,6 +307,7 @@ public partial class MainWindow : Window
     {
         _refresh.Stop();
         _gameTimer.Stop();
+        _screenTimer.Stop();
         _cts.Cancel();
         try { _lights.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3)); } catch (Exception) { /* closing anyway */ }
         // RunAsync returns on cancellation and never needs the UI thread, so a short wait cannot deadlock.

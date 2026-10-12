@@ -188,3 +188,63 @@ public class LightingStoreTests : IDisposable
         Assert.Equal("only", s.Current.Name);
     }
 }
+
+public class ScreenZonesTests
+{
+    static byte[] Image(int w, int h, Func<int, int, (byte r, byte g, byte b)> pixel)
+    {
+        var data = new byte[w * h * 4];
+        for (var y = 0; y < h; y++)
+            for (var x = 0; x < w; x++)
+            {
+                var (r, g, b) = pixel(x, y);
+                var i = (y * w + x) * 4;
+                data[i] = b; data[i + 1] = g; data[i + 2] = r;
+            }
+        return data;
+    }
+
+    [Fact]
+    public void Each_strip_gets_the_average_of_its_columns()
+    {
+        // left half red, right half blue
+        var img = Image(8, 4, (x, _) => x < 4 ? ((byte)255, (byte)0, (byte)0) : ((byte)0, (byte)0, (byte)255));
+        var zones = ScreenZones.FromBgra(img, 8, 4, 4);
+        Assert.Equal(4, zones.Length);
+        Assert.Equal(1, zones[0].R, 3);
+        Assert.Equal(1, zones[1].R, 3);
+        Assert.Equal(1, zones[2].B, 3);
+        Assert.Equal(1, zones[3].B, 3);
+        Assert.Equal(0, zones[0].B, 3);
+    }
+
+    [Fact]
+    public void Mixed_columns_average()
+    {
+        var img = Image(4, 2, (_, y) => y == 0 ? ((byte)255, (byte)255, (byte)255) : ((byte)0, (byte)0, (byte)0));
+        Assert.Equal(0.5, ScreenZones.FromBgra(img, 4, 2, 1)[0].G, 2);
+    }
+
+    [Theory]
+    [InlineData(0, 4)]
+    [InlineData(4, 0)]
+    public void Empty_sizes_give_nothing(int w, int h) => Assert.Empty(ScreenZones.FromBgra(new byte[64], w, h));
+
+    [Fact]
+    public void A_buffer_that_is_too_short_gives_nothing() => Assert.Empty(ScreenZones.FromBgra(new byte[10], 8, 4));
+
+    [Fact]
+    public void More_zones_than_columns_still_works()
+    {
+        var zones = ScreenZones.FromBgra(Image(2, 2, (_, _) => ((byte)10, (byte)20, (byte)30)), 2, 2, 5);
+        Assert.Equal(5, zones.Length);
+    }
+
+    [Fact]
+    public void Smoothing_moves_part_of_the_way()
+    {
+        var s = ScreenZones.Smooth([new Color(0, 0, 0)], [new Color(1, 1, 1)], 0.25);
+        Assert.Equal(0.25, s[0].R, 3);
+        Assert.Same(s, ScreenZones.Smooth(null, s));
+    }
+}
