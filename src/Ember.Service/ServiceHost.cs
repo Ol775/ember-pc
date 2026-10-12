@@ -7,13 +7,15 @@ namespace Ember.Service;
 
 public static class ServiceHost
 {
-    public static IHostBuilder Create(string[] args, Func<ISensorSource> sourceFactory, string pipeName) =>
+    public static IHostBuilder Create(string[] args, Func<ISensorSource> sourceFactory, string pipeName,
+        Func<IFanController>? fanFactory = null) =>
         Host.CreateDefaultBuilder(args)
             .UseWindowsService(o => o.ServiceName = EmberNames.ServiceName)
             .ConfigureServices(s =>
             {
                 s.AddSingleton<SnapshotHub>();
                 s.AddSingleton(_ => sourceFactory());
+                if (fanFactory is not null) s.AddSingleton(_ => fanFactory());
                 s.AddSingleton(TimeProvider.System);
                 if (OperatingSystem.IsWindows()) s.AddSingleton<IDriverProbe, PawnIoProbe>();
                 s.AddHostedService<SensorPoller>();

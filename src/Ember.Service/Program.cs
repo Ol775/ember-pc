@@ -6,8 +6,17 @@ using Microsoft.Extensions.Logging;
 
 internal static class Program
 {
-    private static int Main(string[] args) =>
-        Run(ServiceHost.Create(args, () => new LhmSensorSource(), EmberNames.PipeName));
+    private static int Main(string[] args)
+    {
+        LhmHardware? hardware = null;
+        LhmHardware Hardware() => hardware ??= new LhmHardware();
+        try
+        {
+            return Run(ServiceHost.Create(args, () => new LhmSensorSource(Hardware()), EmberNames.PipeName,
+                () => new LhmFanController(Hardware())));
+        }
+        finally { hardware?.Dispose(); }
+    }
 
     // Non-zero on any failure (source cannot be created, startup throws, a hosted service faulted) so the
     // service-recovery settings restart the service; handled here to avoid an unhandled-exception crash record.

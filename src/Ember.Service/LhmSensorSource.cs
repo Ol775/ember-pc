@@ -3,22 +3,15 @@ using LibreHardwareMonitor.Hardware;
 
 namespace Ember.Service;
 
-// Ember's own code never writes fan, PWM or control values; the library and PawnIO driver only probe chip registers to read sensors.
-internal sealed class LhmSensorSource : ISensorSource
+// Reading sensors never writes: the library and the PawnIO driver only probe chip registers here.
+// Fan writes happen only in LhmFanController.
+internal sealed class LhmSensorSource(LhmHardware hardware) : ISensorSource
 {
-    private readonly Computer _computer = new()
-    {
-        IsCpuEnabled = true,
-        IsGpuEnabled = true,
-        IsMotherboardEnabled = true,
-    };
-
-    public LhmSensorSource() => _computer.Open();
-
     public IReadOnlyList<SensorReading> Read()
     {
         var result = new List<SensorReading>();
-        foreach (var hw in _computer.Hardware) Collect(hw, result);
+        lock (hardware.Gate)
+            foreach (var hw in hardware.Computer.Hardware) Collect(hw, result);
         return result;
     }
 
@@ -33,5 +26,5 @@ internal sealed class LhmSensorSource : ISensorSource
         foreach (var sub in hw.SubHardware) Collect(sub, into);
     }
 
-    public void Dispose() => _computer.Close();
+    public void Dispose() { } // the shared LhmHardware owns the Computer
 }
