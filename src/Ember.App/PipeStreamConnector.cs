@@ -13,13 +13,14 @@ namespace Ember.App;
 /// The service runs as LocalSystem (scripts/install-service.ps1). The identity proof is that the pipe server's PID
 /// equals the PID the Service Control Manager reports for EmberService. A non-admin squatter cannot spoof that,
 /// because only admins can create or control that service. Querying the service status needs only
-/// SC_MANAGER_CONNECT and SERVICE_QUERY_STATUS, which authenticated users have, so the app works as a normal user.
+/// SC_MANAGER_CONNECT and SERVICE_QUERY_STATUS, which the default service DACL grants to Interactive and Service logons; the app is interactive, so it works as a
+/// normal user (windows-checklist c1 is the real test).
 /// </summary>
 [SupportedOSPlatform("windows")]
 public static class PipeStreamConnector
 {
-    const string PipeName = "ember.v1";
-    const string ServiceName = "EmberService";
+    const string PipeName = EmberNames.PipeName;
+    const string ServiceName = EmberNames.ServiceName;
     const int ConnectTimeoutMs = 1000;
 
     const uint ScManagerConnect = 0x0001;

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 internal static class Program
 {
     private static int Main(string[] args) =>
-        Run(ServiceHost.Create(args, () => new LhmSensorSource(), "ember.v1"));
+        Run(ServiceHost.Create(args, () => new LhmSensorSource(), EmberNames.PipeName));
 
     // Non-zero on any failure (source cannot be created, startup throws, a hosted service faulted) so the
     // service-recovery settings restart the service; handled here to avoid an unhandled-exception crash record.

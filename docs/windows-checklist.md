@@ -22,7 +22,7 @@ Phase 1 is read-only. During every step, watch that no fan speed changes (check 
 
 | Step | Expected | Result | Notes |
 |---|---|---|---|
-| **a1.** On a clean machine (no PawnIO), elevated PowerShell: `scripts\install-pawnio.ps1` | Prints the signer subject and thumbprint, `SHA-256 OK`, the installer runs with no UI and exits 0, the temp folder under Program Files is removed. | | |
+| **a1.** On a clean machine (no PawnIO), elevated PowerShell: `scripts\install-pawnio.ps1` | Prints the signer subject and thumbprint, `SHA-256 OK`, the installer runs with no UI and exits 0, the `Program Files\Ember-pawnio-<guid>` folder is removed. | | |
 | **a2.** Record the signer subject and thumbprint printed in a1 | Values written in Notes, to be pinned in `install-pawnio.ps1`. | | Subject: <br> Thumbprint: |
 | **a3.** Repeat a1 under both Windows PowerShell 5.1 and PowerShell 7 (uninstall PawnIO in between) | Same result on both. | | |
 | **a4.** After a1 with the service installed: `Restart-Service EmberService` | Service restarts; the app's driver banner disappears and fan RPMs appear. Note whether fan RPMs appeared before the restart. | | |
@@ -49,7 +49,8 @@ Phase 1 is read-only. During every step, watch that no fan speed changes (check 
 | **j1.** Elevated: `scripts\install-pawnio.ps1 -Sha256 0000000000000000000000000000000000000000000000000000000000000000` | Refuses with "SHA-256 mismatch ... Refusing to run the installer"; nothing is installed. | | |
 | **j2.** Run `scripts\install-pawnio.ps1` from a non-elevated PowerShell | Refuses: must be run elevated. | | |
 | **k1.** Leave the app running 15 minutes; watch its memory (Task Manager, Details tab) | Memory stays flat (no steady growth after the first minute or two). | | Start: <br> End: |
-| **l1.** During all of the above, watch fan speeds in HWiNFO | No fan speed changes caused by Ember (phase 1 never writes to fans). | | |
+| **l1.** During all of the above, watch fan speeds in HWiNFO | Fan speeds do not change while Ember runs (Ember's own code writes no fan or control values). | | |
+| **m1.** `dotnet test` on Windows | `dotnet test` is green on Windows (as a normal user and as admin). | | |
 
 ## Driver items still unverified on Windows (from `docs/driver-research.md`)
 

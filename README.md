@@ -12,8 +12,9 @@ lighting and the rest come in later phases. The Windows-side behaviour is still 
 
 ## Safety
 
-Phase 1 never writes to fans or any other hardware setting. It only reads sensors. Ember makes no network calls
-and stores no data.
+Ember's own code never writes fan, PWM or control values; sensor access goes through LibreHardwareMonitorLib and
+the PawnIO driver, which probe chip registers. The app and service make no network calls; only
+`scripts/install-pawnio.ps1` downloads, from GitHub. Ember stores no data.
 
 ## Requirements
 
@@ -38,7 +39,8 @@ dotnet build Ember.sln
 dotnet test
 ```
 
-The tests run on any OS. The WPF app and the service's hardware, pipe-security and install code are only verified
+The tests run on Windows and on an arm64 Mac. x64 macOS and Linux need the LibreHardwareMonitorLib dll selection
+fixed first (phase 8 CI). The WPF app and the service's hardware, pipe-security and install code are only verified
 on Windows.
 
 ## Install
@@ -75,6 +77,10 @@ To remove the service: `scripts\uninstall-service.ps1` (elevated).
 ## Licence
 
 MIT. See [`LICENSE`](LICENSE).
+
+Credits: [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0, used
+unmodified as a library, compatible with this MIT project) and PawnIO by namazso (a separate driver, installed
+separately).
 
 ## Trademarks
 

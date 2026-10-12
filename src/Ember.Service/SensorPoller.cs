@@ -45,6 +45,8 @@ public sealed class SensorPoller(ISensorSource source, SnapshotHub hub, TimeProv
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Let host start (and the pipe server) proceed without waiting for the first, possibly hung, sensor read.
+        await Task.Yield();
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1), clock);
         try
         {

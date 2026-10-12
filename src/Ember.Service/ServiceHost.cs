@@ -9,7 +9,7 @@ public static class ServiceHost
 {
     public static IHostBuilder Create(string[] args, Func<ISensorSource> sourceFactory, string pipeName) =>
         Host.CreateDefaultBuilder(args)
-            .UseWindowsService(o => o.ServiceName = "EmberService")
+            .UseWindowsService(o => o.ServiceName = EmberNames.ServiceName)
             .ConfigureServices(s =>
             {
                 s.AddSingleton<SnapshotHub>();

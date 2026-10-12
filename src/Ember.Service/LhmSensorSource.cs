@@ -3,7 +3,7 @@ using LibreHardwareMonitor.Hardware;
 
 namespace Ember.Service;
 
-// Strictly read-only: this source has no write access to any hardware control.
+// Ember's own code never writes fan, PWM or control values; the library and PawnIO driver only probe chip registers to read sensors.
 internal sealed class LhmSensorSource : ISensorSource
 {
     private readonly Computer _computer = new()

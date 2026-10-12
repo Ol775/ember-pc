@@ -27,6 +27,11 @@ public static class PipeSecurityFactory
         void Allow(WellKnownSidType sid, PipeAccessRights rights) =>
             security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(sid, null), rights, AccessControlType.Allow));
         Allow(WellKnownSidType.LocalSystemSid, PipeAccessRights.FullControl);
+        // An explicit DACL drops the creator's implicit rights, and Windows checks CreateNewInstance for instance 2+
+        // against the first instance's DACL. So the creating user needs FullControl too, or a non-LocalSystem host
+        // (console run, dotnet test) cannot create further instances. Under LocalSystem this is the same SID as above.
+        using (var self = WindowsIdentity.GetCurrent())
+            security.AddAccessRule(new PipeAccessRule(self.User!, PipeAccessRights.FullControl, AccessControlType.Allow));
         Allow(WellKnownSidType.BuiltinAdministratorsSid, PipeAccessRights.ReadWrite);
         Allow(WellKnownSidType.InteractiveSid, PipeAccessRights.Read);
         return NamedPipeServerStreamAcl.Create(pipeName, PipeDirection.Out,

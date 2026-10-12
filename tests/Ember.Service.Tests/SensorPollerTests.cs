@@ -125,4 +125,18 @@ public class SensorPollerTests
         await p.StopAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(2));
         Assert.True(p.ExecuteTask?.IsCompleted ?? true);
     }
+
+    [Fact]
+    public async Task StartAsync_returns_even_if_first_read_blocks()
+    {
+        using var gate = new ManualResetEventSlim();
+        var (p, _, src) = Make();
+        src.OnRead = () => { gate.Wait(); return []; };
+        try { await p.StartAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(1)); }
+        finally
+        {
+            gate.Set();
+            await p.StopAsync(CancellationToken.None);
+        }
+    }
 }

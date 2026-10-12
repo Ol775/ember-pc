@@ -104,7 +104,7 @@ Uncertainties:
 
 - [ ] `PawnIoProbe` reports `Ok` on a machine with PawnIO 2.2.0 installed and `Missing` on a clean machine.
 - [ ] `install-pawnio.ps1` on a clean Windows VM under both PowerShell 5.1 and 7: the signature is `Valid`, the
-      signer is printed, `-install -silent` runs with no UI and exit code 0, and the temp folder is removed.
+      signer is printed, `-install -silent` runs with no UI and exit code 0, and the `Program Files\Ember-pawnio-<guid>` folder is removed.
 - [ ] After the install, LHM fan RPMs appear. Check whether this needs a `Restart-Service EmberService` (expected,
       because of the per-process cache above) or works without one. Record the result here.
 - [ ] The script refuses a bad `-Sha256`, and refuses when not elevated.
