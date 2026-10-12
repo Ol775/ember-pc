@@ -4,6 +4,10 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+  <!-- OpenRGB, fetched by scripts/fetch-openrgb.ps1, ships in an "OpenRGB" folder next to the app. -->
+  <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\third-party\openrgb\OpenRGB.exe')">
+    <Content Include="..\..\third-party\openrgb\**\*" Link="OpenRGB\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ember.Core\Ember.Core.csproj" />
     <ProjectReference Include="..\Ember.Lighting\Ember.Lighting.csproj" />

@@ -120,7 +120,10 @@ public sealed class LightsPage : UserControl
 
         var s = m.State;
         box.Children.Add(Text("OpenRGB", weight: FontWeights.SemiBold));
-        box.Children.Add(Text("Ember talks to PC lighting through OpenRGB, a separate program that must be running with its SDK server on. Close other lighting apps that hold your devices (such as SignalRGB or vendor suites) if a device does not show up.", muted: true));
+        var bundled = MainWindow.BundledOpenRgb is not null;
+        box.Children.Add(Text(bundled
+            ? "OpenRGB comes with Ember and starts by itself when it is not already running. Leave the box below empty to use it, or choose your own OpenRGB.exe. Close other lighting apps that hold your devices (such as SignalRGB or vendor suites) if a device does not show up."
+            : "Ember talks to PC lighting through OpenRGB, a separate program that must be running with its SDK server on. Choose its OpenRGB.exe below to let Ember start it. Close other lighting apps that hold your devices (such as SignalRGB or vendor suites) if a device does not show up.", muted: true));
         var path = new TextBox { Style = Sty("TextField"), Text = s.OpenRgbPath ?? "", Width = 380, Margin = new Thickness(0, 8, 8, 6) };
         AutomationProperties.SetName(path, "Path to OpenRGB.exe");
         path.LostFocus += (_, _) => { m.SetOpenRgb(path.Text, m.State.StartOpenRgb); _rendered = m.State; };
@@ -132,7 +135,7 @@ public sealed class LightsPage : UserControl
             if (dlg.ShowDialog() == true) { path.Text = dlg.FileName; m.SetOpenRgb(dlg.FileName, m.State.StartOpenRgb); _rendered = m.State; }
         }));
         box.Children.Add(row);
-        box.Children.Add(Switch("Start OpenRGB for me when it is not running", s.StartOpenRgb, on => { m.SetOpenRgb(m.State.OpenRgbPath, on); _rendered = m.State; }));
+        box.Children.Add(Switch("Start OpenRGB for me when it is not running", s.ShouldStartOpenRgb, on => { m.SetOpenRgb(m.State.OpenRgbPath, on); _rendered = m.State; }));
         box.Children.Add(Pill("Look for devices again", () => m.RefreshDevices()));
         return box;
     }

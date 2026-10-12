@@ -197,7 +197,7 @@ public partial class CurveEditor : UserControl
         var what = _group == CurveGroup.Cpu ? "the CPU fan" : "the system fans";
         Hint.Text = _editable
             ? $"Manual curve for {what}. Drag a point, or select one and use the arrow keys (Shift moves by 5). Fans never go below 30% (CPU) or 20% (system), and the curve must reach 60% by 80 °C and 80% by 85 °C."
-            : $"The {_mode} curve for {what}. Choose Manual above to change it, or copy it with the button below.";
+            : $"The {FansViewState.Label(_mode)} curve for {what}. Choose Manual above to change it, or copy it with the button below.";
         if (_group == CurveGroup.Cpu) Hint.Text += " The CPU fan also ramps up early above 70 °C, whatever the curve says.";
         // Points that break the shape rules (mid-edit) cannot be evaluated; the hot-end rules do not matter for a number.
         var curve = _shown.Count >= 2 ? TryCurve(_shown) : null;

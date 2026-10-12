@@ -132,3 +132,32 @@ public class ManualCurvesTests
         Assert.Equal(FanMode.Manual, view.Mode);
     }
 }
+
+public class PresetTests
+{
+    public static IEnumerable<object[]> Presets() =>
+        new[] { FanMode.SuperQuiet, FanMode.Quiet, FanMode.Normal, FanMode.Performance, FanMode.Extreme }.Select(m => new object[] { m });
+
+    [Theory]
+    [MemberData(nameof(Presets))]
+    public void Every_preset_can_be_copied_into_manual(FanMode mode) =>
+        Assert.Null(ManualCurveRules.Check(ModePresets.Get(mode).Points));
+
+    [Fact]
+    public void Super_quiet_is_never_louder_than_quiet_and_sits_on_the_floor_when_cool()
+    {
+        var sq = ModePresets.Get(FanMode.SuperQuiet);
+        var q = ModePresets.Get(FanMode.Quiet);
+        for (var t = 20; t <= 100; t += 2) Assert.True(sq.Evaluate(t) <= q.Evaluate(t) + 1e-9, $"at {t} C");
+        Assert.Equal(ReleaseRules.SystemFloor, sq.Evaluate(45));
+        Assert.Equal(100, sq.Evaluate(90));
+    }
+
+    [Fact]
+    public void Super_quiet_can_be_picked_and_has_a_readable_name()
+    {
+        Assert.True(ControlProtocol.TryDecode(ControlProtocol.Encode(new SetMode(FanMode.SuperQuiet)), out var m));
+        Assert.Equal(new SetMode(FanMode.SuperQuiet), m);
+        Assert.Equal("Super quiet", FansViewState.Label(FanMode.SuperQuiet));
+    }
+}

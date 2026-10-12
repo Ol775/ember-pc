@@ -33,7 +33,7 @@ public partial class MainWindow : Window
 
         LightingManager? lights = null;
         _lights = lights = new LightingManager(new LightingStore(LightingStore.DefaultPath), TimeProvider.System,
-            [new OpenRgbSource(() => lights?.State.OpenRgbPath, () => lights?.State.StartOpenRgb ?? false),
+            [new OpenRgbSource(() => string.IsNullOrWhiteSpace(lights?.State.OpenRgbPath) ? BundledOpenRgb : lights!.State.OpenRgbPath, () => lights?.State.ShouldStartOpenRgb ?? true),
              new GoveeSource(new GoveeLanClient(), GoveeCloud)]);
         Lights.Attach(_lights);
         _lights.Start();
@@ -75,6 +75,25 @@ public partial class MainWindow : Window
         Closed += OnClosed;
     }
 
+    [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
+    static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
+    /// <summary>Gives the title bar and the window frame the colours of the window, instead of the light system ones.</summary>
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        try
+        {
+            var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            int on = 1, caption = 0x101114, border = 0x24282E, text = 0xE6ECF3; // COLORREF: 0x00BBGGRR
+            DwmSetWindowAttribute(hwnd, 20, ref on, sizeof(int));        // dark title bar (Windows 10 2004 and later)
+            DwmSetWindowAttribute(hwnd, 34, ref border, sizeof(int));    // frame colour (Windows 11)
+            DwmSetWindowAttribute(hwnd, 35, ref caption, sizeof(int));   // title bar colour (Windows 11)
+            DwmSetWindowAttribute(hwnd, 36, ref text, sizeof(int));      // title text colour (Windows 11)
+        }
+        catch (Exception) { /* an older Windows keeps its normal frame */ }
+    }
+
     void GrabScreen()
     {
         try
@@ -101,6 +120,16 @@ public partial class MainWindow : Window
             if (message is not null) await ControlClient.SendAsync(message);
         }
         catch (Exception) { /* detection must never take the window down */ }
+    }
+
+    /// <summary>The OpenRGB that ships next to the app, if this build has one.</summary>
+    public static string? BundledOpenRgb
+    {
+        get
+        {
+            var p = Path.Combine(AppContext.BaseDirectory, "OpenRGB", "OpenRGB.exe");
+            return File.Exists(p) ? p : null;
+        }
     }
 
     GoveeCloudClient? GoveeCloud() =>

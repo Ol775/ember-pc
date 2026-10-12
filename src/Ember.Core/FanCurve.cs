@@ -38,6 +38,8 @@ public sealed class FanCurve
 
 public static class ModePresets
 {
+    // Percent at 30, 40, ... 90 C. Stays on the floor speed until 60 C, then rises steeply: 65% at 80 C and 100% at 90 C, so it still passes the manual-curve hot-end rules.
+    static readonly FanCurve SuperQuiet = Make(20, 20, 20, 25, 35, 65, 100);
     static readonly FanCurve Quiet = Make(20, 20, 25, 35, 55, 80, 100);
     static readonly FanCurve Normal = Make(25, 30, 40, 55, 70, 90, 100);
     static readonly FanCurve Performance = Make(30, 40, 55, 70, 85, 100, 100);
@@ -49,6 +51,7 @@ public static class ModePresets
 
     public static FanCurve Get(FanMode mode) => mode switch
     {
+        FanMode.SuperQuiet => SuperQuiet,
         FanMode.Quiet => Quiet,
         FanMode.Normal => Normal,
         FanMode.Performance => Performance,

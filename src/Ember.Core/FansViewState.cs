@@ -28,7 +28,7 @@ public sealed record FansView(
 /// <summary>Turns the service's fan control status into what the Fans page shows. Pure, so it is tested without WPF.</summary>
 public static class FansViewState
 {
-    static readonly FanMode[] Order = [FanMode.Quiet, FanMode.Normal, FanMode.Performance, FanMode.Extreme, FanMode.Manual, FanMode.Ai];
+    static readonly FanMode[] Order = [FanMode.SuperQuiet, FanMode.Quiet, FanMode.Normal, FanMode.Performance, FanMode.Extreme, FanMode.Manual, FanMode.Ai];
 
     public static FansView Render(FanControlStatus? status, bool connected, BuildFeatures? features = null)
     {
@@ -86,7 +86,7 @@ public static class FansViewState
         return new HeaderRow(h.Id, h.Name, text, canEnable, h.State == HeaderState.Enabled, canTest, reason);
     }
 
-    static string Label(FanMode m) => m == FanMode.Ai ? "AI (coming later)" : m.ToString();
+    public static string Label(FanMode m) => m switch { FanMode.Ai => "AI (coming later)", FanMode.SuperQuiet => "Super quiet", _ => m.ToString() };
 
     static string Join(IReadOnlyList<string> items) => items.Count switch
     {

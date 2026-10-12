@@ -82,6 +82,7 @@ public class ManagerTests : IDisposable
         Assert.Equal(0.4, back.Current.Brightness);
         Assert.Equal(2, back.Scenes.Count);
         Assert.True(back.StartOpenRgb);
+        Assert.True(back.ShouldStartOpenRgb);
     }
 
     [Fact]

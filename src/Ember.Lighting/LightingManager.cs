@@ -114,7 +114,7 @@ public sealed class LightingManager : IAsyncDisposable
         return s with { Scenes = s.Scenes.Select(x => x.Name == current.Name ? changed : x).ToList() };
     });
 
-    public void SetOpenRgb(string? path, bool start) => Mutate(s => s with { OpenRgbPath = string.IsNullOrWhiteSpace(path) ? null : path.Trim(), StartOpenRgb = start });
+    public void SetOpenRgb(string? path, bool? start) => Mutate(s => s with { OpenRgbPath = string.IsNullOrWhiteSpace(path) ? null : path.Trim(), StartOpenRgb = start });
 
     // Writing the file waits until the changes stop (a slider produces dozens a second) and is done once on shutdown.
     ITimer? _saveTimer;
