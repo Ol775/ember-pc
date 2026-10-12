@@ -1,4 +1,4 @@
-# Windows verification checklist (phase 1)
+﻿# Windows verification checklist (phase 1)
 
 Phase 1 was written and unit-tested on macOS. The app, the service's hardware code, the pipe ACL and the install
 scripts can only be verified on Windows. Run these checks on the Windows PC and fill in the **Result** column
@@ -31,10 +31,10 @@ Phase 1 is read-only. During every step, watch that no fan speed changes (check 
 | **b3.** `(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\EmberService).ImagePath` | Double-quoted path containing spaces: `"C:\Program Files\Ember\Ember.Service.exe"`. | | |
 | **b4.** Run `scripts\install-service.ps1` from a non-elevated PowerShell | Refused: must be run elevated. | | |
 | **c1.** Start `publish\app\Ember.App.exe` as a normal (non-admin) user, not elevated | Window titled "Ember"; the app connects and the sidebar shows "Service running" with a green dot. No UAC prompt. | | The connector trusts the pipe only if its server PID equals the PID the Service Control Manager reports for EmberService; a normal user must be able to do this. |
-| **c2.** Compare CPU, GPU, Motherboard and Fans (average) with HWiNFO or Task Manager | Values agree within a few degrees / a few percent of RPM. Missing sensors show "—", never 0. | | |
+| **c2.** Compare CPU, GPU, Motherboard and Fans (average) with HWiNFO or Task Manager | Values agree within a few degrees / a few percent of RPM. Missing sensors show "â€”", never 0. | | |
 | **c3.** On a machine with two GPUs (or an iGPU plus a dGPU) | The GPU card shows the hottest GPU. | | |
-| **c4.** Leave the app running 2 minutes | History chart draws CPU (orange) and GPU (blue) lines that move left over time; values stay within 20 to 100 °C. | | |
-| **d1.** Elevated: `Stop-Service EmberService` with the app open | Within 2 s the app shows "Service not running"; cards show "—", the fan list is empty; the app does not crash. | | |
+| **c4.** Leave the app running 2 minutes | History chart draws CPU (orange) and GPU (blue) lines that move left over time; values stay within 20 to 100 Â°C. | | |
+| **d1.** Elevated: `Stop-Service EmberService` with the app open | Within 2 s the app shows "Service not running"; cards show "â€”", the fan list is empty; the app does not crash. | | |
 | **d2.** `Start-Service EmberService` | The app reconnects by itself within 6 s and shows live values again. | | |
 | **e1.** Stop the service, close and restart the app, then start the service | The app shows "Service not running", then "Service running" once the service is up, without user action. | | |
 | **f1.** Elevated: `Stop-Process -Name Ember.Service -Force` | Windows restarts the service within about 5 s (service recovery); the app reconnects. | | |
@@ -80,14 +80,14 @@ runs. Have HWiNFO open to watch RPM. Install the watchdog first (`scripts\instal
 | **p7.** `Start-Service EmberService`; confirm the header is still enabled and driven | Fan control resumes without opening the app. | | |
 | **p8.** `Stop-Process -Name Ember.Service -Force` (a hard kill) | The watchdog writes the saved speeds within a few seconds; Windows restarts the service. Record the fan's speed after the kill. | pass | System Fan #1 held its last speed (38%) for about 2 s, then the watchdog wrote 60% (log: "Handing back 1 header(s)"). The restart took 30 s because a third failure inside the old 24 h reset period used the 30 s action; the install script now uses reset= 600. |
 | **p9.** Stop the Ember service and leave it stopped for 15 s | The watchdog keeps the fans at the safe speeds. Restart the service afterwards. | pass | Read-only check while stopped: System Fan #1 at 60% / 1180 RPM. |
-| **p10.** Kill the watchdog process (`Stop-Process -Name Ember.Watchdog -Force`) while the service runs | The service keeps controlling fans; Windows restarts the watchdog. | | |
-| **p11.** Hang test (optional): suspend the service process (Process Explorer) for 15 s | The watchdog stops the service and releases the fans; the service restarts. | | |
-| **p12.** Over-temperature override | Cannot be done by heating the PC; covered by `FanControlLoopTests.Over_90C_forces_100_...`. Confirm the Fans page note appears if a test build injects it. | | |
+| **p10.** Kill the watchdog process (`Stop-Process -Name Ember.Watchdog -Force`) while the service runs | The service keeps controlling fans; Windows restarts the watchdog. | pass | Killed; Windows restarted it within seconds, service untouched. |
+| **p11.** Hang test (optional): suspend the service process (Process Explorer) for 15 s | The watchdog stops the service and releases the fans; the service restarts. | pass | Suspended service ended after 10 s, fans handed back, restarted once. Found and fixed a second needless restart and a hang in the graceful stop. |
+| **p12.** Over-temperature override | Cannot be done by heating the PC; covered by `FanControlLoopTests.Over_90C_forces_100_...`. Confirm the Fans page note appears if a test build injects it. | unit test | Covered by FanControlLoopTests; not forced on hardware. |
 | **p13.** Start a full-screen game with the GPU busy | After about 10 s the Fans page shows "Game mode: <game>.exe" and fans follow Performance. Closing the game returns to your normal mode within 5 s. | | |
 | **p14.** Full-screen a browser video and a video player | No game is detected. | | |
 | **p15.** During a game pick **Extreme** by hand | The page says "Your pick for this game" and holds until the game closes. | | |
 | **p16.** Detect a wrong guess: press **Not a game** | The program moves to "Not games"; a restart of the game does not trigger game mode; **Undo** restores it. | | |
 | **p17.** Close the app mid-game | The service leaves game mode after about 30 s. | | |
-| **p18.** Corrupt `%ProgramData%\Ember\settings.json` by hand, restart the service | Service starts, no header is driven, defaults apply. | | |
-| **p19.** ACLs: `Get-Acl %ProgramData%\Ember`, and the control pipe `ember.ctl.v1` | Folder: SYSTEM and Administrators full control, Users read only. Pipe: Interactive read/write, no Everyone. | | |
+| **p18.** Corrupt `%ProgramData%\Ember\settings.json` by hand, restart the service | Service starts, no header is driven, defaults apply. | pass | Garbage file: service starts, no header Enabled. Restored afterwards. |
+| **p19.** ACLs: `Get-Acl %ProgramData%\Ember`, and the control pipe `ember.ctl.v1` | Folder: SYSTEM and Administrators full control, Users read only. Pipe: Interactive read/write, no Everyone. | pass | Folder and file: SYSTEM and Administrators full, Users read only. Control pipe connects for the interactive user. |
 | **p20.** GPU fan (optional): tick "Allow Ember to control the GPU fan", Test it | Either passes (then Enable works, floor 30%) or fails and stays unused. Unticking releases it. | | |
