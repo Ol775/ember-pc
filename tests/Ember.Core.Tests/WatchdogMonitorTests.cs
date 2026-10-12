@@ -71,13 +71,27 @@ public class WatchdogMonitorTests
     }
 
     [Fact]
-    public void Boot_with_service_running_and_no_snapshot_yet_waits_10s()
+    public void Boot_with_service_running_and_no_snapshot_yet_waits_60s()
     {
         var m = new WatchdogMonitor();
         m.OnDisconnected(T0);
         Assert.Equal(WatchdogAction.None, m.Decide(At(3), true));
-        Assert.Equal(WatchdogAction.None, m.Decide(At(10), true));
-        Assert.Equal(WatchdogAction.StopServiceThenRelease, m.Decide(At(11), true));
+        Assert.Equal(WatchdogAction.None, m.Decide(At(30), true));
+        Assert.Equal(WatchdogAction.None, m.Decide(At(60), true));
+        Assert.Equal(WatchdogAction.StopServiceThenRelease, m.Decide(At(61), true));
+    }
+
+    [Fact]
+    public void Restarted_service_gets_a_fresh_grace_period()
+    {
+        var m = new WatchdogMonitor();
+        m.OnSnapshot(T0);
+        Assert.Equal(WatchdogAction.Release, m.Decide(At(1), false)); // killed
+        Assert.Equal(WatchdogAction.None, m.Decide(At(6), true));    // restarted by Windows, still opening the hardware
+        Assert.Equal(WatchdogAction.None, m.Decide(At(20), true));   // the old snapshot time must not count
+        m.OnSnapshot(At(25));
+        Assert.Equal(WatchdogAction.None, m.Decide(At(30), true));
+        Assert.Equal(WatchdogAction.StopServiceThenRelease, m.Decide(At(36), true)); // hung again: 10 s rule
     }
 
     [Fact]

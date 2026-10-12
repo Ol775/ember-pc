@@ -143,13 +143,13 @@ public sealed class FanControlLoopTests : IDisposable
     }
 
     [Fact]
-    public void Group_with_one_of_two_sources_missing_uses_the_other()
+    public void Case_group_goes_to_100_when_any_source_it_uses_goes_blind()
     {
         var loop = Loop(Rec(Sys1));
         loop.OnSnapshot(Snap(40, 40, 40));
         _clock.Advance(6);
-        loop.OnSnapshot(Snap(50, null, null));
-        Assert.Equal(35, LastSet(Sys1)); // smoothed (40+50)/2 = 45 °C on the Normal curve
+        loop.OnSnapshot(Snap(50, null, null)); // GPU and motherboard sensors vanished: the case fans must not trust CPU alone
+        Assert.Equal(100, LastSet(Sys1));
     }
 
     [Fact]
@@ -372,6 +372,88 @@ public sealed class FanControlLoopTests : IDisposable
         loop.OnSnapshot(Snap());
         Assert.DoesNotContain(_fans.Calls, c => c.Id == Gpu);
         Assert.Equal(HeaderState.Failed, loop.Status.Headers.Single(h => h.Id == Gpu).State);
+    }
+
+    [Fact]
+    public void Write_failure_falls_back_to_100_and_marks_header_failed()
+    {
+        var loop = Loop(Rec(Sys1));
+        _fans.FailWrite = (_, p) => p < 100;
+        loop.OnSnapshot(Snap(50));
+        Assert.Equal(100, LastSet(Sys1));
+        Assert.Equal(HeaderState.Failed, loop.Status.Headers.Single(h => h.Id == Sys1).State);
+    }
+
+    [Fact]
+    public void Write_failure_with_no_fallback_possible_releases_the_header()
+    {
+        var loop = Loop(Rec(Sys1));
+        loop.OnSnapshot(Snap(50));
+        _fans.FailWrite = (_, _) => true;
+        loop.OnSnapshot(Snap(60));
+        Assert.Contains(("release", Sys1, (double?)null), _fans.Calls);
+    }
+
+    [Fact]
+    public void Enumerate_failure_releases_everything_written()
+    {
+        var loop = Loop(Rec(Sys1));
+        loop.OnSnapshot(Snap(50));
+        _fans.EnumerateThrows = true;
+        loop.OnSnapshot(Snap(50));
+        Assert.Contains(("release", Sys1, (double?)null), _fans.Calls);
+    }
+
+    [Fact]
+    public void Failed_release_is_retried_on_the_next_step()
+    {
+        var loop = Loop(Rec(Sys1));
+        loop.OnSnapshot(Snap(50));
+        _processes = new[] { "FanControl" };
+        _fans.FailRelease = true;
+        _clock.Advance(6);
+        loop.OnSnapshot(Snap(50));
+        Assert.DoesNotContain(_fans.Calls, c => c.Op == "release");
+        _fans.FailRelease = false;
+        loop.OnSnapshot(Snap(50));
+        Assert.Contains(("release", Sys1, (double?)null), _fans.Calls);
+    }
+
+    [Fact]
+    public void Failed_release_after_disable_is_retried()
+    {
+        var loop = Loop(Rec(Sys1));
+        loop.OnSnapshot(Snap(50));
+        _fans.FailRelease = true;
+        loop.Handle(new ConfirmHeader(Sys1, false));
+        Assert.DoesNotContain(_fans.Calls, c => c.Op == "release");
+        _fans.FailRelease = false;
+        loop.OnSnapshot(Snap(50));
+        Assert.Contains(("release", Sys1, (double?)null), _fans.Calls);
+    }
+
+    [Fact]
+    public async Task Snapshot_after_stop_does_not_write()
+    {
+        var loop = Loop(Rec(Sys1));
+        await loop.StartAsync(CancellationToken.None);
+        loop.OnSnapshot(Snap(50));
+        await loop.StopAsync(CancellationToken.None);
+        var calls = _fans.Calls.Count;
+        loop.OnSnapshot(Snap(50));
+        Assert.Equal(calls, _fans.Calls.Count);
+        Assert.False(loop.Handle(new SetMode(FanMode.Quiet)).Ok);
+    }
+
+    [Fact]
+    public void NotGames_list_is_capped()
+    {
+        var loop = Loop();
+        ControlReply last = new(true, null);
+        for (var i = 0; i < 250; i++) last = loop.Handle(new SetNotGame($"game{i}.exe", true));
+        Assert.False(last.Ok);
+        Assert.True(new SettingsStore(SettingsPath).Load().NotGames.Count <= FanControlLoop.MaxNotGames);
+        Assert.True(loop.Handle(new SetNotGame("game0.exe", false)).Ok); // removing still works
     }
 
     [Fact]

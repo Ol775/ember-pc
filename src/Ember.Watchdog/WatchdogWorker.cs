@@ -54,8 +54,9 @@ internal sealed class WatchdogWorker(ILogger<WatchdogWorker> log) : BackgroundSe
                 break;
             case WatchdogAction.StopServiceThenRelease:
                 log.LogError("Ember service has stopped answering; stopping it and handing fans back to the board");
-                StopService();
+                var cleanStop = StopService();
                 ReleaseAll(now);
+                if (cleanStop) StartService(); // a clean stop exits with 0, so Windows recovery will not bring it back
                 break;
         }
     }
@@ -70,13 +71,16 @@ internal sealed class WatchdogWorker(ILogger<WatchdogWorker> log) : BackgroundSe
         catch (Exception) { return false; } // not installed counts as not running
     }
 
-    void StopService()
+    /// <summary>Stops the hung service. A stop is a clean exit, so Windows will not restart it: the caller starts it again after the release.</summary>
+    bool StopService()
     {
+        var stoppedCleanly = false;
         try
         {
             using var sc = new ServiceController(EmberNames.ServiceName);
             sc.Stop();
             sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(10));
+            stoppedCleanly = true;
         }
         catch (Exception ex)
         {
@@ -86,6 +90,17 @@ internal sealed class WatchdogWorker(ILogger<WatchdogWorker> log) : BackgroundSe
                 try { p.Kill(); } catch (Exception) { /* already gone */ } finally { p.Dispose(); }
             }
         }
+        return stoppedCleanly;
+    }
+
+    void StartService()
+    {
+        try
+        {
+            using var sc = new ServiceController(EmberNames.ServiceName);
+            sc.Start();
+        }
+        catch (Exception ex) { log.LogError(ex, "Restarting the Ember service failed"); }
     }
 
     void ReleaseAll(DateTimeOffset now)
@@ -95,11 +110,7 @@ internal sealed class WatchdogWorker(ILogger<WatchdogWorker> log) : BackgroundSe
         {
             using var hardware = new LhmHardware();
             using var fans = new LhmFanController(hardware);
-            foreach (var header in fans.Enumerate().Where(h => h.HasControl))
-            {
-                try { fans.ReleaseToAuto(header.Id); }
-                catch (Exception ex) { log.LogError(ex, "Releasing {Header} failed", header.Id); }
-            }
+            FanRelease.ReleaseAll(fans, message => log.LogWarning("{Message}", message));
         }
         catch (Exception ex) { log.LogError(ex, "Could not open the hardware to release fans"); }
     }

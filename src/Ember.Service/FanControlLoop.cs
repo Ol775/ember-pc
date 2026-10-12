@@ -19,6 +19,8 @@ public sealed class FanControlLoop : BackgroundService
     static readonly TempSource[] AllSources = [TempSource.Cpu, TempSource.Gpu, TempSource.Motherboard];
     static readonly TimeSpan ScanEvery = TimeSpan.FromSeconds(5);
     const double Floor = 20, PumpFloor = 60, GpuFloor = 30;
+    /// <summary>Bounds settings.json: any local user can reach the control pipe, so the list must not grow without limit.</summary>
+    public const int MaxNotGames = 200;
 
     readonly SnapshotHub _hub;
     readonly IFanController _fans;
@@ -35,6 +37,7 @@ public sealed class FanControlLoop : BackgroundService
     readonly HashSet<TempSource> _seen = new();
     readonly HashSet<string> _written = new();
     readonly HashSet<string> _failed = new();
+    bool _stopped;
     EmberSettings _settings;
     ModeResolver _resolver;
     IReadOnlyList<string> _competitors = [];
@@ -84,21 +87,32 @@ public sealed class FanControlLoop : BackgroundService
         {
             _hub.Published -= handler;
             _stop.Cancel();
-            ReleaseAll();
+            StopAndRelease();
         }
     }
 
     public override void Dispose()
     {
         _stop.Cancel();
-        ReleaseAll();
+        StopAndRelease();
         base.Dispose();
+    }
+
+    /// <summary>The final release. After it no snapshot or message may write again, even one already waiting on the lock.</summary>
+    void StopAndRelease()
+    {
+        lock (_gate)
+        {
+            _stopped = true;
+            ReleaseAllLocked();
+        }
     }
 
     public void OnSnapshot(Snapshot s)
     {
         lock (_gate)
         {
+            if (_stopped) return;
             var now = _clock.GetUtcNow();
             ScanCompetitors(now);
             _resolver.Expire(now);
@@ -114,7 +128,16 @@ public sealed class FanControlLoop : BackgroundService
             _wasSafetyOverride = safety.AllFansMax;
 
             if (_competitors.Count > 0) ReleaseAllLocked();
-            else DriveHeaders(temps, safety);
+            else
+            {
+                try { DriveHeaders(temps, safety); }
+                catch (Exception ex)
+                {
+                    // Cannot even read the headers: do not leave fans at a stale low value, hand them back.
+                    _log.LogError(ex, "Fan control step failed; releasing all headers");
+                    ReleaseAllLocked();
+                }
+            }
 
             _status = BuildStatus(safety.AllFansMax);
         }
@@ -139,6 +162,7 @@ public sealed class FanControlLoop : BackgroundService
         var headers = _fans.Enumerate().ToDictionary(h => h.Id);
         var curve = ModePresets.Get(_resolver.Effective);
         var percents = new Dictionary<Group, double>();
+        var driven = new HashSet<string>();
 
         foreach (var record in _settings.Headers)
         {
@@ -156,8 +180,47 @@ public sealed class FanControlLoop : BackgroundService
             {
                 _fans.SetPercent(header.Id, Math.Max(floor, percent));
                 _written.Add(header.Id);
+                driven.Add(header.Id);
             }
-            catch (Exception ex) { _log.LogError(ex, "Writing {Header} failed", header.Id); }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Writing {Header} failed", header.Id);
+                FailSafe(header.Id);
+            }
+        }
+
+        // A header Ember wrote earlier but no longer drives (disabled, or a failed release last time): hand it back.
+        foreach (var id in _written.Except(driven).ToList()) TryRelease(id);
+    }
+
+    /// <summary>A write failed: the fan may be at a stale low value. Make it loud (100%), or hand it back if even that fails.</summary>
+    void FailSafe(string id)
+    {
+        _failed.Add(id);
+        try
+        {
+            _fans.SetPercent(id, 100);
+            _written.Add(id);
+        }
+        catch (Exception)
+        {
+            TryRelease(id);
+        }
+    }
+
+    /// <summary>Releases one header and forgets it only if that worked, so a failed release is retried on the next step.</summary>
+    bool TryRelease(string id)
+    {
+        try
+        {
+            _fans.ReleaseToAuto(id);
+            _written.Remove(id);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Releasing {Header} failed; will retry", id);
+            return false;
         }
     }
 
@@ -165,7 +228,9 @@ public sealed class FanControlLoop : BackgroundService
     {
         if (safety.AllFansMax) return 100;
         var wanted = (group == Group.CpuPump ? new[] { TempSource.Cpu } : AllSources).Where(_seen.Contains).ToList();
-        if (wanted.Count == 0 || wanted.All(safety.MissingSources.Contains)) return 100;
+        // A source this group depends on has gone blind (seen before, now missing for over 5 s): do not trust the
+        // others to stand in for it, because the blind one may be the hot one.
+        if (wanted.Count == 0 || wanted.Any(safety.MissingSources.Contains)) return 100;
         var live = wanted.Select(w => temps.GetValueOrDefault(w)).Where(v => v is not null).Select(v => v!.Value).ToList();
         // Inside the 5 s grace period a source can be briefly unreadable: hold the last value rather than guess.
         if (live.Count == 0) return _lastPercent.GetValueOrDefault(group, 100);
@@ -185,29 +250,14 @@ public sealed class FanControlLoop : BackgroundService
 
     bool IsTested(HeaderRecord r) => r.PassedBoard == _identity.Board && r.PassedLhmVersion == _identity.LhmVersion;
 
-    void ReleaseAll()
-    {
-        lock (_gate) ReleaseAllLocked();
-    }
-
     void ReleaseAllLocked()
     {
-        foreach (var id in _written.ToList())
-        {
-            try { _fans.ReleaseToAuto(id); }
-            catch (Exception ex) { _log.LogError(ex, "Releasing {Header} failed", id); }
-        }
-        _written.Clear();
+        foreach (var id in _written.ToList()) TryRelease(id);
     }
 
     void ReleaseWhere(Func<string, bool> match)
     {
-        foreach (var id in _written.Where(match).ToList())
-        {
-            try { _fans.ReleaseToAuto(id); }
-            catch (Exception ex) { _log.LogError(ex, "Releasing {Header} failed", id); }
-            _written.Remove(id);
-        }
+        foreach (var id in _written.Where(match).ToList()) TryRelease(id);
     }
 
     FanControlStatus BuildStatus(bool safetyOverride)
@@ -234,6 +284,7 @@ public sealed class FanControlLoop : BackgroundService
     {
         lock (_gate)
         {
+            if (_stopped) return new ControlReply(false, "the service is stopping");
             var reply = HandleLocked(message);
             _status = BuildStatus(_wasSafetyOverride);
             return reply;
@@ -266,6 +317,8 @@ public sealed class FanControlLoop : BackgroundService
                     return Ok();
                 case SetNotGame n:
                     var list = _settings.NotGames.Where(e => e != n.Exe.ToLowerInvariant()).ToList();
+                    if (n.NotGame && list.Count >= MaxNotGames && !_settings.NotGames.Contains(n.Exe.ToLowerInvariant()))
+                        return new ControlReply(false, "the not-a-game list is full");
                     if (n.NotGame) list.Add(n.Exe.ToLowerInvariant());
                     Save(_settings with { NotGames = list });
                     if (n.NotGame && string.Equals(_resolver.GameExe, n.Exe, StringComparison.OrdinalIgnoreCase)) _resolver.GameEnded();
@@ -316,11 +369,7 @@ public sealed class FanControlLoop : BackgroundService
         {
             if (existing is null) return Ok();
             Save(_settings with { Headers = _settings.Headers.Select(r => r.Id == c.HeaderId ? r with { Enabled = false } : r).ToList() });
-            if (_written.Remove(c.HeaderId))
-            {
-                try { _fans.ReleaseToAuto(c.HeaderId); }
-                catch (Exception ex) { _log.LogError(ex, "Releasing {Header} failed", c.HeaderId); }
-            }
+            if (_written.Contains(c.HeaderId)) TryRelease(c.HeaderId); // a failed release stays in _written and is retried each step
             return Ok();
         }
         if (IsGpu(c.HeaderId) && !_settings.GpuControlEnabled) return new ControlReply(false, "turn on GPU fan control first");
