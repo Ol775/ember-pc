@@ -45,6 +45,12 @@ public class DashboardSummaryTests
             R("Fan 2", HardwareKind.Motherboard, SensorKind.FanRpm, 700)).AverageFanRpm);
 
     [Fact]
+    public void Fan_average_ignores_fans_reading_zero() =>
+        Assert.Equal(800, S(R("Fan 1", HardwareKind.Motherboard, SensorKind.FanRpm, 900),
+            R("Fan 2", HardwareKind.Motherboard, SensorKind.FanRpm, 700),
+            R("Fan 3", HardwareKind.Motherboard, SensorKind.FanRpm, 0)).AverageFanRpm);
+
+    [Fact]
     public void Fans_sorted_by_name() =>
         Assert.Equal(new[] { "A", "B" }, S(R("B", HardwareKind.Motherboard, SensorKind.FanRpm, 1),
             R("A", HardwareKind.Motherboard, SensorKind.FanRpm, 2)).Fans.Select(f => f.Name));

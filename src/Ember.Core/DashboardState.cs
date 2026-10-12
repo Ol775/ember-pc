@@ -2,7 +2,11 @@ using System.Globalization;
 
 namespace Ember.Core;
 
-public sealed record FanBar(string Name, string RpmText, double Fraction);
+public sealed record FanBar(string Name, string RpmText, double Fraction)
+{
+    // WPF uses ToString() as the accessible name of each list item.
+    public override string ToString() => $"{Name}, {RpmText}";
+}
 
 public sealed record DashboardView(
     string ConnectionText, string CpuText, string GpuText, string MotherboardText, string FanAverageText,
@@ -19,6 +23,7 @@ public sealed class DashboardState
         "Motherboard sensors and fan headers need the PawnIO driver. Run scripts/install-pawnio.ps1 as administrator, then restart the Ember service.";
 
     public static readonly TimeSpan ChartWindow = TimeSpan.FromMinutes(10);
+    public static readonly TimeSpan StaleAfter = TimeSpan.FromSeconds(5);
     public const double ChartMinCelsius = 20, ChartMaxCelsius = 100;
 
     const string CpuId = "cpu", GpuId = "gpu";
@@ -73,7 +78,7 @@ public sealed class DashboardState
             s?.AverageFanRpm is { } avg ? Rpm(avg) : Dash,
             fans,
             connected && _latest?.Driver == DriverStatus.Missing ? DriverBannerText : null,
-            connected && _latest?.Stale == true,
+            connected && _latest is { } l && (l.Stale || now - l.Timestamp > StaleAfter), // also stale when the service stops sending (hung sensor read)
             Line(CpuId),
             Line(GpuId));
     }

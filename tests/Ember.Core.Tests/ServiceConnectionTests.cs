@@ -115,9 +115,8 @@ public class ServiceConnectionTests
         Assert.Single(snaps);
         Assert.Equal(new[]
         {
-            ConnectionState.Connecting, ConnectionState.Unavailable, ConnectionState.Connecting,
-            ConnectionState.Unavailable, ConnectionState.Connecting, ConnectionState.Connected,
-        }, states.Take(6));
+            ConnectionState.Connecting, ConnectionState.Unavailable, ConnectionState.Connected,
+        }, states.Take( 3));
     }
 
     [Fact]
@@ -134,9 +133,8 @@ public class ServiceConnectionTests
         Assert.Equal(2, snaps.Count);
         Assert.Equal(new[]
         {
-            ConnectionState.Connecting, ConnectionState.Connected, ConnectionState.Unavailable,
-            ConnectionState.Connecting, ConnectionState.Connected,
-        }, states.Take(5));
+            ConnectionState.Connecting, ConnectionState.Connected, ConnectionState.Unavailable, ConnectionState.Connected,
+        }, states.Take( 4));
     }
 
     [Fact]

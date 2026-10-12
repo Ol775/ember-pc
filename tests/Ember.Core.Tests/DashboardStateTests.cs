@@ -123,6 +123,14 @@ public class DashboardStateTests
     }
 
     [Fact]
+    public void Old_snapshot_shows_stale_note_even_if_service_says_fresh()
+    {
+        var s = Connected(Snap(T0.AddSeconds(-6)));
+        Assert.True(View(s).ShowStaleNote);
+        Assert.False(s.Render(T0.AddSeconds(-4), 600, 80, TemperatureUnit.Celsius).ShowStaleNote);
+    }
+
+    [Fact]
     public void History_lines_use_summary_values_on_20_to_100_scale_over_10_minutes()
     {
         var s = Connected(Snap(T0.AddMinutes(-10), cpu: 100, gpu: 20), Snap(T0, cpu: 60, gpu: 150));

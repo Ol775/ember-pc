@@ -49,7 +49,7 @@ public sealed class ServiceConnection
         {
             try
             {
-                SetState(ConnectionState.Connecting);
+                if (_state is null) SetState(ConnectionState.Connecting); // after a failure stay Unavailable, so retries don't flicker
                 var stream = await _connect(ct).ConfigureAwait(false);
                 await using (stream.ConfigureAwait(false))
                 {

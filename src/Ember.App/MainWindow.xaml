@@ -24,6 +24,8 @@
                 <TextBlock x:Name="ConnectionLabel" Text="{Binding ConnectionText}" Foreground="{StaticResource MutedBrush}"
                            AutomationProperties.LiveSetting="Polite" />
             </StackPanel>
+            <CheckBox DockPanel.Dock="Bottom" Content="Show °F" IsChecked="{Binding UseFahrenheit}" Margin="20,0,20,16"
+                      Foreground="{StaticResource TextBrush}" />
             <!-- Only one page in phase 1, so the navigation entry is a static "current page" marker, not a control. -->
             <Border VerticalAlignment="Top" Margin="8,0" Padding="12,8" CornerRadius="6" Background="{StaticResource PanelBrush}"
                     BorderBrush="{StaticResource AccentBrush}" BorderThickness="3,0,0,0">
@@ -66,7 +68,7 @@
                     </GroupBox>
                 </UniformGrid>
 
-                <GroupBox Header="Temperature history (last 10 minutes, 20 to 100 °C)" Style="{StaticResource Panel}" Margin="0,0,0,16">
+                <GroupBox Header="{Binding ChartTitle}" Style="{StaticResource Panel}" Margin="0,0,0,16">
                     <AutomationProperties.Name>
                         <MultiBinding StringFormat="Temperature history chart, last 10 minutes. CPU now {0}, GPU now {1}">
                             <Binding Path="CpuText" />

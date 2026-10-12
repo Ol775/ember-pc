@@ -5,7 +5,7 @@ Installs the official, signed PawnIO driver that LibreHardwareMonitorLib needs f
 
 .DESCRIPTION
 Runs elevated and executes a downloaded installer, so it refuses unless BOTH the SHA-256 matches -Sha256 AND
-the Authenticode signature is Valid. There is deliberately no switch to bypass either check.
+the Authenticode signature is Valid and made by the pinned -SignerThumbprint. There is deliberately no switch to bypass either check.
 What protects the binary between verification and execution:
 - it is downloaded into a fresh folder under Program Files, where non-admins cannot create or change anything,
   so the folder is admin-only from the moment it exists;
@@ -24,7 +24,10 @@ param(
     [string]$Version = '2.2.0',
     # SHA-256 of PawnIO_setup.exe for -Version (shasum -a 256; matches GitHub's published asset digest).
     [ValidatePattern('^[0-9A-Fa-f]{64}\z')]
-    [string]$Sha256 = '1f519a22e47187f70a1379a48ca604981c4fcf694f4e65b734aaa74a9fba3032'
+    [string]$Sha256 = '1f519a22e47187f70a1379a48ca604981c4fcf694f4e65b734aaa74a9fba3032',
+    # Authenticode signer certificate thumbprint (namazso.eu; read on Windows 2026-10-12; cert expires 2027-08-05).
+    [ValidatePattern('^[0-9A-Fa-f]{40}\z')]
+    [string]$SignerThumbprint = 'F380DCC9F706E2756A5047B832FFE719E1BC35F5'
 )
 $ErrorActionPreference = 'Stop'
 
@@ -58,6 +61,9 @@ function Assert-Verified([string]$path) {
     $sig = Get-AuthenticodeSignature -LiteralPath $path
     if ($sig.Status -ne [Management.Automation.SignatureStatus]::Valid) {
         throw "Authenticode signature is not valid ($($sig.Status): $($sig.StatusMessage)). Refusing to run the installer."
+    }
+    if (-not [string]::Equals($sig.SignerCertificate.Thumbprint, $SignerThumbprint, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Unexpected signer $($sig.SignerCertificate.Thumbprint) ($($sig.SignerCertificate.Subject)). Refusing to run the installer."
     }
     return $sig
 }

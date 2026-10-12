@@ -21,7 +21,22 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public TemperatureUnit Unit { get; set; } = TemperatureUnit.Celsius;
+    public TemperatureUnit Unit { get; private set; } = TemperatureUnit.Celsius;
+
+    public bool UseFahrenheit
+    {
+        get => Unit == TemperatureUnit.Fahrenheit;
+        set
+        {
+            Unit = value ? TemperatureUnit.Fahrenheit : TemperatureUnit.Celsius;
+            _dirty = true;
+            Refresh(DateTimeOffset.UtcNow);
+        }
+    }
+
+    public string ChartTitle => Unit == TemperatureUnit.Fahrenheit
+        ? "Temperature history (last 10 minutes, 68 to 212 °F)"
+        : "Temperature history (last 10 minutes, 20 to 100 °C)";
     public double ChartWidth { get; private set; }
     public double ChartHeight { get; private set; }
 

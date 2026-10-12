@@ -19,7 +19,7 @@ public sealed record DashboardSummary(double? CpuTemp, double? GpuTemp, double? 
             Max(package.Count > 0 ? package : cpu),
             Max(Temps(HardwareKind.Gpu)),
             Max(Temps(HardwareKind.Motherboard)),
-            fans.Count > 0 ? fans.Average(f => f.Rpm) : null,
+            fans.Any(f => f.Rpm > 0) ? fans.Where(f => f.Rpm > 0).Average(f => f.Rpm) : null, // unplugged or stopped fans read 0 and would drag the average down
             fans);
     }
 }
