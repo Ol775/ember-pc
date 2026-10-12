@@ -19,6 +19,16 @@ internal sealed class LhmHardware : IDisposable
 
     public LhmHardware() => Computer.Open();
 
+    /// <summary>The motherboard model and library version a header test result is valid for.</summary>
+    public FanControlIdentity Identity()
+    {
+        lock (Gate)
+        {
+            var board = Computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Motherboard)?.Name ?? "unknown";
+            return new FanControlIdentity(board, typeof(Computer).Assembly.GetName().Version?.ToString() ?? "unknown");
+        }
+    }
+
     public void Dispose()
     {
         lock (Gate) Computer.Close();

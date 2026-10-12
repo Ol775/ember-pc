@@ -4,11 +4,10 @@
   "Fan Control": ["FanControl"],
   "SpeedFan": ["speedfan"],
   "NZXT CAM": ["NZXT CAM"],
-  "HWiNFO": ["HWiNFO64", "HWiNFO32"],
   "SignalRGB": ["SignalRgbLauncher"],
   "Argus Monitor": ["ArgusMonitor"],
   "iCUE": ["iCUE"],
   "SteelSeries GG": ["SteelSeriesGG"],
-  "Armoury Crate": ["ArmouryCrate.UserSessionHelper"],
-  "OpenRGB": ["OpenRGB"]
+  "Armoury Crate": ["ArmouryCrate.UserSessionHelper"]
+
 }

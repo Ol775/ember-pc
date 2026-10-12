@@ -10,7 +10,7 @@ public interface IDriverProbe
 }
 
 public sealed class SensorPoller(ISensorSource source, SnapshotHub hub, TimeProvider clock, ILogger<SensorPoller> log,
-    IDriverProbe? probe = null) : BackgroundService
+    IDriverProbe? probe = null, Func<FanControlStatus?>? control = null) : BackgroundService
 {
     private IReadOnlyList<SensorReading> _previous = [];
 
@@ -22,12 +22,12 @@ public sealed class SensorPoller(ISensorSource source, SnapshotHub hub, TimeProv
         {
             // NaN/Infinity mean a bad sensor; drop them (exactly 0 is a valid value and is kept).
             _previous = source.Read().Where(r => double.IsFinite(r.Value)).ToList();
-            snap = new Snapshot(clock.GetUtcNow(), _previous, false, driver);
+            snap = new Snapshot(clock.GetUtcNow(), _previous, false, driver, control?.Invoke());
         }
         catch (Exception ex)
         {
             log.LogWarning(ex, "Sensor read failed; publishing stale snapshot");
-            snap = new Snapshot(clock.GetUtcNow(), _previous, true, driver);
+            snap = new Snapshot(clock.GetUtcNow(), _previous, true, driver, control?.Invoke());
         }
         hub.Publish(snap);
         return snap;

@@ -13,7 +13,7 @@ internal static class Program
         try
         {
             return Run(ServiceHost.Create(args, () => new LhmSensorSource(Hardware()), EmberNames.PipeName,
-                () => new LhmFanController(Hardware())));
+                () => new LhmFanController(Hardware()), () => Hardware().Identity()));
         }
         finally { hardware?.Dispose(); }
     }

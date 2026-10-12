@@ -3,6 +3,10 @@ namespace Ember.Core.Tests;
 public class CompetitorListTests
 {
     [Fact]
+    public void Monitoring_only_tools_are_not_competitors() =>
+        Assert.Empty(CompetitorList.Default.Match(new[] { "HWiNFO64", "OpenRGB" }));
+
+    [Fact]
     public void Matches_case_insensitively() =>
         Assert.Equal(new[] { "Fan Control" }, CompetitorList.Default.Match(new[] { "fancontrol" }));
 
@@ -12,7 +16,7 @@ public class CompetitorListTests
 
     [Fact]
     public void Returns_display_name_once() =>
-        Assert.Equal(new[] { "HWiNFO" }, CompetitorList.Default.Match(new[] { "HWiNFO64", "HWiNFO32", "hwinfo64.exe" }));
+        Assert.Equal(new[] { "MSI Center" }, CompetitorList.Default.Match(new[] { "MSI Center", "MSI_Center", "msi_center.exe" }));
 
     [Fact]
     public void Unknown_process_gives_empty() =>

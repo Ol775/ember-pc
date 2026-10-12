@@ -94,3 +94,40 @@ public sealed class HostTests
         Assert.Equal(1, Program.Run(Quiet(ServiceHost.Create([], () => new FakeSensorSource(), name))));
     }
 }
+
+public sealed class HostFanControlTests
+{
+    [Fact]
+    public async Task Host_with_fan_controller_publishes_control_status_and_releases_on_stop()
+    {
+        var name = $"ember.test.{Guid.NewGuid():N}";
+        var dir = Path.Combine(Path.GetTempPath(), "ember-host-" + Guid.NewGuid().ToString("N"));
+        var fake = new FakeSensorSource { OnRead = () => [new("cpu", "CPU", HardwareKind.Cpu, SensorKind.Temperature, 50)] };
+        var fans = new FakeFanController(new FanHeader("/lpc/nct6687d/0/control/2", "System Fan #1", true, true, false));
+        new SettingsStore(Path.Combine(dir, "settings.json")).Save(EmberSettings.Default with
+        {
+            Headers = new[] { new HeaderRecord("/lpc/nct6687d/0/control/2", true, "Case", "B", "1") },
+        });
+        using var host = ServiceHost.Create([], () => fake, name, () => fans, () => new FanControlIdentity("B", "1"), dir, () => [])
+            .ConfigureLogging(l => l.ClearProviders()).Build();
+        await host.StartAsync();
+        try
+        {
+            using var c = new NamedPipeClientStream(".", name, PipeDirection.In, PipeOptions.Asynchronous);
+            await c.ConnectAsync(5000);
+            using var cts = new CancellationTokenSource(8000);
+            await using var e = SnapshotReader.ReadAsync(c, cts.Token).GetAsyncEnumerator();
+            Snapshot? last = null;
+            for (var i = 0; i < 4 && await e.MoveNextAsync(); i++) last = e.Current;
+            Assert.NotNull(last?.Control);
+            Assert.Equal(HeaderState.Enabled, Assert.Single(last!.Control!.Headers).State);
+            Assert.Contains(fans.Calls, x => x.Op == "set");
+        }
+        finally
+        {
+            await host.StopAsync().WaitAsync(TimeSpan.FromSeconds(3));
+        }
+        Assert.Contains(fans.Calls, x => x.Op == "release");
+        Directory.Delete(dir, true);
+    }
+}
