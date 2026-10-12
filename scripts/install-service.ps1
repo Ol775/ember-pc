@@ -18,17 +18,11 @@ $exe = (Resolve-Path -LiteralPath $ExePath).ProviderPath
 
 # The service runs as LocalSystem, so anyone who can write the exe or its folder could escalate to SYSTEM.
 $badSids = @('S-1-5-32-545', 'S-1-5-11', 'S-1-1-0', 'S-1-5-4')  # Users, Authenticated Users, Everyone, Interactive
-$writeRights = [int](
-    [Security.AccessControl.FileSystemRights]::Write -bor
-    [Security.AccessControl.FileSystemRights]::WriteData -bor
-    [Security.AccessControl.FileSystemRights]::CreateFiles -bor
-    [Security.AccessControl.FileSystemRights]::AppendData -bor
-    [Security.AccessControl.FileSystemRights]::Modify -bor
-    [Security.AccessControl.FileSystemRights]::FullControl -bor
-    [Security.AccessControl.FileSystemRights]::Delete -bor
-    [Security.AccessControl.FileSystemRights]::ChangePermissions -bor
-    [Security.AccessControl.FileSystemRights]::TakeOwnership)
-$writeRights = $writeRights -bor 0x10000000 -bor 0x40000000  # raw GENERIC_ALL and GENERIC_WRITE
+# Write-type bits only. Composite masks (Modify, FullControl, Write) contain READ bits, which would match every read grant.
+# 0x500D0156 = WriteData/CreateFiles | AppendData | WriteEA | WriteAttributes | DeleteSubdirectoriesAndFiles | Delete |
+#              ChangePermissions | TakeOwnership | GENERIC_ALL | GENERIC_WRITE
+$writeRights = 0x500D0156
+function Test-WriteRight([int]$rights) { return (($rights -band $writeRights) -ne 0) }
 $unsafe = foreach ($target in @($exe, (Split-Path -Parent $exe))) {
     $acl = Get-Acl -LiteralPath $target
     $owner = $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value
@@ -36,7 +30,7 @@ $unsafe = foreach ($target in @($exe, (Split-Path -Parent $exe))) {
     # Ask for SIDs directly: Translate() throws for unmappable ACEs such as ALL APPLICATION PACKAGES.
     foreach ($rule in $acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
         if ($rule.AccessControlType -ne 'Allow') { continue }
-        if (($badSids -contains $rule.IdentityReference.Value) -and (([int]$rule.FileSystemRights) -band $writeRights)) {
+        if (($badSids -contains $rule.IdentityReference.Value) -and (Test-WriteRight ([int]$rule.FileSystemRights))) {
             "$target is writable by $($rule.IdentityReference.Value) ($($rule.FileSystemRights))"
         }
     }

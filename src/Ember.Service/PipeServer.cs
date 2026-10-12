@@ -63,10 +63,12 @@ public sealed class PipeServer(SnapshotHub hub, string pipeName, ILogger<PipeSer
         return pipe;
     }
 
-    private ValueTask Release(NamedPipeServerStream pipe)
+    private async ValueTask Release(NamedPipeServerStream pipe)
     {
-        Interlocked.Decrement(ref _live);
-        return pipe.DisposeAsync();
+        // Close the handle before decrementing: a zero count means the name is really free, so the
+        // accept loop may then ask for FirstPipeInstance without racing the old handle.
+        try { await pipe.DisposeAsync().ConfigureAwait(false); }
+        finally { Interlocked.Decrement(ref _live); }
     }
 
     private async Task ServeAsync(NamedPipeServerStream pipe, CancellationToken ct)

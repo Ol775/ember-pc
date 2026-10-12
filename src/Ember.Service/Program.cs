@@ -28,10 +28,10 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            if (log is not null)
-                log.LogCritical(ex, "Ember service failed; exiting");
-            else
-                Console.Error.WriteLine($"Ember service failed to build: {ex}");
+            // The host may already be disposed, so logging can throw; always report to stderr too.
+            try { log?.LogCritical(ex, "Ember service failed; exiting"); }
+            catch { /* stderr below */ }
+            Console.Error.WriteLine($"Ember service failed: {ex.Message}");
             return 1;
         }
         finally { host?.Dispose(); }
