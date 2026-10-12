@@ -61,6 +61,11 @@ public partial class MainWindow : Window
         catch (Exception) { /* detection must never take the window down */ }
     }
 
+    async void OnGpuControl(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.CheckBox box) await SendAsync(new SetGpuControl(box.IsChecked == true));
+    }
+
     async void OnNotAGame(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string exe }) await SendAsync(new SetNotGame(exe, true));

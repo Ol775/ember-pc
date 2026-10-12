@@ -18,7 +18,7 @@ public sealed class FanControlLoop : BackgroundService
 
     static readonly TempSource[] AllSources = [TempSource.Cpu, TempSource.Gpu, TempSource.Motherboard];
     static readonly TimeSpan ScanEvery = TimeSpan.FromSeconds(5);
-    const double Floor = 20, PumpFloor = 60;
+    const double Floor = 20, PumpFloor = 60, GpuFloor = 30;
 
     readonly SnapshotHub _hub;
     readonly IFanController _fans;
@@ -151,7 +151,7 @@ public sealed class FanControlLoop : BackgroundService
                 percents[group] = percent;
                 _lastPercent[group] = percent;
             }
-            var floor = header.Name == "Pump Fan" ? PumpFloor : Floor;
+            var floor = header.Name == "Pump Fan" ? PumpFloor : IsGpu(header.Id) ? GpuFloor : Floor;
             try
             {
                 _fans.SetPercent(header.Id, Math.Max(floor, percent));
@@ -172,9 +172,12 @@ public sealed class FanControlLoop : BackgroundService
         return _engines[group].Step(live.Max(), curve);
     }
 
-    static Group? GroupOf(FanHeader h)
+    static bool IsGpu(string id) => id.StartsWith("/gpu-", StringComparison.Ordinal);
+
+    Group? GroupOf(FanHeader h)
     {
-        if (!h.Id.StartsWith("/lpc/", StringComparison.Ordinal)) return null; // GPU fan is handled in a later task
+        if (IsGpu(h.Id)) return _settings.GpuControlEnabled ? Group.Case : null; // optional, off by default
+        if (!h.Id.StartsWith("/lpc/", StringComparison.Ordinal)) return null;
         if (h.Name is "CPU Fan" or "Pump Fan") return Group.CpuPump;
         if (h.Name.StartsWith("System Fan", StringComparison.Ordinal)) return Group.Case;
         return null;
@@ -197,6 +200,16 @@ public sealed class FanControlLoop : BackgroundService
         _written.Clear();
     }
 
+    void ReleaseWhere(Func<string, bool> match)
+    {
+        foreach (var id in _written.Where(match).ToList())
+        {
+            try { _fans.ReleaseToAuto(id); }
+            catch (Exception ex) { _log.LogError(ex, "Releasing {Header} failed", id); }
+            _written.Remove(id);
+        }
+    }
+
     FanControlStatus BuildStatus(bool safetyOverride)
     {
         IReadOnlyList<FanHeader> headers;
@@ -206,13 +219,14 @@ public sealed class FanControlLoop : BackgroundService
         {
             var record = _settings.Headers.FirstOrDefault(r => r.Id == h.Id);
             var state = _failed.Contains(h.Id) ? HeaderState.Failed
+                : IsGpu(h.Id) && !_settings.GpuControlEnabled ? HeaderState.Unknown
                 : !h.HasControl ? HeaderState.ReadOnly
                 : record is { Enabled: true } && IsTested(record) ? HeaderState.Enabled
                 : HeaderState.Controllable;
             return new HeaderStatus(h.Id, h.Name, state, record is not null && IsTested(record));
         }).ToList();
         return new FanControlStatus(_resolver.Effective, _resolver.Source, safetyOverride, _resolver.GameExe, rows,
-            _competitors, _testMessage, _settings.NotGames);
+            _competitors, _testMessage, _settings.NotGames, _settings.GpuControlEnabled);
     }
 
     /// <summary>Handles one validated control message. Called from the control pipe.</summary>
@@ -256,9 +270,14 @@ public sealed class FanControlLoop : BackgroundService
                     Save(_settings with { NotGames = list });
                     if (n.NotGame && string.Equals(_resolver.GameExe, n.Exe, StringComparison.OrdinalIgnoreCase)) _resolver.GameEnded();
                     return Ok();
+                case SetGpuControl g:
+                    Save(_settings with { GpuControlEnabled = g.Enabled });
+                    if (!g.Enabled) ReleaseWhere(IsGpu);
+                    return Ok();
                 case ConfirmHeader c:
                     return Confirm(c);
                 case RunHeaderTest t:
+                    if (IsGpu(t.HeaderId) && !_settings.GpuControlEnabled) return new ControlReply(false, "turn on GPU fan control first");
                     if (_competitors.Count > 0) return new ControlReply(false, "close " + string.Join(", ", _competitors) + " first");
                     return StartTest(t.HeaderId);
                 default:
@@ -304,6 +323,7 @@ public sealed class FanControlLoop : BackgroundService
             }
             return Ok();
         }
+        if (IsGpu(c.HeaderId) && !_settings.GpuControlEnabled) return new ControlReply(false, "turn on GPU fan control first");
         if (_competitors.Count > 0) return new ControlReply(false, "close " + string.Join(", ", _competitors) + " first");
         var header = _fans.Enumerate().FirstOrDefault(h => h.Id == c.HeaderId);
         if (header is null || !header.HasControl) return new ControlReply(false, "header cannot be controlled");

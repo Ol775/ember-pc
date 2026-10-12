@@ -193,6 +193,8 @@
 
                 <GroupBox Header="Fan headers" Style="{StaticResource Panel}" AutomationProperties.Name="Fan headers">
                     <StackPanel>
+                        <CheckBox Content="Allow Ember to control the GPU fan (optional, test it first)" IsChecked="{Binding FansPage.GpuControl, Mode=OneWay}"
+                                  Click="OnGpuControl" Foreground="{StaticResource TextBrush}" Margin="0,0,0,8" />
                         <TextBlock Text="No fan headers reported" Foreground="{StaticResource MutedBrush}"
                                    Visibility="{Binding NoHeadersVisibility}" />
                         <ItemsControl ItemsSource="{Binding FansPage.Headers}" Focusable="False">

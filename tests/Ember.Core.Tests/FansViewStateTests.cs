@@ -129,3 +129,16 @@ public class FansViewGamesTests
         Assert.Empty(v.NotGames!);
     }
 }
+
+public class FansViewGpuTests
+{
+    [Fact]
+    public void Gpu_off_row_text_and_status_flag()
+    {
+        var status = new FanControlStatus(FanMode.Normal, ModeSource.User, false, null,
+            new[] { new HeaderStatus("/gpu-nvidia/0/control/1", "GPU Fan", HeaderState.Unknown, false) }, Array.Empty<string>(), null);
+        var v = FansViewState.Render(status, true);
+        Assert.Contains("GPU fan control is off", Assert.Single(v.Headers).StateText);
+        Assert.False(v.GpuControl);
+    }
+}

@@ -14,6 +14,7 @@ public sealed record DetectorHeartbeat : ControlMessage;
 public sealed record SetNotGame(string Exe, bool NotGame) : ControlMessage;
 public sealed record ConfirmHeader(string HeaderId, bool Enabled) : ControlMessage;
 public sealed record RunHeaderTest(string HeaderId) : ControlMessage;
+public sealed record SetGpuControl(bool Enabled) : ControlMessage;
 
 public sealed record ControlReply(bool Ok, string? Error);
 
@@ -63,6 +64,7 @@ public static partial class ControlProtocol
             case SetNotGame x: d.Op = "setNotGame"; d.Exe = x.Exe; d.NotGame = x.NotGame; break;
             case ConfirmHeader x: d.Op = "confirmHeader"; d.Id = x.HeaderId; d.Enabled = x.Enabled; break;
             case RunHeaderTest x: d.Op = "runHeaderTest"; d.Id = x.HeaderId; break;
+            case SetGpuControl x: d.Op = "setGpuControl"; d.Enabled = x.Enabled; break;
             default: throw new ArgumentException("Unknown control message.", nameof(m));
         }
         return JsonSerializer.Serialize(d);
@@ -86,6 +88,7 @@ public static partial class ControlProtocol
                 "setNotGame" => Exe(d.Exe) is { } e && d.NotGame is { } n ? new SetNotGame(e, n) : null,
                 "confirmHeader" => Header(d.Id) is { } h && d.Enabled is { } en ? new ConfirmHeader(h, en) : null,
                 "runHeaderTest" => Header(d.Id) is { } h ? new RunHeaderTest(h) : null,
+                "setGpuControl" => d.Enabled is { } g ? new SetGpuControl(g) : null,
                 _ => null,
             };
             return message is not null;

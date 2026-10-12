@@ -35,6 +35,7 @@ public static class Protocol
         [JsonRequired, JsonPropertyName("x")] public List<string?>? X { get; set; }
         [JsonPropertyName("t")] public string? T { get; set; }
         [JsonPropertyName("ng")] public List<string?>? Ng { get; set; }
+        [JsonPropertyName("gc")] public bool Gc { get; set; }
     }
 
     sealed class HeaderDto
@@ -65,7 +66,7 @@ public static class Protocol
             M = s.Control.Mode.ToString(), S = s.Control.Source.ToString(), So = s.Control.SafetyOverride, G = s.Control.GameExe,
             H = s.Control.Headers.Select(h => (HeaderDto?)new HeaderDto { Id = h.Id, N = h.Name, St = h.State.ToString(), Ok = h.Tested }).ToList(),
             X = s.Control.Competitors.Select(c => (string?)c).ToList(), T = s.Control.TestMessage,
-            Ng = s.Control.NotGames.Select(c => (string?)c).ToList(),
+            Ng = s.Control.NotGames.Select(c => (string?)c).ToList(), Gc = s.Control.GpuControl,
         },
         R = s.Readings.Select(r => (ReadingDto?)new ReadingDto
         {
@@ -88,7 +89,7 @@ public static class Protocol
         if (c.X.Any(x => x is null)) return false;
         if (c.Ng is not null && c.Ng.Any(x => x is null)) return false;
         status = new FanControlStatus(Enum.Parse<FanMode>(c.M), Enum.Parse<ModeSource>(c.S), c.So, c.G, headers,
-            c.X.Select(x => x!).ToList(), c.T, c.Ng?.Select(x => x!).ToList());
+            c.X.Select(x => x!).ToList(), c.T, c.Ng?.Select(x => x!).ToList(), c.Gc);
         return true;
     }
 

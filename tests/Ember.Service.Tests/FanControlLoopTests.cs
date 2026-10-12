@@ -13,6 +13,7 @@ internal sealed class ManualClock : TimeProvider
 public sealed class FanControlLoopTests : IDisposable
 {
     const string Sys1 = "/lpc/nct6687d/0/control/2", Sys2 = "/lpc/nct6687d/0/control/3";
+    const string Gpu = "/gpu-nvidia/0/control/1";
     const string CpuFan = "/lpc/nct6687d/0/control/0", Pump = "/lpc/nct6687d/0/control/1";
     static readonly FanControlIdentity Id = new("MS-7C56", "0.9.6");
 
@@ -29,7 +30,8 @@ public sealed class FanControlLoopTests : IDisposable
             new FanHeader(CpuFan, "CPU Fan", true, true, false),
             new FanHeader(Pump, "Pump Fan", true, true, false),
             new FanHeader(Sys1, "System Fan #1", true, true, false),
-            new FanHeader(Sys2, "System Fan #2", true, true, true));
+            new FanHeader(Sys2, "System Fan #2", true, true, true),
+            new FanHeader(Gpu, "GPU Fan", true, true, false));
     }
 
     public void Dispose() => Directory.Delete(_dir, true);
@@ -337,6 +339,39 @@ public sealed class FanControlLoopTests : IDisposable
         _processes = new[] { "FanControl" };
         loop.OnSnapshot(Snap());
         Assert.False(loop.Handle(new RunHeaderTest(Sys1)).Ok); // competitor
+    }
+
+    [Fact]
+    public void Gpu_header_ignored_when_gpu_control_disabled()
+    {
+        var loop = Loop(Rec(Gpu));
+        loop.OnSnapshot(Snap());
+        Assert.DoesNotContain(_fans.Calls, c => c.Id == Gpu);
+        Assert.Equal(HeaderState.Unknown, loop.Status.Headers.Single(h => h.Id == Gpu).State);
+        Assert.False(loop.Handle(new ConfirmHeader(Gpu, true)).Ok);
+    }
+
+    [Fact]
+    public void Gpu_floor_is_30_and_turning_it_off_releases_it()
+    {
+        var loop = Loop(EmberSettings.Default with { GpuControlEnabled = true, Headers = new[] { Rec(Gpu) } });
+        loop.Handle(new SetMode(FanMode.Quiet));
+        loop.OnSnapshot(Snap(30, 30, 30)); // Quiet at 30 = 20, floor 30
+        Assert.Equal(30, LastSet(Gpu));
+        Assert.True(loop.Status.GpuControl);
+        loop.Handle(new SetGpuControl(false));
+        Assert.Contains(("release", Gpu, (double?)null), _fans.Calls);
+        Assert.False(new SettingsStore(SettingsPath).Load().GpuControlEnabled);
+    }
+
+    [Fact]
+    public void Failed_gpu_test_means_no_writes()
+    {
+        var loop = Loop(EmberSettings.Default with { GpuControlEnabled = true });
+        loop.RecordTestResult(Gpu, false, "no response");
+        loop.OnSnapshot(Snap());
+        Assert.DoesNotContain(_fans.Calls, c => c.Id == Gpu);
+        Assert.Equal(HeaderState.Failed, loop.Status.Headers.Single(h => h.Id == Gpu).State);
     }
 
     [Fact]

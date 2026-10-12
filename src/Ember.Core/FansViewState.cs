@@ -15,7 +15,7 @@ public sealed record HeaderRow(string Id, string Name, string StateText, bool Ca
 public sealed record FansView(
     bool ServiceAvailable, string? Message, IReadOnlyList<ModeItem> Modes, string SourceText,
     string? CompetitorWarning, string? SafetyNote, IReadOnlyList<HeaderRow> Headers, string? TestMessage,
-    string? DetectedGame = null, IReadOnlyList<string>? NotGames = null);
+    string? DetectedGame = null, IReadOnlyList<string>? NotGames = null, bool GpuControl = false);
 
 /// <summary>Turns the service's fan control status into what the Fans page shows. Pure, so it is tested without WPF.</summary>
 public static class FansViewState
@@ -47,7 +47,7 @@ public static class FansViewState
             status.SafetyOverride
                 ? "Safety override: all controlled fans are at 100% because a temperature is too high or a sensor is missing."
                 : null,
-            headers, status.TestMessage, status.GameExe, status.NotGames);
+            headers, status.TestMessage, status.GameExe, status.NotGames, status.GpuControl);
     }
 
     static HeaderRow Row(HeaderStatus h, bool competing, string names)
@@ -58,6 +58,7 @@ public static class FansViewState
             HeaderState.Controllable => h.Tested ? "Tested, not enabled" : "Not tested",
             HeaderState.Enabled => "Enabled (Ember controls this fan)",
             HeaderState.Failed => "Test failed",
+            HeaderState.Unknown when h.Id.StartsWith("/gpu-", StringComparison.Ordinal) => "GPU fan control is off (allow it above)",
             _ => "Unknown",
         };
         var canTest = !competing && h.State is HeaderState.Controllable or HeaderState.Failed;

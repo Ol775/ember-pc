@@ -12,6 +12,7 @@ public class ControlProtocolTests
         new object[] { new SetNotGame("chrome.exe", true) },
         new object[] { new ConfirmHeader("/lpc/nct6687d/0/control/2", true) },
         new object[] { new RunHeaderTest("/gpu-nvidia/0/control/1") },
+        new object[] { new SetGpuControl(true) },
     };
 
     [Theory]
@@ -39,6 +40,7 @@ public class ControlProtocolTests
     [InlineData("{\"v\":1,\"op\":\"confirmHeader\",\"id\":\"/lpc/../../x\",\"enabled\":true}")]
     [InlineData("{\"v\":1,\"op\":\"confirmHeader\",\"id\":\"/lpc/nct6687d/0/control/2\"}")]
     [InlineData("{\"v\":1,\"op\":\"runHeaderTest\",\"id\":\"CPU Fan\"}")]
+    [InlineData("{\"v\":1,\"op\":\"setGpuControl\"}")]
     [InlineData("")]
     [InlineData("null")]
     [InlineData("[]")]
