@@ -31,9 +31,14 @@ public static class ServiceHost
                         var dir = settingsDir ?? Path.Combine(
                             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Ember");
                         SettingsDirectory.Ensure(dir);
-                        return new FanControlLoop(p.GetRequiredService<SnapshotHub>(), p.GetRequiredService<IFanController>(),
+                        var hub = p.GetRequiredService<SnapshotHub>();
+                        var fans = p.GetRequiredService<IFanController>();
+                        var loop = new FanControlLoop(hub, fans,
                             new SettingsStore(Path.Combine(dir, "settings.json")), processNames ?? ProcessNames, p.GetRequiredService<TimeProvider>(),
                             p.GetRequiredService<ILogger<FanControlLoop>>(), identity?.Invoke() ?? new FanControlIdentity("unknown", "unknown"));
+                        loop.Runner = new HeaderTestRunner(fans, id => Reading(hub, id.Replace("/control/", "/fan/", StringComparison.Ordinal)),
+                            id => Reading(hub, id), Task.Delay, () => loop.Status.SafetyOverride);
+                        return loop;
                     });
                     s.AddHostedService(p => new SensorPoller(p.GetRequiredService<ISensorSource>(), p.GetRequiredService<SnapshotHub>(),
                         p.GetRequiredService<TimeProvider>(), p.GetRequiredService<ILogger<SensorPoller>>(),
@@ -42,6 +47,9 @@ public static class ServiceHost
                 }
                 s.AddHostedService(p => new PipeServer(p.GetRequiredService<SnapshotHub>(), pipeName, p.GetRequiredService<ILogger<PipeServer>>()));
             });
+
+    static double? Reading(SnapshotHub hub, string id) =>
+        hub.Latest?.Readings.FirstOrDefault(r => r.Id == id) is { } r ? r.Value : null;
 
     static IReadOnlyList<string> ProcessNames()
     {

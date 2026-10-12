@@ -65,8 +65,10 @@ public sealed class FanControlLoop : BackgroundService
         get { lock (_gate) return _status; }
     }
 
-    /// <summary>The header test runner (Task 11) plugs in here; null means tests are unavailable.</summary>
-    internal Func<string, bool>? StartHeaderTest { get; set; }
+    /// <summary>Runs the guided header test; null means tests are unavailable.</summary>
+    internal HeaderTestRunner? Runner { get; set; }
+
+    readonly CancellationTokenSource _stop = new();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -81,12 +83,14 @@ public sealed class FanControlLoop : BackgroundService
         finally
         {
             _hub.Published -= handler;
+            _stop.Cancel();
             ReleaseAll();
         }
     }
 
     public override void Dispose()
     {
+        _stop.Cancel();
         ReleaseAll();
         base.Dispose();
     }
@@ -216,6 +220,15 @@ public sealed class FanControlLoop : BackgroundService
     {
         lock (_gate)
         {
+            var reply = HandleLocked(message);
+            _status = BuildStatus(_wasSafetyOverride);
+            return reply;
+        }
+    }
+
+    ControlReply HandleLocked(ControlMessage message)
+    {
+        {
             var now = _clock.GetUtcNow();
             switch (message)
             {
@@ -247,11 +260,34 @@ public sealed class FanControlLoop : BackgroundService
                     return Confirm(c);
                 case RunHeaderTest t:
                     if (_competitors.Count > 0) return new ControlReply(false, "close " + string.Join(", ", _competitors) + " first");
-                    return StartHeaderTest?.Invoke(t.HeaderId) == true ? Ok() : new ControlReply(false, "test not available");
+                    return StartTest(t.HeaderId);
                 default:
                     return new ControlReply(false, "invalid");
             }
         }
+    }
+
+    ControlReply StartTest(string headerId)
+    {
+        if (Runner is not { } runner) return new ControlReply(false, "test not available");
+        if (_settings.Headers.Any(r => r.Id == headerId && r.Enabled)) return new ControlReply(false, "disable the header before testing it");
+        if (runner.IsBusy) return new ControlReply(false, "a test is already running");
+        _testMessage = "Testing…";
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var r = await runner.RunAsync(headerId, _stop.Token).ConfigureAwait(false);
+                RecordTestResult(headerId, r.Passed, r.Message);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Header test failed");
+                RecordTestResult(headerId, false, "The test stopped because of an error.");
+            }
+        });
+        return Ok();
     }
 
     ControlReply Confirm(ConfirmHeader c)
@@ -282,7 +318,7 @@ public sealed class FanControlLoop : BackgroundService
         lock (_gate)
         {
             _testMessage = message;
-            if (!passed) { _failed.Add(headerId); return; }
+            if (!passed) { _failed.Add(headerId); _status = BuildStatus(_wasSafetyOverride); return; }
             _failed.Remove(headerId);
             var group = _fans.Enumerate().FirstOrDefault(h => h.Id == headerId) is { } h && GroupOf(h) is { } g
                 ? (g == Group.CpuPump ? "CPU/Pump" : "Case") : "Case";
@@ -290,6 +326,7 @@ public sealed class FanControlLoop : BackgroundService
             var others = _settings.Headers.Where(r => r.Id != headerId);
             var kept = _settings.Headers.FirstOrDefault(r => r.Id == headerId);
             Save(_settings with { Headers = others.Append(kept is null ? record : record with { Enabled = kept.Enabled }).ToList() });
+            _status = BuildStatus(_wasSafetyOverride);
         }
     }
 

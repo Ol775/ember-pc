@@ -303,6 +303,33 @@ public sealed class FanControlLoopTests : IDisposable
     }
 
     [Fact]
+    public async Task Header_test_via_control_message_records_pass_then_confirm_works()
+    {
+        var loop = Loop();
+        double? Held() { var l = _fans.Calls.LastOrDefault(c => c.Id == Sys1); return l.Op == "set" ? l.Value : null; }
+        loop.Runner = new HeaderTestRunner(_fans, _ => Held() is { } p ? 1000 * p / 60 : 1000, _ => Held() ?? 60,
+            (_, _) => Task.CompletedTask);
+        Assert.True(loop.Handle(new RunHeaderTest(Sys1)).Ok);
+        for (var i = 0; i < 200 && !loop.Status.Headers.Any(h => h.Id == Sys1 && h.Tested); i++) await Task.Delay(10);
+        Assert.Contains(loop.Status.Headers, h => h.Id == Sys1 && h.Tested && h.State == HeaderState.Controllable);
+        Assert.StartsWith("Passed", loop.Status.TestMessage);
+        Assert.True(loop.Handle(new ConfirmHeader(Sys1, true)).Ok);
+    }
+
+    [Fact]
+    public void Header_test_refused_without_runner_or_when_enabled_or_with_competitor()
+    {
+        var loop = Loop(Rec(Sys1));
+        Assert.False(loop.Handle(new RunHeaderTest(Sys1)).Ok); // no runner
+        loop.Runner = new HeaderTestRunner(_fans, _ => 1000, _ => 60, (_, _) => Task.CompletedTask);
+        Assert.False(loop.Handle(new RunHeaderTest(Sys1)).Ok); // enabled
+        loop.Handle(new ConfirmHeader(Sys1, false));
+        _processes = new[] { "FanControl" };
+        loop.OnSnapshot(Snap());
+        Assert.False(loop.Handle(new RunHeaderTest(Sys1)).Ok); // competitor
+    }
+
+    [Fact]
     public void Ai_mode_is_rejected()
     {
         var loop = Loop();
