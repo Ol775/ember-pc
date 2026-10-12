@@ -10,4 +10,4 @@ public sealed record SensorReading(string Id, string Name, HardwareKind Hardware
 public enum DriverStatus { Unknown, Ok, Missing }
 
 public sealed record Snapshot(DateTimeOffset Timestamp, IReadOnlyList<SensorReading> Readings, bool Stale,
-    DriverStatus Driver = DriverStatus.Unknown);
+    DriverStatus Driver = DriverStatus.Unknown, FanControlStatus? Control = null);

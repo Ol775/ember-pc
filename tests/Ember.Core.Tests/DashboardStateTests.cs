@@ -165,3 +165,21 @@ public class DashboardStateTests
         Assert.Equal(0, View(Connected(new Snapshot(T0,
             new[] { R("Fan 1", HardwareKind.Motherboard, SensorKind.FanRpm, 0) }, false))).Fans[0].Fraction);
 }
+
+public class DashboardControlTests
+{
+    private static readonly DateTimeOffset T0 = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+    private static Snapshot Snap() => new(T0, Array.Empty<SensorReading>(), false, DriverStatus.Ok,
+        new FanControlStatus(FanMode.Normal, ModeSource.User, false, null, Array.Empty<HeaderStatus>(), Array.Empty<string>(), null));
+
+    [Fact]
+    public void Control_status_is_exposed_when_connected_and_cleared_when_not()
+    {
+        var s = new DashboardState();
+        s.SetConnection(ConnectionState.Connected);
+        s.Add(Snap());
+        Assert.NotNull(s.Render(T0, 600, 80, TemperatureUnit.Celsius).Control);
+        s.SetConnection(ConnectionState.Unavailable);
+        Assert.Null(s.Render(T0, 600, 80, TemperatureUnit.Celsius).Control);
+    }
+}

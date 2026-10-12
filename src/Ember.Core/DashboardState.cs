@@ -11,7 +11,8 @@ public sealed record FanBar(string Name, string RpmText, double Fraction)
 public sealed record DashboardView(
     string ConnectionText, string CpuText, string GpuText, string MotherboardText, string FanAverageText,
     IReadOnlyList<FanBar> Fans, string? DriverBannerText, bool ShowStaleNote,
-    IReadOnlyList<(double X, double Y)> CpuLine, IReadOnlyList<(double X, double Y)> GpuLine);
+    IReadOnlyList<(double X, double Y)> CpuLine, IReadOnlyList<(double X, double Y)> GpuLine,
+    FanControlStatus? Control = null);
 
 /// <summary>
 /// Turns connection state and snapshots into what the dashboard shows. Not thread-safe:
@@ -80,7 +81,8 @@ public sealed class DashboardState
             connected && _latest?.Driver == DriverStatus.Missing ? DriverBannerText : null,
             connected && _latest is { } l && (l.Stale || now - l.Timestamp > StaleAfter), // also stale when the service stops sending (hung sensor read)
             Line(CpuId),
-            Line(GpuId));
+            Line(GpuId),
+            connected ? _latest?.Control : null);
     }
 
     static string Rpm(double rpm) =>

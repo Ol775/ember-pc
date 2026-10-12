@@ -125,3 +125,51 @@ public class ProtocolTests
     [Fact]
     public void Encode_has_no_newline_inside() => Assert.DoesNotContain('\n', Protocol.Encode(Sample()));
 }
+
+public class ProtocolControlTests
+{
+    static Snapshot WithControl() => new(
+        new DateTimeOffset(2026, 10, 12, 8, 30, 0, TimeSpan.Zero), Array.Empty<SensorReading>(), false, DriverStatus.Ok,
+        new FanControlStatus(FanMode.Quiet, ModeSource.GameOverride, true, "game.exe",
+            new[] { new HeaderStatus("/lpc/nct6687d/0/control/2", "System Fan #1", HeaderState.Enabled, true) },
+            new[] { "Fan Control" }, "Test passed"));
+
+    [Fact]
+    public void Round_trip_preserves_control_status()
+    {
+        var s = WithControl();
+        Assert.True(Protocol.TryDecode(Protocol.Encode(s), out var d));
+        var c = d!.Control!;
+        Assert.Equal(FanMode.Quiet, c.Mode);
+        Assert.Equal(ModeSource.GameOverride, c.Source);
+        Assert.True(c.SafetyOverride);
+        Assert.Equal("game.exe", c.GameExe);
+        Assert.Equal(s.Control!.Headers, c.Headers);
+        Assert.Equal(new[] { "Fan Control" }, c.Competitors);
+        Assert.Equal("Test passed", c.TestMessage);
+    }
+
+    [Fact]
+    public void Missing_c_decodes_as_null()
+    {
+        var line = "{\"v\":1,\"t\":\"2026-10-12T08:30:00+00:00\",\"stale\":false,\"r\":[]}";
+        Assert.True(Protocol.TryDecode(line, out var d));
+        Assert.Null(d!.Control);
+    }
+
+    [Theory]
+    [InlineData("\"st\":\"Bogus\"")]
+    [InlineData("\"st\":1")]
+    public void Invalid_header_state_rejected(string st)
+    {
+        var line = "{\"v\":1,\"t\":\"2026-10-12T08:30:00+00:00\",\"stale\":false,\"r\":[],\"c\":{\"m\":\"Normal\",\"s\":\"User\",\"h\":[{\"id\":\"a\",\"n\":\"A\"," + st + "}],\"x\":[]}}";
+        Assert.False(Protocol.TryDecode(line, out _));
+    }
+
+    [Fact]
+    public void Invalid_mode_in_status_rejected()
+    {
+        var line = "{\"v\":1,\"t\":\"2026-10-12T08:30:00+00:00\",\"stale\":false,\"r\":[],\"c\":{\"m\":\"Turbo\",\"s\":\"User\",\"h\":[],\"x\":[]}}";
+        Assert.False(Protocol.TryDecode(line, out _));
+    }
+}

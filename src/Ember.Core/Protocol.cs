@@ -21,6 +21,27 @@ public static class Protocol
         [JsonRequired, JsonPropertyName("r")] public List<ReadingDto?>? R { get; set; }
         // Optional: absent/null decodes as Unknown (older services); an unknown name is rejected.
         [JsonPropertyName("d")] public string? D { get; set; }
+        // Optional fan control status; absent from older services.
+        [JsonPropertyName("c")] public ControlDto? C { get; set; }
+    }
+
+    sealed class ControlDto
+    {
+        [JsonRequired, JsonPropertyName("m")] public string? M { get; set; }
+        [JsonRequired, JsonPropertyName("s")] public string? S { get; set; }
+        [JsonPropertyName("so")] public bool So { get; set; }
+        [JsonPropertyName("g")] public string? G { get; set; }
+        [JsonRequired, JsonPropertyName("h")] public List<HeaderDto?>? H { get; set; }
+        [JsonRequired, JsonPropertyName("x")] public List<string?>? X { get; set; }
+        [JsonPropertyName("t")] public string? T { get; set; }
+    }
+
+    sealed class HeaderDto
+    {
+        [JsonRequired, JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonRequired, JsonPropertyName("n")] public string? N { get; set; }
+        [JsonRequired, JsonPropertyName("st")] public string? St { get; set; }
+        [JsonPropertyName("ok")] public bool Ok { get; set; }
     }
 
     sealed class ReadingDto
@@ -38,11 +59,35 @@ public static class Protocol
         T = s.Timestamp,
         Stale = s.Stale,
         D = s.Driver.ToString(),
+        C = s.Control is null ? null : new ControlDto
+        {
+            M = s.Control.Mode.ToString(), S = s.Control.Source.ToString(), So = s.Control.SafetyOverride, G = s.Control.GameExe,
+            H = s.Control.Headers.Select(h => (HeaderDto?)new HeaderDto { Id = h.Id, N = h.Name, St = h.State.ToString(), Ok = h.Tested }).ToList(),
+            X = s.Control.Competitors.Select(c => (string?)c).ToList(), T = s.Control.TestMessage,
+        },
         R = s.Readings.Select(r => (ReadingDto?)new ReadingDto
         {
             Id = r.Id, N = r.Name, H = r.Hardware.ToString(), K = r.Kind.ToString(), Val = r.Value,
         }).ToList(),
     });
+
+    static bool TryDecodeControl(ControlDto c, out FanControlStatus? status)
+    {
+        status = null;
+        if (c.M is null || !Enum.IsDefined(typeof(FanMode), c.M)) return false;
+        if (c.S is null || !Enum.IsDefined(typeof(ModeSource), c.S)) return false;
+        if (c.H is null || c.X is null) return false;
+        var headers = new List<HeaderStatus>(c.H.Count);
+        foreach (var h in c.H)
+        {
+            if (h is null || h.Id is null || h.N is null || h.St is null || !Enum.IsDefined(typeof(HeaderState), h.St)) return false;
+            headers.Add(new HeaderStatus(h.Id, h.N, Enum.Parse<HeaderState>(h.St), h.Ok));
+        }
+        if (c.X.Any(x => x is null)) return false;
+        status = new FanControlStatus(Enum.Parse<FanMode>(c.M), Enum.Parse<ModeSource>(c.S), c.So, c.G, headers,
+            c.X.Select(x => x!).ToList(), c.T);
+        return true;
+    }
 
     public static bool TryDecode(string line, out Snapshot? snapshot)
     {
@@ -65,7 +110,9 @@ public static class Protocol
                 readings.Add(new SensorReading(r.Id, r.N,
                     Enum.Parse<HardwareKind>(r.H), Enum.Parse<SensorKind>(r.K), r.Val));
             }
-            snapshot = new Snapshot(dto.T, readings, dto.Stale, driver);
+            FanControlStatus? control = null;
+            if (dto.C is not null && !TryDecodeControl(dto.C, out control)) return false;
+            snapshot = new Snapshot(dto.T, readings, dto.Stale, driver, control);
             return true;
         }
         catch (Exception)
