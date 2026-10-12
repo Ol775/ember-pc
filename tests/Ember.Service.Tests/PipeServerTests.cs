@@ -94,14 +94,32 @@ public sealed class PipeServerTests : IAsyncLifetime
     [Fact]
     public async Task Unencodable_snapshot_is_skipped_and_client_keeps_receiving()
     {
+        _hub.Publish(Snap(double.NaN)); // Latest is unencodable at connect time
+        using var c = await ConnectAsync();
+        await using var e = SnapshotReader.ReadAsync(c, Timeout()).GetAsyncEnumerator();
+        // Give the server time to serve the unencodable Latest (it must skip it, not drop the client).
+        await Task.Delay(100);
+        _hub.Publish(Snap(3));
+        Assert.True(await e.MoveNextAsync());
+        Assert.Equal(3, Value(e.Current));
+    }
+
+    [Fact]
+    public async Task Accept_failure_is_logged_and_server_keeps_serving()
+    {
+        await _server.StopAsync(CancellationToken.None);
+        var calls = 0;
+        _server = new PipeServer(_hub, _name, NullLogger<PipeServer>.Instance)
+        {
+            RetryDelay = TimeSpan.FromMilliseconds(10),
+            CreatePipe = n => calls++ == 0 ? throw new IOException("boom") : PipeSecurityFactory.Create(n),
+        };
+        await _server.StartAsync(CancellationToken.None);
         _hub.Publish(Snap(1));
         using var c = await ConnectAsync();
         await using var e = SnapshotReader.ReadAsync(c, Timeout()).GetAsyncEnumerator();
         Assert.True(await e.MoveNextAsync());
-        _hub.Publish(Snap(double.NaN));
-        _hub.Publish(Snap(3));
-        Assert.True(await e.MoveNextAsync());
-        Assert.Equal(3, Value(e.Current));
+        Assert.Equal(1, Value(e.Current));
     }
 
     [Fact]

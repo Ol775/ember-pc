@@ -9,6 +9,9 @@ namespace Ember.Service;
 
 public sealed class PipeServer(SnapshotHub hub, string pipeName, ILogger<PipeServer> log) : BackgroundService
 {
+    internal Func<string, NamedPipeServerStream> CreatePipe { get; init; } = PipeSecurityFactory.Create;
+    internal TimeSpan RetryDelay { get; init; } = TimeSpan.FromSeconds(1);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var clients = new List<Task>();
@@ -16,15 +19,29 @@ public sealed class PipeServer(SnapshotHub hub, string pipeName, ILogger<PipeSer
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                var pipe = PipeSecurityFactory.Create(pipeName);
-                try { await pipe.WaitForConnectionAsync(stoppingToken).ConfigureAwait(false); }
-                catch { await pipe.DisposeAsync().ConfigureAwait(false); throw; }
+                NamedPipeServerStream? pipe = null;
+                try
+                {
+                    pipe = CreatePipe(pipeName);
+                    await pipe.WaitForConnectionAsync(stoppingToken).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    if (pipe is not null) await pipe.DisposeAsync().ConfigureAwait(false);
+                    if (stoppingToken.IsCancellationRequested) break;
+                    log.LogError(ex, "Pipe accept failed; retrying");
+                    try { await Task.Delay(RetryDelay, stoppingToken).ConfigureAwait(false); }
+                    catch (OperationCanceledException) { break; }
+                    continue;
+                }
                 clients.RemoveAll(t => t.IsCompleted);
                 clients.Add(ServeAsync(pipe, stoppingToken));
             }
         }
-        catch (OperationCanceledException) { }
-        await Task.WhenAll(clients).ConfigureAwait(false); // ServeAsync never throws
+        finally
+        {
+            await Task.WhenAll(clients).ConfigureAwait(false); // ServeAsync never throws
+        }
     }
 
     private async Task ServeAsync(NamedPipeServerStream pipe, CancellationToken ct)

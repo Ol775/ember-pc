@@ -17,9 +17,15 @@ public static class PipeSecurityFactory
     [SupportedOSPlatform("windows")]
     private static NamedPipeServerStream CreateWindows(string pipeName)
     {
+        // LocalSystem (the service account) needs FullControl, not ReadWrite: creating each further
+        // server instance needs CreateNewInstance (FILE_CREATE_PIPE_INSTANCE), which ReadWrite lacks.
+        // Clients only read, so Interactive gets Read and no write or CreateNewInstance.
         var security = new PipeSecurity();
-        foreach (var sid in new[] { WellKnownSidType.LocalSystemSid, WellKnownSidType.BuiltinAdministratorsSid, WellKnownSidType.InteractiveSid })
-            security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(sid, null), PipeAccessRights.ReadWrite, AccessControlType.Allow));
+        void Allow(WellKnownSidType sid, PipeAccessRights rights) =>
+            security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(sid, null), rights, AccessControlType.Allow));
+        Allow(WellKnownSidType.LocalSystemSid, PipeAccessRights.FullControl);
+        Allow(WellKnownSidType.BuiltinAdministratorsSid, PipeAccessRights.ReadWrite);
+        Allow(WellKnownSidType.InteractiveSid, PipeAccessRights.Read);
         return NamedPipeServerStreamAcl.Create(pipeName, PipeDirection.Out,
             NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous,
             0, 0, security);
