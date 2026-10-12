@@ -2,10 +2,9 @@ using System.IO;
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using Ember.Core;
 using Microsoft.Win32.SafeHandles;
 
-namespace Ember.App;
+namespace Ember.Core;
 
 /// <summary>
 /// Opens the service pipe and checks that the process serving it is the installed EmberService before trusting it,

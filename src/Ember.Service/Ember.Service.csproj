@@ -12,5 +12,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Ember.Core\Ember.Core.csproj" />
     <InternalsVisibleTo Include="Ember.Service.Tests" />
+    <InternalsVisibleTo Include="Ember.Watchdog" />
   </ItemGroup>
 </Project>

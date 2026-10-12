@@ -1,9 +1,11 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$ExePath,
     # Dev builds only: skip the check that the exe and its folder are not writable by non-admins.
-    [switch]$AllowInsecurePath
+    [switch]$AllowInsecurePath,
+    [string]$ServiceName = 'EmberService',
+    [string]$DisplayName = 'Ember'
 )
 $ErrorActionPreference = 'Stop'
 
@@ -45,31 +47,31 @@ if ($unsafe) {
     }
 }
 
-& sc.exe query EmberService *> $null
+& sc.exe query $ServiceName *> $null
 if ($LASTEXITCODE -eq 0) {
-    throw 'EmberService already exists. Run uninstall-service.ps1 first.'
+    throw "$ServiceName already exists. Run the matching uninstall script first."
 }
 
 # New-Service avoids sc.exe's native-argument quoting quirks, which differ between PowerShell versions.
-New-Service -Name EmberService -BinaryPathName "`"$exe`"" -DisplayName 'Ember' -StartupType Automatic | Out-Null
+New-Service -Name $ServiceName -BinaryPathName "`"$exe`"" -DisplayName $DisplayName -StartupType Automatic | Out-Null
 
-function Remove-Failed { & sc.exe delete EmberService *> $null }
+function Remove-Failed { & sc.exe delete $ServiceName *> $null }
 
 # The stored path must be quoted, otherwise a path with spaces is an unquoted-service-path hole.
-$imagePath = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\EmberService').ImagePath
+$imagePath = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\$ServiceName").ImagePath
 if (-not ($imagePath.StartsWith('"') -and $imagePath.EndsWith('"'))) {
     Remove-Failed
     throw "ImagePath was stored unquoted ($imagePath); the service was removed."
 }
 
-& sc.exe failure EmberService reset= 86400 actions= restart/5000/restart/5000/restart/30000
+& sc.exe failure $ServiceName reset= 86400 actions= restart/5000/restart/5000/restart/30000
 if ($LASTEXITCODE -ne 0) { Remove-Failed; throw "sc.exe failure failed (exit $LASTEXITCODE); the service was removed." }
 
 # Also trigger recovery when the service stops with a non-zero exit code, not only on a crash.
-& sc.exe failureflag EmberService 1
+& sc.exe failureflag $ServiceName 1
 if ($LASTEXITCODE -ne 0) { Remove-Failed; throw "sc.exe failureflag failed (exit $LASTEXITCODE); the service was removed." }
 
-try { Start-Service EmberService }
+try { Start-Service $ServiceName }
 catch {
     Write-Warning 'The service was created but failed to start; check the Windows Event Log.'
     throw
