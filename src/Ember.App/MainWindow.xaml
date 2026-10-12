@@ -26,15 +26,16 @@
             </StackPanel>
             <CheckBox DockPanel.Dock="Bottom" Content="Show °F" IsChecked="{Binding UseFahrenheit}" Margin="20,0,20,16"
                       Foreground="{StaticResource TextBrush}" />
-            <!-- Only one page in phase 1, so the navigation entry is a static "current page" marker, not a control. -->
-            <Border VerticalAlignment="Top" Margin="8,0" Padding="12,8" CornerRadius="6" Background="{StaticResource PanelBrush}"
-                    BorderBrush="{StaticResource AccentBrush}" BorderThickness="3,0,0,0">
-                <TextBlock Text="Dashboard" AutomationProperties.Name="Dashboard (current page)" />
-            </Border>
+            <StackPanel VerticalAlignment="Top">
+                <RadioButton x:Name="NavDashboard" GroupName="Nav" Content="Dashboard" IsChecked="True"
+                             Style="{StaticResource NavItem}" Checked="OnNavChanged" />
+                <RadioButton x:Name="NavFans" GroupName="Nav" Content="Fans"
+                             Style="{StaticResource NavItem}" Checked="OnNavChanged" />
+            </StackPanel>
         </DockPanel>
 
         <!-- Dashboard -->
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False">
+        <ScrollViewer x:Name="DashboardPage" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False">
             <StackPanel Margin="24">
                 <TextBlock Text="Dashboard" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"
                            AutomationProperties.HeadingLevel="Level2" />
@@ -115,6 +116,91 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Fans -->
+        <ScrollViewer x:Name="FansPageView" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
+                      Visibility="Collapsed">
+            <StackPanel Margin="24">
+                <TextBlock Text="Fans" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"
+                           AutomationProperties.HeadingLevel="Level2" />
+
+                <TextBlock Text="{Binding FansPage.Message}" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,12"
+                           Visibility="{Binding FansMessageVisibility}" AutomationProperties.LiveSetting="Polite" />
+
+                <Border Background="{StaticResource BannerBrush}" BorderBrush="{StaticResource AccentBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
+                        Visibility="{Binding CompetitorVisibility}">
+                    <TextBlock x:Name="CompetitorLabel" Text="{Binding FansPage.CompetitorWarning}" TextWrapping="Wrap"
+                               AutomationProperties.LiveSetting="Assertive" />
+                </Border>
+
+                <Border Background="{StaticResource BannerBrush}" BorderBrush="{StaticResource AccentBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
+                        Visibility="{Binding SafetyVisibility}">
+                    <TextBlock Text="{Binding FansPage.SafetyNote}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
+                </Border>
+
+                <GroupBox Header="Mode" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan mode">
+                    <StackPanel>
+                        <ItemsControl ItemsSource="{Binding FansPage.Modes}" Focusable="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <RadioButton GroupName="FanMode" Content="{Binding Label}" IsChecked="{Binding Selected, Mode=OneWay}"
+                                                 IsEnabled="{Binding Enabled}" Tag="{Binding Mode}" Click="OnModePicked"
+                                                 Foreground="{StaticResource TextBrush}" Margin="0,0,24,0" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{Binding FansPage.SourceText}" Foreground="{StaticResource MutedBrush}" Margin="0,8,0,0" />
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Fan headers" Style="{StaticResource Panel}" AutomationProperties.Name="Fan headers">
+                    <StackPanel>
+                        <TextBlock Text="No fan headers reported" Foreground="{StaticResource MutedBrush}"
+                                   Visibility="{Binding NoHeadersVisibility}" />
+                        <ItemsControl ItemsSource="{Binding FansPage.Headers}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="170" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding StateText}" Foreground="{StaticResource MutedBrush}"
+                                                   VerticalAlignment="Center" TextWrapping="Wrap" />
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                            <Button Content="Test" Tag="{Binding Id}" Click="OnTestHeader" IsEnabled="{Binding CanTest}"
+                                                    Style="{StaticResource ActionButton}" ToolTip="{Binding DisabledReason}"
+                                                    AutomationProperties.Name="{Binding Name, StringFormat=Test {0}}"
+                                                    AutomationProperties.HelpText="{Binding DisabledReason}" />
+                                            <Button Content="Enable" Tag="{Binding Id}" Click="OnEnableHeader" IsEnabled="{Binding CanEnable}"
+                                                    Style="{StaticResource ActionButton}" ToolTip="{Binding DisabledReason}"
+                                                    AutomationProperties.Name="{Binding Name, StringFormat=Enable {0}}"
+                                                    AutomationProperties.HelpText="{Binding DisabledReason}" />
+                                            <Button Content="Disable" Tag="{Binding Id}" Click="OnDisableHeader" IsEnabled="{Binding CanDisable}"
+                                                    Style="{StaticResource ActionButton}"
+                                                    AutomationProperties.Name="{Binding Name, StringFormat=Disable {0}}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock x:Name="TestLabel" Text="{Binding FansPage.TestMessage}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                   AutomationProperties.LiveSetting="Polite" />
+                        <TextBlock x:Name="ActionLabel" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{StaticResource MutedBrush}"
+                                   AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

@@ -49,6 +49,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<FanBar> Fans { get; } = new();
     public PointCollection CpuLine { get; private set; } = new();
     public PointCollection GpuLine { get; private set; } = new();
+    FansView _fansPage = FansViewState.Render(null, false);
+    public FansView FansPage => _fansPage;
+    public Visibility FansMessageVisibility => _fansPage.Message is null ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility CompetitorVisibility => _fansPage.CompetitorWarning is null ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility SafetyVisibility => _fansPage.SafetyNote is null ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility NoHeadersVisibility => _fansPage.ServiceAvailable && _fansPage.Headers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     public string? DriverBannerText { get; private set; }
     public Visibility DriverBannerVisibility => DriverBannerText is null ? Visibility.Collapsed : Visibility.Visible;
     public Visibility StaleNoteVisibility { get; private set; } = Visibility.Collapsed;
@@ -86,6 +92,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         MotherboardText = v.MotherboardText;
         FanAverageText = v.FanAverageText;
         DriverBannerText = v.DriverBannerText;
+        var fansView = FansViewState.Render(v.Control, _connected);
+        if (!SameFans(_fansPage, fansView)) _fansPage = fansView; // keep the old instance when nothing changed, so focus is not lost
         StaleNoteVisibility = v.ShowStaleNote ? Visibility.Visible : Visibility.Collapsed;
         CpuLine = Points(v.CpuLine);
         GpuLine = Points(v.GpuLine);
@@ -96,6 +104,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty)); // every property
     }
+
+    static bool SameFans(FansView a, FansView b) =>
+        a.ServiceAvailable == b.ServiceAvailable && a.Message == b.Message && a.SourceText == b.SourceText
+        && a.CompetitorWarning == b.CompetitorWarning && a.SafetyNote == b.SafetyNote && a.TestMessage == b.TestMessage
+        && a.Modes.SequenceEqual(b.Modes) && a.Headers.SequenceEqual(b.Headers);
 
     static PointCollection Points(IReadOnlyList<(double X, double Y)> line)
     {

@@ -11,7 +11,7 @@ public partial class MainWindow : Window
     readonly CancellationTokenSource _cts = new();
     readonly DispatcherTimer _refresh;
     readonly Task _run;
-    string? _announcedConnection, _announcedBanner;
+    string? _announcedConnection, _announcedBanner, _announcedCompetitor, _announcedTest;
 
     public MainWindow()
     {
@@ -33,6 +33,41 @@ public partial class MainWindow : Window
         Closed += OnClosed;
     }
 
+    void OnNavChanged(object sender, RoutedEventArgs e)
+    {
+        if (DashboardPage is null || FansPageView is null) return; // fires once during InitializeComponent
+        var fans = NavFans.IsChecked == true;
+        DashboardPage.Visibility = fans ? Visibility.Collapsed : Visibility.Visible;
+        FansPageView.Visibility = fans ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    async void OnModePicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: FanMode mode }) await SendAsync(new SetMode(mode));
+    }
+
+    async void OnTestHeader(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string id }) await SendAsync(new RunHeaderTest(id));
+    }
+
+    async void OnEnableHeader(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string id }) await SendAsync(new ConfirmHeader(id, true));
+    }
+
+    async void OnDisableHeader(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string id }) await SendAsync(new ConfirmHeader(id, false));
+    }
+
+    async Task SendAsync(ControlMessage message)
+    {
+        var reply = await ControlClient.SendAsync(message);
+        ActionLabel.Text = reply.Ok ? "" : reply.Error ?? "That did not work.";
+        Announce(ActionLabel);
+    }
+
     void OnChartSizeChanged(object sender, SizeChangedEventArgs e)
     {
         _vm.SetChartSize(e.NewSize.Width, e.NewSize.Height);
@@ -52,6 +87,16 @@ public partial class MainWindow : Window
         {
             _announcedBanner = _vm.DriverBannerText;
             if (_announcedBanner is not null) Announce(BannerLabel);
+        }
+        if (_vm.FansPage.CompetitorWarning != _announcedCompetitor)
+        {
+            _announcedCompetitor = _vm.FansPage.CompetitorWarning;
+            if (_announcedCompetitor is not null) Announce(CompetitorLabel);
+        }
+        if (_vm.FansPage.TestMessage != _announcedTest)
+        {
+            _announcedTest = _vm.FansPage.TestMessage;
+            if (_announcedTest is not null) Announce(TestLabel);
         }
     }
 

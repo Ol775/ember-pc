@@ -27,10 +27,13 @@ public static class PipeStreamConnector
     const int ScStatusProcessInfo = 0;
     const uint ServiceRunning = 0x00000004;
 
-    public static async Task<Stream> ConnectAsync(CancellationToken ct)
+    public static Task<Stream> ConnectAsync(CancellationToken ct) => ConnectAsync(PipeName, PipeDirection.In, ct);
+
+    /// <summary>Connects to <paramref name="pipeName"/> and proves the server is the Ember service (used for the control pipe too).</summary>
+    public static async Task<Stream> ConnectAsync(string pipeName, PipeDirection direction, CancellationToken ct)
     {
         if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("Ember runs on Windows only.");
-        var pipe = new NamedPipeClientStream(".", PipeName, PipeDirection.In, PipeOptions.Asynchronous);
+        var pipe = new NamedPipeClientStream(".", pipeName, direction, PipeOptions.Asynchronous);
         try
         {
             await pipe.ConnectAsync(ConnectTimeoutMs, ct).ConfigureAwait(false);
