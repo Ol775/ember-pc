@@ -234,7 +234,7 @@ public sealed class FanControlLoop : BackgroundService
         catch (Exception ex) { _log.LogError(ex, "Writing the release speed to {Header} failed; trying the library restore anyway", id); }
         try
         {
-            _fans.ReleaseToAuto(id);
+            _fans.Release(id);
             _written.Remove(id);
             return true;
         }

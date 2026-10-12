@@ -14,7 +14,7 @@ public static class FanRelease
             try
             {
                 fans.SetPercent(id, value);
-                fans.ReleaseToAuto(id);
+                fans.Release(id);
             }
             catch (Exception ex)
             {

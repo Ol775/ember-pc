@@ -20,6 +20,7 @@ internal sealed class WatchdogWorker(ILogger<WatchdogWorker> log) : BackgroundSe
 
     readonly WatchdogMonitor _monitor = new();
     DateTimeOffset _lastRelease = DateTimeOffset.MinValue;
+    LhmHardware? _hardware;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -111,12 +112,18 @@ internal sealed class WatchdogWorker(ILogger<WatchdogWorker> log) : BackgroundSe
             var settings = new SettingsStore(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Ember", "settings.json")).Load();
             var enabled = settings.Headers.ToDictionary(r => r.Id); // every header Ember has a test record for may have been written
-            if (enabled.Count == 0) return; // no header was ever tested or enabled, so Ember never wrote anything
-            using var hardware = new LhmHardware();
-            using var fans = new LhmFanController(hardware);
+            if (enabled.Count == 0)
+            {
+                log.LogWarning("No tested header in settings, so there is nothing to hand back");
+                return; // Ember never wrote anything
+            }
+            _hardware ??= new LhmHardware(); // opened once and kept: closing it would undo the safe speeds written below
+            var fans = new LhmFanController(_hardware);
             var values = fans.Enumerate().Where(h => enabled.ContainsKey(h.Id))
                 .ToDictionary(h => h.Id, h => ReleaseRules.ValueFor(h.Name, enabled[h.Id].OriginalPercent));
+            log.LogWarning("Handing back {Count} header(s): {Values}", values.Count, string.Join(", ", values.Select(v => v.Key + "=" + v.Value)));
             FanRelease.ReleaseAll(fans, values, message => log.LogWarning("{Message}", message));
+            log.LogWarning("Hand-back finished");
         }
         catch (Exception ex) { log.LogError(ex, "Could not open the hardware to release fans"); }
     }

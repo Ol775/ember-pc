@@ -23,7 +23,7 @@ internal sealed class FakeFanController(params FanHeader[] headers) : IFanContro
         Calls.Add(("set", headerId, percent));
     }
 
-    public void ReleaseToAuto(string headerId)
+    public void Release(string headerId)
     {
         Known(headerId);
         if (FailRelease) throw new InvalidOperationException("release failed");

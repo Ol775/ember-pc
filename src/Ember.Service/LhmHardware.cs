@@ -29,8 +29,10 @@ internal sealed class LhmHardware : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        lock (Gate) Computer.Close();
-    }
+    /// <summary>
+    /// Deliberately does not close the Computer. Closing makes LibreHardwareMonitor restore each header it touched to a
+    /// stale register value, which undoes the safe speed Ember just wrote (seen on the owner's board). The process is
+    /// about to exit anyway, and Windows closes the driver handle with it.
+    /// </summary>
+    public void Dispose() { }
 }

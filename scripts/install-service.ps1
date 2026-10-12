@@ -64,7 +64,7 @@ if (-not ($imagePath.StartsWith('"') -and $imagePath.EndsWith('"'))) {
     throw "ImagePath was stored unquoted ($imagePath); the service was removed."
 }
 
-& sc.exe failure $ServiceName reset= 86400 actions= restart/5000/restart/5000/restart/30000
+& sc.exe failure $ServiceName reset= 600 actions= restart/5000/restart/5000/restart/30000
 if ($LASTEXITCODE -ne 0) { Remove-Failed; throw "sc.exe failure failed (exit $LASTEXITCODE); the service was removed." }
 
 # Also trigger recovery when the service stops with a non-zero exit code, not only on a crash.

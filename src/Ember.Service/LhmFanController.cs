@@ -4,7 +4,7 @@ namespace Ember.Service;
 
 /// <summary>
 /// Windows implementation over LibreHardwareMonitorLib. This class and nothing else calls <c>SetSoftware</c> and
-/// <c>SetDefault</c>; sensor reads never write.
+/// <c>SetSoftware</c>; sensor reads never write. Nothing calls <c>SetDefault</c>: it left a fan stuck low on the owner's board.
 /// </summary>
 internal sealed class LhmFanController(LhmHardware hardware) : IFanController
 {
@@ -35,9 +35,11 @@ internal sealed class LhmFanController(LhmHardware hardware) : IFanController
         lock (hardware.Gate) Find(headerId).SetSoftware((float)percent);
     }
 
-    public void ReleaseToAuto(string headerId)
+    public void Release(string headerId)
     {
-        lock (hardware.Gate) Find(headerId).SetDefault();
+        // Deliberately no SetDefault: on the NCT6687D it writes back a stale register value and leaves the fan low.
+        // The caller has already written the safe speed, which stays in force.
+        lock (hardware.Gate) _ = Find(headerId);
     }
 
     IControl Find(string headerId)

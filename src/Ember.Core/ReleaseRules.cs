@@ -1,9 +1,10 @@
 namespace Ember.Core;
 
 /// <summary>
-/// What "hand a fan back" means on this hardware. LibreHardwareMonitor's restore call on the NCT6687D does not make the
-/// board resume automatic control (checked on the owner's MSI B550-A PRO: the fan stays at its last speed), so Ember
-/// writes a known-safe speed first. System fans go back to the speed they had before Ember's first write (the board
+/// What "hand a fan back" means on this hardware. LibreHardwareMonitor's restore (SetDefault, and the restore that
+/// Computer.Close runs) on the NCT6687D writes back a stale register value and left a fan stuck low on the owner's MSI
+/// B550-A PRO, so Ember never calls it: it writes a known-safe speed and leaves it. A restart returns the board to
+/// automatic control. System fans go back to the speed they had before Ember's first write (the board
 /// holds them at a flat value). The CPU fan's board speed follows temperature and cannot be restored by a number, so
 /// it is left at 100%, which is loud but safe. With no saved speed the answer is also 100%.
 /// </summary>

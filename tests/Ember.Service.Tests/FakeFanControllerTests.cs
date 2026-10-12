@@ -20,7 +20,7 @@ public class FakeFanControllerTests
     {
         var f = new FakeFanController(H("a"), H("b"));
         f.SetPercent("a", 40);
-        f.ReleaseToAuto("b");
+        f.Release("b");
         Assert.Equal(new (string, string, double?)[] { ("set", "a", 40), ("release", "b", null) }, f.Calls);
     }
 }

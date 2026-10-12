@@ -21,9 +21,12 @@ enable or test a header. The service enforces the safety rules itself:
 
 - at 90 °C on any source every controlled fan goes to 100% (released at 85 °C), and a missing or stale sensor sends the
   affected fans to 100%;
-- fans never go below a floor (20%, pump 60%, GPU 30%);
-- when the service stops, every fan Ember controls is handed back to the board's own control, and a separate
-  **watchdog** service does the same if the service is killed or hangs.
+- fans never go below a floor (system fans 20%, CPU fan 30%, GPU fan 30%), and the CPU fan ramps early: at least 60% from 70 °C, 85% from 75 °C and 100% from 80 °C;
+- the pump is left entirely to the board;
+- when the service stops, each system fan is left at the speed it had before Ember first touched it and the CPU fan at 100%.
+  LibreHardwareMonitor cannot hand a fan back to automatic control on this kind of chip (its restore call left a fan stuck
+  low on the author's MSI B550-A PRO), so Ember never calls it. A restart of the PC returns the board to automatic control.
+  A separate **watchdog** service writes the same safe speeds if the Ember service is killed or hangs.
 
 If another program that controls fans is running (MSI Center, Fan Control, NZXT CAM, iCUE and similar), Ember warns
 you by name and blocks enabling and testing headers until you close it. The app and service make no network calls; only

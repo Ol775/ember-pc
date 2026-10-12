@@ -38,7 +38,7 @@ public sealed class HeaderTestRunner
     void Restore(string headerName, string headerId, double? original)
     {
         _fans.SetPercent(headerId, ReleaseRules.ValueFor(headerName, original));
-        _fans.ReleaseToAuto(headerId);
+        _fans.Release(headerId);
     }
 
     static HeaderTestResult Fail(string message, double b = 0, double c = 0, double r = 0) => new(false, message, b, c, r);
