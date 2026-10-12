@@ -40,6 +40,7 @@ public sealed class FanControlLoop : BackgroundService
     readonly HashSet<string> _written = new();
     readonly HashSet<string> _failed = new();
     readonly Dictionary<string, string> _names = new(); // header id -> name, for the ones Ember has written
+    readonly HashSet<string> _everSpun = new(); // control ids whose fan has been seen turning since the service started
     double? _lastCpuTemp;
     bool _stopped;
     readonly BuildFeatures _features;
@@ -136,6 +137,8 @@ public sealed class FanControlLoop : BackgroundService
 
             var summary = DashboardSummary.From(s);
             _lastCpuTemp = s.Stale ? null : summary.CpuTemp;
+            foreach (var r in s.Readings)
+                if (r.Kind == SensorKind.FanRpm && r.Value > 0) _everSpun.Add(r.Id.Replace("/fan/", "/control/", StringComparison.Ordinal));
             var temps = new Dictionary<TempSource, double?>();
             Observe(temps, TempSource.Cpu, summary.CpuTemp, s.Stale);
             Observe(temps, TempSource.Gpu, summary.GpuTemp, s.Stale);
@@ -296,7 +299,10 @@ public sealed class FanControlLoop : BackgroundService
         IReadOnlyList<FanHeader> headers;
         try { headers = _fans.Enumerate(); }
         catch (Exception) { headers = []; }
-        var rows = headers.Select(h =>
+        var rows = headers
+            // A header with no fan on it (never seen turning, never tested) is not shown at all.
+            .Where(h => _everSpun.Contains(h.Id) || _settings.Headers.Any(r => r.Id == h.Id))
+            .Select(h =>
         {
             var record = _settings.Headers.FirstOrDefault(r => r.Id == h.Id);
             var state = _failed.Contains(h.Id) ? HeaderState.Failed

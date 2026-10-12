@@ -424,7 +424,7 @@ public sealed class FanControlLoopTests : IDisposable
     {
         var loop = Loop(EmberSettings.Default with { GpuControlEnabled = true });
         loop.RecordTestResult(Gpu, false, "no response");
-        loop.OnSnapshot(Snap());
+        loop.OnSnapshot(Snap() with { Readings = Snap().Readings.Append(new SensorReading("/gpu-nvidia/0/fan/1", "GPU Fan", HardwareKind.Gpu, SensorKind.FanRpm, 1200)).ToList() });
         Assert.DoesNotContain(_fans.Calls, c => c.Id == Gpu);
         Assert.Equal(HeaderState.Failed, loop.Status.Headers.Single(h => h.Id == Gpu).State);
     }
@@ -546,6 +546,38 @@ public sealed class FanControlLoopTests : IDisposable
         loop.OnSnapshot(Snap());
         Assert.Equal(HeaderState.Unknown, loop.Status.Headers.Single().State);
         Assert.False(loop.Handle(new ConfirmHeader(odd, true)).Ok);
+    }
+
+    private static Snapshot WithFans(params string[] fanIds) => Snap() with
+    {
+        Readings = Snap().Readings.Concat(fanIds.Select(id => new SensorReading(id, id, HardwareKind.Motherboard, SensorKind.FanRpm, 900))).ToList(),
+    };
+
+    [Fact]
+    public void Headers_with_no_fan_are_not_listed()
+    {
+        var loop = Loop();
+        loop.OnSnapshot(WithFans("/lpc/nct6687d/0/fan/2")); // only System Fan #1 is turning
+        Assert.Equal(new[] { Sys1 }, loop.Status.Headers.Select(h => h.Id).ToArray());
+    }
+
+    [Fact]
+    public void A_header_appears_once_its_fan_has_turned_and_stays_when_it_stops()
+    {
+        var loop = Loop();
+        loop.OnSnapshot(Snap());
+        Assert.Empty(loop.Status.Headers);
+        loop.OnSnapshot(WithFans("/lpc/nct6687d/0/fan/3"));
+        loop.OnSnapshot(Snap()); // the RPM reading is gone again
+        Assert.Equal(new[] { Sys2 }, loop.Status.Headers.Select(h => h.Id).ToArray());
+    }
+
+    [Fact]
+    public void Tested_headers_stay_listed_without_a_reading()
+    {
+        var loop = Loop(Rec(Sys2, enabled: false));
+        loop.OnSnapshot(Snap());
+        Assert.Equal(new[] { Sys2 }, loop.Status.Headers.Select(h => h.Id).ToArray());
     }
 
     [Fact]
