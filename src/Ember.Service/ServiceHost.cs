@@ -15,6 +15,7 @@ public static class ServiceHost
                 s.AddSingleton<SnapshotHub>();
                 s.AddSingleton(_ => sourceFactory());
                 s.AddSingleton(TimeProvider.System);
+                if (OperatingSystem.IsWindows()) s.AddSingleton<IDriverProbe, PawnIoProbe>();
                 s.AddHostedService<SensorPoller>();
                 s.AddHostedService(p => new PipeServer(p.GetRequiredService<SnapshotHub>(), pipeName, p.GetRequiredService<ILogger<PipeServer>>()));
             });

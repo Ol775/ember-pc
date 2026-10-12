@@ -8,12 +8,42 @@ public class SensorPollerTests
     private static SensorReading R(string id, double v) =>
         new(id, id, HardwareKind.Cpu, SensorKind.Temperature, v);
 
-    private static (SensorPoller Poller, SnapshotHub Hub, FakeSensorSource Src) Make()
+    private static (SensorPoller Poller, SnapshotHub Hub, FakeSensorSource Src) Make(IDriverProbe? probe = null)
     {
         var src = new FakeSensorSource();
         var hub = new SnapshotHub();
-        return (new SensorPoller(src, hub, TimeProvider.System, NullLogger<SensorPoller>.Instance), hub, src);
+        return (new SensorPoller(src, hub, TimeProvider.System, NullLogger<SensorPoller>.Instance, probe), hub, src);
     }
+
+    private sealed class FakeProbe(Func<DriverStatus> check) : IDriverProbe
+    {
+        public DriverStatus Check() => check();
+    }
+
+    [Fact]
+    public void Tick_stamps_driver_status_from_probe()
+    {
+        var status = DriverStatus.Missing;
+        var (p, _, _) = Make(new FakeProbe(() => status));
+        Assert.Equal(DriverStatus.Missing, p.Tick().Driver);
+        status = DriverStatus.Ok;
+        Assert.Equal(DriverStatus.Ok, p.Tick().Driver);
+    }
+
+    [Fact]
+    public void Probe_exception_yields_unknown_and_keeps_running()
+    {
+        var (p, hub, src) = Make(new FakeProbe(() => throw new InvalidOperationException("probe boom")));
+        src.OnRead = () => [R("a", 1)];
+        var s = p.Tick();
+        Assert.Equal(DriverStatus.Unknown, s.Driver);
+        Assert.False(s.Stale);
+        Assert.Single(s.Readings);
+        Assert.Same(s, hub.Latest);
+    }
+
+    [Fact]
+    public void No_probe_yields_unknown() => Assert.Equal(DriverStatus.Unknown, Make().Poller.Tick().Driver);
 
     [Fact]
     public void Tick_publishes_readings_to_hub()

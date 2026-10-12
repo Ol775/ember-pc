@@ -73,7 +73,52 @@ public class ProtocolTests
 
     [Fact]
     public void Decode_ignores_unknown_fields() =>
-        Assert.True(Protocol.TryDecode(Line().Replace("\"v\":1,", "\"v\":1,\"d\":\"x\","), out _));
+        Assert.True(Protocol.TryDecode(Line().Replace("\"v\":1,", "\"v\":1,\"future\":\"x\","), out _));
+
+    [Theory]
+    [InlineData(DriverStatus.Unknown)]
+    [InlineData(DriverStatus.Ok)]
+    [InlineData(DriverStatus.Missing)]
+    public void Driver_status_round_trips(DriverStatus driver)
+    {
+        Assert.True(Protocol.TryDecode(Protocol.Encode(Sample() with { Driver = driver }), out var d));
+        Assert.Equal(driver, d!.Driver);
+    }
+
+    [Fact]
+    public void Missing_driver_field_decodes_as_unknown()
+    {
+        Assert.True(Protocol.TryDecode(Line(), out var d));
+        Assert.Equal(DriverStatus.Unknown, d!.Driver);
+    }
+
+    [Theory]
+    [InlineData("\"Bogus\"")]
+    [InlineData("\"1\"")]
+    [InlineData("1")]
+    public void Invalid_driver_value_is_rejected(string d) =>
+        Assert.False(Protocol.TryDecode(Line().Replace("\"v\":1,", $"\"v\":1,\"d\":{d},"), out _));
+
+    [Fact]
+    public void Missing_val_is_rejected() =>
+        Assert.False(Protocol.TryDecode(Line().Replace(",\"val\":54.0", ""), out _));
+
+    [Fact]
+    public void Missing_timestamp_is_rejected() =>
+        Assert.False(Protocol.TryDecode(Line().Replace("\"t\":\"2026-10-12T08:30:00+00:00\",", ""), out _));
+
+    [Fact]
+    public void Missing_version_is_rejected() =>
+        Assert.False(Protocol.TryDecode(Line().Replace("\"v\":1,", ""), out _));
+
+    [Fact]
+    public void Driver_missing_with_no_readings_round_trips()
+    {
+        var s = new Snapshot(DateTimeOffset.UnixEpoch, [], false, DriverStatus.Missing);
+        Assert.True(Protocol.TryDecode(Protocol.Encode(s), out var d));
+        Assert.Empty(d!.Readings);
+        Assert.Equal(DriverStatus.Missing, d.Driver);
+    }
 
     [Fact]
     public void Encode_has_no_newline_inside() => Assert.DoesNotContain('\n', Protocol.Encode(Sample()));

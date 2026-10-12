@@ -4,27 +4,43 @@ using Microsoft.Extensions.Logging;
 
 namespace Ember.Service;
 
-public sealed class SensorPoller(ISensorSource source, SnapshotHub hub, TimeProvider clock, ILogger<SensorPoller> log)
-    : BackgroundService
+public interface IDriverProbe
+{
+    DriverStatus Check();
+}
+
+public sealed class SensorPoller(ISensorSource source, SnapshotHub hub, TimeProvider clock, ILogger<SensorPoller> log,
+    IDriverProbe? probe = null) : BackgroundService
 {
     private IReadOnlyList<SensorReading> _previous = [];
 
     public Snapshot Tick()
     {
+        var driver = CheckDriver();
         Snapshot snap;
         try
         {
             // NaN/Infinity mean a bad sensor; drop them (exactly 0 is a valid value and is kept).
             _previous = source.Read().Where(r => double.IsFinite(r.Value)).ToList();
-            snap = new Snapshot(clock.GetUtcNow(), _previous, false);
+            snap = new Snapshot(clock.GetUtcNow(), _previous, false, driver);
         }
         catch (Exception ex)
         {
             log.LogWarning(ex, "Sensor read failed; publishing stale snapshot");
-            snap = new Snapshot(clock.GetUtcNow(), _previous, true);
+            snap = new Snapshot(clock.GetUtcNow(), _previous, true, driver);
         }
         hub.Publish(snap);
         return snap;
+    }
+
+    private DriverStatus CheckDriver()
+    {
+        try { return probe?.Check() ?? DriverStatus.Unknown; }
+        catch (Exception ex)
+        {
+            log.LogWarning(ex, "Driver probe failed; reporting Unknown");
+            return DriverStatus.Unknown;
+        }
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
