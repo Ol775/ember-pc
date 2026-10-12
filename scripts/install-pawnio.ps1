@@ -6,9 +6,14 @@ Installs the official, signed PawnIO driver that LibreHardwareMonitorLib needs f
 .DESCRIPTION
 Runs elevated and executes a downloaded installer, so it refuses unless BOTH the SHA-256 matches -Sha256 AND
 the Authenticode signature is Valid. There is deliberately no switch to bypass either check.
-The installer goes to a fresh folder under ProgramData that only SYSTEM and Administrators can write, so it
-cannot be swapped between verification and execution. The installer is never bundled with Ember (redistribution
-terms are unpublished; see docs/driver-research.md).
+What protects the binary between verification and execution:
+- it is downloaded into a fresh folder under Program Files, where non-admins cannot create or change anything,
+  so the folder is admin-only from the moment it exists;
+- the folder also gets a protected ACL (SYSTEM + Administrators only, no inheritance) and must be empty;
+- the script refuses if the folder or the downloaded file is a reparse point (junction/symlink);
+- the hash and signature are checked again immediately before the installer runs, by its full path.
+This narrows but cannot eliminate a swap by an attacker who already has admin rights (they have already won).
+The installer is never bundled with Ember (redistribution terms are unpublished; see docs/driver-research.md).
 
 NOTE: the "-install -silent" switches come from third-party winget documentation and still need confirming on Windows.
 #>
@@ -37,14 +42,36 @@ if (-not $url.StartsWith('https://github.com/namazso/PawnIO.Setup/releases/downl
 # PowerShell 5.1 may default to TLS 1.0; GitHub needs TLS 1.2+.
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
-# Fresh GUID folder directly under ProgramData (known-folder API, not an env var). Not under a shared
-# ProgramData\Ember parent: a non-admin could pre-create that and then delete/replace children.
-$dir = Join-Path ([Environment]::GetFolderPath('CommonApplicationData')) ('ember-pawnio-' + [Guid]::NewGuid().ToString('N'))
+function Assert-NotReparsePoint([string]$path) {
+    if ((Get-Item -LiteralPath $path -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+        throw "Refusing: $path is a reparse point (junction or symlink)."
+    }
+}
+
+# Hash AND signature, both required. Returns the signature for printing.
+function Assert-Verified([string]$path) {
+    Assert-NotReparsePoint $path
+    $actual = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+    if (-not [string]::Equals($actual, $Sha256, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "SHA-256 mismatch: expected $Sha256, got $actual. Refusing to run the installer."
+    }
+    $sig = Get-AuthenticodeSignature -LiteralPath $path
+    if ($sig.Status -ne [Management.Automation.SignatureStatus]::Valid) {
+        throw "Authenticode signature is not valid ($($sig.Status): $($sig.StatusMessage)). Refusing to run the installer."
+    }
+    return $sig
+}
+
+# Fresh GUID folder under Program Files (known-folder API, not an env var). Users only have read & execute
+# there, so no non-admin can plant files or turn the folder into a junction, even before Set-Acl runs.
+# (ProgramData was rejected: Users may create folders there, which allows a junction race.)
+$dir = Join-Path ([Environment]::GetFolderPath('ProgramFiles')) ('Ember-pawnio-' + [Guid]::NewGuid().ToString('N'))
 $created = $false
 try {
-    # Create the folder, lock it to SYSTEM + Administrators (no inheritance), and only then download into it.
     New-Item -ItemType Directory -Path $dir | Out-Null  # no -Force: fails if the name already exists
     $created = $true
+    Assert-NotReparsePoint $dir
+    # Defence in depth: SYSTEM + Administrators only, no inheritance.
     $acl = New-Object Security.AccessControl.DirectorySecurity
     $acl.SetAccessRuleProtection($true, $false)
     $inherit = [Security.AccessControl.InheritanceFlags]'ContainerInherit, ObjectInherit'
@@ -54,28 +81,22 @@ try {
     }
     $acl.SetOwner((New-Object Security.Principal.SecurityIdentifier 'S-1-5-32-544'))
     Set-Acl -LiteralPath $dir -AclObject $acl
-    # Until Set-Acl, the folder inherited ProgramData's "Users may create files" grant. Anything planted in that
-    # window would stay owned by its creator (who could rewrite it after verification), so require it empty.
-    if (Get-ChildItem -LiteralPath $dir -Force) { throw "Refusing: $dir was modified before it was locked down." }
+    if (Get-ChildItem -LiteralPath $dir -Force) { throw "Refusing: $dir is not empty." }
 
     $exe = Join-Path $dir 'PawnIO_setup.exe'
     Write-Host "Downloading $url"
     $ProgressPreference = 'SilentlyContinue'  # the 5.1 progress bar makes Invoke-WebRequest very slow
     Invoke-WebRequest -Uri $url -OutFile $exe -UseBasicParsing -MaximumRedirection 5
+    $exe = (Resolve-Path -LiteralPath $exe).ProviderPath
 
-    $actual = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash
-    if (-not [string]::Equals($actual, $Sha256, [StringComparison]::OrdinalIgnoreCase)) {
-        throw "SHA-256 mismatch: expected $Sha256, got $actual. Refusing to run the installer."
-    }
-    Write-Host "SHA-256 OK: $actual"
-
-    $sig = Get-AuthenticodeSignature -LiteralPath $exe
-    if ($sig.Status -ne [Management.Automation.SignatureStatus]::Valid) {
-        throw "Authenticode signature is not valid ($($sig.Status): $($sig.StatusMessage)). Refusing to run the installer."
-    }
+    $sig = Assert-Verified $exe
+    Write-Host "SHA-256 OK: $Sha256"
     Write-Host "Signed by: $($sig.SignerCertificate.Subject)"
     Write-Host "Thumbprint: $($sig.SignerCertificate.Thumbprint)"
 
+    # Re-verify right before running, by full path. Narrows, but cannot fully eliminate, a swap by an
+    # admin-level attacker (who has already won).
+    $null = Assert-Verified $exe
     $proc = Start-Process -FilePath $exe -ArgumentList '-install', '-silent' -Wait -PassThru
     if ($proc.ExitCode -ne 0) {
         throw "PawnIO installer failed with exit code $($proc.ExitCode)."
@@ -83,5 +104,12 @@ try {
     Write-Host 'PawnIO installed. Restart EmberService (Restart-Service EmberService) so it picks up the driver.'
 }
 finally {
-    if ($created) { Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue }
+    if ($created) {
+        $item = Get-Item -LiteralPath $dir -Force -ErrorAction SilentlyContinue
+        if ($item -and ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+            [IO.Directory]::Delete($dir, $false)  # remove only the link; never recurse into its target
+        } elseif ($item) {
+            Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
 }

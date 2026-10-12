@@ -59,6 +59,15 @@ shasum -a 256 "$D/PawnIO_setup.exe"                 # 1f519a22e47187f70a1379a48c
 The local hash matches the digest GitHub publishes for the asset. The Authenticode signature was **not** checked
 (it cannot be checked on macOS). The script enforces `Valid` on Windows and prints the signer subject and thumbprint.
 
+## Download folder
+
+The script downloads into a fresh `Ember-pawnio-<guid>` folder under Program Files, not ProgramData. In
+ProgramData, BUILTIN\Users can create folders, so a non-admin could turn the new folder into a junction before
+`Set-Acl` runs. Then the checks would pass against the genuine file and the junction would be re-pointed before
+the installer runs elevated. Under Program Files, Users only have read and execute, so the folder is admin-only
+from the moment it exists. The script also sets a protected ACL, refuses reparse points (on the folder and on the
+file), and re-checks the hash and signature immediately before running the installer by its full path.
+
 ## Install switches
 
 `PawnIO_setup.exe -install -silent` comes from third-party winget manifest documentation, not from the PawnIO
@@ -99,6 +108,8 @@ Uncertainties:
 - [ ] After the install, LHM fan RPMs appear. Check whether this needs a `Restart-Service EmberService` (expected,
       because of the per-process cache above) or works without one. Record the result here.
 - [ ] The script refuses a bad `-Sha256`, and refuses when not elevated.
+- [ ] Record the real signer subject and thumbprint of `PawnIO_setup.exe` 2.2.0 (`Get-AuthenticodeSignature`; the
+      script prints both), then pin them in `install-pawnio.ps1` so a different valid signer is refused.
 
 ## Sources
 

@@ -107,6 +107,8 @@ public class ProtocolTests
     public void Missing_timestamp_is_rejected() =>
         Assert.False(Protocol.TryDecode(Line().Replace("\"t\":\"2026-10-12T08:30:00+00:00\",", ""), out _));
 
+    // Also covered by the version comparison: a missing "v" would default to 0, and TryDecode rejects any v != 1.
+    // So this passes with or without [JsonRequired] on "v"; it pins the behaviour, not the attribute.
     [Fact]
     public void Missing_version_is_rejected() =>
         Assert.False(Protocol.TryDecode(Line().Replace("\"v\":1,", ""), out _));
