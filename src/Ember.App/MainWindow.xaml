@@ -33,6 +33,8 @@
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
                 <RadioButton x:Name="NavFans" GroupName="Nav" Content="Fans"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
+                <RadioButton x:Name="NavLights" GroupName="Nav" Content="Lights"
+                             Style="{StaticResource NavItem}" Checked="OnNavChanged" />
                 <RadioButton x:Name="NavSettings" GroupName="Nav" Content="Settings"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
             </StackPanel>
@@ -255,6 +257,12 @@
                     </StackPanel>
                 </GroupBox>
             </StackPanel>
+        </ScrollViewer>
+
+        <!-- Lights -->
+        <ScrollViewer x:Name="LightsPageView" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
+                      Visibility="Collapsed">
+            <local:LightsPage x:Name="Lights" />
         </ScrollViewer>
 
         <!-- Settings -->

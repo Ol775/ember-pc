@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Threading;
 using Ember.Core;
+using Ember.Lighting;
+using Ember.Lighting.OpenRgb;
 
 namespace Ember.App;
 
@@ -10,6 +12,7 @@ public partial class MainWindow : Window
 {
     readonly MainViewModel _vm = new();
     readonly CancellationTokenSource _cts = new();
+    readonly LightingManager _lights;
     readonly DispatcherTimer _refresh;
     readonly Task _run;
     readonly GameDetection _detection = new([]);
@@ -22,6 +25,12 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _vm;
 
+        LightingManager? lights = null;
+        _lights = lights = new LightingManager(new LightingStore(LightingStore.DefaultPath), TimeProvider.System,
+            [new OpenRgbSource(() => lights?.State.OpenRgbPath, () => lights?.State.StartOpenRgb ?? false)]);
+        Lights.Attach(_lights);
+        _lights.Start();
+
         // ServiceConnection raises events on its background loop thread: queue each one onto the UI thread.
         // InvokeAsync is the non-blocking BeginInvoke, so the loop never waits for the UI.
         var connection = new ServiceConnection(PipeStreamConnector.ConnectAsync, ServiceConnection.DefaultBackoff);
@@ -33,6 +42,7 @@ public partial class MainWindow : Window
             if (s.Control is { } c) _detection.SetNotGames(c.NotGames);
             var sum = DashboardSummary.From(s);
             _cpuTemp = s.Stale ? null : sum.CpuTemp;
+            _lights.SetInputs(s.Stale ? null : sum.CpuTemp, s.Stale ? null : sum.GpuTemp, null);
             _caseTemp = s.Stale ? null : new[] { sum.CpuTemp, sum.GpuTemp, sum.MotherboardTemp }.Where(v => v is not null).Max();
         });
 
@@ -127,7 +137,8 @@ public partial class MainWindow : Window
 
     void OnNavChanged(object sender, RoutedEventArgs e)
     {
-        if (DashboardPage is null || FansPageView is null || SettingsPageView is null) return; // fires once during InitializeComponent
+        if (DashboardPage is null || FansPageView is null || SettingsPageView is null || LightsPageView is null) return; // fires once during InitializeComponent
+        LightsPageView.Visibility = NavLights.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         DashboardPage.Visibility = NavDashboard.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         FansPageView.Visibility = NavFans.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         SettingsPageView.Visibility = NavSettings.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
@@ -240,6 +251,7 @@ public partial class MainWindow : Window
         _refresh.Stop();
         _gameTimer.Stop();
         _cts.Cancel();
+        try { _lights.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3)); } catch (Exception) { /* closing anyway */ }
         // RunAsync returns on cancellation and never needs the UI thread, so a short wait cannot deadlock.
         _run.Wait(TimeSpan.FromSeconds(2));
     }

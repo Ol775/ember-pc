@@ -116,6 +116,30 @@ public sealed class LightingManager : IAsyncDisposable
 
     public void SetOpenRgb(string? path, bool start) => Mutate(s => s with { OpenRgbPath = string.IsNullOrWhiteSpace(path) ? null : path.Trim(), StartOpenRgb = start });
 
+    // Writing the file waits until the changes stop (a slider produces dozens a second) and is done once on shutdown.
+    ITimer? _saveTimer;
+    bool _dirty;
+
+    void ScheduleSave()
+    {
+        _dirty = true;
+        _saveTimer ??= _clock.CreateTimer(_ => Flush(), null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        _saveTimer.Change(TimeSpan.FromMilliseconds(400), Timeout.InfiniteTimeSpan);
+    }
+
+    void Flush()
+    {
+        LightingState state;
+        lock (_gate)
+        {
+            if (!_dirty) return;
+            _dirty = false;
+            state = _state;
+        }
+        var ok = _store.TrySave(state);
+        lock (_gate) _saveFailed = !ok;
+    }
+
     void Mutate(Func<LightingState, LightingState> change)
     {
         lock (_gate)
@@ -123,7 +147,7 @@ public sealed class LightingManager : IAsyncDisposable
             var next = change(_state);
             if (ReferenceEquals(next, _state) || !LightingState.IsValid(next)) return;
             _state = next;
-            _saveFailed = !_store.TrySave(next);
+            ScheduleSave();
         }
         Changed?.Invoke();
     }
@@ -195,7 +219,7 @@ public sealed class LightingManager : IAsyncDisposable
             if (!ReferenceEquals(withPlacements, _state))
             {
                 _state = withPlacements;
-                _saveFailed = !_store.TrySave(_state);
+                ScheduleSave();
             }
         }
         Changed?.Invoke();
@@ -214,7 +238,7 @@ public sealed class LightingManager : IAsyncDisposable
         foreach (var sink in missing)
         {
             var row = placements.Count;
-            placements.Add(new DevicePlacement(sink.Id, 0.08, Math.Min(0.88, 0.06 + 0.11 * row), 0.84, 0.07, Enabled: true));
+            placements.Add(new DevicePlacement(sink.Id, 0.08, Math.Min(0.80, 0.05 + 0.19 * row), 0.84, 0.14, Enabled: true));
         }
         var changed = scene with { Placements = placements };
         return state with { Scenes = state.Scenes.Select(x => x.Name == scene.Name ? changed : x).ToList() };
@@ -226,6 +250,8 @@ public sealed class LightingManager : IAsyncDisposable
         if (_loop is not null) { try { await _loop.ConfigureAwait(false); } catch (OperationCanceledException) { } }
         // Leave the lights the way the user last set them: only an explicit "off" darkens them.
         foreach (var s in _sources) if (s is IAsyncDisposable d) await d.DisposeAsync().ConfigureAwait(false);
+        _saveTimer?.Dispose();
+        Flush();
         _cts?.Dispose();
     }
 }
