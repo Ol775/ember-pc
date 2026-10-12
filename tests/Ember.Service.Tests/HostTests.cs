@@ -28,8 +28,7 @@ public sealed class HostTests
         }
         finally
         {
-            using var stop = new CancellationTokenSource(3000);
-            await host.StopAsync(stop.Token);
+            await host.StopAsync().WaitAsync(TimeSpan.FromSeconds(3));
         }
     }
 
@@ -38,5 +37,23 @@ public sealed class HostTests
     {
         var builder = Quiet(ServiceHost.Create([], () => throw new InvalidOperationException("driver missing"), "ember.test.unused"));
         Assert.Equal(1, Program.Run(builder));
+    }
+
+    private sealed class FaultingService : BackgroundService
+    {
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            await Task.Delay(50, stoppingToken);
+            throw new InvalidOperationException("boom");
+        }
+    }
+
+    [Fact]
+    public void Run_returns_nonzero_when_a_hosted_service_faults()
+    {
+        var builder = Quiet(ServiceHost.Create([], () => new FakeSensorSource(), $"ember.test.{Guid.NewGuid():N}"))
+            .ConfigureServices(s => s.AddHostedService<FaultingService>());
+        try { Assert.NotEqual(0, Program.Run(builder)); }
+        finally { Environment.ExitCode = 0; }
     }
 }

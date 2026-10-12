@@ -112,14 +112,43 @@ public sealed class PipeServerTests : IAsyncLifetime
         _server = new PipeServer(_hub, _name, NullLogger<PipeServer>.Instance)
         {
             RetryDelay = TimeSpan.FromMilliseconds(10),
-            CreatePipe = n => calls++ == 0 ? throw new IOException("boom") : PipeSecurityFactory.Create(n),
+            CreatePipe = (n, first) => calls++ == 1 ? throw new IOException("boom") : PipeSecurityFactory.Create(n, first),
         };
         await _server.StartAsync(CancellationToken.None);
         _hub.Publish(Snap(1));
+        // The first client consumes the first instance; creating the second instance then fails once and is retried.
+        using (var c1 = await ConnectAsync())
+        {
+            await using var e1 = SnapshotReader.ReadAsync(c1, Timeout()).GetAsyncEnumerator();
+            Assert.True(await e1.MoveNextAsync());
+        }
         using var c = await ConnectAsync();
         await using var e = SnapshotReader.ReadAsync(c, Timeout()).GetAsyncEnumerator();
         Assert.True(await e.MoveNextAsync());
         Assert.Equal(1, Value(e.Current));
+    }
+
+    [Fact]
+    public async Task Start_fails_when_the_pipe_name_is_already_taken()
+    {
+        await _server.StopAsync(CancellationToken.None);
+        using var squatter = new NamedPipeServerStream(_name, PipeDirection.Out, 4, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        var server = new PipeServer(_hub, _name, NullLogger<PipeServer>.Instance);
+        await Assert.ThrowsAnyAsync<Exception>(() => server.StartAsync(CancellationToken.None));
+        _server = server; // already failed; DisposeAsync's StopAsync is then a no-op
+    }
+
+    [Fact]
+    public async Task Several_sequential_clients_are_served()
+    {
+        _hub.Publish(Snap(1));
+        for (var i = 0; i < 3; i++)
+        {
+            using var c = await ConnectAsync();
+            await using var e = SnapshotReader.ReadAsync(c, Timeout()).GetAsyncEnumerator();
+            Assert.True(await e.MoveNextAsync());
+            Assert.Equal(1, Value(e.Current));
+        }
     }
 
     [Fact]

@@ -9,12 +9,21 @@ namespace Ember.Service;
 
 public sealed class PipeServer(SnapshotHub hub, string pipeName, ILogger<PipeServer> log) : BackgroundService
 {
-    internal Func<string, NamedPipeServerStream> CreatePipe { get; init; } = PipeSecurityFactory.Create;
+    internal Func<string, bool, NamedPipeServerStream> CreatePipe { get; init; } = PipeSecurityFactory.Create;
     internal TimeSpan RetryDelay { get; init; } = TimeSpan.FromSeconds(1);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var clients = new List<Task>();
+        // The first instance claims the name exclusively. If it fails (e.g. a squatter owns the name),
+        // fail startup instead of serving beside it.
+        NamedPipeServerStream? first;
+        try { first = CreatePipe(pipeName, true); }
+        catch (Exception ex)
+        {
+            log.LogCritical(ex, "Cannot claim pipe {Pipe} exclusively (already exists?); refusing to serve", pipeName);
+            throw;
+        }
         try
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -22,7 +31,8 @@ public sealed class PipeServer(SnapshotHub hub, string pipeName, ILogger<PipeSer
                 NamedPipeServerStream? pipe = null;
                 try
                 {
-                    pipe = CreatePipe(pipeName);
+                    pipe = first ?? CreatePipe(pipeName, false);
+                    first = null;
                     await pipe.WaitForConnectionAsync(stoppingToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
@@ -40,6 +50,7 @@ public sealed class PipeServer(SnapshotHub hub, string pipeName, ILogger<PipeSer
         }
         finally
         {
+            if (first is not null) await first.DisposeAsync().ConfigureAwait(false);
             await Task.WhenAll(clients).ConfigureAwait(false); // ServeAsync never throws
         }
     }

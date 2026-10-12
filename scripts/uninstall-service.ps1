@@ -14,8 +14,8 @@ if ($LASTEXITCODE -ne 0) {
     return
 }
 
-# Stop may fail if the service is already stopped; that is fine.
-& sc.exe stop EmberService *> $null
+# Waits for the stop; harmless if already stopped.
+Stop-Service EmberService -ErrorAction SilentlyContinue
 
 & sc.exe delete EmberService
 if ($LASTEXITCODE -ne 0) { throw "sc.exe delete failed (exit $LASTEXITCODE)." }
