@@ -13,7 +13,7 @@ public partial class MainWindow : Window
     readonly Task _run;
     readonly GameDetection _detection = new([]);
     readonly DispatcherTimer _gameTimer;
-    double? _gpuLoad;
+    double? _gpuLoad, _cpuTemp, _caseTemp;
     string? _announcedConnection, _announcedBanner, _announcedCompetitor, _announcedTest;
 
     public MainWindow()
@@ -30,6 +30,9 @@ public partial class MainWindow : Window
             _vm.Add(s);
             _gpuLoad = s.Readings.FirstOrDefault(r => r.Hardware == HardwareKind.Gpu && r.Kind == SensorKind.Load && r.Name == "GPU Core")?.Value;
             if (s.Control is { } c) _detection.SetNotGames(c.NotGames);
+            var sum = DashboardSummary.From(s);
+            _cpuTemp = s.Stale ? null : sum.CpuTemp;
+            _caseTemp = s.Stale ? null : new[] { sum.CpuTemp, sum.GpuTemp, sum.MotherboardTemp }.Where(v => v is not null).Max();
         });
 
         // Throttle: redraw at most twice a second, whatever the snapshot rate.
@@ -40,6 +43,9 @@ public partial class MainWindow : Window
         // Game detection: once a second look at the foreground program and report start, end and heartbeat to the service.
         _gameTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (_, _) => DetectGame(), Dispatcher);
         if (BuildFeatures.Current.GameDetection) _gameTimer.Start(); // beta feature: off in the alpha build
+
+        Curve.Committed += OnCurveCommitted;
+        Curve.CopyRequested += OnCurveCopy;
 
         _run = Task.Run(() => connection.RunAsync(_cts.Token));
         Closed += OnClosed;
@@ -59,6 +65,25 @@ public partial class MainWindow : Window
             if (message is not null) await ControlClient.SendAsync(message);
         }
         catch (Exception) { /* detection must never take the window down */ }
+    }
+
+    async void OnCurveCommitted(CurveGroup group, IReadOnlyList<CurvePoint> points)
+    {
+        var reply = await ControlClient.SendAsync(new SetCurve(group, points));
+        if (!reply.Ok) Curve.ReportFailure("The service did not accept that curve: " + (reply.Error ?? "unknown reason") + ".");
+    }
+
+    async void OnCurveCopy(IReadOnlyList<CurvePoint> points)
+    {
+        if (!_vm.FansPage.Curves.Equals(ManualCurves.Default)
+            && MessageBox.Show(this, "This replaces both of your manual curves with the one shown. Continue?", "Customise this curve",
+                MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+        foreach (var group in new[] { CurveGroup.Cpu, CurveGroup.Case })
+        {
+            var reply = await ControlClient.SendAsync(new SetCurve(group, points));
+            if (!reply.Ok) { Curve.ReportFailure("The service did not accept that curve: " + (reply.Error ?? "unknown reason") + "."); return; }
+        }
+        await SendAsync(new SetMode(FanMode.Manual));
     }
 
     async void OnGpuControl(object sender, RoutedEventArgs e)
@@ -142,6 +167,7 @@ public partial class MainWindow : Window
     {
         _vm.Refresh(DateTimeOffset.UtcNow);
         // WPF only announces a live region when the app raises LiveRegionChanged itself.
+        Curve.SetState(_vm.FansPage.Mode, _vm.FansPage.Curves, _cpuTemp, _caseTemp);
         if (_vm.ConnectionText != _announcedConnection)
         {
             _announcedConnection = _vm.ConnectionText;

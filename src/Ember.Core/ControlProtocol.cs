@@ -15,13 +15,16 @@ public sealed record SetNotGame(string Exe, bool NotGame) : ControlMessage;
 public sealed record ConfirmHeader(string HeaderId, bool Enabled) : ControlMessage;
 public sealed record RunHeaderTest(string HeaderId) : ControlMessage;
 public sealed record SetGpuControl(bool Enabled) : ControlMessage;
+/// <summary>Replaces one of the user's Manual-mode curves. Only the shape is checked on decoding; the service applies <see cref="ManualCurveRules"/>.</summary>
+public sealed record SetCurve(CurveGroup Group, IReadOnlyList<CurvePoint> Points) : ControlMessage;
 
 public sealed record ControlReply(bool Ok, string? Error);
 
 /// <summary>
 /// JSON-lines control messages. Trust boundary: any local interactive user can reach the control pipe, so decoding
 /// accepts only a closed set of operations with strictly validated values, and never throws. There is deliberately
-/// no message that carries a fan percentage.
+/// no message that sets a fan speed directly: the only percentages are the points of a Manual curve, which the service
+/// checks against <see cref="ManualCurveRules"/> and which the safety rules, floors and the 90 °C override still sit on top of.
 /// </summary>
 public static partial class ControlProtocol
 {
@@ -43,6 +46,14 @@ public static partial class ControlProtocol
         [JsonPropertyName("notGame")] public bool? NotGame { get; set; }
         [JsonPropertyName("id")] public string? Id { get; set; }
         [JsonPropertyName("enabled")] public bool? Enabled { get; set; }
+        [JsonPropertyName("group")] public string? Group { get; set; }
+        [JsonPropertyName("points")] public List<PointDto?>? Points { get; set; }
+    }
+
+    sealed class PointDto
+    {
+        [JsonRequired, JsonPropertyName("t")] public double T { get; set; }
+        [JsonRequired, JsonPropertyName("p")] public double P { get; set; }
     }
 
     sealed class ReplyDto
@@ -65,6 +76,10 @@ public static partial class ControlProtocol
             case ConfirmHeader x: d.Op = "confirmHeader"; d.Id = x.HeaderId; d.Enabled = x.Enabled; break;
             case RunHeaderTest x: d.Op = "runHeaderTest"; d.Id = x.HeaderId; break;
             case SetGpuControl x: d.Op = "setGpuControl"; d.Enabled = x.Enabled; break;
+            case SetCurve x:
+                d.Op = "setCurve"; d.Group = x.Group.ToString();
+                d.Points = x.Points.Select(p => (PointDto?)new PointDto { T = p.TempC, P = p.Percent }).ToList();
+                break;
             default: throw new ArgumentException("Unknown control message.", nameof(m));
         }
         return JsonSerializer.Serialize(d);
@@ -89,6 +104,7 @@ public static partial class ControlProtocol
                 "confirmHeader" => Header(d.Id) is { } h && d.Enabled is { } en ? new ConfirmHeader(h, en) : null,
                 "runHeaderTest" => Header(d.Id) is { } h ? new RunHeaderTest(h) : null,
                 "setGpuControl" => d.Enabled is { } g ? new SetGpuControl(g) : null,
+                "setCurve" => Curve(d),
                 _ => null,
             };
             return message is not null;
@@ -117,6 +133,13 @@ public static partial class ControlProtocol
         {
             return false;
         }
+    }
+
+    static SetCurve? Curve(Dto d)
+    {
+        if (d.Group is null || !Enum.IsDefined(typeof(CurveGroup), d.Group) || d.Points is not { Count: >= 2 and <= 10 } list) return null;
+        if (list.Any(p => p is null || !double.IsFinite(p.T) || !double.IsFinite(p.P))) return null;
+        return new SetCurve(Enum.Parse<CurveGroup>(d.Group), list.Select(p => new CurvePoint(p!.T, p.P)).ToList());
     }
 
     // IsDefined(string) matches names only, so numeric strings like "1" are rejected; Ai is not selectable yet.

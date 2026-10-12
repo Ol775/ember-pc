@@ -13,11 +13,14 @@ public sealed record EmberSettings(
     public static readonly EmberSettings Default =
         new(FanMode.Normal, FanMode.Performance, Array.Empty<string>(), Array.Empty<HeaderRecord>(), false);
 
+    /// <summary>The user's curves for Manual mode.</summary>
+    public ManualCurves Curves { get; init; } = ManualCurves.Default;
+
     // Record value equality compares list references, so Default equality needs content comparison in tests/callers.
     public bool Equals(EmberSettings? other) =>
         other is not null && NormalMode == other.NormalMode && GameMode == other.GameMode
         && GpuControlEnabled == other.GpuControlEnabled && NotGames.SequenceEqual(other.NotGames)
-        && Headers.SequenceEqual(other.Headers);
+        && Headers.SequenceEqual(other.Headers) && Curves.Equals(other.Curves);
 
     public override int GetHashCode() => HashCode.Combine(NormalMode, GameMode, GpuControlEnabled, NotGames.Count, Headers.Count);
 }
@@ -53,7 +56,15 @@ public sealed class SettingsStore(string path)
             if (notGames is null || headers is null || notGames.Any(e => e is null)
                 || headers.Any(r => r is null || r.Id is null || r.Group is null))
                 return d;
-            return new EmberSettings(normal, game, Normalize(notGames), headers, gpu);
+            var curves = ManualCurves.Default;
+            // A bad curve costs only the curves, never the rest of the settings.
+            if (root.TryGetProperty("Curves", out var cv))
+            {
+                ManualCurves? parsed = null;
+                try { parsed = cv.Deserialize<ManualCurves>(Options); } catch (JsonException) { /* keep the defaults */ }
+                if (parsed is not null && ManualCurveRules.Check(parsed.Cpu) is null && ManualCurveRules.Check(parsed.Case) is null) curves = parsed;
+            }
+            return new EmberSettings(normal, game, Normalize(notGames), headers, gpu) { Curves = curves };
         }
         catch (Exception)
         {

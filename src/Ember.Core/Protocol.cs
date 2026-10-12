@@ -36,6 +36,14 @@ public static class Protocol
         [JsonPropertyName("t")] public string? T { get; set; }
         [JsonPropertyName("ng")] public List<string?>? Ng { get; set; }
         [JsonPropertyName("gc")] public bool Gc { get; set; }
+        // Optional: the Manual-mode curves, as [temp, percent] pairs.
+        [JsonPropertyName("mc")] public CurvesDto? Mc { get; set; }
+    }
+
+    sealed class CurvesDto
+    {
+        [JsonRequired, JsonPropertyName("cpu")] public List<double[]?>? Cpu { get; set; }
+        [JsonRequired, JsonPropertyName("case")] public List<double[]?>? Case { get; set; }
     }
 
     sealed class HeaderDto
@@ -67,12 +75,18 @@ public static class Protocol
             H = s.Control.Headers.Select(h => (HeaderDto?)new HeaderDto { Id = h.Id, N = h.Name, St = h.State.ToString(), Ok = h.Tested }).ToList(),
             X = s.Control.Competitors.Select(c => (string?)c).ToList(), T = s.Control.TestMessage,
             Ng = s.Control.NotGames.Select(c => (string?)c).ToList(), Gc = s.Control.GpuControl,
+            Mc = new CurvesDto { Cpu = Pairs(s.Control.Curves.Cpu), Case = Pairs(s.Control.Curves.Case) },
         },
         R = s.Readings.Select(r => (ReadingDto?)new ReadingDto
         {
             Id = r.Id, N = r.Name, H = r.Hardware.ToString(), K = r.Kind.ToString(), Val = r.Value,
         }).ToList(),
     });
+
+    static List<double[]?> Pairs(IReadOnlyList<CurvePoint> points) => points.Select(p => (double[]?)new[] { p.TempC, p.Percent }).ToList();
+
+    static IReadOnlyList<CurvePoint>? Points(List<double[]?>? pairs) =>
+        pairs is null || pairs.Any(p => p is not { Length: 2 }) ? null : pairs.Select(p => new CurvePoint(p![0], p[1])).ToList();
 
     static bool TryDecodeControl(ControlDto c, out FanControlStatus? status)
     {
@@ -88,8 +102,17 @@ public static class Protocol
         }
         if (c.X.Any(x => x is null)) return false;
         if (c.Ng is not null && c.Ng.Any(x => x is null)) return false;
+        ManualCurves? curves = null;
+        if (c.Mc is not null)
+        {
+            // A curve that does not pass the rules is a broken message, not something to draw.
+            var cpu = Points(c.Mc.Cpu);
+            var cas = Points(c.Mc.Case);
+            if (ManualCurveRules.Check(cpu) is not null || ManualCurveRules.Check(cas) is not null) return false;
+            curves = new ManualCurves(cpu!, cas!);
+        }
         status = new FanControlStatus(Enum.Parse<FanMode>(c.M), Enum.Parse<ModeSource>(c.S), c.So, c.G, headers,
-            c.X.Select(x => x!).ToList(), c.T, c.Ng?.Select(x => x!).ToList(), c.Gc);
+            c.X.Select(x => x!).ToList(), c.T, c.Ng?.Select(x => x!).ToList(), c.Gc, curves);
         return true;
     }
 

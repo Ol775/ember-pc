@@ -47,6 +47,7 @@ public sealed class FanControlLoop : BackgroundService
     bool _disposed;
     string? _testingHeader;
     EmberSettings _settings;
+    Dictionary<Group, FanCurve> _manualCurves;
     ModeResolver _resolver;
     IReadOnlyList<string> _competitors = [];
     DateTimeOffset _lastScan = DateTimeOffset.MinValue;
@@ -67,6 +68,7 @@ public sealed class FanControlLoop : BackgroundService
         _identity = identity;
         _features = features ?? BuildFeatures.All;
         _settings = store.Load();
+        _manualCurves = BuildManual(_settings.Curves);
         _resolver = new ModeResolver(_settings.NormalMode, _settings.GameMode);
         _status = BuildStatus(false);
     }
@@ -181,7 +183,6 @@ public sealed class FanControlLoop : BackgroundService
     void DriveHeaders(Dictionary<TempSource, double?> temps, SafetyResult safety)
     {
         var headers = _fans.Enumerate().ToDictionary(h => h.Id);
-        var curve = ModePresets.Get(_resolver.Effective);
         var percents = new Dictionary<Group, double>();
         var driven = new HashSet<string>();
 
@@ -192,7 +193,7 @@ public sealed class FanControlLoop : BackgroundService
 
             if (!percents.TryGetValue(group, out var percent))
             {
-                percent = Compute(group, temps, safety, curve);
+                percent = Compute(group, temps, safety, CurveFor(group));
                 percents[group] = percent;
                 _lastPercent[group] = percent;
             }
@@ -214,6 +215,17 @@ public sealed class FanControlLoop : BackgroundService
         // A header Ember wrote earlier but no longer drives (disabled, or a failed release last time): hand it back.
         foreach (var id in _written.Except(driven).ToList()) TryRelease(id);
     }
+
+    /// <summary>The curve in force for a group: the preset of the effective mode, or the user's own curve in Manual mode.</summary>
+    FanCurve CurveFor(Group group) =>
+        _resolver.Effective == FanMode.Manual ? _manualCurves[group] : ModePresets.Get(_resolver.Effective);
+
+    /// <summary>One FanCurve instance per group, kept until the user edits it: the engine treats a new instance as a changed curve.</summary>
+    static Dictionary<Group, FanCurve> BuildManual(ManualCurves curves) => new()
+    {
+        [Group.CpuPump] = new FanCurve(curves.Cpu),
+        [Group.Case] = new FanCurve(curves.Case),
+    };
 
     /// <summary>A write failed: the fan may be at a stale low value. Make it loud (100%), or hand it back if even that fails.</summary>
     void FailSafe(string id)
@@ -314,7 +326,7 @@ public sealed class FanControlLoop : BackgroundService
             return new HeaderStatus(h.Id, h.Name, state, record is not null && IsTested(record));
         }).ToList();
         return new FanControlStatus(_resolver.Effective, _resolver.Source, safetyOverride, _resolver.GameExe, rows,
-            _competitors, _testMessage, _settings.NotGames, GpuAllowed);
+            _competitors, _testMessage, _settings.NotGames, GpuAllowed, _settings.Curves);
     }
 
     /// <summary>Handles one validated control message. Called from the control pipe.</summary>
@@ -370,6 +382,11 @@ public sealed class FanControlLoop : BackgroundService
                     if (!_features.GpuFan) return NotInBuild("GPU fan control");
                     Save(_settings with { GpuControlEnabled = g.Enabled });
                     if (!g.Enabled) ReleaseWhere(IsGpu);
+                    return Ok();
+                case SetCurve sc:
+                    if (ManualCurveRules.Check(sc.Points) is { } why) return new ControlReply(false, why);
+                    Save(_settings with { Curves = _settings.Curves.With(sc.Group, sc.Points.ToList()) });
+                    _manualCurves = BuildManual(_settings.Curves);
                     return Ok();
                 case ConfirmHeader c:
                     return Confirm(c);

@@ -116,7 +116,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         a.ServiceAvailable == b.ServiceAvailable && a.Message == b.Message && a.SourceText == b.SourceText
         && a.CompetitorWarning == b.CompetitorWarning && a.SafetyNote == b.SafetyNote && a.TestMessage == b.TestMessage
         && a.Modes.SequenceEqual(b.Modes) && a.Headers.SequenceEqual(b.Headers)
-        && a.GpuControl == b.GpuControl && a.Competitors.SequenceEqual(b.Competitors) && a.DetectedGame == b.DetectedGame && (a.NotGames ?? []).SequenceEqual(b.NotGames ?? []);
+        && a.Mode == b.Mode && a.Curves.Equals(b.Curves) && a.GpuControl == b.GpuControl && a.Competitors.SequenceEqual(b.Competitors) && a.DetectedGame == b.DetectedGame && (a.NotGames ?? []).SequenceEqual(b.NotGames ?? []);
 
     static PointCollection Points(IReadOnlyList<(double X, double Y)> line)
     {

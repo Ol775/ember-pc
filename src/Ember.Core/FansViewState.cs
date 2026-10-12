@@ -16,8 +16,11 @@ public sealed record FansView(
     bool ServiceAvailable, string? Message, IReadOnlyList<ModeItem> Modes, string SourceText,
     string? CompetitorWarning, string? SafetyNote, IReadOnlyList<HeaderRow> Headers, string? TestMessage,
     string? DetectedGame = null, IReadOnlyList<string>? NotGames = null, bool GpuControl = false,
-    IReadOnlyList<string>? CompetitorNames = null)
+    IReadOnlyList<string>? CompetitorNames = null, FanMode Mode = FanMode.Normal, ManualCurves? ManualCurves = null)
 {
+    /// <summary>The user's Manual-mode curves (the Normal preset until they change them).</summary>
+    public ManualCurves Curves => ManualCurves ?? Ember.Core.ManualCurves.Default;
+
     /// <summary>Display names of the detected fan-control programs (for the close button).</summary>
     public IReadOnlyList<string> Competitors => CompetitorNames ?? Array.Empty<string>();
 }
@@ -25,7 +28,7 @@ public sealed record FansView(
 /// <summary>Turns the service's fan control status into what the Fans page shows. Pure, so it is tested without WPF.</summary>
 public static class FansViewState
 {
-    static readonly FanMode[] Order = [FanMode.Quiet, FanMode.Normal, FanMode.Performance, FanMode.Extreme, FanMode.Ai];
+    static readonly FanMode[] Order = [FanMode.Quiet, FanMode.Normal, FanMode.Performance, FanMode.Extreme, FanMode.Manual, FanMode.Ai];
 
     public static FansView Render(FanControlStatus? status, bool connected, BuildFeatures? features = null)
     {
@@ -53,7 +56,8 @@ public static class FansViewState
             status.SafetyOverride
                 ? "Safety override: all controlled fans are at 100% because a temperature is too high or a sensor is missing."
                 : null,
-            headers, status.TestMessage, status.GameExe, status.NotGames, status.GpuControl, status.Competitors);
+            headers, status.TestMessage, status.GameExe, status.NotGames, status.GpuControl, status.Competitors,
+            status.Mode, status.Curves);
     }
 
     static HeaderRow Row(HeaderStatus h, bool competing, string names, bool gpuInBuild)

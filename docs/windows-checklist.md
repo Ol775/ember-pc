@@ -1,4 +1,4 @@
-﻿# Windows verification checklist (phase 1)
+# Windows verification checklist (phase 1)
 
 Phase 1 was written and unit-tested on macOS. The app, the service's hardware code, the pipe ACL and the install
 scripts can only be verified on Windows. Run these checks on the Windows PC and fill in the **Result** column
@@ -91,3 +91,4 @@ runs. Have HWiNFO open to watch RPM. Install the watchdog first (`scripts\instal
 | **p18.** Corrupt `%ProgramData%\Ember\settings.json` by hand, restart the service | Service starts, no header is driven, defaults apply. | pass | Garbage file: service starts, no header Enabled. Restored afterwards. |
 | **p19.** ACLs: `Get-Acl %ProgramData%\Ember`, and the control pipe `ember.ctl.v1` | Folder: SYSTEM and Administrators full control, Users read only. Pipe: Interactive read/write, no Everyone. | pass | Folder and file: SYSTEM and Administrators full, Users read only. Control pipe connects for the interactive user. |
 | **p20.** GPU fan (optional): tick "Allow Ember to control the GPU fan", Test it | Either passes (then Enable works, floor 30%) or fails and stays unused. Unticking releases it. | | |
+| **p21.** Fans page, Manual mode: pick Manual, drag a point, nudge one with the arrow keys, add and remove a point, switch between CPU fan and System fans, Reset to Normal | The curve redraws, the service has the new points (`ember.v1` status `mc`), the fans follow the curve, a curve that is slow when hot is not sent. Presets show read-only with a "Customise this curve" button. | pass | Drag, arrow keys, group switch and reset checked on the PC; the hot-end rule is covered by unit tests. |

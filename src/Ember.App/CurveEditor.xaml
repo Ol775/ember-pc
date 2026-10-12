@@ -1,0 +1,50 @@
+<UserControl x:Class="Ember.App.CurveEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Focusable="False">
+    <UserControl.Resources>
+        <!-- A draggable point. A real Thumb: focusable, so the arrow keys move it too. -->
+        <Style x:Key="PointThumb" TargetType="Thumb">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Focusable" Value="True" />
+            <Setter Property="Cursor" Value="SizeAll" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Ellipse x:Name="Dot" Fill="{StaticResource AccentBrush}" Stroke="{StaticResource TextBrush}" StrokeThickness="2" />
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="Dot" Property="StrokeThickness" Value="5" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Dot" Property="StrokeThickness" Value="4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+    <StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <RadioButton x:Name="CpuGroup" GroupName="CurveGroup" Content="CPU fan" IsChecked="True" Checked="OnGroupChecked"
+                         Foreground="{StaticResource TextBrush}" Margin="0,0,24,0" />
+            <RadioButton x:Name="CaseGroup" GroupName="CurveGroup" Content="System fans" Checked="OnGroupChecked"
+                         Foreground="{StaticResource TextBrush}" />
+        </StackPanel>
+        <TextBlock x:Name="Hint" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,4" />
+        <TextBlock x:Name="NowText" TextWrapping="Wrap" Margin="0,0,0,8" />
+        <Canvas x:Name="Plot" Height="260" Background="Transparent" SizeChanged="OnPlotSizeChanged" />
+        <TextBlock x:Name="Readout" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
+        <TextBlock x:Name="Problem" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{StaticResource AccentBrush}"
+                   AutomationProperties.LiveSetting="Assertive" />
+        <WrapPanel Margin="0,10,0,0">
+            <Button x:Name="AddButton" Content="Add point" Click="OnAdd" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
+            <Button x:Name="RemoveButton" Content="Remove point" Click="OnRemove" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
+            <Button x:Name="ResetButton" Content="Reset to Normal" Click="OnReset" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
+            <Button x:Name="CopyButton" Content="Customise this curve" Click="OnCopy" Style="{StaticResource ActionButton}" Margin="0" />
+        </WrapPanel>
+    </StackPanel>
+</UserControl>

@@ -8,8 +8,11 @@ public sealed record HeaderStatus(string Id, string Name, HeaderState State, boo
 public sealed record FanControlStatus(
     FanMode Mode, ModeSource Source, bool SafetyOverride, string? GameExe,
     IReadOnlyList<HeaderStatus> Headers, IReadOnlyList<string> Competitors, string? TestMessage,
-    IReadOnlyList<string>? NotGamesList = null, bool GpuControl = false)
+    IReadOnlyList<string>? NotGamesList = null, bool GpuControl = false, ManualCurves? ManualCurvesOrNull = null)
 {
     /// <summary>Programs the user marked "not a game" (lower case).</summary>
     public IReadOnlyList<string> NotGames => NotGamesList ?? Array.Empty<string>();
+
+    /// <summary>The user's Manual-mode curves (the Normal preset until they change them).</summary>
+    public ManualCurves Curves => ManualCurvesOrNull ?? ManualCurves.Default;
 }

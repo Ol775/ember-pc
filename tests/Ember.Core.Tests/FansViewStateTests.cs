@@ -12,7 +12,7 @@ public class FansViewStateTests
     public void Ai_item_disabled_and_other_modes_enabled()
     {
         var v = FansViewState.Render(Status(), true);
-        Assert.Equal(5, v.Modes.Count);
+        Assert.Equal(6, v.Modes.Count);
         Assert.All(v.Modes.Where(m => m.Mode != FanMode.Ai), m => Assert.True(m.Enabled));
         var ai = v.Modes.Single(m => m.Mode == FanMode.Ai);
         Assert.False(ai.Enabled);

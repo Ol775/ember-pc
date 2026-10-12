@@ -176,6 +176,10 @@
                     </StackPanel>
                 </GroupBox>
 
+                <GroupBox Header="Fan curve" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan curve">
+                    <local:CurveEditor x:Name="Curve" />
+                </GroupBox>
+
                 <GroupBox Header="Games" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Games"
                           Visibility="{Binding BetaGamesVisibility}">
                     <StackPanel>
