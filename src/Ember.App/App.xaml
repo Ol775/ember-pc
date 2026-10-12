@@ -68,25 +68,37 @@
             </Setter>
         </Style>
 
+        <SolidColorBrush x:Key="TrackBrush" Color="#241f1c" />
+        <SolidColorBrush x:Key="SegmentOnBrush" Color="#4b413a" />
+        <SolidColorBrush x:Key="SegmentHoverBrush" Color="#322b27" />
+        <SolidColorBrush x:Key="ButtonBrush" Color="#352e29" />
+        <SolidColorBrush x:Key="ButtonHoverBrush" Color="#463c35" />
+        <SolidColorBrush x:Key="ButtonPressedBrush" Color="#574a41" />
+
+        <!-- Pill buttons: soft fill, fully rounded, a lighter fill on hover and a darker one when pressed. -->
         <Style x:Key="ActionButton" TargetType="Button">
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-            <Setter Property="Background" Value="{StaticResource PanelBorderBrush}" />
-            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="Background" Value="{StaticResource ButtonBrush}" />
+            <Setter Property="Padding" Value="16,7" />
             <Setter Property="Margin" Value="4,0,0,0" />
+            <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Box" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="Box" Background="{TemplateBinding Background}" CornerRadius="15" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Box" Property="Opacity" Value="0.45" />
-                            </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                                <Setter TargetName="Box" Property="BorderThickness" Value="1" />
+                                <Setter TargetName="Box" Property="Background" Value="{StaticResource ButtonHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="{StaticResource ButtonPressedBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Box" Property="Opacity" Value="0.4" />
+                                <Setter Property="Cursor" Value="Arrow" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -94,6 +106,72 @@
             </Setter>
         </Style>
 
+        <!-- Segmented control: the radio buttons of one choice sit together on a rounded track, the chosen one is a raised pill. -->
+        <Style x:Key="SegmentTrack" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource TrackBrush}" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Padding" Value="3" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+
+        <Style x:Key="Segment" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Pill" CornerRadius="11" Padding="14,6" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="False" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Pill" Property="Background" Value="{StaticResource SegmentHoverBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Pill" Property="Background" Value="{StaticResource SegmentOnBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- On/off switch in place of a check box. -->
+        <Style x:Key="SwitchBox" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal" Background="Transparent">
+                            <Border x:Name="Track" Width="38" Height="22" CornerRadius="11" Background="#4b413a" VerticalAlignment="Center">
+                                <Ellipse x:Name="Knob" Width="18" Height="18" Fill="White" HorizontalAlignment="Left" Margin="2,0,0,0" />
+                            </Border>
+                            <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="False" />
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
+                                <Setter TargetName="Knob" Property="Margin" Value="0,0,2,0" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="StatValue" TargetType="TextBlock">
             <Setter Property="FontSize" Value="30" />
             <Setter Property="FontWeight" Value="SemiBold" />

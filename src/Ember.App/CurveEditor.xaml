@@ -28,12 +28,14 @@
         </Style>
     </UserControl.Resources>
     <StackPanel>
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-            <RadioButton x:Name="CpuGroup" GroupName="CurveGroup" Content="CPU fan" IsChecked="True" Checked="OnGroupChecked"
-                         Foreground="{StaticResource TextBrush}" Margin="0,0,24,0" />
-            <RadioButton x:Name="CaseGroup" GroupName="CurveGroup" Content="System fans" Checked="OnGroupChecked"
-                         Foreground="{StaticResource TextBrush}" />
-        </StackPanel>
+        <Border Style="{StaticResource SegmentTrack}" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="CpuGroup" GroupName="CurveGroup" Content="CPU fan" IsChecked="True" Checked="OnGroupChecked"
+                             Style="{StaticResource Segment}" />
+                <RadioButton x:Name="CaseGroup" GroupName="CurveGroup" Content="System fans" Checked="OnGroupChecked"
+                             Style="{StaticResource Segment}" />
+            </StackPanel>
+        </Border>
         <TextBlock x:Name="Hint" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,4" />
         <TextBlock x:Name="NowText" TextWrapping="Wrap" Margin="0,0,0,8" />
         <Canvas x:Name="Plot" Height="260" Background="Transparent" SizeChanged="OnPlotSizeChanged" />

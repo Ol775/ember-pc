@@ -29,7 +29,7 @@
                     Style="{StaticResource ActionButton}" Visibility="{Binding NotElevatedVisibility}"
                     ToolTip="Needed to close fan-control programs that run as administrator." />
             <CheckBox DockPanel.Dock="Bottom" Content="Show °F" IsChecked="{Binding UseFahrenheit}" Margin="20,0,20,16"
-                      Foreground="{StaticResource TextBrush}" />
+                      Style="{StaticResource SwitchBox}" />
             <StackPanel VerticalAlignment="Top">
                 <RadioButton x:Name="NavDashboard" GroupName="Nav" Content="Dashboard" IsChecked="True"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
@@ -158,6 +158,7 @@
 
                 <GroupBox Header="Mode" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan mode">
                     <StackPanel>
+                        <Border Style="{StaticResource SegmentTrack}">
                         <ItemsControl ItemsSource="{Binding FansPage.Modes}" Focusable="False">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -168,10 +169,11 @@
                                 <DataTemplate>
                                     <RadioButton GroupName="FanMode" Content="{Binding Label}" IsChecked="{Binding Selected, Mode=OneWay}"
                                                  IsEnabled="{Binding Enabled}" Tag="{Binding Mode}" Click="OnModePicked"
-                                                 Foreground="{StaticResource TextBrush}" Margin="0,0,24,0" />
+                                                 Style="{StaticResource Segment}" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        </Border>
                         <TextBlock Text="{Binding FansPage.SourceText}" Foreground="{StaticResource MutedBrush}" Margin="0,8,0,0" />
                     </StackPanel>
                 </GroupBox>
@@ -211,7 +213,7 @@
                 <GroupBox Header="Fan headers" Style="{StaticResource Panel}" AutomationProperties.Name="Fan headers">
                     <StackPanel>
                         <CheckBox Content="Allow Ember to control the GPU fan (optional, test it first)" IsChecked="{Binding FansPage.GpuControl, Mode=OneWay}"
-                                  Click="OnGpuControl" Foreground="{StaticResource TextBrush}" Margin="0,0,0,8"
+                                  Click="OnGpuControl" Style="{StaticResource SwitchBox}" Margin="0,0,0,8"
                                   Visibility="{Binding BetaGpuVisibility}" />
                         <TextBlock Text="No fan headers reported" Foreground="{StaticResource MutedBrush}"
                                    Visibility="{Binding NoHeadersVisibility}" />
