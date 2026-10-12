@@ -164,6 +164,33 @@
                     </StackPanel>
                 </GroupBox>
 
+                <GroupBox Header="Games" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Games">
+                    <StackPanel>
+                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
+                                   Text="Ember switches to game mode when a full-screen program keeps your GPU busy. If it guesses wrong, mark the program as not a game." />
+                        <DockPanel Margin="0,8,0,0" Visibility="{Binding DetectedGameVisibility}">
+                            <Button DockPanel.Dock="Right" Content="Not a game" Tag="{Binding FansPage.DetectedGame}" Click="OnNotAGame"
+                                    Style="{StaticResource ActionButton}"
+                                    AutomationProperties.Name="{Binding FansPage.DetectedGame, StringFormat=Mark {0} as not a game}" />
+                            <TextBlock Text="{Binding FansPage.DetectedGame, StringFormat=Game detected: {0}}" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <TextBlock Text="Not games" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,4"
+                                   Visibility="{Binding NotGamesVisibility}" />
+                        <ItemsControl ItemsSource="{Binding FansPage.NotGames}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,2">
+                                        <Button DockPanel.Dock="Right" Content="Undo" Tag="{Binding}" Click="OnUndoNotAGame"
+                                                Style="{StaticResource ActionButton}"
+                                                AutomationProperties.Name="{Binding StringFormat=Treat {0} as a game again}" />
+                                        <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </GroupBox>
+
                 <GroupBox Header="Fan headers" Style="{StaticResource Panel}" AutomationProperties.Name="Fan headers">
                     <StackPanel>
                         <TextBlock Text="No fan headers reported" Foreground="{StaticResource MutedBrush}"

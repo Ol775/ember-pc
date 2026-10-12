@@ -212,7 +212,7 @@ public sealed class FanControlLoop : BackgroundService
             return new HeaderStatus(h.Id, h.Name, state, record is not null && IsTested(record));
         }).ToList();
         return new FanControlStatus(_resolver.Effective, _resolver.Source, safetyOverride, _resolver.GameExe, rows,
-            _competitors, _testMessage);
+            _competitors, _testMessage, _settings.NotGames);
     }
 
     /// <summary>Handles one validated control message. Called from the control pipe.</summary>

@@ -11,6 +11,9 @@ public partial class MainWindow : Window
     readonly CancellationTokenSource _cts = new();
     readonly DispatcherTimer _refresh;
     readonly Task _run;
+    readonly GameDetection _detection = new([]);
+    readonly DispatcherTimer _gameTimer;
+    double? _gpuLoad;
     string? _announcedConnection, _announcedBanner, _announcedCompetitor, _announcedTest;
 
     public MainWindow()
@@ -22,15 +25,50 @@ public partial class MainWindow : Window
         // InvokeAsync is the non-blocking BeginInvoke, so the loop never waits for the UI.
         var connection = new ServiceConnection(PipeStreamConnector.ConnectAsync, ServiceConnection.DefaultBackoff);
         connection.StateChanged += s => Dispatcher.InvokeAsync(() => _vm.SetConnection(s));
-        connection.SnapshotReceived += s => Dispatcher.InvokeAsync(() => _vm.Add(s));
+        connection.SnapshotReceived += s => Dispatcher.InvokeAsync(() =>
+        {
+            _vm.Add(s);
+            _gpuLoad = s.Readings.FirstOrDefault(r => r.Hardware == HardwareKind.Gpu && r.Kind == SensorKind.Load && r.Name == "GPU Core")?.Value;
+            if (s.Control is { } c) _detection.SetNotGames(c.NotGames);
+        });
 
         // Throttle: redraw at most twice a second, whatever the snapshot rate.
         _refresh = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Background,
             (_, _) => Refresh(), Dispatcher);
         _refresh.Start();
 
+        // Game detection: once a second look at the foreground program and report start, end and heartbeat to the service.
+        _gameTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (_, _) => DetectGame(), Dispatcher);
+        _gameTimer.Start();
+
         _run = Task.Run(() => connection.RunAsync(_cts.Token));
         Closed += OnClosed;
+    }
+
+    async void DetectGame()
+    {
+        try
+        {
+            ControlMessage? message = _detection.Update(DateTimeOffset.UtcNow, GameDetectorWindows.Foreground(), _gpuLoad) switch
+            {
+                GameEvent.Started s => new GameStarted(s.Exe),
+                GameEvent.Ended => new GameEnded(),
+                GameEvent.Heartbeat => new DetectorHeartbeat(),
+                _ => null,
+            };
+            if (message is not null) await ControlClient.SendAsync(message);
+        }
+        catch (Exception) { /* detection must never take the window down */ }
+    }
+
+    async void OnNotAGame(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string exe }) await SendAsync(new SetNotGame(exe, true));
+    }
+
+    async void OnUndoNotAGame(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string exe }) await SendAsync(new SetNotGame(exe, false));
     }
 
     void OnNavChanged(object sender, RoutedEventArgs e)
@@ -109,6 +147,7 @@ public partial class MainWindow : Window
     void OnClosed(object? sender, EventArgs e)
     {
         _refresh.Stop();
+        _gameTimer.Stop();
         _cts.Cancel();
         // RunAsync returns on cancellation and never needs the UI thread, so a short wait cannot deadlock.
         _run.Wait(TimeSpan.FromSeconds(2));

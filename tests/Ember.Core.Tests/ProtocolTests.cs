@@ -132,7 +132,7 @@ public class ProtocolControlTests
         new DateTimeOffset(2026, 10, 12, 8, 30, 0, TimeSpan.Zero), Array.Empty<SensorReading>(), false, DriverStatus.Ok,
         new FanControlStatus(FanMode.Quiet, ModeSource.GameOverride, true, "game.exe",
             new[] { new HeaderStatus("/lpc/nct6687d/0/control/2", "System Fan #1", HeaderState.Enabled, true) },
-            new[] { "Fan Control" }, "Test passed"));
+            new[] { "Fan Control" }, "Test passed", new[] { "chrome.exe" }));
 
     [Fact]
     public void Round_trip_preserves_control_status()
@@ -147,6 +147,7 @@ public class ProtocolControlTests
         Assert.Equal(s.Control!.Headers, c.Headers);
         Assert.Equal(new[] { "Fan Control" }, c.Competitors);
         Assert.Equal("Test passed", c.TestMessage);
+        Assert.Equal(new[] { "chrome.exe" }, c.NotGames);
     }
 
     [Fact]

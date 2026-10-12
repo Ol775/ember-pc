@@ -266,6 +266,16 @@ public sealed class FanControlLoopTests : IDisposable
     }
 
     [Fact]
+    public void Status_lists_not_games()
+    {
+        var loop = Loop();
+        loop.Handle(new SetNotGame("Chrome.exe", true));
+        Assert.Equal(new[] { "chrome.exe" }, loop.Status.NotGames);
+        loop.Handle(new SetNotGame("chrome.exe", false));
+        Assert.Empty(loop.Status.NotGames);
+    }
+
+    [Fact]
     public void Not_a_game_is_ignored_when_it_reports_a_game()
     {
         var loop = Loop(EmberSettings.Default with { NotGames = new[] { "chrome.exe" } });

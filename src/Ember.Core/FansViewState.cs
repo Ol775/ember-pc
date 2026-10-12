@@ -14,7 +14,8 @@ public sealed record HeaderRow(string Id, string Name, string StateText, bool Ca
 
 public sealed record FansView(
     bool ServiceAvailable, string? Message, IReadOnlyList<ModeItem> Modes, string SourceText,
-    string? CompetitorWarning, string? SafetyNote, IReadOnlyList<HeaderRow> Headers, string? TestMessage);
+    string? CompetitorWarning, string? SafetyNote, IReadOnlyList<HeaderRow> Headers, string? TestMessage,
+    string? DetectedGame = null, IReadOnlyList<string>? NotGames = null);
 
 /// <summary>Turns the service's fan control status into what the Fans page shows. Pure, so it is tested without WPF.</summary>
 public static class FansViewState
@@ -46,7 +47,7 @@ public static class FansViewState
             status.SafetyOverride
                 ? "Safety override: all controlled fans are at 100% because a temperature is too high or a sensor is missing."
                 : null,
-            headers, status.TestMessage);
+            headers, status.TestMessage, status.GameExe, status.NotGames);
     }
 
     static HeaderRow Row(HeaderStatus h, bool competing, string names)

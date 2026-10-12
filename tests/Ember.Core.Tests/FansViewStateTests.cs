@@ -107,3 +107,25 @@ public class FansViewStateTests
     [Fact]
     public void No_safety_note_normally() => Assert.Null(FansViewState.Render(Status(), true).SafetyNote);
 }
+
+public class FansViewGamesTests
+{
+    [Fact]
+    public void Detected_game_and_not_game_list_are_exposed()
+    {
+        var status = new FanControlStatus(FanMode.Normal, ModeSource.Game, false, "game.exe", Array.Empty<HeaderStatus>(),
+            Array.Empty<string>(), null, new[] { "chrome.exe" });
+        var v = FansViewState.Render(status, true);
+        Assert.Equal("game.exe", v.DetectedGame);
+        Assert.Equal(new[] { "chrome.exe" }, v.NotGames);
+    }
+
+    [Fact]
+    public void No_game_gives_null_detected_and_empty_list()
+    {
+        var v = FansViewState.Render(new FanControlStatus(FanMode.Normal, ModeSource.User, false, null,
+            Array.Empty<HeaderStatus>(), Array.Empty<string>(), null), true);
+        Assert.Null(v.DetectedGame);
+        Assert.Empty(v.NotGames!);
+    }
+}
