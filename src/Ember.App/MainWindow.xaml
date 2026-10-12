@@ -21,7 +21,7 @@
                        AutomationProperties.HeadingLevel="Level1" />
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="20,0,20,20">
                 <Ellipse Width="10" Height="10" Fill="{Binding ConnectionBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                <TextBlock Text="{Binding ConnectionText}" Foreground="{StaticResource MutedBrush}"
+                <TextBlock x:Name="ConnectionLabel" Text="{Binding ConnectionText}" Foreground="{StaticResource MutedBrush}"
                            AutomationProperties.LiveSetting="Polite" />
             </StackPanel>
             <!-- Only one page in phase 1, so the navigation entry is a static "current page" marker, not a control. -->
@@ -40,7 +40,7 @@
                 <Border Background="{StaticResource BannerBrush}" BorderBrush="{StaticResource AccentBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
                         Visibility="{Binding DriverBannerVisibility}">
-                    <TextBlock Text="{Binding DriverBannerText}" TextWrapping="Wrap"
+                    <TextBlock x:Name="BannerLabel" Text="{Binding DriverBannerText}" TextWrapping="Wrap"
                                AutomationProperties.LiveSetting="Assertive" />
                 </Border>
 

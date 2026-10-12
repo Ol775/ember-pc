@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Threading;
 using Ember.Core;
 
@@ -10,6 +11,7 @@ public partial class MainWindow : Window
     readonly CancellationTokenSource _cts = new();
     readonly DispatcherTimer _refresh;
     readonly Task _run;
+    string? _announcedConnection, _announcedBanner;
 
     public MainWindow()
     {
@@ -24,7 +26,7 @@ public partial class MainWindow : Window
 
         // Throttle: redraw at most twice a second, whatever the snapshot rate.
         _refresh = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Background,
-            (_, _) => _vm.Refresh(DateTimeOffset.UtcNow), Dispatcher);
+            (_, _) => Refresh(), Dispatcher);
         _refresh.Start();
 
         _run = Task.Run(() => connection.RunAsync(_cts.Token));
@@ -34,7 +36,29 @@ public partial class MainWindow : Window
     void OnChartSizeChanged(object sender, SizeChangedEventArgs e)
     {
         _vm.SetChartSize(e.NewSize.Width, e.NewSize.Height);
+        Refresh();
+    }
+
+    void Refresh()
+    {
         _vm.Refresh(DateTimeOffset.UtcNow);
+        // WPF only announces a live region when the app raises LiveRegionChanged itself.
+        if (_vm.ConnectionText != _announcedConnection)
+        {
+            _announcedConnection = _vm.ConnectionText;
+            Announce(ConnectionLabel);
+        }
+        if (_vm.DriverBannerText != _announcedBanner)
+        {
+            _announcedBanner = _vm.DriverBannerText;
+            if (_announcedBanner is not null) Announce(BannerLabel);
+        }
+    }
+
+    static void Announce(UIElement element)
+    {
+        if (!AutomationPeer.ListenerExists(AutomationEvents.LiveRegionChanged)) return;
+        UIElementAutomationPeer.CreatePeerForElement(element)?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
     }
 
     void OnClosed(object? sender, EventArgs e)
