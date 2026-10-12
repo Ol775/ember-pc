@@ -39,7 +39,7 @@ public static class ServiceHost
                             p.GetRequiredService<ILogger<FanControlLoop>>(), identity?.Invoke() ?? new FanControlIdentity("unknown", "unknown"));
                         loop.Runner = new HeaderTestRunner(fans, id => Reading(hub, id.Replace("/control/", "/fan/", StringComparison.Ordinal)),
                             id => Reading(hub, id), Task.Delay,
-                            () => loop.Status.SafetyOverride || loop.Status.Competitors.Count > 0);
+                            () => loop.TestMustStop);
                         return loop;
                     });
                     s.AddHostedService(p => new SensorPoller(p.GetRequiredService<ISensorSource>(), p.GetRequiredService<SnapshotHub>(),

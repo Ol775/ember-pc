@@ -59,6 +59,7 @@ public static class FansViewState
             HeaderState.Enabled => "Enabled (Ember controls this fan)",
             HeaderState.Failed => "Test failed",
             HeaderState.Unknown when h.Id.StartsWith("/gpu-", StringComparison.Ordinal) => "GPU fan control is off (allow it above)",
+            HeaderState.Unknown => "Left to the board (Ember does not control this header)",
             _ => "Unknown",
         };
         var canTest = !competing && h.State is HeaderState.Controllable or HeaderState.Failed;

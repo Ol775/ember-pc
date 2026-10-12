@@ -18,7 +18,9 @@ public sealed class FanControlLoop : BackgroundService
 
     static readonly TempSource[] AllSources = [TempSource.Cpu, TempSource.Gpu, TempSource.Motherboard];
     static readonly TimeSpan ScanEvery = TimeSpan.FromSeconds(5);
-    const double Floor = 20, PumpFloor = 60, GpuFloor = 30;
+    const double GpuFloor = 30;
+    // Extra care for the CPU: ramp early above these temperatures (on top of the curve, the 90 °C rule and the 100% on a lost sensor).
+    static readonly (double TempC, double Percent)[] CpuGuard = [(70, 60), (75, 85), (80, 100)];
     /// <summary>Bounds settings.json: any local user can reach the control pipe, so the list must not grow without limit.</summary>
     public const int MaxNotGames = 200;
 
@@ -32,11 +34,13 @@ public sealed class FanControlLoop : BackgroundService
 
     readonly object _gate = new();
     readonly SafetyMonitor _safety = new();
-    readonly Dictionary<Group, CurveEngine> _engines = new() { [Group.CpuPump] = new(), [Group.Case] = new() };
+    readonly Dictionary<Group, CurveEngine> _engines = new() { [Group.CpuPump] = new(2, 1.0), [Group.Case] = new() };
     readonly Dictionary<Group, double> _lastPercent = new();
     readonly HashSet<TempSource> _seen = new();
     readonly HashSet<string> _written = new();
     readonly HashSet<string> _failed = new();
+    readonly Dictionary<string, string> _names = new(); // header id -> name, for the ones Ember has written
+    double? _lastCpuTemp;
     bool _stopped;
     bool _disposed;
     string? _testingHeader;
@@ -68,6 +72,12 @@ public sealed class FanControlLoop : BackgroundService
     public FanControlStatus Status
     {
         get { lock (_gate) return _status; }
+    }
+
+    /// <summary>True when a running header test must stop: a safety override, a competing app, or a hot CPU (75 °C or more).</summary>
+    internal bool TestMustStop
+    {
+        get { lock (_gate) return _wasSafetyOverride || _competitors.Count > 0 || _lastCpuTemp >= 75; }
     }
 
     /// <summary>Runs the guided header test; null means tests are unavailable.</summary>
@@ -123,6 +133,7 @@ public sealed class FanControlLoop : BackgroundService
             _resolver.Expire(now);
 
             var summary = DashboardSummary.From(s);
+            _lastCpuTemp = s.Stale ? null : summary.CpuTemp;
             var temps = new Dictionary<TempSource, double?>();
             Observe(temps, TempSource.Cpu, summary.CpuTemp, s.Stale);
             Observe(temps, TempSource.Gpu, summary.GpuTemp, s.Stale);
@@ -180,7 +191,8 @@ public sealed class FanControlLoop : BackgroundService
                 percents[group] = percent;
                 _lastPercent[group] = percent;
             }
-            var floor = header.Name == "Pump Fan" ? PumpFloor : IsGpu(header.Id) ? GpuFloor : Floor;
+            var floor = IsGpu(header.Id) ? GpuFloor : header.Name == "CPU Fan" ? ReleaseRules.CpuFloor : ReleaseRules.SystemFloor;
+            _names[header.Id] = header.Name;
             try
             {
                 _fans.SetPercent(header.Id, Math.Max(floor, percent));
@@ -216,6 +228,10 @@ public sealed class FanControlLoop : BackgroundService
     /// <summary>Releases one header and forgets it only if that worked, so a failed release is retried on the next step.</summary>
     bool TryRelease(string id)
     {
+        // The library restore alone leaves the fan at its last speed on this board, so write the safe speed first.
+        var original = _settings.Headers.FirstOrDefault(r => r.Id == id)?.OriginalPercent;
+        try { _fans.SetPercent(id, ReleaseRules.ValueFor(_names.GetValueOrDefault(id, ""), original)); }
+        catch (Exception ex) { _log.LogError(ex, "Writing the release speed to {Header} failed; trying the library restore anyway", id); }
         try
         {
             _fans.ReleaseToAuto(id);
@@ -225,6 +241,7 @@ public sealed class FanControlLoop : BackgroundService
         catch (Exception ex)
         {
             _log.LogError(ex, "Releasing {Header} failed; will retry", id);
+            try { _fans.SetPercent(id, 100); } catch (Exception) { /* retried next step */ }
             return false;
         }
     }
@@ -239,7 +256,10 @@ public sealed class FanControlLoop : BackgroundService
         var live = wanted.Select(w => temps.GetValueOrDefault(w)).Where(v => v is not null).Select(v => v!.Value).ToList();
         // Inside the 5 s grace period a source can be briefly unreadable: hold the last value rather than guess.
         if (live.Count == 0) return _lastPercent.GetValueOrDefault(group, 100);
-        return _engines[group].Step(live.Max(), curve);
+        var percent = _engines[group].Step(live.Max(), curve);
+        if (group == Group.CpuPump && temps.GetValueOrDefault(TempSource.Cpu) is { } cpu)
+            foreach (var (t, p) in CpuGuard) if (cpu >= t) percent = Math.Max(percent, p);
+        return percent;
     }
 
     static bool IsGpu(string id) => id.StartsWith("/gpu-", StringComparison.Ordinal);
@@ -248,7 +268,7 @@ public sealed class FanControlLoop : BackgroundService
     {
         if (IsGpu(h.Id)) return _settings.GpuControlEnabled ? Group.Case : null; // optional, off by default
         if (!h.Id.StartsWith("/lpc/", StringComparison.Ordinal)) return null;
-        if (h.Name is "CPU Fan" or "Pump Fan") return Group.CpuPump;
+        if (h.Name == "CPU Fan") return Group.CpuPump; // the pump is left to the board
         if (h.Name.StartsWith("System Fan", StringComparison.Ordinal)) return Group.Case;
         return null;
     }
@@ -359,7 +379,7 @@ public sealed class FanControlLoop : BackgroundService
             try
             {
                 var r = await runner.RunAsync(headerId, _stop.Token).ConfigureAwait(false);
-                RecordTestResult(headerId, r.Passed, r.Message);
+                RecordTestResult(headerId, r.Passed, r.Message, r.OriginalPercent);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -397,7 +417,7 @@ public sealed class FanControlLoop : BackgroundService
     }
 
     /// <summary>Called by the header test runner when a test finishes; records the pass or failure.</summary>
-    internal void RecordTestResult(string headerId, bool passed, string message)
+    internal void RecordTestResult(string headerId, bool passed, string message, double? originalPercent = null)
     {
         lock (_gate)
         {
@@ -406,7 +426,7 @@ public sealed class FanControlLoop : BackgroundService
             _failed.Remove(headerId);
             var group = _fans.Enumerate().FirstOrDefault(h => h.Id == headerId) is { } h && GroupOf(h) is { } g
                 ? (g == Group.CpuPump ? "CPU/Pump" : "Case") : "Case";
-            var record = new HeaderRecord(headerId, false, group, _identity.Board, _identity.LhmVersion);
+            var record = new HeaderRecord(headerId, false, group, _identity.Board, _identity.LhmVersion, originalPercent);
             var others = _settings.Headers.Where(r => r.Id != headerId);
             var kept = _settings.Headers.FirstOrDefault(r => r.Id == headerId);
             Save(_settings with { Headers = others.Append(kept is null ? record : record with { Enabled = kept.Enabled }).ToList() });

@@ -226,6 +226,8 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                   Text="This board cannot hand a fan back to automatic control on its own. When Ember stops it writes back each system fan's saved speed and sets the CPU fan to 100%. The pump is left to the board." />
                         <TextBlock x:Name="TestLabel" Text="{Binding FansPage.TestMessage}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    AutomationProperties.LiveSetting="Polite" />
                         <TextBlock x:Name="ActionLabel" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{StaticResource MutedBrush}"

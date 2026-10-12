@@ -1,6 +1,9 @@
+using Ember.Core;
+
 namespace Ember.Service;
 
-public sealed record HeaderTestResult(bool Passed, string Message, double BaselineRpm, double ChangedRpm, double RestoredRpm);
+public sealed record HeaderTestResult(bool Passed, string Message, double BaselineRpm, double ChangedRpm, double RestoredRpm,
+    double? OriginalPercent = null);
 
 /// <summary>
 /// The guided one-header test: change the speed by 20 points (towards the middle, never below the floor), watch for
@@ -9,7 +12,7 @@ public sealed record HeaderTestResult(bool Passed, string Message, double Baseli
 /// </summary>
 public sealed class HeaderTestRunner
 {
-    const double Step = 20, MinMove = 0.15, Floor = 20, PumpFloor = 60;
+    const double Step = 20, MinMove = 0.15;
     static readonly TimeSpan Tick = TimeSpan.FromSeconds(1);
     const int WaitTicks = 10;
 
@@ -31,12 +34,21 @@ public sealed class HeaderTestRunner
 
     public bool IsBusy => Volatile.Read(ref _busy) == 1;
 
+    /// <summary>Hands the header back the way this board needs: write the safe speed, then call the library restore.</summary>
+    void Restore(string headerName, string headerId, double? original)
+    {
+        _fans.SetPercent(headerId, ReleaseRules.ValueFor(headerName, original));
+        _fans.ReleaseToAuto(headerId);
+    }
+
     static HeaderTestResult Fail(string message, double b = 0, double c = 0, double r = 0) => new(false, message, b, c, r);
 
     public async Task<HeaderTestResult> RunAsync(string headerId, CancellationToken ct)
     {
         if (Interlocked.CompareExchange(ref _busy, 1, 0) != 0) return Fail("Another header test is already running.");
         var written = false;
+        var restoreName = "";
+        double? restoreFrom = null;
         try
         {
             if (_safetyOverride()) return Fail("A safety override is active; try again when temperatures are normal.");
@@ -47,7 +59,9 @@ public sealed class HeaderTestRunner
             var baseline = _readRpm(headerId);
             if (baseline is not > 0) return Fail("No fan is spinning on this header.");
             var current = _readPercent(headerId) ?? 50;
-            var floor = header.Name == "Pump Fan" ? PumpFloor : Floor;
+            restoreName = header.Name;
+            restoreFrom = current;
+            var floor = header.Name == "CPU Fan" ? ReleaseRules.CpuFloor : ReleaseRules.SystemFloor;
             var command = current - Step >= floor ? current - Step : Math.Min(100, current + Step);
             var lowering = command < current;
 
@@ -64,7 +78,7 @@ public sealed class HeaderTestRunner
                 moved = lowering ? changed <= baseline.Value * (1 - MinMove) : changed >= baseline.Value * (1 + MinMove);
             }
 
-            _fans.ReleaseToAuto(headerId);
+            Restore(header.Name, headerId, current);
             written = false;
             if (!moved) return Fail($"The fan did not follow: {baseline:0} RPM before, {changed:0} RPM after.", baseline.Value, changed);
 
@@ -75,17 +89,22 @@ public sealed class HeaderTestRunner
             {
                 await _delay(Tick, ct).ConfigureAwait(false);
                 restored = _readRpm(headerId) ?? restored;
-                back = Math.Abs(restored - baseline.Value) <= halfway;
+                // System fans return to the speed they had; the CPU fan is left at 100%, so it only has to be no slower than before.
+                back = header.Name == "CPU Fan" ? restored >= baseline.Value * (1 - MinMove) : Math.Abs(restored - baseline.Value) <= halfway;
             }
             return back
-                ? new HeaderTestResult(true, $"Passed: {baseline:0} RPM, {changed:0} RPM at {command:0}%, back to {restored:0} RPM.", baseline.Value, changed, restored)
-                : Fail($"The fan did not return to automatic control ({restored:0} RPM).", baseline.Value, changed, restored);
+                ? new HeaderTestResult(true, $"Passed: {baseline:0} RPM, {changed:0} RPM at {command:0}%, back to {restored:0} RPM.", baseline.Value, changed, restored, current)
+                : Fail($"The fan did not go back to its saved speed ({restored:0} RPM).", baseline.Value, changed, restored);
         }
         finally
         {
             if (written)
             {
-                try { _fans.ReleaseToAuto(headerId); } catch (Exception) { /* nothing more can be done */ }
+                try { Restore(restoreName, headerId, restoreFrom); }
+                catch (Exception)
+                {
+                    try { _fans.SetPercent(headerId, 100); } catch (Exception) { /* nothing more can be done */ }
+                }
             }
             Volatile.Write(ref _busy, 0);
         }

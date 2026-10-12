@@ -6,31 +6,37 @@ public class FanReleaseTests
     private static FanHeader H(string id) => new(id, id, true, true, false);
 
     [Fact]
-    public void Releases_every_controllable_header_and_leaves_clean_ones_alone()
-    {
-        var fans = new FakeFanController(H(A), H(B), new FanHeader("/lpc/x/0/control/9", "RO", false, false, false));
-        FanRelease.ReleaseAll(fans, _ => { });
-        Assert.Equal(new[] { ("release", A, (double?)null), ("release", B, (double?)null) }, fans.Calls);
-    }
-
-    [Fact]
-    public void A_header_still_in_software_mode_after_release_is_forced_to_100()
+    public void Writes_the_safe_speed_then_releases_each_header_in_the_list_only()
     {
         var fans = new FakeFanController(H(A), H(B));
-        fans.Stuck.Add(A);
-        FanRelease.ReleaseAll(fans, _ => { });
-        Assert.Contains(("set", A, (double?)100), fans.Calls);
-        Assert.DoesNotContain(fans.Calls, c => c.Op == "set" && c.Id == B);
+        FanRelease.ReleaseAll(fans, new Dictionary<string, double> { [A] = 60 }, _ => { });
+        Assert.Equal(new[] { ("set", A, (double?)60), ("release", A, (double?)null) }, fans.Calls);
     }
 
     [Fact]
-    public void A_failing_release_does_not_stop_the_others_and_is_forced_to_100()
+    public void A_failing_release_falls_back_to_100_and_does_not_stop_the_others()
     {
         var fans = new FakeFanController(H(A), H(B)) { FailRelease = true };
         var log = new List<string>();
-        FanRelease.ReleaseAll(fans, log.Add);
+        FanRelease.ReleaseAll(fans, new Dictionary<string, double> { [A] = 60, [B] = 70 }, log.Add);
         Assert.Contains(("set", A, (double?)100), fans.Calls);
         Assert.Contains(("set", B, (double?)100), fans.Calls);
         Assert.NotEmpty(log);
+    }
+
+    [Fact]
+    public void A_failing_write_falls_back_to_100()
+    {
+        var fans = new FakeFanController(H(A)) { FailWrite = (_, p) => p < 100 };
+        FanRelease.ReleaseAll(fans, new Dictionary<string, double> { [A] = 60 }, _ => { });
+        Assert.Contains(("set", A, (double?)100), fans.Calls);
+    }
+
+    [Fact]
+    public void Nothing_to_release_touches_nothing()
+    {
+        var fans = new FakeFanController(H(A));
+        FanRelease.ReleaseAll(fans, new Dictionary<string, double>(), _ => { });
+        Assert.Empty(fans.Calls);
     }
 }

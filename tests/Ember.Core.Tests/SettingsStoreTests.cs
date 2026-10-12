@@ -26,7 +26,7 @@ public class SettingsStoreTests : IDisposable
     public void Round_trip_preserves_values()
     {
         var s = new EmberSettings(FanMode.Quiet, FanMode.Extreme, new[] { "chrome.exe" },
-            new[] { new HeaderRecord("/lpc/nct6687d/0/control/2", true, "Case", "MS-7C56", "0.9.6") }, true);
+            new[] { new HeaderRecord("/lpc/nct6687d/0/control/2", true, "Case", "MS-7C56", "0.9.6", 60) }, true);
         var store = new SettingsStore(PathOf);
         store.Save(s);
         var back = store.Load();

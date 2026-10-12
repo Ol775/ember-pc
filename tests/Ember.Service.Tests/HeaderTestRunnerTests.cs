@@ -93,11 +93,22 @@ public class HeaderTestRunnerTests
     }
 
     [Fact]
-    public async Task Pump_floor_is_60()
+    public async Task Cpu_fan_floor_is_30_and_it_ends_at_100()
     {
-        var s = new SimFan(Header(name: "Pump Fan")) { AutoPercent = 70 };
-        await Runner(s).RunAsync(Id, CancellationToken.None);
-        Assert.Equal(90, s.Fans.Calls[0].Value); // 70 - 20 = 50 < 60, so raise
+        var s = new SimFan(Header(name: "CPU Fan")) { AutoPercent = 40 };
+        var r = await Runner(s).RunAsync(Id, CancellationToken.None);
+        Assert.Equal(60, s.Fans.Calls[0].Value); // 40 - 20 = 20 < floor 30, so raise
+        Assert.Equal(new[] { ("set", Id, (double?)100), ("release", Id, (double?)null) }, s.Fans.Calls.Skip(1).ToArray());
+        Assert.Equal(40, r.OriginalPercent);
+    }
+
+    [Fact]
+    public async Task System_fan_is_restored_to_its_original_percent_before_release()
+    {
+        var s = new SimFan(Header());
+        var r = await Runner(s).RunAsync(Id, CancellationToken.None);
+        Assert.Equal(new[] { ("set", Id, (double?)40), ("set", Id, (double?)60), ("release", Id, (double?)null) }, s.Fans.Calls.ToArray());
+        Assert.Equal(60, r.OriginalPercent);
     }
 
     [Fact]

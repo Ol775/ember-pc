@@ -107,13 +107,68 @@ public sealed class FanControlLoopTests : IDisposable
     }
 
     [Fact]
-    public void Floor_applied_20_and_60_for_pump()
+    public void Floors_are_20_for_system_and_30_for_cpu_fan_and_the_pump_is_left_to_the_board()
     {
-        var loop = Loop(Rec(Sys1), Rec(Pump));
+        var loop = Loop(Rec(Sys1), Rec(CpuFan), Rec(Pump));
         loop.Handle(new SetMode(FanMode.Quiet));
         loop.OnSnapshot(Snap(30, 30, 30)); // Quiet at 30 = 20
         Assert.Equal(20, LastSet(Sys1));
-        Assert.Equal(60, LastSet(Pump));
+        Assert.Equal(30, LastSet(CpuFan));
+        Assert.DoesNotContain(_fans.Calls, c => c.Id == Pump);
+        Assert.Equal(HeaderState.Unknown, loop.Status.Headers.Single(h => h.Id == Pump).State);
+        Assert.False(loop.Handle(new ConfirmHeader(Pump, true)).Ok);
+    }
+
+    [Fact]
+    public void Cpu_guard_ramps_early_above_75_and_goes_to_100_at_80()
+    {
+        var loop = Loop(Rec(CpuFan));
+        loop.Handle(new SetMode(FanMode.Quiet));
+        loop.OnSnapshot(Snap(78, 30, 30));
+        Assert.True(LastSet(CpuFan) >= 85, $"was {LastSet(CpuFan)}");
+        loop.OnSnapshot(Snap(81, 30, 30));
+        Assert.Equal(100, LastSet(CpuFan));
+    }
+
+    [Fact]
+    public void Release_writes_the_saved_original_then_hands_back()
+    {
+        var loop = Loop(new HeaderRecord(Sys1, true, "Case", "MS-7C56", "0.9.6", 55));
+        loop.OnSnapshot(Snap(50));
+        _processes = new[] { "FanControl" };
+        _clock.Advance(6);
+        loop.OnSnapshot(Snap(50));
+        var tail = _fans.Calls.TakeLast(2).ToArray();
+        Assert.Equal(("set", Sys1, (double?)55), tail[0]);
+        Assert.Equal(("release", Sys1, (double?)null), tail[1]);
+    }
+
+    [Fact]
+    public async Task Stop_hands_the_cpu_fan_back_at_100()
+    {
+        var loop = Loop(Rec(CpuFan));
+        await loop.StartAsync(CancellationToken.None);
+        loop.OnSnapshot(Snap(50));
+        await loop.StopAsync(CancellationToken.None);
+        Assert.Equal(new[] { ("set", CpuFan, (double?)100), ("release", CpuFan, (double?)null) }, _fans.Calls.TakeLast(2).ToArray());
+    }
+
+    [Fact]
+    public void Tests_must_stop_when_the_cpu_is_hot()
+    {
+        var loop = Loop();
+        loop.OnSnapshot(Snap(76));
+        Assert.True(loop.TestMustStop);
+        loop.OnSnapshot(Snap(60));
+        Assert.False(loop.TestMustStop);
+    }
+
+    [Fact]
+    public void A_passing_test_saves_the_original_percent()
+    {
+        var loop = Loop();
+        loop.RecordTestResult(Sys1, true, "ok", 60);
+        Assert.Equal(60, new SettingsStore(SettingsPath).Load().Headers.Single().OriginalPercent);
     }
 
     [Fact]
@@ -193,7 +248,7 @@ public sealed class FanControlLoopTests : IDisposable
         _clock.Advance(6);
         loop.OnSnapshot(Snap());
         Assert.Equal(new[] { "Fan Control" }, loop.Status.Competitors);
-        Assert.Equal(writes, _fans.Calls.Count(c => c.Op == "set"));
+        Assert.Equal(writes + 1, _fans.Calls.Count(c => c.Op == "set")); // the one extra write is the saved speed on release
         Assert.Contains(("release", Sys1, (double?)null), _fans.Calls);
         _processes = [];
         _clock.Advance(6);

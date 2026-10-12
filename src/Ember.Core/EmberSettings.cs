@@ -3,7 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace Ember.Core;
 
-public sealed record HeaderRecord(string Id, bool Enabled, string Group, string? PassedBoard, string? PassedLhmVersion);
+public sealed record HeaderRecord(string Id, bool Enabled, string Group, string? PassedBoard, string? PassedLhmVersion,
+    double? OriginalPercent = null);
 
 public sealed record EmberSettings(
     FanMode NormalMode, FanMode GameMode, IReadOnlyList<string> NotGames, IReadOnlyList<HeaderRecord> Headers,

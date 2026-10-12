@@ -93,6 +93,15 @@ public class FansViewStateTests
     }
 
     [Fact]
+    public void Unmapped_or_pump_header_is_left_to_the_board()
+    {
+        var row = Assert.Single(FansViewState.Render(Status(headers: new[] { new HeaderStatus("/lpc/nct6687d/0/control/1", "Pump Fan", HeaderState.Unknown, false) }), true).Headers);
+        Assert.Contains("Left to the board", row.StateText);
+        Assert.False(row.CanEnable);
+        Assert.False(row.CanTest);
+    }
+
+    [Fact]
     public void Failed_header_can_be_retested()
     {
         var row = Assert.Single(FansViewState.Render(Status(headers: new[] { H(HeaderState.Failed) }), true).Headers);
