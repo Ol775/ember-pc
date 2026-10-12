@@ -27,7 +27,7 @@ enable or test a header. The service enforces the safety rules itself:
 
 If another program that controls fans is running (MSI Center, Fan Control, NZXT CAM, iCUE and similar), Ember warns
 you by name and blocks enabling and testing headers until you close it. The app and service make no network calls; only
-`scripts/install-pawnio.ps1` downloads, from GitHub. Ember keeps one small settings file in `%ProgramData%mber`.
+`scripts/install-pawnio.ps1` downloads, from GitHub. Ember keeps one small settings file in `%ProgramData%\Ember`.
 
 ## Requirements
 
