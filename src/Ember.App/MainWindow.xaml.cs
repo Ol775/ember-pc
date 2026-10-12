@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Threading;
@@ -44,6 +45,8 @@ public partial class MainWindow : Window
         _gameTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (_, _) => DetectGame(), Dispatcher);
         if (BuildFeatures.Current.GameDetection) _gameTimer.Start(); // beta feature: off in the alpha build
 
+        StartupSwitch.IsChecked = StartupRegistration.IsEnabled();
+        if (_vm.Prefs.StartPage == StartPage.Fans) NavFans.IsChecked = true;
         Curve.Committed += OnCurveCommitted;
         Curve.CopyRequested += OnCurveCopy;
 
@@ -124,12 +127,48 @@ public partial class MainWindow : Window
 
     void OnNavChanged(object sender, RoutedEventArgs e)
     {
-        if (DashboardPage is null || FansPageView is null) return; // fires once during InitializeComponent
-        var fans = NavFans.IsChecked == true;
-        DashboardPage.Visibility = fans ? Visibility.Collapsed : Visibility.Visible;
-        FansPageView.Visibility = fans ? Visibility.Visible : Visibility.Collapsed;
+        if (DashboardPage is null || FansPageView is null || SettingsPageView is null) return; // fires once during InitializeComponent
+        DashboardPage.Visibility = NavDashboard.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        FansPageView.Visibility = NavFans.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        SettingsPageView.Visibility = NavSettings.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    void OnUnitPicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string u } && Enum.TryParse<TemperatureUnit>(u, out var unit))
+            Remember(_vm.Prefs with { Unit = unit });
+    }
+
+    void OnStartPagePicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string p } && Enum.TryParse<StartPage>(p, out var page))
+            Remember(_vm.Prefs with { StartPage = page });
+    }
+
+    void Remember(AppPreferences prefs)
+    {
+        SettingsNote.Text = _vm.Update(prefs) ? "" : "Could not save this setting; it applies until you close Ember.";
+        Announce(SettingsNote);
+    }
+
+    void OnStartupToggled(object sender, RoutedEventArgs e)
+    {
+        var want = StartupSwitch.IsChecked == true;
+        if (!StartupRegistration.Set(want))
+        {
+            StartupSwitch.IsChecked = StartupRegistration.IsEnabled();
+            SettingsNote.Text = "Windows would not let Ember change its start-up entry.";
+        }
+        else SettingsNote.Text = want ? "Ember will open when you sign in." : "Ember will no longer open when you sign in.";
+        Announce(SettingsNote);
+    }
+
+    void OnOpenSettingsFolder(object sender, RoutedEventArgs e)
+    {
+        var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Ember");
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", "\"" + dir + "\"") { UseShellExecute = true }); }
+        catch (Exception) { SettingsNote.Text = "Could not open " + dir + "."; Announce(SettingsNote); }
+    }
     async void OnModePicked(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: FanMode mode }) await SendAsync(new SetMode(mode));

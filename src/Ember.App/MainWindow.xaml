@@ -28,12 +28,12 @@
             <Button DockPanel.Dock="Bottom" Content="Restart as administrator" Click="OnRestartAsAdmin" Margin="20,0,20,12"
                     Style="{StaticResource ActionButton}" Visibility="{Binding NotElevatedVisibility}"
                     ToolTip="Needed to close fan-control programs that run as administrator." />
-            <CheckBox DockPanel.Dock="Bottom" Content="Show °F" IsChecked="{Binding UseFahrenheit}" Margin="20,0,20,16"
-                      Style="{StaticResource SwitchBox}" />
             <StackPanel VerticalAlignment="Top">
                 <RadioButton x:Name="NavDashboard" GroupName="Nav" Content="Dashboard" IsChecked="True"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
                 <RadioButton x:Name="NavFans" GroupName="Nav" Content="Fans"
+                             Style="{StaticResource NavItem}" Checked="OnNavChanged" />
+                <RadioButton x:Name="NavSettings" GroupName="Nav" Content="Settings"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
             </StackPanel>
         </DockPanel>
@@ -251,6 +251,71 @@
                         <TextBlock x:Name="TestLabel" Text="{Binding FansPage.TestMessage}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    AutomationProperties.LiveSetting="Polite" />
                         <TextBlock x:Name="ActionLabel" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{StaticResource MutedBrush}"
+                                   AutomationProperties.LiveSetting="Polite" />
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Settings -->
+        <ScrollViewer x:Name="SettingsPageView" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
+                      Visibility="Collapsed">
+            <StackPanel Margin="24" MaxWidth="720" HorizontalAlignment="Left">
+                <TextBlock Text="Settings" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"
+                           AutomationProperties.HeadingLevel="Level2" />
+
+                <GroupBox Header="Temperature unit" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Temperature unit">
+                    <StackPanel>
+                        <Border Style="{StaticResource SegmentTrack}">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton GroupName="Unit" Content="Celsius (°C)" Tag="Celsius" Click="OnUnitPicked"
+                                             IsChecked="{Binding UseCelsius, Mode=OneWay}" Style="{StaticResource Segment}" />
+                                <RadioButton GroupName="Unit" Content="Fahrenheit (°F)" Tag="Fahrenheit" Click="OnUnitPicked"
+                                             IsChecked="{Binding UseFahrenheit, Mode=OneWay}" Style="{StaticResource Segment}" />
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                   Text="Used for the numbers and the temperature history. The fan curves are always drawn in °C." />
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="When Ember opens" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="When Ember opens">
+                    <StackPanel>
+                        <Border Style="{StaticResource SegmentTrack}">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton GroupName="StartPage" Content="Dashboard" Tag="Dashboard" Click="OnStartPagePicked"
+                                             IsChecked="{Binding StartOnDashboard, Mode=OneWay}" Style="{StaticResource Segment}" />
+                                <RadioButton GroupName="StartPage" Content="Fans" Tag="Fans" Click="OnStartPagePicked"
+                                             IsChecked="{Binding StartOnFans, Mode=OneWay}" Style="{StaticResource Segment}" />
+                            </StackPanel>
+                        </Border>
+                        <CheckBox x:Name="StartupSwitch" Content="Start Ember when I sign in to Windows" Click="OnStartupToggled"
+                                  Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
+                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                   Text="This only opens the window. Fan control runs in the Ember service, which starts with Windows whether or not the window is open." />
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Fan control" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan control">
+                    <StackPanel>
+                        <TextBlock TextWrapping="Wrap" Text="{Binding ConnectionText}" />
+                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                   Text="Fan modes, curves and which headers Ember controls are kept by the service and are set on the Fans page. The safety rules (90 °C override, early CPU ramp, speed floors) cannot be switched off." />
+                        <WrapPanel Margin="0,12,0,0">
+                            <Button Content="Open settings folder" Click="OnOpenSettingsFolder" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
+                            <Button Content="Restart as administrator" Click="OnRestartAsAdmin" Style="{StaticResource ActionButton}" Margin="0"
+                                    Visibility="{Binding NotElevatedVisibility}"
+                                    ToolTip="Needed to close fan-control programs that run as administrator." />
+                        </WrapPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="About" Style="{StaticResource Panel}" AutomationProperties.Name="About Ember">
+                    <StackPanel>
+                        <TextBlock Text="{Binding BuildLabel}" FontWeight="SemiBold" />
+                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                   Text="Ember monitors your PC's temperatures and fans and controls the fans on supported motherboards. Game detection and GPU fan control arrive in the beta build." />
+                        <TextBlock x:Name="SettingsNote" TextWrapping="Wrap" Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}"
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </GroupBox>

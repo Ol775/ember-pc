@@ -21,17 +21,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public TemperatureUnit Unit { get; private set; } = TemperatureUnit.Celsius;
+    readonly PreferencesStore _prefsStore = new(PreferencesStore.DefaultPath);
 
-    public bool UseFahrenheit
+    public MainViewModel() => Prefs = _prefsStore.Load();
+
+    public AppPreferences Prefs { get; private set; }
+
+    public TemperatureUnit Unit => Prefs.Unit;
+
+    public bool UseFahrenheit => Unit == TemperatureUnit.Fahrenheit;
+    public bool UseCelsius => Unit == TemperatureUnit.Celsius;
+    public bool StartOnFans => Prefs.StartPage == StartPage.Fans;
+    public bool StartOnDashboard => Prefs.StartPage == StartPage.Dashboard;
+
+    /// <summary>Changes and remembers a preference. False if it could not be saved (it still applies until the app closes).</summary>
+    public bool Update(AppPreferences prefs)
     {
-        get => Unit == TemperatureUnit.Fahrenheit;
-        set
-        {
-            Unit = value ? TemperatureUnit.Fahrenheit : TemperatureUnit.Celsius;
-            _dirty = true;
-            Refresh(DateTimeOffset.UtcNow);
-        }
+        Prefs = prefs;
+        _dirty = true;
+        var saved = _prefsStore.TrySave(prefs);
+        Refresh(DateTimeOffset.UtcNow);
+        return saved;
     }
 
     public string ChartTitle => Unit == TemperatureUnit.Fahrenheit
