@@ -1,0 +1,14 @@
+{
+  "MSI Center": ["MSI Center", "MSI_Center", "MSICenterService"],
+  "MSI Dragon Center": ["DragonCenter"],
+  "Fan Control": ["FanControl"],
+  "SpeedFan": ["speedfan"],
+  "NZXT CAM": ["NZXT CAM"],
+  "HWiNFO": ["HWiNFO64", "HWiNFO32"],
+  "SignalRGB": ["SignalRgbLauncher"],
+  "Argus Monitor": ["ArgusMonitor"],
+  "iCUE": ["iCUE"],
+  "SteelSeries GG": ["SteelSeriesGG"],
+  "Armoury Crate": ["ArmouryCrate.UserSessionHelper"],
+  "OpenRGB": ["OpenRGB"]
+}
