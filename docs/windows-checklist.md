@@ -60,3 +60,32 @@ Phase 1 is read-only. During every step, watch that no fan speed changes (check 
 | **r2.** `install-pawnio.ps1`: `-install -silent` switches | Installer runs silently with no UI and exit code 0 (the switches come from third-party winget docs, not the PawnIO author). | | |
 | **r3.** After installing PawnIO with the service already running | Record whether fan RPMs appear without `Restart-Service EmberService` (expected: a restart is needed, because LHM caches PawnIO status per process). Record the result in `docs/driver-research.md`. | | |
 | **r4.** Signature check | `Get-AuthenticodeSignature` status is `Valid` for `PawnIO_setup.exe` 2.2.0; pin the subject and thumbprint recorded in a2 in the script so a different valid signer is refused. | | |
+
+## Phase 2: fan control (nothing below has been run yet)
+
+Run these with the owner at the PC. The first fan write is on **one System Fan header only**, and only after every other
+fan-control program (NZXT CAM, MSI Center, Fan Control, iCUE) is closed: Ember refuses to test or enable headers while one
+runs. Have HWiNFO open to watch RPM. Install the watchdog first (`scripts\install-watchdog.ps1`).
+
+| Step | Expected | Result | Notes |
+|---|---|---|---|
+| **p1.** Fans page lists the board's headers | CPU Fan, Pump Fan, System Fan #1 to #6 shown as "Not tested"; GPU Fan shows "GPU fan control is off". | | |
+| **p2.** With NZXT CAM (or another listed program) running, look at Fans | A warning names it; Test and Enable are disabled with "Close ... first". Close it and the warning clears within 5 s. | | |
+| **p3.** Press **Test** on System Fan #1 (a fan that is attached) | Within about 25 s the row says "Tested, not enabled"; the message reads "Passed: ... RPM"; RPM in HWiNFO dipped and returned to its original value. Record the three RPM values. | | RPM before / during / after: |
+| **p4.** Press **Test** on a header with no fan (System Fan #3) | Test fails with "No fan is spinning on this header"; nothing is written. | | |
+| **p5.** Enable System Fan #1, pick **Quiet**, then **Extreme** | RPM follows the curve for the temperature; modes switch within a few seconds. Quiet at idle is quieter than board default. | | |
+| **p6.** `Stop-Service EmberService` | Within about 2 s the fan returns to the board's automatic speed. Record whether it does. | | |
+| **p7.** `Start-Service EmberService`; confirm the header is still enabled and driven | Fan control resumes without opening the app. | | |
+| **p8.** `Stop-Process -Name Ember.Service -Force` (a hard kill) | Windows restarts the service within about 5 s. Between the kill and the restart record the fan's RPM: does it hold its last speed? **This decides whether the watchdog is enough.** | | RPM at kill / 3 s / 6 s: |
+| **p9.** Stop the Ember service and leave it stopped for 15 s | The watchdog releases the header; RPM returns to the board's automatic value. Restart the service afterwards. | | |
+| **p10.** Kill the watchdog process (`Stop-Process -Name Ember.Watchdog -Force`) while the service runs | The service keeps controlling fans; Windows restarts the watchdog. | | |
+| **p11.** Hang test (optional): suspend the service process (Process Explorer) for 15 s | The watchdog stops the service and releases the fans; the service restarts. | | |
+| **p12.** Over-temperature override | Cannot be done by heating the PC; covered by `FanControlLoopTests.Over_90C_forces_100_...`. Confirm the Fans page note appears if a test build injects it. | | |
+| **p13.** Start a full-screen game with the GPU busy | After about 10 s the Fans page shows "Game mode: <game>.exe" and fans follow Performance. Closing the game returns to your normal mode within 5 s. | | |
+| **p14.** Full-screen a browser video and a video player | No game is detected. | | |
+| **p15.** During a game pick **Extreme** by hand | The page says "Your pick for this game" and holds until the game closes. | | |
+| **p16.** Detect a wrong guess: press **Not a game** | The program moves to "Not games"; a restart of the game does not trigger game mode; **Undo** restores it. | | |
+| **p17.** Close the app mid-game | The service leaves game mode after about 30 s. | | |
+| **p18.** Corrupt `%ProgramData%\Ember\settings.json` by hand, restart the service | Service starts, no header is driven, defaults apply. | | |
+| **p19.** ACLs: `Get-Acl %ProgramData%\Ember`, and the control pipe `ember.ctl.v1` | Folder: SYSTEM and Administrators full control, Users read only. Pipe: Interactive read/write, no Everyone. | | |
+| **p20.** GPU fan (optional): tick "Allow Ember to control the GPU fan", Test it | Either passes (then Enable works, floor 30%) or fails and stays unused. Unticking releases it. | | |
