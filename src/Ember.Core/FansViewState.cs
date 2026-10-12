@@ -15,15 +15,21 @@ public sealed record HeaderRow(string Id, string Name, string StateText, bool Ca
 public sealed record FansView(
     bool ServiceAvailable, string? Message, IReadOnlyList<ModeItem> Modes, string SourceText,
     string? CompetitorWarning, string? SafetyNote, IReadOnlyList<HeaderRow> Headers, string? TestMessage,
-    string? DetectedGame = null, IReadOnlyList<string>? NotGames = null, bool GpuControl = false);
+    string? DetectedGame = null, IReadOnlyList<string>? NotGames = null, bool GpuControl = false,
+    IReadOnlyList<string>? CompetitorNames = null)
+{
+    /// <summary>Display names of the detected fan-control programs (for the close button).</summary>
+    public IReadOnlyList<string> Competitors => CompetitorNames ?? Array.Empty<string>();
+}
 
 /// <summary>Turns the service's fan control status into what the Fans page shows. Pure, so it is tested without WPF.</summary>
 public static class FansViewState
 {
     static readonly FanMode[] Order = [FanMode.Quiet, FanMode.Normal, FanMode.Performance, FanMode.Extreme, FanMode.Ai];
 
-    public static FansView Render(FanControlStatus? status, bool connected)
+    public static FansView Render(FanControlStatus? status, bool connected, BuildFeatures? features = null)
     {
+        features ??= BuildFeatures.Current;
         if (!connected || status is null)
         {
             return new FansView(false, "Service not running: fan control is unavailable.",
@@ -33,7 +39,7 @@ public static class FansViewState
         var modes = Order.Select(m => new ModeItem(m, Label(m), m != FanMode.Ai, m == status.Mode)).ToList();
         var names = Join(status.Competitors);
         var competing = status.Competitors.Count > 0;
-        var headers = status.Headers.Select(h => Row(h, competing, names)).ToList();
+        var headers = status.Headers.Select(h => Row(h, competing, names, features.GpuFan)).ToList();
 
         return new FansView(
             true, null, modes,
@@ -47,10 +53,10 @@ public static class FansViewState
             status.SafetyOverride
                 ? "Safety override: all controlled fans are at 100% because a temperature is too high or a sensor is missing."
                 : null,
-            headers, status.TestMessage, status.GameExe, status.NotGames, status.GpuControl);
+            headers, status.TestMessage, status.GameExe, status.NotGames, status.GpuControl, status.Competitors);
     }
 
-    static HeaderRow Row(HeaderStatus h, bool competing, string names)
+    static HeaderRow Row(HeaderStatus h, bool competing, string names, bool gpuInBuild)
     {
         var text = h.State switch
         {
@@ -58,6 +64,7 @@ public static class FansViewState
             HeaderState.Controllable => h.Tested ? "Tested, not enabled" : "Not tested",
             HeaderState.Enabled => "Enabled (Ember controls this fan)",
             HeaderState.Failed => "Test failed",
+            HeaderState.Unknown when h.Id.StartsWith("/gpu-", StringComparison.Ordinal) && !gpuInBuild => "GPU fan control arrives in the beta build",
             HeaderState.Unknown when h.Id.StartsWith("/gpu-", StringComparison.Ordinal) => "GPU fan control is off (allow it above)",
             HeaderState.Unknown => "Left to the board (Ember does not control this header)",
             _ => "Unknown",

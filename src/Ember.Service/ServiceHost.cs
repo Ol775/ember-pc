@@ -36,7 +36,7 @@ public static class ServiceHost
                         var fans = p.GetRequiredService<IFanController>();
                         var loop = new FanControlLoop(hub, fans,
                             new SettingsStore(Path.Combine(dir, "settings.json")), processNames ?? ProcessNames, p.GetRequiredService<TimeProvider>(),
-                            p.GetRequiredService<ILogger<FanControlLoop>>(), identity?.Invoke() ?? new FanControlIdentity("unknown", "unknown"));
+                            p.GetRequiredService<ILogger<FanControlLoop>>(), identity?.Invoke() ?? new FanControlIdentity("unknown", "unknown"), BuildFeatures.Current);
                         loop.Runner = new HeaderTestRunner(fans, id => Reading(hub, id.Replace("/control/", "/fan/", StringComparison.Ordinal)),
                             id => Reading(hub, id), Task.Delay,
                             () => loop.TestMustStop);

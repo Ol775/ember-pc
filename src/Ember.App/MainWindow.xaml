@@ -24,6 +24,10 @@
                 <TextBlock x:Name="ConnectionLabel" Text="{Binding ConnectionText}" Foreground="{StaticResource MutedBrush}"
                            AutomationProperties.LiveSetting="Polite" />
             </StackPanel>
+            <TextBlock DockPanel.Dock="Bottom" Text="{Binding BuildLabel}" Foreground="{StaticResource MutedBrush}" Margin="20,0,20,12" />
+            <Button DockPanel.Dock="Bottom" Content="Restart as administrator" Click="OnRestartAsAdmin" Margin="20,0,20,12"
+                    Style="{StaticResource ActionButton}" Visibility="{Binding NotElevatedVisibility}"
+                    ToolTip="Needed to close fan-control programs that run as administrator." />
             <CheckBox DockPanel.Dock="Bottom" Content="Show °F" IsChecked="{Binding UseFahrenheit}" Margin="20,0,20,16"
                       Foreground="{StaticResource TextBrush}" />
             <StackPanel VerticalAlignment="Top">
@@ -134,8 +138,16 @@
                 <Border Background="{StaticResource BannerBrush}" BorderBrush="{StaticResource AccentBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
                         Visibility="{Binding CompetitorVisibility}">
-                    <TextBlock x:Name="CompetitorLabel" Text="{Binding FansPage.CompetitorWarning}" TextWrapping="Wrap"
-                               AutomationProperties.LiveSetting="Assertive" />
+                    <StackPanel>
+                        <TextBlock x:Name="CompetitorLabel" Text="{Binding FansPage.CompetitorWarning}" TextWrapping="Wrap"
+                                   AutomationProperties.LiveSetting="Assertive" />
+                        <WrapPanel Margin="0,10,0,0">
+                            <Button Content="Close these apps" Click="OnCloseCompetitors" Style="{StaticResource ActionButton}"
+                                    Margin="0,0,8,0" AutomationProperties.Name="Close the detected fan-control apps" />
+                            <Button Content="Restart Ember as administrator" Click="OnRestartAsAdmin" Style="{StaticResource ActionButton}"
+                                    Margin="0" Visibility="{Binding NotElevatedVisibility}" />
+                        </WrapPanel>
+                    </StackPanel>
                 </Border>
 
                 <Border Background="{StaticResource BannerBrush}" BorderBrush="{StaticResource AccentBrush}"
@@ -164,7 +176,8 @@
                     </StackPanel>
                 </GroupBox>
 
-                <GroupBox Header="Games" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Games">
+                <GroupBox Header="Games" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Games"
+                          Visibility="{Binding BetaGamesVisibility}">
                     <StackPanel>
                         <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Ember switches to game mode when a full-screen program keeps your GPU busy. If it guesses wrong, mark the program as not a game." />
@@ -194,7 +207,8 @@
                 <GroupBox Header="Fan headers" Style="{StaticResource Panel}" AutomationProperties.Name="Fan headers">
                     <StackPanel>
                         <CheckBox Content="Allow Ember to control the GPU fan (optional, test it first)" IsChecked="{Binding FansPage.GpuControl, Mode=OneWay}"
-                                  Click="OnGpuControl" Foreground="{StaticResource TextBrush}" Margin="0,0,0,8" />
+                                  Click="OnGpuControl" Foreground="{StaticResource TextBrush}" Margin="0,0,0,8"
+                                  Visibility="{Binding BetaGpuVisibility}" />
                         <TextBlock Text="No fan headers reported" Foreground="{StaticResource MutedBrush}"
                                    Visibility="{Binding NoHeadersVisibility}" />
                         <ItemsControl ItemsSource="{Binding FansPage.Headers}" Focusable="False">

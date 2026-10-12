@@ -3,6 +3,16 @@ namespace Ember.Core.Tests;
 public class CompetitorListTests
 {
     [Fact]
+    public void Process_names_for_display_names()
+    {
+        var names = CompetitorList.Default.ProcessNamesFor(new[] { "NZXT CAM", "iCUE" });
+        Assert.Contains("NZXT CAM", names);
+        Assert.Contains("iCUE", names);
+        Assert.DoesNotContain("FanControl", names);
+        Assert.Empty(CompetitorList.Default.ProcessNamesFor(new[] { "Nothing" }));
+    }
+
+    [Fact]
     public void Monitoring_only_tools_are_not_competitors() =>
         Assert.Empty(CompetitorList.Default.Match(new[] { "HWiNFO64", "OpenRGB" }));
 

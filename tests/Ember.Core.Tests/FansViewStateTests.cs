@@ -124,7 +124,7 @@ public class FansViewGamesTests
     {
         var status = new FanControlStatus(FanMode.Normal, ModeSource.Game, false, "game.exe", Array.Empty<HeaderStatus>(),
             Array.Empty<string>(), null, new[] { "chrome.exe" });
-        var v = FansViewState.Render(status, true);
+        var v = FansViewState.Render(status, true, BuildFeatures.All);
         Assert.Equal("game.exe", v.DetectedGame);
         Assert.Equal(new[] { "chrome.exe" }, v.NotGames);
     }
@@ -142,12 +142,33 @@ public class FansViewGamesTests
 public class FansViewGpuTests
 {
     [Fact]
+    public void Gpu_row_says_beta_when_the_build_lacks_it()
+    {
+        var status = new FanControlStatus(FanMode.Normal, ModeSource.User, false, null,
+            new[] { new HeaderStatus("/gpu-nvidia/0/control/1", "GPU Fan", HeaderState.Unknown, false) }, Array.Empty<string>(), null);
+        Assert.Contains("beta build", Assert.Single(FansViewState.Render(status, true, BuildFeatures.Alpha).Headers).StateText);
+        Assert.Contains("allow it above", Assert.Single(FansViewState.Render(status, true, BuildFeatures.All).Headers).StateText);
+    }
+
+    [Fact]
     public void Gpu_off_row_text_and_status_flag()
     {
         var status = new FanControlStatus(FanMode.Normal, ModeSource.User, false, null,
             new[] { new HeaderStatus("/gpu-nvidia/0/control/1", "GPU Fan", HeaderState.Unknown, false) }, Array.Empty<string>(), null);
-        var v = FansViewState.Render(status, true);
+        var v = FansViewState.Render(status, true, BuildFeatures.All);
         Assert.Contains("GPU fan control is off", Assert.Single(v.Headers).StateText);
         Assert.False(v.GpuControl);
+    }
+}
+
+public class FansViewCompetitorTests
+{
+    [Fact]
+    public void Competitor_names_are_exposed_for_the_close_button()
+    {
+        var status = new FanControlStatus(FanMode.Normal, ModeSource.User, false, null, Array.Empty<HeaderStatus>(),
+            new[] { "NZXT CAM", "iCUE" }, null);
+        Assert.Equal(new[] { "NZXT CAM", "iCUE" }, FansViewState.Render(status, true).Competitors);
+        Assert.Empty(FansViewState.Render(null, false).Competitors);
     }
 }

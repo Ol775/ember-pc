@@ -61,7 +61,9 @@ Phase 1 is read-only. During every step, watch that no fan speed changes (check 
 | **r3.** After installing PawnIO with the service already running | Record whether fan RPMs appear without `Restart-Service EmberService` (expected: a restart is needed, because LHM caches PawnIO status per process). Record the result in `docs/driver-research.md`. | | |
 | **r4.** Signature check | `Get-AuthenticodeSignature` status is `Valid` for `PawnIO_setup.exe` 2.2.0; pin the subject and thumbprint recorded in a2 in the script so a different valid signer is refused. | | |
 
-## Phase 2: fan control (nothing below has been run yet)
+## Phase 2: fan control (alpha build)
+
+Rows p13 to p17 (game detection) and p20 (GPU fan) are **beta features**: they are switched off in the alpha build, so skip them until the beta build.
 
 Run these with the owner at the PC. The first fan write is on **one System Fan header only**, and only after every other
 fan-control program (NZXT CAM, MSI Center, Fan Control, iCUE) is closed: Ember refuses to test or enable headers while one

@@ -54,6 +54,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public Visibility FansMessageVisibility => _fansPage.Message is null ? Visibility.Collapsed : Visibility.Visible;
     public Visibility CompetitorVisibility => _fansPage.CompetitorWarning is null ? Visibility.Collapsed : Visibility.Visible;
     public Visibility SafetyVisibility => _fansPage.SafetyNote is null ? Visibility.Collapsed : Visibility.Visible;
+    public bool IsElevated { get; } = CompetitorCloser.IsElevated();
+    public Visibility NotElevatedVisibility => IsElevated ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility BetaGamesVisibility => BuildFeatures.Current.GameDetection ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility BetaGpuVisibility => BuildFeatures.Current.GpuFan ? Visibility.Visible : Visibility.Collapsed;
+    public string BuildLabel => BuildFeatures.Channel == "beta" ? "Beta build" : "Alpha build";
     public Visibility DetectedGameVisibility => _fansPage.DetectedGame is null ? Visibility.Collapsed : Visibility.Visible;
     public Visibility NotGamesVisibility => _fansPage.NotGames is { Count: > 0 } ? Visibility.Visible : Visibility.Collapsed;
     public Visibility NoHeadersVisibility => _fansPage.ServiceAvailable && _fansPage.Headers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -111,7 +116,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         a.ServiceAvailable == b.ServiceAvailable && a.Message == b.Message && a.SourceText == b.SourceText
         && a.CompetitorWarning == b.CompetitorWarning && a.SafetyNote == b.SafetyNote && a.TestMessage == b.TestMessage
         && a.Modes.SequenceEqual(b.Modes) && a.Headers.SequenceEqual(b.Headers)
-        && a.GpuControl == b.GpuControl && a.DetectedGame == b.DetectedGame && (a.NotGames ?? []).SequenceEqual(b.NotGames ?? []);
+        && a.GpuControl == b.GpuControl && a.Competitors.SequenceEqual(b.Competitors) && a.DetectedGame == b.DetectedGame && (a.NotGames ?? []).SequenceEqual(b.NotGames ?? []);
 
     static PointCollection Points(IReadOnlyList<(double X, double Y)> line)
     {

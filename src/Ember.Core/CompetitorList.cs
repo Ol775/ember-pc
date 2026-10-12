@@ -17,6 +17,13 @@ public sealed class CompetitorList
     }
 
     /// <summary>Display names of the competitors found among <paramref name="processNames"/>, each once, in first-seen order.</summary>
+    /// <summary>Every process name (without .exe) that belongs to the given display names, for closing them.</summary>
+    public IReadOnlyList<string> ProcessNamesFor(IEnumerable<string> displayNames)
+    {
+        var wanted = displayNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return _byProcess.Where(kv => wanted.Contains(kv.Value)).Select(kv => kv.Key).ToList();
+    }
+
     public IReadOnlyList<string> Match(IEnumerable<string> processNames)
     {
         var found = new List<string>();

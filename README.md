@@ -6,9 +6,7 @@ temperatures, a 10-minute temperature history and fan speeds.
 
 ## Status
 
-**Phase 2: monitoring and fan control (in verification).** Ember shows live sensors and can drive your motherboard fan
-headers with Quiet, Normal, Performance and Extreme curves, switching to a game mode when it detects a game (you can
-override it, or mark a program "not a game"). AI mode, lighting and the rest come in later phases. Fan control has
+**Phase 2: monitoring and fan control (alpha, in verification).** Ember shows live sensors and can drive your motherboard fan`nheaders with Quiet, Normal, Performance and Extreme curves. **Game detection** (switching to a game mode, with a manual`noverride and a "not a game" list) and **GPU fan control** are written and tested but are **beta features**: they are switched`noff in this alpha build and arrive in the beta build (`BuildFeatures.Channel` in `src/Ember.Core/BuildFeatures.cs`). AI mode,`nlighting and the rest come in later phases. Fan control has
 been unit-tested but is still being verified on real hardware: see
 [`docs/windows-checklist.md`](docs/windows-checklist.md). Nothing is written to a fan until you test and enable that
 header yourself.
@@ -29,7 +27,7 @@ enable or test a header. The service enforces the safety rules itself:
   A separate **watchdog** service writes the same safe speeds if the Ember service is killed or hangs.
 
 If another program that controls fans is running (MSI Center, Fan Control, NZXT CAM, iCUE and similar), Ember warns
-you by name and blocks enabling and testing headers until you close it. The app and service make no network calls; only
+you by name and blocks enabling and testing headers until you close it. The Fans page has a **Close these apps** button\nfor that (it asks first, closes each program politely and ends it if it does not close), and **Restart as administrator** for\nprograms that run elevated. The app and service make no network calls; only
 `scripts/install-pawnio.ps1` downloads, from GitHub. Ember keeps one small settings file in `%ProgramData%\Ember`.
 
 ## Requirements

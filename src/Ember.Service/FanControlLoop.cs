@@ -42,6 +42,7 @@ public sealed class FanControlLoop : BackgroundService
     readonly Dictionary<string, string> _names = new(); // header id -> name, for the ones Ember has written
     double? _lastCpuTemp;
     bool _stopped;
+    readonly BuildFeatures _features;
     bool _disposed;
     string? _testingHeader;
     EmberSettings _settings;
@@ -54,7 +55,7 @@ public sealed class FanControlLoop : BackgroundService
 
     public FanControlLoop(SnapshotHub hub, IFanController fans, SettingsStore store,
         Func<IReadOnlyList<string>> processNames, TimeProvider clock, ILogger<FanControlLoop> log,
-        FanControlIdentity identity)
+        FanControlIdentity identity, BuildFeatures? features = null)
     {
         _hub = hub;
         _fans = fans;
@@ -63,6 +64,7 @@ public sealed class FanControlLoop : BackgroundService
         _clock = clock;
         _log = log;
         _identity = identity;
+        _features = features ?? BuildFeatures.All;
         _settings = store.Load();
         _resolver = new ModeResolver(_settings.NormalMode, _settings.GameMode);
         _status = BuildStatus(false);
@@ -262,11 +264,15 @@ public sealed class FanControlLoop : BackgroundService
         return percent;
     }
 
+    bool GpuAllowed => _features.GpuFan && _settings.GpuControlEnabled;
+    string GpuRefusal => _features.GpuFan ? "turn on GPU fan control first" : "GPU fan control is a beta feature and is not in this build";
+    static ControlReply NotInBuild(string what) => new(false, what + " is a beta feature and is not in this build");
+
     static bool IsGpu(string id) => id.StartsWith("/gpu-", StringComparison.Ordinal);
 
     Group? GroupOf(FanHeader h)
     {
-        if (IsGpu(h.Id)) return _settings.GpuControlEnabled ? Group.Case : null; // optional, off by default
+        if (IsGpu(h.Id)) return GpuAllowed ? Group.Case : null; // optional (beta), off by default
         if (!h.Id.StartsWith("/lpc/", StringComparison.Ordinal)) return null;
         if (h.Name == "CPU Fan") return Group.CpuPump; // the pump is left to the board
         if (h.Name.StartsWith("System Fan", StringComparison.Ordinal)) return Group.Case;
@@ -294,7 +300,7 @@ public sealed class FanControlLoop : BackgroundService
         {
             var record = _settings.Headers.FirstOrDefault(r => r.Id == h.Id);
             var state = _failed.Contains(h.Id) ? HeaderState.Failed
-                : IsGpu(h.Id) && !_settings.GpuControlEnabled ? HeaderState.Unknown
+                : IsGpu(h.Id) && !GpuAllowed ? HeaderState.Unknown
                 : !h.HasControl ? HeaderState.ReadOnly
                 : GroupOf(h) is null ? HeaderState.Unknown // not a CPU, pump or system fan header Ember knows how to drive
                 : record is { Enabled: true } && IsTested(record) ? HeaderState.Enabled
@@ -302,7 +308,7 @@ public sealed class FanControlLoop : BackgroundService
             return new HeaderStatus(h.Id, h.Name, state, record is not null && IsTested(record));
         }).ToList();
         return new FanControlStatus(_resolver.Effective, _resolver.Source, safetyOverride, _resolver.GameExe, rows,
-            _competitors, _testMessage, _settings.NotGames, _settings.GpuControlEnabled);
+            _competitors, _testMessage, _settings.NotGames, GpuAllowed);
     }
 
     /// <summary>Handles one validated control message. Called from the control pipe.</summary>
@@ -328,20 +334,25 @@ public sealed class FanControlLoop : BackgroundService
                     if (_resolver.Source == ModeSource.User) Save(_settings with { NormalMode = m.Mode });
                     return Ok();
                 case SetGameMode m:
+                    if (!_features.GameDetection) return NotInBuild("Game mode");
                     _resolver.SetGameMode(m.Mode);
                     Save(_settings with { GameMode = m.Mode });
                     return Ok();
                 case GameStarted g:
+                    if (!_features.GameDetection) return NotInBuild("Game detection");
                     if (_settings.NotGames.Contains(g.Exe.ToLowerInvariant())) return Ok();
                     _resolver.GameStarted(g.Exe, now);
                     return Ok();
                 case GameEnded:
+                    if (!_features.GameDetection) return NotInBuild("Game detection");
                     _resolver.GameEnded();
                     return Ok();
                 case DetectorHeartbeat:
+                    if (!_features.GameDetection) return NotInBuild("Game detection");
                     _resolver.Heartbeat(now);
                     return Ok();
                 case SetNotGame n:
+                    if (!_features.GameDetection) return NotInBuild("Game detection");
                     var list = _settings.NotGames.Where(e => e != n.Exe.ToLowerInvariant()).ToList();
                     if (n.NotGame && list.Count >= MaxNotGames && !_settings.NotGames.Contains(n.Exe.ToLowerInvariant()))
                         return new ControlReply(false, "the not-a-game list is full");
@@ -350,13 +361,14 @@ public sealed class FanControlLoop : BackgroundService
                     if (n.NotGame && string.Equals(_resolver.GameExe, n.Exe, StringComparison.OrdinalIgnoreCase)) _resolver.GameEnded();
                     return Ok();
                 case SetGpuControl g:
+                    if (!_features.GpuFan) return NotInBuild("GPU fan control");
                     Save(_settings with { GpuControlEnabled = g.Enabled });
                     if (!g.Enabled) ReleaseWhere(IsGpu);
                     return Ok();
                 case ConfirmHeader c:
                     return Confirm(c);
                 case RunHeaderTest t:
-                    if (IsGpu(t.HeaderId) && !_settings.GpuControlEnabled) return new ControlReply(false, "turn on GPU fan control first");
+                    if (IsGpu(t.HeaderId) && !GpuAllowed) return new ControlReply(false, GpuRefusal);
                     if (_competitors.Count > 0) return new ControlReply(false, "close " + string.Join(", ", _competitors) + " first");
                     return StartTest(t.HeaderId);
                 default:
@@ -406,7 +418,7 @@ public sealed class FanControlLoop : BackgroundService
             return Ok();
         }
         if (_testingHeader == c.HeaderId) return new ControlReply(false, "wait for the test to finish");
-        if (IsGpu(c.HeaderId) && !_settings.GpuControlEnabled) return new ControlReply(false, "turn on GPU fan control first");
+        if (IsGpu(c.HeaderId) && !GpuAllowed) return new ControlReply(false, GpuRefusal);
         if (_competitors.Count > 0) return new ControlReply(false, "close " + string.Join(", ", _competitors) + " first");
         var header = _fans.Enumerate().FirstOrDefault(h => h.Id == c.HeaderId);
         if (header is null || !header.HasControl) return new ControlReply(false, "header cannot be controlled");

@@ -39,7 +39,7 @@ public partial class MainWindow : Window
 
         // Game detection: once a second look at the foreground program and report start, end and heartbeat to the service.
         _gameTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (_, _) => DetectGame(), Dispatcher);
-        _gameTimer.Start();
+        if (BuildFeatures.Current.GameDetection) _gameTimer.Start(); // beta feature: off in the alpha build
 
         _run = Task.Run(() => connection.RunAsync(_cts.Token));
         Closed += OnClosed;
@@ -64,6 +64,27 @@ public partial class MainWindow : Window
     async void OnGpuControl(object sender, RoutedEventArgs e)
     {
         if (sender is System.Windows.Controls.CheckBox box) await SendAsync(new SetGpuControl(box.IsChecked == true));
+    }
+
+    async void OnCloseCompetitors(object sender, RoutedEventArgs e)
+    {
+        var names = _vm.FansPage.Competitors;
+        if (names.Count == 0) return;
+        var ask = MessageBox.Show(this,
+            $"Close {string.Join(", ", names)} now?\n\nThey will be ended if they do not close on their own, and anything unsaved in them is lost.",
+            "Close fan-control apps", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (ask != MessageBoxResult.Yes) return;
+        var result = await CompetitorCloser.CloseAsync(names);
+        ActionLabel.Text = result.NeedAdmin.Count > 0
+            ? $"Could not close {string.Join(", ", result.NeedAdmin)}: restart Ember as administrator and try again."
+            : result.Closed.Count > 0 ? "Closed " + string.Join(", ", result.Closed) + "." : "Nothing to close.";
+        Announce(ActionLabel);
+    }
+
+    void OnRestartAsAdmin(object sender, RoutedEventArgs e)
+    {
+        if (CompetitorCloser.RestartAsAdministrator()) Application.Current.Shutdown();
+        else { ActionLabel.Text = "Ember was not restarted: the administrator prompt was cancelled."; Announce(ActionLabel); }
     }
 
     async void OnNotAGame(object sender, RoutedEventArgs e)
