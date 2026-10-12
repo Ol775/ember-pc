@@ -14,6 +14,11 @@
     <ProjectReference Include="..\..\src\Ember.Service\Ember.Service.csproj" />
     <ProjectReference Include="..\..\src\Ember.Core\Ember.Core.csproj" />
   </ItemGroup>
+  <!-- LHM ships its implementation only under runtimes/win-*, so dev-machine (non-Windows) test runs would
+       not find it. The win-arm64 IL loads on an arm64 Mac; enough for the pure SensorMapper tests. -->
+  <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+    <None Include="$(NuGetPackageRoot)librehardwaremonitorlib/0.9.6/runtimes/win-arm64/lib/net8.0/LibreHardwareMonitorLib.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
