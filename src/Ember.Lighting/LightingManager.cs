@@ -214,7 +214,7 @@ public sealed class LightingManager : IAsyncDisposable
         lock (_gate)
         {
             _sinks = sinks;
-            _devices = sinks.Select(s => new DeviceInfo(s.Id, s.Name, s.Kind, SourceOf(s), s.LedCount, s.Keepalive)).ToList();
+            _devices = sinks.Select(s => new DeviceInfo(s.Id, s.Name, s.Kind, SourceOf(s), s.LedCount, s.Realtime)).ToList();
             var withPlacements = Placed(_state, sinks);
             if (!ReferenceEquals(withPlacements, _state))
             {

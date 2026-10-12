@@ -11,6 +11,8 @@ public interface IDeviceSink
     TimeSpan MinInterval { get; }
     /// <summary>Resend an unchanged picture now and then (devices that fall back to their own effect when left alone).</summary>
     bool Keepalive { get; }
+    /// <summary>False for devices that can only follow slow changes (the Govee cloud), which never get real-time frames.</summary>
+    bool Realtime => true;
     Task SendAsync(IReadOnlyList<Color> leds, CancellationToken ct);
 }
 

@@ -1,9 +1,11 @@
+using System.Net.Http;
 using System.IO;
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Threading;
 using Ember.Core;
 using Ember.Lighting;
+using Ember.Lighting.Govee;
 using Ember.Lighting.OpenRgb;
 
 namespace Ember.App;
@@ -13,6 +15,9 @@ public partial class MainWindow : Window
     readonly MainViewModel _vm = new();
     readonly CancellationTokenSource _cts = new();
     readonly LightingManager _lights;
+    readonly ISecretStore _secrets = new WindowsCredentialStore();
+    readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(15) };
+    const string GoveeKeyName = "govee-api-key";
     readonly DispatcherTimer _refresh;
     readonly Task _run;
     readonly GameDetection _detection = new([]);
@@ -27,7 +32,8 @@ public partial class MainWindow : Window
 
         LightingManager? lights = null;
         _lights = lights = new LightingManager(new LightingStore(LightingStore.DefaultPath), TimeProvider.System,
-            [new OpenRgbSource(() => lights?.State.OpenRgbPath, () => lights?.State.StartOpenRgb ?? false)]);
+            [new OpenRgbSource(() => lights?.State.OpenRgbPath, () => lights?.State.StartOpenRgb ?? false),
+             new GoveeSource(new GoveeLanClient(), GoveeCloud)]);
         Lights.Attach(_lights);
         _lights.Start();
 
@@ -78,6 +84,40 @@ public partial class MainWindow : Window
             if (message is not null) await ControlClient.SendAsync(message);
         }
         catch (Exception) { /* detection must never take the window down */ }
+    }
+
+    GoveeCloudClient? GoveeCloud() =>
+        string.IsNullOrWhiteSpace(_secrets.Get(GoveeKeyName)) ? null : new GoveeCloudClient(_http, () => _secrets.Get(GoveeKeyName));
+
+    void OnSaveGoveeKey(object sender, RoutedEventArgs e)
+    {
+        var key = GoveeKey.Password.Trim();
+        if (key.Length == 0) { GoveeNote.Text = "Paste your Govee API key first."; Announce(GoveeNote); return; }
+        GoveeNote.Text = _secrets.Set(GoveeKeyName, key) ? "Key saved in Windows Credential Manager." : "Windows would not store the key.";
+        GoveeKey.Clear();
+        _lights.RefreshDevices();
+        Announce(GoveeNote);
+    }
+
+    async void OnTestGoveeKey(object sender, RoutedEventArgs e)
+    {
+        var client = GoveeCloud();
+        if (client is null) { GoveeNote.Text = "Save a key first."; Announce(GoveeNote); return; }
+        GoveeNote.Text = "Asking Goveeâ€¦";
+        try
+        {
+            var devices = await client.GetDevicesAsync();
+            GoveeNote.Text = $"The key works. Govee lists {devices.Count} device{(devices.Count == 1 ? "" : "s")}.";
+        }
+        catch (Exception ex) { GoveeNote.Text = "The key did not work: " + ex.Message; }
+        Announce(GoveeNote);
+    }
+
+    void OnRemoveGoveeKey(object sender, RoutedEventArgs e)
+    {
+        GoveeNote.Text = _secrets.Set(GoveeKeyName, null) ? "Key removed." : "Windows would not remove the key.";
+        _lights.RefreshDevices();
+        Announce(GoveeNote);
     }
 
     async void OnCurveCommitted(CurveGroup group, IReadOnlyList<CurvePoint> points)

@@ -318,6 +318,21 @@
                     </StackPanel>
                 </GroupBox>
 
+                <GroupBox Header="Govee" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Govee lamps">
+                    <StackPanel>
+                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
+                                   Text="Lamps are found on your network when LAN control is switched on for them in the Govee app. An API key is only needed for lamps that cannot do that; they are reached through Govee's cloud and follow slow changes only." />
+                        <WrapPanel Margin="0,10,0,0">
+                            <PasswordBox x:Name="GoveeKey" Width="320" Padding="10,6" Margin="0,0,8,6" MaxLength="200"
+                                         AutomationProperties.Name="Govee API key" />
+                            <Button Content="Save key" Click="OnSaveGoveeKey" Style="{StaticResource ActionButton}" Margin="0,0,8,6" />
+                            <Button Content="Test key" Click="OnTestGoveeKey" Style="{StaticResource ActionButton}" Margin="0,0,8,6" />
+                            <Button Content="Remove key" Click="OnRemoveGoveeKey" Style="{StaticResource ActionButton}" Margin="0,0,8,6" />
+                        </WrapPanel>
+                        <TextBlock x:Name="GoveeNote" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                                   AutomationProperties.LiveSetting="Polite" />
+                    </StackPanel>
+                </GroupBox>
                 <GroupBox Header="About" Style="{StaticResource Panel}" AutomationProperties.Name="About Ember">
                     <StackPanel>
                         <TextBlock Text="{Binding BuildLabel}" FontWeight="SemiBold" />
