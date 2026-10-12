@@ -5,7 +5,9 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="LibreHardwareMonitorLib" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ember.Core\Ember.Core.csproj" />
