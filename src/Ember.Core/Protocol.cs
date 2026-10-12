@@ -36,6 +36,7 @@ public static class Protocol
         [JsonPropertyName("t")] public string? T { get; set; }
         [JsonPropertyName("ng")] public List<string?>? Ng { get; set; }
         [JsonPropertyName("gc")] public bool Gc { get; set; }
+        [JsonPropertyName("ex")] public bool Ex { get; set; }
         // Optional: the Manual-mode curves, as [temp, percent] pairs.
         [JsonPropertyName("mc")] public CurvesDto? Mc { get; set; }
     }
@@ -74,7 +75,7 @@ public static class Protocol
             M = s.Control.Mode.ToString(), S = s.Control.Source.ToString(), So = s.Control.SafetyOverride, G = s.Control.GameExe,
             H = s.Control.Headers.Select(h => (HeaderDto?)new HeaderDto { Id = h.Id, N = h.Name, St = h.State.ToString(), Ok = h.Tested }).ToList(),
             X = s.Control.Competitors.Select(c => (string?)c).ToList(), T = s.Control.TestMessage,
-            Ng = s.Control.NotGames.Select(c => (string?)c).ToList(), Gc = s.Control.GpuControl,
+            Ng = s.Control.NotGames.Select(c => (string?)c).ToList(), Gc = s.Control.GpuControl, Ex = s.Control.Experimental,
             Mc = new CurvesDto { Cpu = Pairs(s.Control.Curves.Cpu), Case = Pairs(s.Control.Curves.Case) },
         },
         R = s.Readings.Select(r => (ReadingDto?)new ReadingDto
@@ -112,7 +113,7 @@ public static class Protocol
             curves = new ManualCurves(cpu!, cas!);
         }
         status = new FanControlStatus(Enum.Parse<FanMode>(c.M), Enum.Parse<ModeSource>(c.S), c.So, c.G, headers,
-            c.X.Select(x => x!).ToList(), c.T, c.Ng?.Select(x => x!).ToList(), c.Gc, curves);
+            c.X.Select(x => x!).ToList(), c.T, c.Ng?.Select(x => x!).ToList(), c.Gc, curves, c.Ex);
         return true;
     }
 

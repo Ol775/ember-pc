@@ -110,6 +110,7 @@ public partial class MainWindow : Window
     {
         try
         {
+            if (!_vm.FansPage.Experimental) return; // game detection is behind the Experimental switch
             ControlMessage? message = _detection.Update(DateTimeOffset.UtcNow, GameDetectorWindows.Foreground(), _gpuLoad) switch
             {
                 GameEvent.Started s => new GameStarted(s.Exe),
@@ -183,6 +184,17 @@ public partial class MainWindow : Window
             if (!reply.Ok) { Curve.ReportFailure("The service did not accept that curve: " + (reply.Error ?? "unknown reason") + "."); return; }
         }
         await SendAsync(new SetMode(FanMode.Manual));
+    }
+
+    async void OnExperimentalToggled(object sender, RoutedEventArgs e)
+    {
+        var on = ExperimentalSwitch.IsChecked == true;
+        var reply = await ControlClient.SendAsync(new SetExperimental(on));
+        SettingsNote.Text = reply.Ok
+            ? (on ? "Experimental features are on: the Games panel and the GPU fan option now show on the Fans page." : "Experimental features are off.")
+            : "Could not change it: " + (reply.Error ?? "the service did not answer.");
+        if (!reply.Ok) ExperimentalSwitch.IsChecked = !on;
+        Announce(SettingsNote);
     }
 
     async void OnGpuControl(object sender, RoutedEventArgs e)

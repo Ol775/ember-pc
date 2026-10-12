@@ -46,7 +46,7 @@ public sealed class FanControlLoopTests : IDisposable
     FanControlLoop Loop(EmberSettings settings)
     {
         var store = new SettingsStore(SettingsPath);
-        store.Save(settings);
+        store.Save(settings with { Experimental = true }); // game detection and GPU fan are behind the Experimental switch
         return new FanControlLoop(_hub, _fans, store, () => _processes, _clock, NullLogger<FanControlLoop>.Instance, Id);
     }
 

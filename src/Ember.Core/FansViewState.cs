@@ -16,7 +16,7 @@ public sealed record FansView(
     bool ServiceAvailable, string? Message, IReadOnlyList<ModeItem> Modes, string SourceText,
     string? CompetitorWarning, string? SafetyNote, IReadOnlyList<HeaderRow> Headers, string? TestMessage,
     string? DetectedGame = null, IReadOnlyList<string>? NotGames = null, bool GpuControl = false,
-    IReadOnlyList<string>? CompetitorNames = null, FanMode Mode = FanMode.Normal, ManualCurves? ManualCurves = null)
+    IReadOnlyList<string>? CompetitorNames = null, FanMode Mode = FanMode.Normal, ManualCurves? ManualCurves = null, bool Experimental = false)
 {
     /// <summary>The user's Manual-mode curves (the Normal preset until they change them).</summary>
     public ManualCurves Curves => ManualCurves ?? Ember.Core.ManualCurves.Default;
@@ -42,7 +42,7 @@ public static class FansViewState
         var modes = Order.Select(m => new ModeItem(m, Label(m), m != FanMode.Ai, m == status.Mode)).ToList();
         var names = Join(status.Competitors);
         var competing = status.Competitors.Count > 0;
-        var headers = status.Headers.Select(h => Row(h, competing, names, features.GpuFan)).ToList();
+        var headers = status.Headers.Select(h => Row(h, competing, names, features.GpuFan, status.Experimental)).ToList();
 
         return new FansView(
             true, null, modes,
@@ -57,10 +57,10 @@ public static class FansViewState
                 ? "Safety override: all controlled fans are at 100% because a temperature is too high or a sensor is missing."
                 : null,
             headers, status.TestMessage, status.GameExe, status.NotGames, status.GpuControl, status.Competitors,
-            status.Mode, status.Curves);
+            status.Mode, status.Curves, status.Experimental);
     }
 
-    static HeaderRow Row(HeaderStatus h, bool competing, string names, bool gpuInBuild)
+    static HeaderRow Row(HeaderStatus h, bool competing, string names, bool gpuInBuild, bool experimental)
     {
         var text = h.State switch
         {
@@ -69,6 +69,7 @@ public static class FansViewState
             HeaderState.Enabled => "Enabled (Ember controls this fan)",
             HeaderState.Failed => "Test failed",
             HeaderState.Unknown when h.Id.StartsWith("/gpu-", StringComparison.Ordinal) && !gpuInBuild => "GPU fan control arrives in the beta build",
+            HeaderState.Unknown when h.Id.StartsWith("/gpu-", StringComparison.Ordinal) && !experimental => "GPU fan control is experimental: switch on Experimental features in Settings",
             HeaderState.Unknown when h.Id.StartsWith("/gpu-", StringComparison.Ordinal) => "GPU fan control is off (allow it above)",
             HeaderState.Unknown => "Left to the board (Ember does not control this header)",
             _ => "Unknown",

@@ -279,8 +279,15 @@ public sealed class FanControlLoop : BackgroundService
         return percent;
     }
 
-    bool GpuAllowed => _features.GpuFan && _settings.GpuControlEnabled;
-    string GpuRefusal => _features.GpuFan ? "turn on GPU fan control first" : "GPU fan control is a beta feature and is not in this build";
+    bool GpuAllowed => _features.GpuFan && _settings.Experimental && _settings.GpuControlEnabled;
+    bool GameAllowed => _features.GameDetection && _settings.Experimental;
+
+    /// <summary>Null when game detection may be used; otherwise why not.</summary>
+    ControlReply? GameRefusal(string what) =>
+        !_features.GameDetection ? NotInBuild(what)
+        : !_settings.Experimental ? new ControlReply(false, what + " is experimental: switch on Experimental features first")
+        : null;
+    string GpuRefusal => _features.GpuFan ? (_settings.Experimental ? "turn on GPU fan control first" : "GPU fan control is experimental: switch on Experimental features first") : "GPU fan control is a beta feature and is not in this build";
     static ControlReply NotInBuild(string what) => new(false, what + " is a beta feature and is not in this build");
 
     static bool IsGpu(string id) => id.StartsWith("/gpu-", StringComparison.Ordinal);
@@ -326,7 +333,7 @@ public sealed class FanControlLoop : BackgroundService
             return new HeaderStatus(h.Id, h.Name, state, record is not null && IsTested(record));
         }).ToList();
         return new FanControlStatus(_resolver.Effective, _resolver.Source, safetyOverride, _resolver.GameExe, rows,
-            _competitors, _testMessage, _settings.NotGames, GpuAllowed, _settings.Curves);
+            _competitors, _testMessage, _settings.NotGames, GpuAllowed, _settings.Curves, _settings.Experimental);
     }
 
     /// <summary>Handles one validated control message. Called from the control pipe.</summary>
@@ -352,25 +359,25 @@ public sealed class FanControlLoop : BackgroundService
                     if (_resolver.Source == ModeSource.User) Save(_settings with { NormalMode = m.Mode });
                     return Ok();
                 case SetGameMode m:
-                    if (!_features.GameDetection) return NotInBuild("Game mode");
+                    if (GameRefusal("Game mode") is { } refused1) return refused1;
                     _resolver.SetGameMode(m.Mode);
                     Save(_settings with { GameMode = m.Mode });
                     return Ok();
                 case GameStarted g:
-                    if (!_features.GameDetection) return NotInBuild("Game detection");
+                    if (GameRefusal("Game detection") is { } refused2) return refused2;
                     if (_settings.NotGames.Contains(g.Exe.ToLowerInvariant())) return Ok();
                     _resolver.GameStarted(g.Exe, now);
                     return Ok();
                 case GameEnded:
-                    if (!_features.GameDetection) return NotInBuild("Game detection");
+                    if (GameRefusal("Game detection") is { } refused3) return refused3;
                     _resolver.GameEnded();
                     return Ok();
                 case DetectorHeartbeat:
-                    if (!_features.GameDetection) return NotInBuild("Game detection");
+                    if (GameRefusal("Game detection") is { } refused4) return refused4;
                     _resolver.Heartbeat(now);
                     return Ok();
                 case SetNotGame n:
-                    if (!_features.GameDetection) return NotInBuild("Game detection");
+                    if (GameRefusal("Game detection") is { } refused5) return refused5;
                     var list = _settings.NotGames.Where(e => e != n.Exe.ToLowerInvariant()).ToList();
                     if (n.NotGame && list.Count >= MaxNotGames && !_settings.NotGames.Contains(n.Exe.ToLowerInvariant()))
                         return new ControlReply(false, "the not-a-game list is full");
@@ -380,8 +387,18 @@ public sealed class FanControlLoop : BackgroundService
                     return Ok();
                 case SetGpuControl g:
                     if (!_features.GpuFan) return NotInBuild("GPU fan control");
+                    if (g.Enabled && !_settings.Experimental) return new ControlReply(false, GpuRefusal);
                     Save(_settings with { GpuControlEnabled = g.Enabled });
                     if (!g.Enabled) ReleaseWhere(IsGpu);
+                    return Ok();
+                case SetExperimental x:
+                    Save(_settings with { Experimental = x.Enabled });
+                    if (!x.Enabled)
+                    {
+                        // Back to the plain build: an ongoing game ends and the GPU fan is handed back at its safe speed.
+                        _resolver.GameEnded();
+                        ReleaseWhere(IsGpu);
+                    }
                     return Ok();
                 case SetCurve sc:
                     if (ManualCurveRules.Check(sc.Points) is { } why) return new ControlReply(false, why);

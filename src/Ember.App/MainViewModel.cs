@@ -66,8 +66,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public Visibility SafetyVisibility => _fansPage.SafetyNote is null ? Visibility.Collapsed : Visibility.Visible;
     public bool IsElevated { get; } = CompetitorCloser.IsElevated();
     public Visibility NotElevatedVisibility => IsElevated ? Visibility.Collapsed : Visibility.Visible;
-    public Visibility BetaGamesVisibility => BuildFeatures.Current.GameDetection ? Visibility.Visible : Visibility.Collapsed;
-    public Visibility BetaGpuVisibility => BuildFeatures.Current.GpuFan ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility BetaGamesVisibility => BuildFeatures.Current.GameDetection && _fansPage.Experimental ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility ExperimentalAvailableVisibility => BuildFeatures.Current.GameDetection || BuildFeatures.Current.GpuFan ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility BetaGpuVisibility => BuildFeatures.Current.GpuFan && _fansPage.Experimental ? Visibility.Visible : Visibility.Collapsed;
     public string BuildLabel => BuildFeatures.Channel == "beta" ? "Beta build" : "Alpha build";
     public Visibility DetectedGameVisibility => _fansPage.DetectedGame is null ? Visibility.Collapsed : Visibility.Visible;
     public Visibility NotGamesVisibility => _fansPage.NotGames is { Count: > 0 } ? Visibility.Visible : Visibility.Collapsed;
@@ -126,7 +127,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         a.ServiceAvailable == b.ServiceAvailable && a.Message == b.Message && a.SourceText == b.SourceText
         && a.CompetitorWarning == b.CompetitorWarning && a.SafetyNote == b.SafetyNote && a.TestMessage == b.TestMessage
         && a.Modes.SequenceEqual(b.Modes) && a.Headers.SequenceEqual(b.Headers)
-        && a.Mode == b.Mode && a.Curves.Equals(b.Curves) && a.GpuControl == b.GpuControl && a.Competitors.SequenceEqual(b.Competitors) && a.DetectedGame == b.DetectedGame && (a.NotGames ?? []).SequenceEqual(b.NotGames ?? []);
+        && a.Experimental == b.Experimental && a.Mode == b.Mode && a.Curves.Equals(b.Curves) && a.GpuControl == b.GpuControl && a.Competitors.SequenceEqual(b.Competitors) && a.DetectedGame == b.DetectedGame && (a.NotGames ?? []).SequenceEqual(b.NotGames ?? []);
 
     static PointCollection Points(IReadOnlyList<(double X, double Y)> line)
     {

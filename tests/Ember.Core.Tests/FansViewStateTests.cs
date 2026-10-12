@@ -147,14 +147,14 @@ public class FansViewGpuTests
         var status = new FanControlStatus(FanMode.Normal, ModeSource.User, false, null,
             new[] { new HeaderStatus("/gpu-nvidia/0/control/1", "GPU Fan", HeaderState.Unknown, false) }, Array.Empty<string>(), null);
         Assert.Contains("beta build", Assert.Single(FansViewState.Render(status, true, BuildFeatures.Alpha).Headers).StateText);
-        Assert.Contains("allow it above", Assert.Single(FansViewState.Render(status, true, BuildFeatures.All).Headers).StateText);
+        Assert.Contains("Experimental features", Assert.Single(FansViewState.Render(status, true, BuildFeatures.All).Headers).StateText);
     }
 
     [Fact]
     public void Gpu_off_row_text_and_status_flag()
     {
         var status = new FanControlStatus(FanMode.Normal, ModeSource.User, false, null,
-            new[] { new HeaderStatus("/gpu-nvidia/0/control/1", "GPU Fan", HeaderState.Unknown, false) }, Array.Empty<string>(), null);
+            new[] { new HeaderStatus("/gpu-nvidia/0/control/1", "GPU Fan", HeaderState.Unknown, false) }, Array.Empty<string>(), null, null, false, null, Experimental: true);
         var v = FansViewState.Render(status, true, BuildFeatures.All);
         Assert.Contains("GPU fan control is off", Assert.Single(v.Headers).StateText);
         Assert.False(v.GpuControl);

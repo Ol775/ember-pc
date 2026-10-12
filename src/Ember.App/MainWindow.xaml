@@ -318,6 +318,16 @@
                     </StackPanel>
                 </GroupBox>
 
+                <GroupBox Header="Experimental" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Experimental features"
+                          Visibility="{Binding ExperimentalAvailableVisibility}">
+                    <StackPanel>
+                        <CheckBox x:Name="ExperimentalSwitch" Content="Turn on experimental features" Click="OnExperimentalToggled"
+                                  IsChecked="{Binding FansPage.Experimental, Mode=OneWay}" Style="{StaticResource SwitchBox}" />
+                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                   Text="Game detection switches the fan mode to your game mode while a full-screen program keeps the GPU busy, and lets you mark programs as not a game. GPU fan control lets Ember drive the graphics card fan once you have tested it. Both are still being proven on real hardware, so they are off until you turn them on. Turning this off ends any game mode and hands the GPU fan back to the card." />
+                    </StackPanel>
+                </GroupBox>
+
                 <GroupBox Header="Govee" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Govee lamps">
                     <StackPanel>
                         <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"

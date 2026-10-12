@@ -16,11 +16,14 @@ public sealed record EmberSettings(
     /// <summary>The user's curves for Manual mode.</summary>
     public ManualCurves Curves { get; init; } = ManualCurves.Default;
 
+    /// <summary>The switch for the experimental features (game detection, GPU fan control). Off until the user turns it on.</summary>
+    public bool Experimental { get; init; }
+
     // Record value equality compares list references, so Default equality needs content comparison in tests/callers.
     public bool Equals(EmberSettings? other) =>
         other is not null && NormalMode == other.NormalMode && GameMode == other.GameMode
         && GpuControlEnabled == other.GpuControlEnabled && NotGames.SequenceEqual(other.NotGames)
-        && Headers.SequenceEqual(other.Headers) && Curves.Equals(other.Curves);
+        && Headers.SequenceEqual(other.Headers) && Curves.Equals(other.Curves) && Experimental == other.Experimental;
 
     public override int GetHashCode() => HashCode.Combine(NormalMode, GameMode, GpuControlEnabled, NotGames.Count, Headers.Count);
 }
@@ -64,7 +67,9 @@ public sealed class SettingsStore(string path)
                 try { parsed = cv.Deserialize<ManualCurves>(Options); } catch (JsonException) { /* keep the defaults */ }
                 if (parsed is not null && ManualCurveRules.Check(parsed.Cpu) is null && ManualCurveRules.Check(parsed.Case) is null) curves = parsed;
             }
-            return new EmberSettings(normal, game, Normalize(notGames), headers, gpu) { Curves = curves };
+            var experimental = false;
+            if (root.TryGetProperty("Experimental", out var ex) && ex.ValueKind is JsonValueKind.True or JsonValueKind.False) experimental = ex.GetBoolean();
+            return new EmberSettings(normal, game, Normalize(notGames), headers, gpu) { Curves = curves, Experimental = experimental };
         }
         catch (Exception)
         {

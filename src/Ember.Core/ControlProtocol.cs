@@ -15,6 +15,7 @@ public sealed record SetNotGame(string Exe, bool NotGame) : ControlMessage;
 public sealed record ConfirmHeader(string HeaderId, bool Enabled) : ControlMessage;
 public sealed record RunHeaderTest(string HeaderId) : ControlMessage;
 public sealed record SetGpuControl(bool Enabled) : ControlMessage;
+public sealed record SetExperimental(bool Enabled) : ControlMessage;
 /// <summary>Replaces one of the user's Manual-mode curves. Only the shape is checked on decoding; the service applies <see cref="ManualCurveRules"/>.</summary>
 public sealed record SetCurve(CurveGroup Group, IReadOnlyList<CurvePoint> Points) : ControlMessage;
 
@@ -76,6 +77,7 @@ public static partial class ControlProtocol
             case ConfirmHeader x: d.Op = "confirmHeader"; d.Id = x.HeaderId; d.Enabled = x.Enabled; break;
             case RunHeaderTest x: d.Op = "runHeaderTest"; d.Id = x.HeaderId; break;
             case SetGpuControl x: d.Op = "setGpuControl"; d.Enabled = x.Enabled; break;
+            case SetExperimental x: d.Op = "setExperimental"; d.Enabled = x.Enabled; break;
             case SetCurve x:
                 d.Op = "setCurve"; d.Group = x.Group.ToString();
                 d.Points = x.Points.Select(p => (PointDto?)new PointDto { T = p.TempC, P = p.Percent }).ToList();
@@ -104,6 +106,7 @@ public static partial class ControlProtocol
                 "confirmHeader" => Header(d.Id) is { } h && d.Enabled is { } en ? new ConfirmHeader(h, en) : null,
                 "runHeaderTest" => Header(d.Id) is { } h ? new RunHeaderTest(h) : null,
                 "setGpuControl" => d.Enabled is { } g ? new SetGpuControl(g) : null,
+                "setExperimental" => d.Enabled is { } x ? new SetExperimental(x) : null,
                 "setCurve" => Curve(d),
                 _ => null,
             };
