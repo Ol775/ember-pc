@@ -160,4 +160,27 @@ public sealed class PipeServerTests : IAsyncLifetime
         await _server.StopAsync(cts.Token);
         Assert.False(cts.IsCancellationRequested);
     }
+
+    [Fact]
+    public async Task Lost_listener_is_recreated_as_first_instance()
+    {
+        await _server.StopAsync(CancellationToken.None);
+        var flags = new List<bool>();
+        var pipes = new List<NamedPipeServerStream>();
+        _server = new PipeServer(_hub, _name, NullLogger<PipeServer>.Instance)
+        {
+            RetryDelay = TimeSpan.FromMilliseconds(10),
+            CreatePipe = (n, first) =>
+            {
+                lock (flags) { flags.Add(first); var p = PipeSecurityFactory.Create(n, first); pipes.Add(p); return p; }
+            },
+        };
+        await _server.StartAsync(CancellationToken.None);
+        NamedPipeServerStream lost;
+        lock (flags) lost = pipes[0];
+        await lost.DisposeAsync(); // simulate the listening instance being lost with no client connected
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (DateTime.UtcNow < deadline) { lock (flags) if (flags.Count >= 2) break; await Task.Delay(10); }
+        lock (flags) Assert.Equal([true, true], flags.Take(2));
+    }
 }

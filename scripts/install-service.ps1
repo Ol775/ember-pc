@@ -18,7 +18,8 @@ $exe = (Resolve-Path -LiteralPath $ExePath).ProviderPath
 
 # The service runs as LocalSystem, so anyone who can write the exe or its folder could escalate to SYSTEM.
 $badSids = @('S-1-5-32-545', 'S-1-5-11', 'S-1-1-0', 'S-1-5-4')  # Users, Authenticated Users, Everyone, Interactive
-$writeRights = [Security.AccessControl.FileSystemRights]::Write -bor
+$writeRights = [int](
+    [Security.AccessControl.FileSystemRights]::Write -bor
     [Security.AccessControl.FileSystemRights]::WriteData -bor
     [Security.AccessControl.FileSystemRights]::CreateFiles -bor
     [Security.AccessControl.FileSystemRights]::AppendData -bor
@@ -26,13 +27,17 @@ $writeRights = [Security.AccessControl.FileSystemRights]::Write -bor
     [Security.AccessControl.FileSystemRights]::FullControl -bor
     [Security.AccessControl.FileSystemRights]::Delete -bor
     [Security.AccessControl.FileSystemRights]::ChangePermissions -bor
-    [Security.AccessControl.FileSystemRights]::TakeOwnership
+    [Security.AccessControl.FileSystemRights]::TakeOwnership)
+$writeRights = $writeRights -bor 0x10000000 -bor 0x40000000  # raw GENERIC_ALL and GENERIC_WRITE
 $unsafe = foreach ($target in @($exe, (Split-Path -Parent $exe))) {
-    foreach ($rule in (Get-Acl -LiteralPath $target).Access) {
+    $acl = Get-Acl -LiteralPath $target
+    $owner = $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value
+    if ($badSids -contains $owner) { "$target is owned by $owner, who can change its permissions" }
+    # Ask for SIDs directly: Translate() throws for unmappable ACEs such as ALL APPLICATION PACKAGES.
+    foreach ($rule in $acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
         if ($rule.AccessControlType -ne 'Allow') { continue }
-        $sid = $rule.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value
-        if (($badSids -contains $sid) -and ($rule.FileSystemRights -band $writeRights)) {
-            "$target is writable by $($rule.IdentityReference) ($($rule.FileSystemRights))"
+        if (($badSids -contains $rule.IdentityReference.Value) -and (([int]$rule.FileSystemRights) -band $writeRights)) {
+            "$target is writable by $($rule.IdentityReference.Value) ($($rule.FileSystemRights))"
         }
     }
 }
@@ -70,4 +75,8 @@ if ($LASTEXITCODE -ne 0) { Remove-Failed; throw "sc.exe failure failed (exit $LA
 & sc.exe failureflag EmberService 1
 if ($LASTEXITCODE -ne 0) { Remove-Failed; throw "sc.exe failureflag failed (exit $LASTEXITCODE); the service was removed." }
 
-Start-Service EmberService
+try { Start-Service EmberService }
+catch {
+    Write-Warning 'The service was created but failed to start; check the Windows Event Log.'
+    throw
+}

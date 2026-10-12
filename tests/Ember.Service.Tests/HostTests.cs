@@ -1,5 +1,6 @@
 using System.IO.Pipes;
 using Ember.Core;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -55,5 +56,41 @@ public sealed class HostTests
             .ConfigureServices(s => s.AddHostedService<FaultingService>());
         try { Assert.NotEqual(0, Program.Run(builder)); }
         finally { Environment.ExitCode = 0; }
+    }
+
+    private sealed class StopsItselfService(IHostApplicationLifetime life) : BackgroundService
+    {
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            await Task.Delay(50, stoppingToken);
+            life.StopApplication();
+            await Task.Delay(Timeout.Infinite, stoppingToken); // ends cancelled on stop, not faulted
+        }
+    }
+
+    [Fact]
+    public void Run_returns_zero_on_a_normal_stop()
+    {
+        var builder = Quiet(ServiceHost.Create([], () => new FakeSensorSource(), $"ember.test.{Guid.NewGuid():N}"))
+            .ConfigureServices(s => s.AddHostedService<StopsItselfService>());
+        Assert.Equal(0, Program.Run(builder));
+    }
+
+    [Fact]
+    public void Run_detects_a_faulted_service_even_with_logging_off()
+    {
+        var builder = ServiceHost.Create([], () => new FakeSensorSource(), $"ember.test.{Guid.NewGuid():N}")
+            .ConfigureAppConfiguration(c => c.AddInMemoryCollection(new Dictionary<string, string?> { ["Logging:LogLevel:Default"] = "None" }))
+            .ConfigureServices(s => s.AddHostedService<FaultingService>());
+        try { Assert.NotEqual(0, Program.Run(builder)); }
+        finally { Environment.ExitCode = 0; }
+    }
+
+    [Fact]
+    public void Run_returns_nonzero_when_the_pipe_name_is_squatted()
+    {
+        var name = $"ember.test.{Guid.NewGuid():N}";
+        using var squatter = new NamedPipeServerStream(name, PipeDirection.Out, 4, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        Assert.Equal(1, Program.Run(Quiet(ServiceHost.Create([], () => new FakeSensorSource(), name))));
     }
 }

@@ -10,6 +10,7 @@ namespace Ember.Service;
 public sealed class PipeServer(SnapshotHub hub, string pipeName, ILogger<PipeServer> log) : BackgroundService
 {
     internal Func<string, bool, NamedPipeServerStream> CreatePipe { get; init; } = PipeSecurityFactory.Create;
+    private int _live; // pipe instances (listening or serving) currently open
     internal TimeSpan RetryDelay { get; init; } = TimeSpan.FromSeconds(1);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -18,7 +19,7 @@ public sealed class PipeServer(SnapshotHub hub, string pipeName, ILogger<PipeSer
         // The first instance claims the name exclusively. If it fails (e.g. a squatter owns the name),
         // fail startup instead of serving beside it.
         NamedPipeServerStream? first;
-        try { first = CreatePipe(pipeName, true); }
+        try { first = Track(CreatePipe(pipeName, true)); }
         catch (Exception ex)
         {
             log.LogCritical(ex, "Cannot claim pipe {Pipe} exclusively (already exists?); refusing to serve", pipeName);
@@ -31,13 +32,14 @@ public sealed class PipeServer(SnapshotHub hub, string pipeName, ILogger<PipeSer
                 NamedPipeServerStream? pipe = null;
                 try
                 {
-                    pipe = first ?? CreatePipe(pipeName, false);
+                    // With no live instance the name is free, so claim it exclusively again (a squatter could slip in).
+                    pipe = first ?? Track(CreatePipe(pipeName, Volatile.Read(ref _live) == 0));
                     first = null;
                     await pipe.WaitForConnectionAsync(stoppingToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
-                    if (pipe is not null) await pipe.DisposeAsync().ConfigureAwait(false);
+                    if (pipe is not null) await Release(pipe).ConfigureAwait(false);
                     if (stoppingToken.IsCancellationRequested) break;
                     log.LogError(ex, "Pipe accept failed; retrying");
                     try { await Task.Delay(RetryDelay, stoppingToken).ConfigureAwait(false); }
@@ -50,9 +52,21 @@ public sealed class PipeServer(SnapshotHub hub, string pipeName, ILogger<PipeSer
         }
         finally
         {
-            if (first is not null) await first.DisposeAsync().ConfigureAwait(false);
+            if (first is not null) await Release(first).ConfigureAwait(false);
             await Task.WhenAll(clients).ConfigureAwait(false); // ServeAsync never throws
         }
+    }
+
+    private NamedPipeServerStream Track(NamedPipeServerStream pipe)
+    {
+        Interlocked.Increment(ref _live);
+        return pipe;
+    }
+
+    private ValueTask Release(NamedPipeServerStream pipe)
+    {
+        Interlocked.Decrement(ref _live);
+        return pipe.DisposeAsync();
     }
 
     private async Task ServeAsync(NamedPipeServerStream pipe, CancellationToken ct)
@@ -84,7 +98,7 @@ public sealed class PipeServer(SnapshotHub hub, string pipeName, ILogger<PipeSer
         finally
         {
             hub.Published -= Enqueue;
-            await pipe.DisposeAsync().ConfigureAwait(false);
+            await Release(pipe).ConfigureAwait(false);
         }
     }
 }
