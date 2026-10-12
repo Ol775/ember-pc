@@ -61,6 +61,18 @@ public class SettingsStoreTests : IDisposable
     }
 
     [Fact]
+    public void Missing_fields_fall_back_one_by_one()
+    {
+        File.WriteAllText(PathOf, "{\"NormalMode\":\"Quiet\"}");
+        var s = new SettingsStore(PathOf).Load();
+        Assert.Equal(FanMode.Quiet, s.NormalMode);
+        Assert.Equal(FanMode.Performance, s.GameMode);
+        Assert.Empty(s.Headers);
+        File.WriteAllText(PathOf, "{}");
+        Assert.Equal(EmberSettings.Default, new SettingsStore(PathOf).Load());
+    }
+
+    [Fact]
     public void Save_leaves_no_temp_file()
     {
         new SettingsStore(PathOf).Save(EmberSettings.Default);

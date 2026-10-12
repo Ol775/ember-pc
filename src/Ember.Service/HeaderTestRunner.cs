@@ -60,6 +60,7 @@ public sealed class HeaderTestRunner
             {
                 await _delay(Tick, ct).ConfigureAwait(false);
                 changed = _readRpm(headerId) ?? changed;
+                if (_safetyOverride()) return Fail("Stopped because a safety override or a competing app started.");
                 moved = lowering ? changed <= baseline.Value * (1 - MinMove) : changed >= baseline.Value * (1 + MinMove);
             }
 

@@ -116,6 +116,18 @@ public class HeaderTestRunnerTests
     }
 
     [Fact]
+    public async Task Aborts_and_releases_when_safety_trips_mid_test()
+    {
+        var s = new SimFan(Header());
+        var trip = false;
+        var runner = Runner(s, safety: () => trip, delay: (_, _) => { trip = true; return Task.CompletedTask; });
+        var r = await runner.RunAsync(Id, CancellationToken.None);
+        Assert.False(r.Passed);
+        Assert.Contains("safety", r.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("release", s.Fans.Calls[^1].Op);
+    }
+
+    [Fact]
     public async Task Refuses_during_safety_override()
     {
         var s = new SimFan(Header());

@@ -38,11 +38,21 @@ public sealed class SettingsStore(string path)
         {
             var info = new FileInfo(path);
             if (!info.Exists || info.Length > MaxBytes) return EmberSettings.Default;
-            var s = JsonSerializer.Deserialize<EmberSettings>(File.ReadAllText(path), Options);
-            if (s is null || s.NormalMode == FanMode.Ai || s.GameMode == FanMode.Ai) return EmberSettings.Default;
-            if (s.NotGames is null || s.Headers is null || s.Headers.Any(h => h is null || h.Id is null || h.Group is null))
-                return EmberSettings.Default;
-            return s with { NotGames = Normalize(s.NotGames) };
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            if (doc.RootElement.ValueKind != JsonValueKind.Object) return EmberSettings.Default;
+            var root = doc.RootElement;
+            var d = EmberSettings.Default;
+            // Each missing field falls back on its own; a present but invalid one (unknown mode, Ai, wrong type) rejects the file.
+            var normal = root.TryGetProperty("NormalMode", out var n) ? n.Deserialize<FanMode>(Options) : d.NormalMode;
+            var game = root.TryGetProperty("GameMode", out var g) ? g.Deserialize<FanMode>(Options) : d.GameMode;
+            if (normal == FanMode.Ai || game == FanMode.Ai) return d;
+            var notGames = root.TryGetProperty("NotGames", out var ng) ? ng.Deserialize<List<string>>(Options) : [];
+            var headers = root.TryGetProperty("Headers", out var h) ? h.Deserialize<List<HeaderRecord>>(Options) : [];
+            var gpu = root.TryGetProperty("GpuControlEnabled", out var gc) ? gc.Deserialize<bool>(Options) : d.GpuControlEnabled;
+            if (notGames is null || headers is null || notGames.Any(e => e is null)
+                || headers.Any(r => r is null || r.Id is null || r.Group is null))
+                return d;
+            return new EmberSettings(normal, game, Normalize(notGames), headers, gpu);
         }
         catch (Exception)
         {

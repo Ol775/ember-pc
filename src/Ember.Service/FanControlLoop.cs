@@ -38,6 +38,8 @@ public sealed class FanControlLoop : BackgroundService
     readonly HashSet<string> _written = new();
     readonly HashSet<string> _failed = new();
     bool _stopped;
+    bool _disposed;
+    string? _testingHeader;
     EmberSettings _settings;
     ModeResolver _resolver;
     IReadOnlyList<string> _competitors = [];
@@ -93,8 +95,11 @@ public sealed class FanControlLoop : BackgroundService
 
     public override void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         _stop.Cancel();
         StopAndRelease();
+        _stop.Dispose();
         base.Dispose();
     }
 
@@ -271,6 +276,7 @@ public sealed class FanControlLoop : BackgroundService
             var state = _failed.Contains(h.Id) ? HeaderState.Failed
                 : IsGpu(h.Id) && !_settings.GpuControlEnabled ? HeaderState.Unknown
                 : !h.HasControl ? HeaderState.ReadOnly
+                : GroupOf(h) is null ? HeaderState.Unknown // not a CPU, pump or system fan header Ember knows how to drive
                 : record is { Enabled: true } && IsTested(record) ? HeaderState.Enabled
                 : HeaderState.Controllable;
             return new HeaderStatus(h.Id, h.Name, state, record is not null && IsTested(record));
@@ -343,8 +349,11 @@ public sealed class FanControlLoop : BackgroundService
     {
         if (Runner is not { } runner) return new ControlReply(false, "test not available");
         if (_settings.Headers.Any(r => r.Id == headerId && r.Enabled)) return new ControlReply(false, "disable the header before testing it");
-        if (runner.IsBusy) return new ControlReply(false, "a test is already running");
+        if (runner.IsBusy || _testingHeader is not null) return new ControlReply(false, "a test is already running");
+        if (_fans.Enumerate().FirstOrDefault(h => h.Id == headerId) is { } known && !IsGpu(known.Id) && GroupOf(known) is null)
+            return new ControlReply(false, "this header is not part of a fan group");
         _testMessage = "Testing…";
+        _testingHeader = headerId; // set now, not inside the task, so a second request cannot slip in before it starts
         _ = Task.Run(async () =>
         {
             try
@@ -357,6 +366,10 @@ public sealed class FanControlLoop : BackgroundService
             {
                 _log.LogError(ex, "Header test failed");
                 RecordTestResult(headerId, false, "The test stopped because of an error.");
+            }
+            finally
+            {
+                lock (_gate) _testingHeader = null;
             }
         });
         return Ok();
@@ -372,10 +385,12 @@ public sealed class FanControlLoop : BackgroundService
             if (_written.Contains(c.HeaderId)) TryRelease(c.HeaderId); // a failed release stays in _written and is retried each step
             return Ok();
         }
+        if (_testingHeader == c.HeaderId) return new ControlReply(false, "wait for the test to finish");
         if (IsGpu(c.HeaderId) && !_settings.GpuControlEnabled) return new ControlReply(false, "turn on GPU fan control first");
         if (_competitors.Count > 0) return new ControlReply(false, "close " + string.Join(", ", _competitors) + " first");
         var header = _fans.Enumerate().FirstOrDefault(h => h.Id == c.HeaderId);
         if (header is null || !header.HasControl) return new ControlReply(false, "header cannot be controlled");
+        if (GroupOf(header) is null) return new ControlReply(false, "this header is not part of a fan group");
         if (existing is null || !IsTested(existing)) return new ControlReply(false, "run the header test first");
         Save(_settings with { Headers = _settings.Headers.Select(r => r.Id == c.HeaderId ? r with { Enabled = true } : r).ToList() });
         return Ok();

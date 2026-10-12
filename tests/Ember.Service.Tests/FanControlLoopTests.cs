@@ -457,6 +457,43 @@ public sealed class FanControlLoopTests : IDisposable
     }
 
     [Fact]
+    public async Task Second_test_request_is_refused_while_the_first_is_starting()
+    {
+        var loop = Loop();
+        var gate = new TaskCompletionSource();
+        loop.Runner = new HeaderTestRunner(_fans, _ => 1000, _ => 60, (_, _) => gate.Task);
+        Assert.True(loop.Handle(new RunHeaderTest(Sys1)).Ok);
+        Assert.False(loop.Handle(new RunHeaderTest(Sys2)).Ok);
+        gate.SetResult();
+        for (var i = 0; i < 300 && loop.Status.TestMessage == "Testing2026"; i++) await Task.Delay(10);
+    }
+
+    [Fact]
+    public async Task Confirm_refused_while_that_header_is_being_tested()
+    {
+        var loop = Loop(Rec(Sys1, enabled: false));
+        var gate = new TaskCompletionSource();
+        loop.Runner = new HeaderTestRunner(_fans, _ => 1000, _ => 60, (_, _) => gate.Task);
+        Assert.True(loop.Handle(new RunHeaderTest(Sys1)).Ok);
+        Assert.False(loop.Handle(new ConfirmHeader(Sys1, true)).Ok);
+        gate.SetResult();
+        for (var i = 0; i < 300 && loop.Status.TestMessage == "Testing2026"; i++) await Task.Delay(10);
+    }
+
+    [Fact]
+    public void Unmapped_header_name_cannot_be_enabled_or_tested()
+    {
+        const string odd = "/lpc/other/0/control/9";
+        var fans = new FakeFanController(new FanHeader(odd, "Fan #1", true, true, false));
+        var store = new SettingsStore(SettingsPath);
+        store.Save(EmberSettings.Default with { Headers = new[] { Rec(odd, enabled: false) } });
+        var loop = new FanControlLoop(_hub, fans, store, () => _processes, _clock, NullLogger<FanControlLoop>.Instance, Id);
+        loop.OnSnapshot(Snap());
+        Assert.Equal(HeaderState.Unknown, loop.Status.Headers.Single().State);
+        Assert.False(loop.Handle(new ConfirmHeader(odd, true)).Ok);
+    }
+
+    [Fact]
     public void Ai_mode_is_rejected()
     {
         var loop = Loop();

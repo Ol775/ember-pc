@@ -30,14 +30,16 @@ public static class ServiceHost
                     {
                         var dir = settingsDir ?? Path.Combine(
                             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Ember");
-                        SettingsDirectory.Ensure(dir);
+                        try { SettingsDirectory.Ensure(dir); }
+                        catch (Exception ex) { p.GetRequiredService<ILogger<FanControlLoop>>().LogError(ex, "Could not prepare {Dir}; fan control will run with default settings", dir); }
                         var hub = p.GetRequiredService<SnapshotHub>();
                         var fans = p.GetRequiredService<IFanController>();
                         var loop = new FanControlLoop(hub, fans,
                             new SettingsStore(Path.Combine(dir, "settings.json")), processNames ?? ProcessNames, p.GetRequiredService<TimeProvider>(),
                             p.GetRequiredService<ILogger<FanControlLoop>>(), identity?.Invoke() ?? new FanControlIdentity("unknown", "unknown"));
                         loop.Runner = new HeaderTestRunner(fans, id => Reading(hub, id.Replace("/control/", "/fan/", StringComparison.Ordinal)),
-                            id => Reading(hub, id), Task.Delay, () => loop.Status.SafetyOverride);
+                            id => Reading(hub, id), Task.Delay,
+                            () => loop.Status.SafetyOverride || loop.Status.Competitors.Count > 0);
                         return loop;
                     });
                     s.AddHostedService(p => new SensorPoller(p.GetRequiredService<ISensorSource>(), p.GetRequiredService<SnapshotHub>(),
