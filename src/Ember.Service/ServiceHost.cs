@@ -10,7 +10,7 @@ public static class ServiceHost
 {
     public static IHostBuilder Create(string[] args, Func<ISensorSource> sourceFactory, string pipeName,
         Func<IFanController>? fanFactory = null, Func<FanControlIdentity>? identity = null, string? settingsDir = null,
-        Func<IReadOnlyList<string>>? processNames = null) =>
+        Func<IReadOnlyList<string>>? processNames = null, string? controlPipeName = null) =>
         Host.CreateDefaultBuilder(args)
             .UseWindowsService(o => o.ServiceName = EmberNames.ServiceName)
             .ConfigureServices(s =>
@@ -44,6 +44,8 @@ public static class ServiceHost
                         p.GetRequiredService<TimeProvider>(), p.GetRequiredService<ILogger<SensorPoller>>(),
                         p.GetService<IDriverProbe>(), () => p.GetRequiredService<FanControlLoop>().Status));
                     s.AddHostedService(p => p.GetRequiredService<FanControlLoop>());
+                    s.AddHostedService(p => new ControlPipeServer(p.GetRequiredService<FanControlLoop>().Handle,
+                        controlPipeName ?? EmberNames.ControlPipeName, p.GetRequiredService<ILogger<ControlPipeServer>>()));
                 }
                 s.AddHostedService(p => new PipeServer(p.GetRequiredService<SnapshotHub>(), pipeName, p.GetRequiredService<ILogger<PipeServer>>()));
             });

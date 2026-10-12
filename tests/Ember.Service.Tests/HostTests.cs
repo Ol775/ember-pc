@@ -108,7 +108,7 @@ public sealed class HostFanControlTests
         {
             Headers = new[] { new HeaderRecord("/lpc/nct6687d/0/control/2", true, "Case", "B", "1") },
         });
-        using var host = ServiceHost.Create([], () => fake, name, () => fans, () => new FanControlIdentity("B", "1"), dir, () => [])
+        using var host = ServiceHost.Create([], () => fake, name, () => fans, () => new FanControlIdentity("B", "1"), dir, () => [], $"ember.ctl.test.{Guid.NewGuid():N}")
             .ConfigureLogging(l => l.ClearProviders()).Build();
         await host.StartAsync();
         try
