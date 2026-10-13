@@ -219,6 +219,13 @@ public sealed class LightingManager : IAsyncDisposable
         RefreshDevices();
     }
 
+    /// <summary>Logitech through G HUB can either light the keyboard key by key or colour every Logitech device as one: not both at once.</summary>
+    public void SetLogitechOneColour(bool on)
+    {
+        Mutate(s => s with { LogitechOneColour = on });
+        RefreshDevices();
+    }
+
     public void SetOpenRgb(string? path, bool? start) => Mutate(s => s with { OpenRgbPath = string.IsNullOrWhiteSpace(path) ? null : path.Trim(), StartOpenRgb = start });
 
     // Writing the file waits until the changes stop (a slider produces dozens a second) and is done once on shutdown.

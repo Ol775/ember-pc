@@ -81,8 +81,8 @@ public sealed class LogitechKeyboardSink(LogitechContext context) : IDeviceSink
 public sealed class LogitechMouseSink(LogitechContext context) : IDeviceSink
 {
     public string Id => "logitech:mouse";
-    public string Name => "Logitech mouse";
-    public string Kind => "Mouse";
+    public string Name => "Logitech devices (one colour)";
+    public string Kind => "Keyboard and mouse";
     public int LedCount => 1;
     public TimeSpan MinInterval => TimeSpan.FromMilliseconds(50);
     public bool Keepalive => true;
@@ -95,11 +95,12 @@ public sealed class LogitechMouseSink(LogitechContext context) : IDeviceSink
     }
 }
 
-public sealed class LogitechSource(Func<ILogitechLed?> open) : IDeviceSource, IAsyncDisposable
+public sealed class LogitechSource(Func<ILogitechLed?> open, Func<bool>? oneColour = null) : IDeviceSource, IAsyncDisposable
 {
     ILogitechLed? _api;
     LogitechContext? _context;
-    IDeviceSink[] _sinks = [];
+    IDeviceSink[] _perKey = [], _oneColour = [];
+    bool? _lastOneColour;
 
     public string Name => "Logitech";
     public string Status { get; private set; } = "Looking for G HUB…";
@@ -108,18 +109,25 @@ public sealed class LogitechSource(Func<ILogitechLed?> open) : IDeviceSource, IA
     {
         try
         {
-            if (_context is { Ready: true }) return Task.FromResult<IReadOnlyList<IDeviceSink>>(_sinks);
             if (_api is null)
             {
                 _api = open();
                 if (_api is null) { Status = "Logitech G HUB is not installed (Ember uses its lighting engine)"; return Task.FromResult<IReadOnlyList<IDeviceSink>>([]); }
                 _context = new LogitechContext(_api);
-                _sinks = [new LogitechKeyboardSink(_context), new LogitechMouseSink(_context)];
+                _perKey = [new LogitechKeyboardSink(_context)];
+                _oneColour = [new LogitechMouseSink(_context)];
             }
+            // G HUB's engine cannot light the keyboard key by key and colour the mouse at the same time: one whole-device colour
+            // locks the keyboard to that colour. So the owner picks a mode, and changing it starts the engine afresh.
+            var one = oneColour?.Invoke() ?? false;
+            if (_lastOneColour is { } before && before != one) _context!.Stop();
+            _lastOneColour = one;
             if (_context!.Start())
             {
-                Status = "Connected through G HUB (keyboard and mouse). If a device does not change, switch on 'Allow games and applications to control lighting' for it in G HUB.";
-                return Task.FromResult<IReadOnlyList<IDeviceSink>>(_sinks);
+                Status = one
+                    ? "Connected through G HUB: every Logitech device takes one colour (keyboard and mouse together)."
+                    : "Connected through G HUB: the keyboard is lit key by key; the mouse is left to G HUB (it cannot be coloured separately while the keyboard is per key). If a device does not change, switch on 'Allow games and applications to control lighting' for it in G HUB.";
+                return Task.FromResult<IReadOnlyList<IDeviceSink>>(one ? _oneColour : _perKey);
             }
             Status = "G HUB is installed but not answering. Start Logitech G HUB.";
         }

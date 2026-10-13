@@ -6,7 +6,7 @@ namespace Ember.Lighting;
 /// <summary>What the Lights page remembers. Lights start switched off, so Ember never takes over a device until asked.</summary>
 public sealed record LightingState(
     bool On, string CurrentScene, IReadOnlyList<Scene> Scenes, string? OpenRgbPath = null, bool? StartOpenRgb = null,
-    IReadOnlyDictionary<string, int>? Segments = null, IReadOnlyList<string>? DisabledDevices = null)
+    IReadOnlyDictionary<string, int>? Segments = null, IReadOnlyList<string>? DisabledDevices = null, bool LogitechOneColour = false)
 {
     /// <summary>Null means automatic: start OpenRGB when a program is known (the bundled one, or the chosen path). False turns that off.</summary>
     [JsonIgnore] public bool ShouldStartOpenRgb => StartOpenRgb != false;

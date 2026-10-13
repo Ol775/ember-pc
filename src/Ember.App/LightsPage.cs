@@ -84,6 +84,10 @@ public sealed class LightsPage : UserControl
         top.Children.Add(row);
         top.Children.Add(Text("Lights start switched off, so Ember never takes over a device until you ask. Turning them off sends one dark frame; closing Ember leaves them as they are.", muted: true));
         top.Children.Add(_status);
+        var logi = Switch("Logitech: one colour for every Logitech device", s.LogitechOneColour, on => { m.SetLogitechOneColour(on); _rendered = m.State; });
+        logi.Margin = new Thickness(0, 8, 0, 0);
+        logi.ToolTip = "Off (recommended): the keyboard is lit key by key and the mouse is left to G HUB. On: the mouse and keyboard all take one colour, because G HUB cannot do both at once.";
+        top.Children.Add(logi);
         _root.Children.Add(Panel("Lights", top));
 
         var sceneBox = new StackPanel();
@@ -277,7 +281,7 @@ public sealed class LightsPage : UserControl
         var devices = _m!.Devices.ToDictionary(d => d.Id);
         foreach (var p in state.Current.Placements)
         {
-            devices.TryGetValue(p.DeviceId, out var info);
+            if (!devices.TryGetValue(p.DeviceId, out var info)) continue; // a device that is not here now is not drawn
             var columns = info?.Columns > 1 ? info.Columns : 0;
             var ledCount = columns > 0 ? Math.Clamp(info!.LedCount, 1, 400) : Math.Clamp(info?.LedCount ?? 8, 1, 60);
             var leds = new List<SolidColorBrush>();

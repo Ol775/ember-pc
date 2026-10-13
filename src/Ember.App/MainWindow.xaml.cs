@@ -45,7 +45,7 @@ public partial class MainWindow : Window
         _lights = lights = new LightingManager(new LightingStore(LightingStore.DefaultPath), TimeProvider.System,
             [new OpenRgbSource(() => string.IsNullOrWhiteSpace(lights?.State.OpenRgbPath) ? BundledOpenRgb : lights!.State.OpenRgbPath, () => lights?.State.ShouldStartOpenRgb ?? true),
              new GoveeSource(new GoveeLanClient(), GoveeCloud, id => lights?.SegmentsOf(id) ?? 1),
-             new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad())]);
+             new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad(), () => lights?.State.LogitechOneColour ?? false)]);
         Lights.Attach(_lights);
         _lights.Start();
 

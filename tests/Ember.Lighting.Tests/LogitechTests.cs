@@ -90,13 +90,31 @@ public class LogitechTests
     }
 
     [Fact]
-    public async Task With_G_HUB_running_the_source_offers_the_keyboard_and_the_mouse_and_keeps_them()
+    public async Task By_default_only_the_per_key_keyboard_is_offered_and_it_is_kept()
     {
         var source = new LogitechSource(() => new FakeLed());
         var first = await source.RefreshAsync(default);
-        Assert.Equal(["logitech:keyboard", "logitech:mouse"], first.Select(s => s.Id));
+        Assert.Equal(["logitech:keyboard"], first.Select(s => s.Id));
         Assert.Same(first[0], (await source.RefreshAsync(default))[0]);
         Assert.Contains("Connected", source.Status);
+    }
+
+    [Fact]
+    public async Task One_colour_mode_offers_a_single_whole_device_sink_and_restarts_the_engine_when_switched()
+    {
+        var one = false;
+        var api = new FakeLed();
+        var source = new LogitechSource(() => api, () => one);
+        Assert.Equal(["logitech:keyboard"], (await source.RefreshAsync(default)).Select(s => s.Id));
+        one = true;
+        Assert.Equal(["logitech:mouse"], (await source.RefreshAsync(default)).Select(s => s.Id));
+        Assert.Contains("one colour", source.Status);
+        // a whole-device colour locks the keyboard, so changing mode hands the lighting back and starts again
+        Assert.Equal(2, api.Calls.Count(c => c == "init"));
+        Assert.Contains("shutdown", api.Calls);
+        one = false;
+        Assert.Equal(["logitech:keyboard"], (await source.RefreshAsync(default)).Select(s => s.Id));
+        Assert.Equal(3, api.Calls.Count(c => c == "init"));
     }
 
     [Fact]
