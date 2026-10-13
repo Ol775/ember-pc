@@ -28,7 +28,7 @@ public sealed class DevicesPage : UserControl
         AutomationProperties.SetHeadingLevel(title, AutomationHeadingLevel.Level2);
         _root.Children.Add(title);
         _root.Children.Add(_cards);
-        _root.Children.Add(Panel("All devices", _rows));
+        _root.Children.Add(Panel("All devices", _rows, new Thickness(0)));
     }
 
     public void Update(MainViewModel vm, LightingManager lights)
@@ -57,8 +57,6 @@ public sealed class DevicesPage : UserControl
             var problem = lights.Problems.TryGetValue(d.Id, out var p) ? p : null;
             _rows.Children.Add(Row(d.Name, d.Source, "Lighting", problem ?? (d.Realtime ? "Online" : "Online, slow (cloud)"), warn: problem is not null || !d.Realtime));
         }
-        foreach (var h in headers)
-            _rows.Children.Add(Row(h.Name, "Motherboard", "Fan", h.CanDisable ? "Controlled by Ember" : h.StateText, warn: !h.CanDisable));
         if (_rows.Children.Count == 1) _rows.Children.Add(Text("Nothing found yet", muted: true));
     }
 

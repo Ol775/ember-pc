@@ -231,7 +231,22 @@
                     </StackPanel>
                 </GroupBox>
 
-                <GroupBox Header="Fan headers" Style="{StaticResource Panel}" AutomationProperties.Name="Fan headers">
+                
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Lights -->
+        <ScrollViewer x:Name="LightsPageView" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
+                      Visibility="Collapsed">
+            <local:LightsPage x:Name="Lights" />
+        </ScrollViewer>
+
+        <!-- Devices -->
+        <ScrollViewer x:Name="DevicesPageView" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
+                      Visibility="Collapsed">
+            <StackPanel>
+            <local:DevicesPage x:Name="Devices" />
+            <GroupBox Header="Fan headers" Style="{StaticResource Panel}" Margin="24,-8,24,24" AutomationProperties.Name="Fan headers">
                     <StackPanel>
                         <CheckBox Content="Allow Ember to control the GPU fan (optional, test it first)" IsChecked="{Binding FansPage.GpuControl, Mode=OneWay}"
                                   Click="OnGpuControl" Style="{StaticResource SwitchBox}" Margin="0,0,0,8"
@@ -276,18 +291,6 @@
                     </StackPanel>
                 </GroupBox>
             </StackPanel>
-        </ScrollViewer>
-
-        <!-- Lights -->
-        <ScrollViewer x:Name="LightsPageView" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
-                      Visibility="Collapsed">
-            <local:LightsPage x:Name="Lights" />
-        </ScrollViewer>
-
-        <!-- Devices -->
-        <ScrollViewer x:Name="DevicesPageView" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
-                      Visibility="Collapsed">
-            <local:DevicesPage x:Name="Devices" />
         </ScrollViewer>
 
         <!-- Settings -->
