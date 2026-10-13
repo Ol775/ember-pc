@@ -49,7 +49,8 @@ public partial class MainWindow : Window
              new GoveeSource(new GoveeLanClient(), GoveeCloud, id => lights?.SegmentsOf(id) ?? 1),
              new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad(), () => lights?.State.LogitechOneColour ?? false),
              new Ember.Lighting.Hue.HueSource(HueConnection),
-             new Ember.Lighting.Nanoleaf.NanoleafSource(NanoleafConnection)]);
+             new Ember.Lighting.Nanoleaf.NanoleafSource(NanoleafConnection),
+             new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp))]);
         Lights.Attach(_lights);
         _lights.Start();
 
@@ -89,6 +90,7 @@ public partial class MainWindow : Window
         MinimisedSwitch.IsChecked = _vm.Prefs.StartMinimised;
         HueHost.Text = _hueStore.Load()?.Host ?? "";
         NanoleafHost.Text = _nanoStore.Load()?.Host ?? "";
+        RazerSwitch.IsChecked = _razerStore.Enabled;
         OnSettingsSection(SetGeneral, new RoutedEventArgs());
         _updates = new UpdateChecker(_http);
         _installer = new UpdateInstaller(_http);
@@ -228,8 +230,9 @@ public partial class MainWindow : Window
             var got = await _installer.DownloadAsync(release, folder, progress);
             UpdateNote.Text = got.Message;
             if (!got.Ok || got.Path is null) return;
-            UpdateNote.Text = "Starting the installer. Windows will ask for permission, then Ember closes and the installer takes over.";
-            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(got.Path) { UseShellExecute = true }); }
+            UpdateNote.Text = "Starting the installer. Windows will ask for permission, then Ember closes, updates and opens again.";
+            var accepted = Math.Max(_vm.Prefs.AcceptedTerms, TermsAcceptance.ByInstaller());
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(got.Path, "/UPDATE /ACCEPTED=" + accepted) { UseShellExecute = true }); }
             catch (System.ComponentModel.Win32Exception) { UpdateNote.Text = "The installer was not started (permission was refused). Press Update now to try again."; return; }
             Quit();
         }
@@ -450,6 +453,21 @@ public partial class MainWindow : Window
         NanoleafNote.Text = ok ? "Unlinked. Ember forgot the controller and its token." : "Could not remove everything.";
         _lights.RefreshDevices();
         Announce(NanoleafNote);
+    }
+
+    // ---- Razer Chroma ----
+
+    readonly Ember.Lighting.Razer.RazerSettingsStore _razerStore = new(Ember.Lighting.Razer.RazerSettingsStore.DefaultPath);
+    readonly HttpClient _razerHttp = new() { Timeout = TimeSpan.FromSeconds(3) };
+
+    void OnRazerToggled(object sender, RoutedEventArgs e)
+    {
+        var on = ((System.Windows.Controls.CheckBox)sender).IsChecked == true;
+        RazerNote.Text = _razerStore.TrySave(on)
+            ? (on ? "On. Its devices appear on the Lights page in a few seconds if Razer Synapse is running with Chroma Connect on." : "Off. Ember no longer talks to Razer Synapse.")
+            : "Could not save this setting.";
+        _lights.RefreshDevices();
+        Announce(RazerNote);
     }
 
     async void OnCurveCommitted(CurveGroup group, IReadOnlyList<CurvePoint> points)

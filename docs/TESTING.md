@@ -70,6 +70,13 @@ reach the tray): the menu, double-click to open, and Quit.
 - [ ] Black or the lights switched off turns the panels off, and switching on brings them back.
 - [ ] Unlink forgets the controller; linking again works.
 
+## Razer Chroma (written and unit-tested against a pretend Synapse only)
+
+- [ ] Settings, Razer Chroma, Use Razer Chroma: with Synapse running and Chroma Connect on, the Razer devices appear on the Lights and Devices pages.
+- [ ] Effects reach the keyboard (22 columns by 6 rows) and the other Razer devices; devices you do not own can be switched off on the Devices page.
+- [ ] Lights keep working for longer than a minute (the heartbeat keeps the Synapse session alive), and after Synapse restarts.
+- [ ] Switching Razer Chroma off stops Ember talking to Synapse.
+
 ## Several devices and shared paint files
 
 Unit-tested (fills across the canvas, the library folder, name safety). The buttons on the Lights page were not reached by

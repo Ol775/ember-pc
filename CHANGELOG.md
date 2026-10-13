@@ -2,6 +2,16 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 0.1.0-beta.9 (2026-10-13)
+
+### Added
+
+- **Razer Chroma.** Settings has a Razer Chroma switch. On, Ember lights Razer keyboards, keypads, mousepads, headsets and Chroma Link strips through Razer Synapse on this PC (its local Chroma SDK, so Synapse must be running with Chroma Connect on). Mice are not used. Ember cannot tell which Razer devices are plugged in, so switch off the ones you do not have on the Devices page. Not yet tried on real Razer hardware.
+
+### Changed
+
+- **Update now skips the wizard.** If you have already accepted the Terms of Use, the installer updates quietly and Ember opens again by itself. If the terms changed, the wizard still asks first.
+
 ## 0.1.0-beta.8 (2026-10-13)
 
 ### Changed

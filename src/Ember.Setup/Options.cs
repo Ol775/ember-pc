@@ -13,6 +13,9 @@ namespace Ember.Setup
         public bool LaunchWhenDone = true;
         public bool Silent;
         public bool Accepted;
+        /// <summary>Started by Ember's "Update now": installs without the wizard when the terms were already accepted, then opens Ember again.</summary>
+        public bool FromUpdate;
+        public int AcceptedVersion;
 
         /// <summary>
         /// Silent install: <c>EmberSetup.exe /S /ACCEPT [/D=folder] [/NODESKTOP] [/NOPAWNIO] [/NORUNTIMES] [/NOLAUNCH]</c>.
@@ -26,12 +29,16 @@ namespace Ember.Setup
                 var a = raw.Trim();
                 if (a.Equals("/S", StringComparison.OrdinalIgnoreCase) || a.Equals("--silent", StringComparison.OrdinalIgnoreCase)) o.Silent = true;
                 else if (a.Equals("/ACCEPT", StringComparison.OrdinalIgnoreCase)) o.Accepted = true;
+                else if (a.Equals("/UPDATE", StringComparison.OrdinalIgnoreCase)) o.FromUpdate = true;
+                else if (a.StartsWith("/ACCEPTED=", StringComparison.OrdinalIgnoreCase)) int.TryParse(a.Substring(10), out o.AcceptedVersion);
                 else if (a.Equals("/NODESKTOP", StringComparison.OrdinalIgnoreCase)) o.DesktopShortcut = false;
                 else if (a.Equals("/NOPAWNIO", StringComparison.OrdinalIgnoreCase)) o.InstallPawnIO = false;
                 else if (a.Equals("/NORUNTIMES", StringComparison.OrdinalIgnoreCase)) o.InstallRuntimes = false;
                 else if (a.Equals("/NOLAUNCH", StringComparison.OrdinalIgnoreCase)) o.LaunchWhenDone = false;
                 else if (a.StartsWith("/D=", StringComparison.OrdinalIgnoreCase)) o.InstallDir = a.Substring(3).Trim('"');
             }
+            // An update from inside Ember skips the wizard only when the person has already accepted these terms; otherwise the wizard asks.
+            if (o.FromUpdate && o.AcceptedVersion >= Installer.TermsVersion) { o.Silent = true; o.Accepted = true; o.LaunchWhenDone = true; return o; }
             if (o.Silent) o.LaunchWhenDone = false; // a silent install never opens a window
             return o;
         }

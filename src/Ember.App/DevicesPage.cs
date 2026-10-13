@@ -53,6 +53,7 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Source("Logitech", "Keyboards and mice, through G HUB", devices, status));
         _cards.Children.Add(Source("Hue", "Philips Hue lights, through the bridge on your network", devices, status));
         _cards.Children.Add(Source("Nanoleaf", "Nanoleaf light panels, through the controller on your network", devices, status));
+        _cards.Children.Add(Source("Razer", "Razer Chroma devices, through Razer Synapse on this PC", devices, status));
 
         _rows.Children.Clear();
         _rows.Children.Add(Row("Name", "Source", "Type", "Status", header: true, use: Text("Use", muted: true, size: 12)));

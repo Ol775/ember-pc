@@ -31,11 +31,17 @@ namespace Ember.Setup
                     var installer = new Installer(options, (percent, text) => Write("[" + percent + "%] " + text), Write);
                     installer.Run();
                     Write("Ember was installed in " + options.InstallDir + (installer.Warnings ? " (with warnings: see above)." : "."));
+                    if (options.FromUpdate) Installer.OpenEmber(options.InstallDir);
                     return 0;
                 }
                 catch (Exception ex)
                 {
                     Write("FAILED: " + ex.Message);
+                    if (options.FromUpdate)
+                    {
+                        MessageBox.Show("Ember could not be updated: " + ex.Message + Environment.NewLine + Environment.NewLine + "The log is at " + logPath, "Ember update", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        Installer.OpenEmber(options.InstallDir);
+                    }
                     return 1;
                 }
             }

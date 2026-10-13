@@ -436,11 +436,20 @@
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </GroupBox>
+                <GroupBox Tag="lights" Header="Razer Chroma" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Razer Chroma">
+                    <StackPanel>
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
+                                   Text="Lights Razer keyboards, keypads, mousepads, headsets and Chroma Link strips through Razer Synapse on this PC (its local Chroma SDK; nothing leaves the PC). Razer Synapse must be running with Chroma Connect on. Ember cannot tell which Razer devices are plugged in, so switch off the ones you do not have on the Devices page. Razer mice are not used." />
+                        <CheckBox x:Name="RazerSwitch" Content="Use Razer Chroma" Click="OnRazerToggled" Style="{StaticResource SwitchBox}" Margin="0,12,0,0" />
+                        <TextBlock x:Name="RazerNote" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,0"
+                                   AutomationProperties.LiveSetting="Polite" />
+                    </StackPanel>
+                </GroupBox>
                 <GroupBox Tag="updates" Header="Updates" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Updates">
                     <StackPanel>
                         <TextBlock Text="{Binding VersionText}" FontWeight="SemiBold" />
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"
-                                   Text="A check only asks GitHub for the list of releases. When a newer one exists, Update now downloads its installer, checks it against the release checksum and starts it. Nothing is downloaded or installed until you press the button." />
+                                   Text="A check only asks GitHub for the list of releases. When a newer one exists, Update now downloads its installer, checks it against the release checksum, updates and opens Ember again (the installer only asks about the Terms of Use if they changed since you accepted them). Nothing is downloaded or installed until you press the button." />
                         <WrapPanel Margin="0,12,0,0">
                             <Button Content="Check now" Click="OnCheckUpdates" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
                             <Button x:Name="UpdateNowButton" Content="Update now" Click="OnUpdateNow" Style="{StaticResource ActionButton}" Margin="0,0,8,0" Visibility="Collapsed" />
