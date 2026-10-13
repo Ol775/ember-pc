@@ -27,6 +27,7 @@ public sealed class LightingManager : IAsyncDisposable
     Dictionary<string, Color[]> _preview = [];
     double? _cpu, _gpu;
     AudioLevels? _audio;
+    readonly List<KeyPulse> _pulses = [];
     IReadOnlyList<Color>? _screen;
     DateTimeOffset _lastRefresh = DateTimeOffset.MinValue, _lastChanged = DateTimeOffset.MinValue;
     bool _refreshNow = true;
@@ -75,7 +76,26 @@ public sealed class LightingManager : IAsyncDisposable
     /// <summary>True when an enabled layer follows the music, so the app listens to the sound only when it is needed.</summary>
     public bool WantsAudio
     {
-        get { lock (_gate) return _state.On && _state.Current.Layers.Any(l => l.Enabled && l.Effect is AudioPulseEffect or AudioSpectrumEffect); }
+        get { lock (_gate) return _state.On && _state.Current.Layers.Any(l => l.Enabled && l.Effect is AudioPulseEffect or AudioSpectrumEffect or AudioBarsEffect); }
+    }
+
+    /// <summary>True when an enabled layer reacts to key presses, so the app watches the keyboard only when it is needed.</summary>
+    public bool WantsKeys
+    {
+        get { lock (_gate) return _state.On && _state.Current.Layers.Any(l => l.Enabled && l.Effect is ReactiveKeysEffect); }
+    }
+
+    /// <summary>A key went down. Only where it sits on the keyboard and when are kept, for about two seconds; which key it was is not.</summary>
+    public void KeyPressed(int virtualKey)
+    {
+        if (KeyboardLayout.Position(virtualKey) is not { } at) return;
+        var seconds = (_clock.GetUtcNow() - _t0).TotalSeconds;
+        lock (_gate)
+        {
+            _pulses.RemoveAll(p => seconds - p.Seconds > 4);
+            if (_pulses.Count >= 48) _pulses.RemoveAt(0);
+            _pulses.Add(new KeyPulse(at.X, at.Y, seconds));
+        }
     }
 
     /// <summary>True when an enabled layer wants the screen picture, so the app only captures the screen when it is needed.</summary>
@@ -133,6 +153,20 @@ public sealed class LightingManager : IAsyncDisposable
         if (count <= 1) map.Remove(deviceId); else map[deviceId] = Math.Min(count, 255);
         return s with { Segments = map.Count == 0 ? null : map };
     });
+
+    /// <summary>Asks the sources how many separately lit parts the device has and applies it. False when none could tell.</summary>
+    public async Task<int?> DetectSegmentsAsync(string deviceId, CancellationToken ct = default)
+    {
+        foreach (var source in _sources.OfType<Govee.ISegmentDetector>())
+        {
+            var count = await source.DetectSegmentsAsync(deviceId, ct).ConfigureAwait(false);
+            if (count is not { } n) continue;
+            SetSegments(deviceId, n);
+            RefreshDevices();
+            return n;
+        }
+        return null;
+    }
 
     public int SegmentsOf(string deviceId) => State.Segments is { } m && m.TryGetValue(deviceId, out var n) ? n : 1;
 
@@ -209,7 +243,9 @@ public sealed class LightingManager : IAsyncDisposable
         {
             state = _state;
             sinks = _sinks.ToList();
-            inputs = new LightingInputs((now - _t0).TotalSeconds, _cpu, _gpu, _screen, _audio);
+            var seconds = (now - _t0).TotalSeconds;
+            _pulses.RemoveAll(p => seconds - p.Seconds > 4);
+            inputs = new LightingInputs(seconds, _cpu, _gpu, _screen, _audio, _pulses.Count == 0 ? null : _pulses.ToList());
         }
         var frame = await _engine.StepAsync(state.Current, state.On, inputs, sinks, ct, state.Scenes).ConfigureAwait(false);
         foreach (var id in _engine.Failures.Keys)

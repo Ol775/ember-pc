@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -41,7 +42,8 @@ public sealed class LightsPage : UserControl
     LightingState? _rendered;
     string? _selectedLayer, _selectedDevice;
     bool _paintMode;
-    LColor _paintColour = new(1.0, 0.45, 0.1);
+    LColor _paintColour = new(1.0, 0.45, 0.1), _paintEnd = new(0.2, 0.3, 1.0);
+    double _paintAngle;
     bool _updating;
 
     public LightsPage()
@@ -104,7 +106,21 @@ public sealed class LightsPage : UserControl
         paintRow.Children.Add(ColorField("Paint colour", _paintColour, c => _paintColour = c));
         paintRow.Children.Add(Pill("Clear paint on this device", ClearPaint));
         canvasBox.Children.Add(paintRow);
-        canvasBox.Children.Add(Text("With painting on, click an LED to give it a fixed colour and right-click to let the layers colour it again. Painted LEDs ignore the effects.", muted: true, size: 12));
+        canvasBox.Children.Add(Text("With painting on, click or drag over LEDs to give them a fixed colour and right-click to let the layers colour them again. Painted LEDs ignore the effects.", muted: true, size: 12));
+        var fills = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
+        fills.Children.Add(ColorField("Gradient end", _paintEnd, c => _paintEnd = c));
+        fills.Children.Add(new Border { Width = 12 });
+        canvasBox.Children.Add(fills);
+        canvasBox.Children.Add(Labelled("Gradient direction", 0, 360, _paintAngle, v => $"{v:0}°", v => _paintAngle = v, 5));
+        var fillRow = new WrapPanel { Margin = new Thickness(0, 4, 0, 0) };
+        fillRow.Children.Add(Pill("Fill with colour", () => FillSelected((n, cols) => PaintTools.Fill(n, _paintColour))));
+        fillRow.Children.Add(Pill("Fill with gradient", () => FillSelected((n, cols) => PaintTools.Gradient(n, cols, _paintColour, _paintEnd, _paintAngle))));
+        fillRow.Children.Add(Pill("Fill with rainbow", () => FillSelected((n, cols) => PaintTools.Rainbow(n, cols, _paintAngle))));
+        fillRow.Children.Add(Pill("Flip left to right", MirrorSelected));
+        fillRow.Children.Add(Pill("Export paint…", ExportPaint));
+        fillRow.Children.Add(Pill("Import paint…", ImportPaint));
+        canvasBox.Children.Add(fillRow);
+        canvasBox.Children.Add(Text("A gradient runs from the paint colour to the gradient end colour in the direction above (0° is left to right, 90° is top to bottom). Exported paint is a small JSON file you can share or keep; importing fits it to the LEDs of the selected device.", muted: true, size: 12));
         _root.Children.Add(Panel("Canvas", canvasBox));
 
         var layerBox = new StackPanel();
@@ -118,6 +134,9 @@ public sealed class LightsPage : UserControl
         add.Children.Add(Pill("Screen sync", () => AddLayer(new ScreenSyncEffect())));
         add.Children.Add(Pill("Music pulse", () => AddLayer(new AudioPulseEffect(new LColor(0.05, 0.02, 0.1), new LColor(1.0, 0.2, 0.5), AudioBand.Bass))));
         add.Children.Add(Pill("Music spectrum", () => AddLayer(new AudioSpectrumEffect(new LColor(1.0, 0.1, 0.2), new LColor(0.2, 0.4, 1.0)))));
+        add.Children.Add(Pill("Spectrum bars", () => AddLayer(new AudioBarsEffect(new LColor(0.1, 1.0, 0.3), new LColor(1.0, 0.1, 0.1)))));
+        add.Children.Add(Pill("Ripples", () => AddLayer(new RippleEffect(new LColor(0.2, 0.6, 1.0)))));
+        add.Children.Add(Pill("Reactive keys", () => AddLayer(new ReactiveKeysEffect(new LColor(1.0, 1.0, 1.0), new LColor(1.0, 0.3, 0.05)))));
         layerBox.Children.Add(add);
         layerBox.Children.Add(Text("Layers are stacked like in a photo editor: the top one is painted last.", muted: true));
         layerBox.Children.Add(_layers);
@@ -311,9 +330,15 @@ public sealed class LightsPage : UserControl
         double sx = 0, sy = 0;
         var dragging = false;
 
+        // Painting works like a brush: press and drag to paint every LED the pointer passes over.
+        string? brushHex = null;
+        var brushOn = false;
+
         v.Root.MouseRightButtonDown += (_, e) =>
         {
             if (!_paintMode || _selectedDevice != id || e.OriginalSource == v.Handle) return;
+            brushOn = true; brushHex = null;
+            v.Root.CaptureMouse();
             PaintAt(id, v, e.GetPosition(v.Grid), null);
             e.Handled = true;
         };
@@ -325,7 +350,9 @@ public sealed class LightsPage : UserControl
             v.Root.Focus();
             if (_paintMode)
             {
-                PaintAt(id, v, e.GetPosition(v.Grid), _paintColour.ToHex());
+                brushOn = true; brushHex = _paintColour.ToHex();
+                v.Root.CaptureMouse();
+                PaintAt(id, v, e.GetPosition(v.Grid), brushHex);
                 e.Handled = true;
                 return;
             }
@@ -337,19 +364,23 @@ public sealed class LightsPage : UserControl
         };
         v.Root.MouseMove += (_, e) =>
         {
+            if (brushOn) { PaintAt(id, v, e.GetPosition(v.Grid), brushHex); return; }
             if (!dragging) return;
             var p = e.GetPosition(_canvas);
             v.X = Math.Clamp(sx + (p.X - start.X) / _canvas.ActualWidth, 0, Math.Max(0, 1 - v.W));
             v.Y = Math.Clamp(sy + (p.Y - start.Y) / _canvas.ActualHeight, 0, Math.Max(0, 1 - v.H));
             LayoutVisuals();
         };
-        v.Root.MouseLeftButtonUp += (_, _) =>
+        void Release()
         {
+            if (brushOn) { brushOn = false; v.Root.ReleaseMouseCapture(); return; }
             if (!dragging) return;
             dragging = false;
             v.Root.ReleaseMouseCapture();
             CommitPlacement(id, v);
-        };
+        }
+        v.Root.MouseLeftButtonUp += (_, _) => Release();
+        v.Root.MouseRightButtonUp += (_, _) => { if (brushOn) Release(); };
         v.Handle.DragDelta += (_, e) =>
         {
             v.W = Math.Clamp(v.W + e.HorizontalChange / _canvas.ActualWidth, 0.04, 1 - v.X);
@@ -397,6 +428,8 @@ public sealed class LightsPage : UserControl
             index = Math.Clamp((int)(f * v.RealCount), 0, v.RealCount - 1);
         }
         var count = v.RealCount;
+        var current = v.Paint is { } pl && index < pl.Count ? pl[index] : null;
+        if (current == hex) return;   // dragging over an LED that already has this colour changes nothing
         _m!.EditScene(sc => sc with
         {
             Placements = sc.Placements.Select(p =>
@@ -420,6 +453,73 @@ public sealed class LightsPage : UserControl
         if (_visuals.TryGetValue(id, out var v)) v.Paint = null;
         _rendered = _m.State;
         UpdatePreview();
+    }
+
+    // ---- paint tools ----
+
+    bool Selected(out string id, out DeviceVisual v)
+    {
+        id = _selectedDevice ?? ""; v = null!;
+        if (_selectedDevice is null || !_visuals.TryGetValue(_selectedDevice, out var found)) { SetNote("Select a device on the canvas first."); return false; }
+        v = found;
+        return true;
+    }
+
+    void SetPaint(string id, DeviceVisual v, IReadOnlyList<string?>? paint)
+    {
+        v.Paint = paint is null || paint.All(x => x is null) ? null : paint;
+        _m!.EditScene(sc => sc with { Placements = sc.Placements.Select(p => p.DeviceId == id ? p with { Paint = v.Paint } : p).ToList() });
+        _rendered = _m.State;
+        UpdatePreview();
+    }
+
+    void FillSelected(Func<int, int, IReadOnlyList<string?>> make)
+    {
+        if (!Selected(out var id, out var v)) return;
+        SetNote("");
+        SetPaint(id, v, make(v.RealCount, v.Columns));
+    }
+
+    void MirrorSelected()
+    {
+        if (!Selected(out var id, out var v)) return;
+        if (v.Paint is null) { SetNote("Nothing is painted on this device yet."); return; }
+        SetNote("");
+        SetPaint(id, v, PaintTools.Mirror(PaintTools.Resample(v.Paint, v.RealCount), v.Columns));
+    }
+
+    void ExportPaint()
+    {
+        if (!Selected(out var id, out var v)) return;
+        if (v.Paint is null) { SetNote("Nothing is painted on this device yet, so there is nothing to export."); return; }
+        var dlg = new Microsoft.Win32.SaveFileDialog { Filter = "Ember paint|*.json|Colour list|*.txt", Title = "Export paint", FileName = "ember-paint" };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            var paint = PaintTools.Resample(v.Paint, v.RealCount);
+            var text = dlg.FileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)
+                ? string.Join(Environment.NewLine, paint.Select(c => c ?? ""))
+                : PaintFile.Export(paint, v.Columns, v.Label.Text);
+            File.WriteAllText(dlg.FileName, text);
+            SetNote("Exported " + paint.Count + " LEDs to " + Path.GetFileName(dlg.FileName) + ".");
+        }
+        catch (Exception ex) { SetNote("Could not save the file: " + ex.Message); }
+    }
+
+    void ImportPaint()
+    {
+        if (!Selected(out var id, out var v)) return;
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "Ember paint or colour list|*.json;*.txt|All files|*.*", Title = "Import paint" };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            var info = new FileInfo(dlg.FileName);
+            if (info.Length > PaintFile.MaxBytes) { SetNote("That file is too large to be a paint file."); return; }
+            if (PaintFile.TryImport(File.ReadAllText(dlg.FileName)) is not { } paint) { SetNote("That is not a paint file Ember can read. It should be an exported Ember paint file, or one #RRGGBB colour per line."); return; }
+            SetNote("Imported " + paint.Count + " LEDs" + (paint.Count == v.RealCount ? "." : ", fitted to the " + v.RealCount + " LEDs of this device."));
+            SetPaint(id, v, PaintTools.Resample(paint, v.RealCount));
+        }
+        catch (Exception ex) { SetNote("Could not read the file: " + ex.Message); }
     }
 
     void CommitPlacement(string id, DeviceVisual v)
@@ -590,6 +690,32 @@ public sealed class LightsPage : UserControl
                 _editor.Children.Add(Labelled("Sensitivity", 10, 400, e.Sensitivity * 100, v => $"{v / 100:0.0}x", v => Effect(x => ((AudioSpectrumEffect)x) with { Sensitivity = v / 100 }), 5));
                 _editor.Children.Add(Text("Low pitches on the left of the canvas, high on the right. Listens to what your PC is playing while this layer is on. Nothing is recorded or kept.", muted: true));
                 break;
+            case AudioBarsEffect e:
+                _editor.Children.Add(ColorField("Bottom of the bars", e.Low, c => Effect(x => ((AudioBarsEffect)x) with { Low = c })));
+                _editor.Children.Add(ColorField("Top of the bars", e.High, c => Effect(x => ((AudioBarsEffect)x) with { High = c })));
+                _editor.Children.Add(Labelled("Sensitivity", 10, 400, e.Sensitivity * 100, v => $"{v / 100:0.0}x", v => Effect(x => ((AudioBarsEffect)x) with { Sensitivity = v / 100 }), 5));
+                _editor.Children.Add(Text("Drawn on", muted: true));
+                _editor.Children.Add(Segments(["Each device", "The whole canvas"], (int)e.Scope, i => Effect(x => ((AudioBarsEffect)x) with { Scope = (EffectScope)i }), "BarsScope" + id));
+                _editor.Children.Add(Text("One bar per pitch, low on the left. On a keyboard the bars rise up the keys; on a single strip they become brightness. Listens to what your PC is playing while this layer is on. Nothing is recorded or kept.", muted: true));
+                break;
+            case RippleEffect e:
+                _editor.Children.Add(ColorField("Ring colour", e.Colour, c => Effect(x => ((RippleEffect)x) with { Colour = c })));
+                _editor.Children.Add(Labelled("A new ring every", 0.2, 10, e.IntervalSeconds, v => $"{v:0.0} s", v => Effect(x => ((RippleEffect)x) with { IntervalSeconds = v }), 0.1));
+                _editor.Children.Add(Labelled("Speed", 5, 200, e.Speed * 100, v => $"{v / 100:0.00} /s", v => Effect(x => ((RippleEffect)x) with { Speed = v / 100 }), 1));
+                _editor.Children.Add(Labelled("Ring width", 2, 60, e.Width * 100, v => $"{v:0}%", v => Effect(x => ((RippleEffect)x) with { Width = v / 100 }), 1));
+                _editor.Children.Add(Labelled("Centre across", 0, 100, e.CenterX * 100, v => $"{v:0}%", v => Effect(x => ((RippleEffect)x) with { CenterX = v / 100 }), 1));
+                _editor.Children.Add(Labelled("Centre down", 0, 100, e.CenterY * 100, v => $"{v:0}%", v => Effect(x => ((RippleEffect)x) with { CenterY = v / 100 }), 1));
+                _editor.Children.Add(Text("Drawn on", muted: true));
+                _editor.Children.Add(Segments(["The whole canvas", "Each device"], (int)e.Scope == 1 ? 0 : 1, i => Effect(x => ((RippleEffect)x) with { Scope = i == 0 ? EffectScope.Canvas : EffectScope.Device }), "RippleScope" + id));
+                _editor.Children.Add(Text("Only the rings are coloured, so put this above another layer to see it spread over it.", muted: true));
+                break;
+            case ReactiveKeysEffect e:
+                _editor.Children.Add(ColorField("Key colour", e.Colour, c => Effect(x => ((ReactiveKeysEffect)x) with { Colour = c })));
+                _editor.Children.Add(ColorField("Fades to", e.Tail, c => Effect(x => ((ReactiveKeysEffect)x) with { Tail = c })));
+                _editor.Children.Add(Labelled("Fade out over", 0.1, 4, e.FadeSeconds, v => $"{v:0.0} s", v => Effect(x => ((ReactiveKeysEffect)x) with { FadeSeconds = v }), 0.1));
+                _editor.Children.Add(Labelled("Glow size", 3, 40, e.Radius * 100, v => $"{v:0}%", v => Effect(x => ((ReactiveKeysEffect)x) with { Radius = v / 100 }), 1));
+                _editor.Children.Add(Text("Flashes where you press a key on a keyboard. While this layer is on, Ember notes that a key went down and where it sits on the keyboard, and nothing else: no text, nothing is saved or sent. Put it above another layer so the glow shows over it.", muted: true));
+                break;
             case ScreenSyncEffect:
                 _editor.Children.Add(Text("Copies the colours of your main screen onto the canvas in four vertical strips, left to right. It looks at the screen only while this layer is on.", muted: true));
                 break;
@@ -652,6 +778,18 @@ public sealed class LightsPage : UserControl
                 seg.Margin = new Thickness(0, 4, 0, 0);
                 seg.ToolTip = "Experimental. For lamps that can light parts of themselves separately (light bars, strips): choose how many parts to drive. Whole lamp is one colour. If the lamp ignores it, set it back to whole lamp.";
                 right.Children.Add(seg);
+                var detect = Pill("Detect segments", async () =>
+                {
+                    SetNote("Looking up how many segments " + info.Name + " has…");
+                    var n = await _m.DetectSegmentsAsync(info.Id);
+                    SetNote(n is { } count
+                        ? $"{info.Name} reports {count} segments; Ember will drive it that way. If the lamp ignores it, set Segments back to whole lamp."
+                        : "Ember could not tell. It needs a Govee API key in Settings for lamps it does not know, or you can pick a number with the Segments button.");
+                    RebuildDevices(_m.State);
+                }, "Detect segments for " + info.Name);
+                detect.Margin = new Thickness(0, 4, 0, 0);
+                detect.ToolTip = "Asks Govee (and Ember's list of known lamps) how many parts this lamp can light separately, and sets it. Experimental.";
+                right.Children.Add(detect);
             }
             Grid.SetColumn(right, 1);
             row.Children.Add(text);

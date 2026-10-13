@@ -13,6 +13,14 @@ folder next to `Ember.App.exe`.
 
 ## Libraries used by the app and service
 
-LibreHardwareMonitorLib (MPL-2.0), PawnIO driver (installed separately, signed by its publisher). See `Directory.Packages.props`.
+- **LibreHardwareMonitorLib 0.9.6** (MPL-2.0): reads sensors and fan headers.
+- **NAudio.Wasapi 2.2.1** (MIT): listens to the sound being played, for music effects.
+- **Vortice.Direct3D11 and Vortice.DXGI 3.6.2** (MIT): fast screen capture for screen sync.
+- **Microsoft.Extensions.Hosting and related 8.x** (MIT): runs the services.
+- **Microsoft .NET 8 Desktop Runtime** (MIT, with Microsoft's installer terms): runs Ember. The installer includes Microsoft's own installer and only runs it when the runtime is missing.
+- **Microsoft Visual C++ Redistributable, x64** (Microsoft Software Licence Terms, shown by its installer): needed by OpenRGB. The installer includes Microsoft's own installer and only runs it when it is missing.
+## PawnIO driver (downloaded, not bundled)
+
+The signed PawnIO driver lets Ember read motherboard sensors and fan headers. The Ember installer downloads PawnIO's official setup from <https://github.com/namazso/PawnIO.Setup> and checks its SHA-256 and signature before running it. It is not included in Ember's files because its setup program publishes no redistribution terms. PawnIO itself is published by its author under its own licence (<https://github.com/namazso/PawnIO>).
 
 - **Logitech G HUB** (not bundled): if it is installed, Ember loads its LED SDK engine (sdk_legacy_led_x64.dll, found through G HUB's own registry entry and only if it sits under Program Files) to light Logitech G keyboards and mice. Logitech and G HUB are trademarks of Logitech; Ember is not affiliated with Logitech.

@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Ember.Lighting.Govee;
 
-public sealed record GoveeCloudDevice(string Id, string Sku, string Name, bool CanSetColor);
+public sealed record GoveeCloudDevice(string Id, string Sku, string Name, bool CanSetColor, int? Segments = null);
 
 /// <summary>
 /// Govee's cloud API, for lamps that do not offer LAN control. Slow and rate limited by Govee, so it only ever carries the
@@ -79,6 +79,27 @@ public sealed class GoveeCloudClient(HttpClient http, Func<string?> apiKey)
         return body;
     }
 
+    /// <summary>
+    /// How many parts the lamp says it can colour separately: the top of the range of its segment capability plus one
+    /// (the cloud counts from 0). Null when the lamp has no such capability or the answer is not in the expected shape.
+    /// </summary>
+    public static int? SegmentCountOf(JsonElement capabilities)
+    {
+        if (capabilities.ValueKind != JsonValueKind.Array) return null;
+        foreach (var cap in capabilities.EnumerateArray())
+        {
+            if (cap.ValueKind != JsonValueKind.Object || !cap.TryGetProperty("type", out var type) || type.GetString() != "devices.capabilities.segment_color_setting") continue;
+            if (!cap.TryGetProperty("parameters", out var ps) || !ps.TryGetProperty("fields", out var fields) || fields.ValueKind != JsonValueKind.Array) continue;
+            foreach (var f in fields.EnumerateArray())
+            {
+                if (f.ValueKind != JsonValueKind.Object || !f.TryGetProperty("fieldName", out var fn) || fn.GetString() != "segment") continue;
+                if (f.TryGetProperty("elementRange", out var range) && range.TryGetProperty("max", out var max) && max.ValueKind == JsonValueKind.Number && max.TryGetInt32(out var top) && top is >= 0 and < 255)
+                    return top + 1;
+            }
+        }
+        return null;
+    }
+
     /// <summary>Reads the device list; an answer in an unexpected shape gives an empty list.</summary>
     public static IReadOnlyList<GoveeCloudDevice> ParseDevices(string json)
     {
@@ -96,7 +117,8 @@ public sealed class GoveeCloudClient(HttpClient http, Func<string?> apiKey)
                 var name = d.TryGetProperty("deviceName", out var n) ? n.GetString() : null;
                 var canColor = d.TryGetProperty("capabilities", out var caps) && caps.ValueKind == JsonValueKind.Array
                     && caps.EnumerateArray().Any(c => c.TryGetProperty("instance", out var inst) && inst.GetString() == "colorRgb");
-                list.Add(new GoveeCloudDevice(id, sku, string.IsNullOrWhiteSpace(name) ? "Govee " + sku : name!, canColor));
+                var segments = d.TryGetProperty("capabilities", out var capList) ? SegmentCountOf(capList) : null;
+                list.Add(new GoveeCloudDevice(id, sku, string.IsNullOrWhiteSpace(name) ? "Govee " + sku : name!, canColor, segments));
             }
             return list;
         }

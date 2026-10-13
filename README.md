@@ -51,18 +51,22 @@
 ## Requirements
 
 - Windows 10 or 11 (x64)
-- .NET 8 Desktop Runtime
+- .NET 8 Desktop Runtime (the installer adds it if it is missing)
 - Administrator rights to install the services and the driver (the app itself runs as a normal user)
 - The **PawnIO** driver, for motherboard temperatures and fan headers. Without it, CPU and GPU temperatures still work and the app explains how to install it.
 
 ## Install
 
-Ember is in beta. Build the release folder once, then install it with one script.
+Ember is in beta.
+
+**Installer (easiest).** Download `Ember-Setup-<version>.exe` from the [releases page](https://github.com/Ol775/ember-pc/releases), run it, read and accept the Terms of Use, and follow the pages. It installs the .NET 8 and Visual C++ runtimes if your PC lacks them, adds the services, and downloads the PawnIO driver (checked before it runs). Ember appears in the Start menu and under Installed apps in Windows Settings, where you can also remove it. Windows will show an "unknown publisher" warning because the installer is not code-signed yet. For a scripted install: `Ember-Setup-<version>.exe /S /ACCEPT` (add `/D=C:\Path\Ember` for another folder, `/NODESKTOP`, `/NOPAWNIO`; `/ACCEPT` says you have read TERMS.md).
+
+**From source.** Build the release folder once, then install it with one script.
 
 **Quick install (recommended).** In PowerShell, from the repository folder:
 
 ```powershell
-scripts\build-release.ps1          # fetches OpenRGB, publishes everything, writes dist\Ember-<version>.zip
+scripts\build-release.ps1          # fetches OpenRGB and the Microsoft runtimes, publishes everything, writes dist\Ember-<version>.zip and dist\Ember-Setup-<version>.exe
 ```
 
 Then, in an **elevated** PowerShell, from the unzipped `dist\Ember-<version>` folder:
@@ -149,9 +153,9 @@ Motherboard sensors and fan headers sit behind port I/O that user mode cannot re
 
 Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
-## Licence
+## Licence and terms
 
-MIT. See [LICENSE](LICENSE). Third-party components are listed in [THIRD-PARTY.md](THIRD-PARTY.md): [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0, used unmodified), [OpenRGB](https://openrgb.org) (GPL-2.0, bundled as a separate program) and PawnIO by namazso (a separate driver, installed separately).
+MIT. See [LICENSE](LICENSE). Using Ember is also covered by the [Terms of Use](TERMS.md) and the [Privacy notice](PRIVACY.md). Third-party components are listed in [THIRD-PARTY.md](THIRD-PARTY.md): [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0, used unmodified), [OpenRGB](https://openrgb.org) (GPL-2.0, bundled as a separate program) and PawnIO by namazso (a separate driver, installed separately).
 
 ## Disclaimer
 

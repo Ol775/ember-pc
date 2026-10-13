@@ -6,11 +6,12 @@ namespace Ember.Lighting.Govee;
 /// Finds Govee lamps: first on the local network, then (when an API key is saved) in the cloud, for the ones the network
 /// scan did not find. A lamp that is missed by one scan is kept for a minute, because Govee devices answer scans unreliably.
 /// </summary>
-public sealed class GoveeSource(GoveeLanClient lan, Func<GoveeCloudClient?> cloud, Func<string, int>? segments = null) : IDeviceSource
+public sealed class GoveeSource(GoveeLanClient lan, Func<GoveeCloudClient?> cloud, Func<string, int>? segments = null) : IDeviceSource, ISegmentDetector
 {
     static readonly TimeSpan KeepFor = TimeSpan.FromMinutes(1), ScanFor = TimeSpan.FromSeconds(1.5);
     readonly Dictionary<string, (GoveeLanDevice Device, DateTime Seen)> _known = new();
     readonly Dictionary<string, IDeviceSink> _sinks = new();
+    readonly Dictionary<string, (string Sku, int? Segments)> _cloudInfo = new();
     string _cloudNote = "";
 
     public string Name => "Govee";
@@ -45,6 +46,7 @@ public sealed class GoveeSource(GoveeLanClient lan, Func<GoveeCloudClient?> clou
             {
                 foreach (var d in await cloudClient.GetDevicesAsync(ct).ConfigureAwait(false))
                 {
+                    _cloudInfo[d.Id] = (d.Sku, d.Segments);
                     if (!d.CanSetColor || _known.ContainsKey(d.Id)) continue;
                     if (!_sinks.TryGetValue("govee:" + d.Id, out var sink) || sink is not GoveeCloudSink) _sinks["govee:" + d.Id] = sink = new GoveeCloudSink(cloudClient, d);
                     result.Add(sink);
@@ -59,6 +61,21 @@ public sealed class GoveeSource(GoveeLanClient lan, Func<GoveeCloudClient?> clou
             ? "No lamps found. Turn on LAN control for each lamp in the Govee app, or save an API key in Settings."
             : $"{lanCount} on the network" + (cloudCount > 0 ? $", {cloudCount} through the cloud" : "")) + _cloudNote;
         return result;
+    }
+
+    public async Task<int?> DetectSegmentsAsync(string deviceId, CancellationToken ct)
+    {
+        var id = deviceId.StartsWith("govee:", StringComparison.Ordinal) ? deviceId[6..] : deviceId;
+        _cloudInfo.TryGetValue(id, out var info);
+        var sku = _known.TryGetValue(id, out var lanDevice) ? lanDevice.Device.Sku : info.Sku;
+        if (sku is null) return null;
+        var fromCloud = info.Segments;
+        if (fromCloud is null && GoveeSegments.ForModel(sku, null) is null && cloud() is { } client)
+        {
+            try { fromCloud = (await client.GetDevicesAsync(ct).ConfigureAwait(false)).FirstOrDefault(d => d.Id == id)?.Segments; }
+            catch (Exception ex) when (ex is not OperationCanceledException) { /* no answer from the cloud: fall back to what is known */ }
+        }
+        return GoveeSegments.ForModel(sku, fromCloud);
     }
 
     public void ReportFailure(string sinkId) { /* lamps have no connection to drop; the next scan decides */ }

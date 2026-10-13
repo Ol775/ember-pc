@@ -17,8 +17,9 @@ public static class Compositor
         return Color.Lerp(under, (mixed with { A = 1 }).Clamped(), weight);
     }
 
-    public static Color SamplePoint(Scene scene, double x, double y, LightingInputs inputs)
+    public static Color SamplePoint(Scene scene, double x, double y, LightingInputs inputs, LedLocal? local = null)
     {
+        if (local is not null) inputs = inputs with { Local = local };
         var c = Color.Black;
         foreach (var layer in scene.Layers)
             if (layer.Enabled) c = Blend(c, layer.Effect.Sample(x, y, inputs), layer.Blend, layer.Opacity);
@@ -37,10 +38,11 @@ public static class Compositor
             var leds = new Color[count];
             for (var i = 0; i < count; i++)
             {
-                var (x, y) = p.LedPosition(i, count, columns is not null && columns.TryGetValue(p.DeviceId, out var cols) ? cols : 0);
+                var cols = columns is not null && columns.TryGetValue(p.DeviceId, out var c) ? c : 0;
+                var (x, y) = p.LedPosition(i, count, cols);
                 leds[i] = p.Paint is { } paint && i < paint.Count && Color.TryParseHex(paint[i]) is { } fixedColour
                     ? fixedColour.Scaled(Math.Clamp(look.Brightness, 0, 1))
-                    : SamplePoint(look, x, y, inputs);
+                    : SamplePoint(look, x, y, inputs, p.LocalPosition(i, count, cols));
             }
             frame[p.DeviceId] = leds;
         }

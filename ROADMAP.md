@@ -15,6 +15,10 @@ What is done, what is being worked on and what is planned. See [CHANGELOG.md](CH
 - Changelog and roadmap inside the app
 - Faster screen capture through DXGI, and music-reactive effects
 - Per-LED painting, a per-key Logitech keyboard grid, and Govee segments (experimental)
+- Gradients, rainbow, import and export for painted LEDs, and Govee segment detection
+- Spectrum bars, ripples and reactive keys
+- An installer with terms, runtimes included, and uninstall from Windows
+- Terms of Use, Privacy and third-party notices inside the app
 
 ## In progress
 
@@ -26,10 +30,10 @@ What is done, what is being worked on and what is planned. See [CHANGELOG.md](CH
 
 - Tray icon and start minimised
 - AI mode: learns your temperatures and noise preference to suggest a curve you approve
-- Signed releases and a proper installer (MSI or similar)
 - Continuous integration builds
-- Per-LED editing beyond single colours (gradients, import and export), Govee segment auto-detection
-- More effects: reactive keys, ripples, spectrum bars on grids
+- Signed installer, so Windows does not warn about an unknown publisher
+- Per-LED painting for several devices at once, and a library of shared paint files
+- More effects: fire, rain, an effect per key group on keyboards
 
 ## Works through OpenRGB
 

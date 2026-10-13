@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.IO;
 using System.Windows;
 using System.Windows.Automation.Peers;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using Ember.Core;
 using Ember.Lighting;
@@ -23,6 +24,7 @@ public partial class MainWindow : Window
     readonly GameDetection _detection = new([]);
     readonly DispatcherTimer _gameTimer, _screenTimer;
     readonly AudioCapture _audio;
+    readonly KeyWatcher _keys;
     readonly DxgiGrabber _dxgi = new();
     Ember.Lighting.Color[]? _screen;
     double? _gpuLoad, _cpuTemp, _gpuTemp, _caseTemp;
@@ -66,6 +68,7 @@ public partial class MainWindow : Window
         _gameTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (_, _) => DetectGame(), Dispatcher);
         // Screen sync: look at the screen ten times a second, but only while an enabled Screen sync layer wants it.
         _audio = new AudioCapture(levels => _lights.SetAudio(levels));
+        _keys = new KeyWatcher(vk => _lights.KeyPressed(vk));
         _screenTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Background, (_, _) => GrabScreen(), Dispatcher);
         _screenTimer.Start();
         if (BuildFeatures.Current.GameDetection) _gameTimer.Start(); // beta feature: off in the alpha build
@@ -76,6 +79,7 @@ public partial class MainWindow : Window
         BuildAccentRow();
         DocView.Fill(ChangelogHost, DocView.ReadEmbedded("CHANGELOG.md"));
         DocView.Fill(RoadmapHost, DocView.ReadEmbedded("ROADMAP.md"));
+        BuildLegal();
         ApplyAppearance();
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, _) => { if (_vm.Prefs.Theme == ThemeMode.System) Dispatcher.InvokeAsync(ApplyAppearance); };
         if (_vm.Prefs.AutoCheckUpdates) _ = Task.Delay(8000).ContinueWith(_ => Dispatcher.InvokeAsync(() => CheckForUpdatesAsync(announce: false)));
@@ -85,6 +89,43 @@ public partial class MainWindow : Window
 
         _run = Task.Run(() => connection.RunAsync(_cts.Token));
         Closed += OnClosed;
+    }
+
+    bool _termsChecked;
+
+    protected override void OnContentRendered(EventArgs e)
+    {
+        base.OnContentRendered(e);
+        if (_termsChecked) return;
+        _termsChecked = true;
+        // The installer asks for the agreement itself; this covers a copy that was not installed that way, and changed terms.
+        if (Legal.IsAccepted(_vm.Prefs.AcceptedTerms, TermsAcceptance.ByInstaller())) return;
+        if (TermsWindow.Ask(this)) Remember(_vm.Prefs with { AcceptedTerms = Legal.TermsVersion });
+        else Application.Current.Shutdown();
+    }
+
+    /// <summary>Settings, Legal: the terms, the privacy notice, the third-party notices and the licence, all kept inside the app.</summary>
+    void BuildLegal()
+    {
+        var docs = new (string Label, string Resource, bool Plain)[]
+        {
+            ("Terms of use", "TERMS.md", false), ("Privacy", "PRIVACY.md", false),
+            ("Third-party notices", "THIRD-PARTY.md", false), ("Licence", "LICENSE.txt", true),
+        };
+        var body = new StackPanel { Margin = new Thickness(0, 8, 0, 0) };
+        void Show(int i)
+        {
+            var (_, resource, plain) = docs[i];
+            var text = DocView.ReadEmbedded(resource);
+            if (!plain) { DocView.Fill(body, text); return; }
+            body.Children.Clear();
+            var t = new TextBlock { Text = text ?? "Nothing to show.", TextWrapping = TextWrapping.Wrap };
+            t.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
+            body.Children.Add(t);
+        }
+        LegalHost.Children.Add(LightsUi.Segments(docs.Select(d => d.Label).ToList(), 0, Show, "LegalDoc"));
+        LegalHost.Children.Add(body);
+        Show(0);
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -162,6 +203,7 @@ public partial class MainWindow : Window
         {
             if (_lights.WantsAudio) { if (!_audio.Running) _audio.Start(); _audio.CheckSilence(); }
             else if (_audio.Running) _audio.Stop();
+            if (_lights.WantsKeys) _keys.Start(); else if (_keys.Running) _keys.Stop();
             if (!_lights.WantsScreen) { _screen = null; _lights.SetInputs(_cpuTemp, _gpuTemp, null); return; }
             // The graphics card hands over the frame when it can (fast); otherwise the older, slower copy through Windows.
             var zones = _dxgi.Capture() ?? ScreenGrabber.Capture();
@@ -428,6 +470,7 @@ public partial class MainWindow : Window
         _gameTimer.Stop();
         _screenTimer.Stop();
         _audio.Dispose();
+        _keys.Dispose();
         _dxgi.Dispose();
         _cts.Cancel();
         try { _lights.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3)); } catch (Exception) { /* closing anyway */ }

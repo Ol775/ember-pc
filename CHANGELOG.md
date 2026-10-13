@@ -2,6 +2,22 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 0.1.0-beta.4 (2026-10-13)
+
+### Added
+
+- **An installer.** `Ember-Setup-<version>.exe` is a normal Windows installer: a welcome page, the Terms of Use to accept, a choice of folder and shortcuts, a progress page with a log, and an Open Ember button at the end. It carries everything Ember needs, including Microsoft's own installers for the .NET 8 Desktop Runtime and the Visual C++ runtime (used by OpenRGB), and only runs them when the PC does not have them. The one thing it downloads is the PawnIO driver, checked against a pinned checksum and signature. It can also run silently for scripted installs.
+- **Uninstall from Windows.** Ember now appears under Installed apps, with its version, and removes itself from there. It asks whether to keep your settings.
+- **Legal pages.** Terms of Use, Privacy, Third-party notices and the Licence are in Settings, Legal. Ember asks you to accept the Terms the first time it opens if the installer did not already ask, and again if they change.
+- **Per-LED painting, further.** Drag over LEDs to paint them like a brush. Fill a device with one colour, a gradient at any angle, or a rainbow; flip a picture left to right; export it to a file and import it again, fitted to the LEDs of another device.
+- **Govee segment detection.** A "Detect segments" button asks Govee (through your API key) how many parts a lamp can light separately, and knows the H6056 light bars have 12.
+- **More effects.** "Spectrum bars" rise up a keyboard (or become brightness on a strip), "Ripples" spread rings across the canvas or each device, and "Reactive keys" flash the keyboard where you press a key. Reactive keys only notice that a key went down, only while the layer is on, and keep no text.
+- A logo and an app icon.
+
+### Changed
+
+- Effects can now be drawn on each device separately, so a keyboard shows the whole picture wherever it sits on the canvas.
+
 ## 0.1.0-beta.3 (2026-10-13)
 
 ### Added

@@ -19,5 +19,9 @@
     <Resource Include="Assets\ember.ico" />
     <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="CHANGELOG.md" />
     <EmbeddedResource Include="..\..\ROADMAP.md" LogicalName="ROADMAP.md" />
+    <EmbeddedResource Include="..\..\TERMS.md" LogicalName="TERMS.md" />
+    <EmbeddedResource Include="..\..\PRIVACY.md" LogicalName="PRIVACY.md" />
+    <EmbeddedResource Include="..\..\THIRD-PARTY.md" LogicalName="THIRD-PARTY.md" />
+    <EmbeddedResource Include="..\..\LICENSE" LogicalName="LICENSE.txt" />
   </ItemGroup>
 </Project>

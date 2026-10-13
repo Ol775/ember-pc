@@ -28,6 +28,19 @@ public sealed record DevicePlacement(string DeviceId, double X, double Y, double
         var f = (index + 0.5) / count;
         return Width >= Height ? (X + f * Width, cy) : (cx, Y + f * Height);
     }
+
+    /// <summary>Where LED <paramref name="index"/> sits inside its own device (see <see cref="LedLocal"/>), laid out the same way as <see cref="LedPosition"/>.</summary>
+    public LedLocal LocalPosition(int index, int count, int columns = 0)
+    {
+        if (count <= 1) return new LedLocal(0.5, 0.5, 1);
+        if (columns > 1 && count % columns == 0)
+        {
+            var rows = count / columns;
+            return new LedLocal((index % columns + 0.5) / columns, (index / columns + 0.5) / rows, rows);
+        }
+        var f = (index + 0.5) / count;
+        return Width >= Height ? new LedLocal(f, 0.5, 1) : new LedLocal(0.5, f, count);
+    }
 }
 
 /// <summary>A saved arrangement: the layers, where the devices are, and the overall brightness.</summary>

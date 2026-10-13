@@ -306,6 +306,7 @@
                 <RadioButton GroupName="SettingsNav" Content="Updates" Tag="updates" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="What's new" Tag="changelog" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Roadmap" Tag="roadmap" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="Legal" Tag="legal" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="About" Tag="about" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
               </StackPanel>
               <StackPanel x:Name="SettingsSections" Grid.Column="1" MaxWidth="720" HorizontalAlignment="Left">
@@ -425,6 +426,9 @@
                 </GroupBox>
                 <GroupBox Tag="roadmap" Header="Roadmap" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Roadmap">
                     <StackPanel x:Name="RoadmapHost" />
+                </GroupBox>
+                <GroupBox Tag="legal" Header="Legal" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Legal">
+                    <StackPanel x:Name="LegalHost" />
                 </GroupBox>
                 <GroupBox Tag="about" Header="About" Style="{StaticResource Panel}" AutomationProperties.Name="About Ember">
                     <StackPanel>
