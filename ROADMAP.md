@@ -8,6 +8,8 @@
 - Lighting through OpenRGB and Govee (LAN and cloud), layered effects, scenes, screen sync
 - Settings page, dark window frame, smooth scrolling
 - Experimental switch for game detection and GPU fan control
+- Themes (dark, light, match Windows) and accent colours
+- Update checker with Stable and Beta channels, and an install and upgrade script
 
 ## Next
 

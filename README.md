@@ -27,8 +27,10 @@
 - **Lighting.** Drives PC devices through **OpenRGB** (bundled with the app) and **Govee** lamps over your LAN, or through the Govee cloud with your own API key.
 - **Layered effects.** Stack effects with blend modes and save them as scenes.
 - **Screen sync.** Lights follow the colours on your screen.
+- **Themes and accent colours.** Dark, light or match Windows, with five accent colours, chosen in Settings.
+- **Update checks.** On request (or at start-up if you turn it on), Ember asks GitHub whether a newer release exists on your channel (Stable or Beta). It never downloads or installs anything by itself.
 - **Experimental features.** Game detection (switches to a game mode) and GPU fan control sit behind an Experimental switch in Settings, off by default.
-- **Private by design.** The app and service make no network calls of their own. The Govee cloud is used only if you add a key, which is stored in Windows Credential Manager.
+- **Private by design.** The app and service make no network calls of their own, apart from the optional update check and the Govee cloud (used only if you add a key), which is stored in Windows Credential Manager.
 
 ## Screenshots
 
@@ -50,8 +52,23 @@
 
 ## Install
 
-Ember is in beta and is built from source for now.
+Ember is in beta. Build the release folder once, then install it with one script.
 
+**Quick install (recommended).** In PowerShell, from the repository folder:
+
+```powershell
+scripts\build-release.ps1          # fetches OpenRGB, publishes everything, writes dist\Ember-<version>.zip
+```
+
+Then, in an **elevated** PowerShell, from the unzipped `dist\Ember-<version>` folder:
+
+```powershell
+scripts\install-ember.ps1          # installs to C:\Program Files\Ember, adds both services and a Start Menu shortcut
+```
+
+Run the same script again to upgrade; your settings are kept. `scripts\uninstall-ember.ps1` removes it (add `-RemoveFiles` to delete the program files too).
+
+**Manual install** (the steps the script follows):
 1. Fetch the bundled OpenRGB (checks a pinned SHA-256) and publish:
 
    ```powershell

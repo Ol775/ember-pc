@@ -68,6 +68,11 @@ public partial class MainWindow : Window
 
         StartupSwitch.IsChecked = StartupRegistration.IsEnabled();
         OnSettingsSection(SetGeneral, new RoutedEventArgs());
+        _updates = new UpdateChecker(_http);
+        BuildAccentRow();
+        ApplyAppearance();
+        Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, _) => { if (_vm.Prefs.Theme == ThemeMode.System) Dispatcher.InvokeAsync(ApplyAppearance); };
+        if (_vm.Prefs.AutoCheckUpdates) _ = Task.Delay(8000).ContinueWith(_ => Dispatcher.InvokeAsync(() => CheckForUpdatesAsync(announce: false)));
         if (_vm.Prefs.StartPage == StartPage.Fans) NavFans.IsChecked = true;
         Curve.Committed += OnCurveCommitted;
         Curve.CopyRequested += OnCurveCopy;
@@ -76,25 +81,75 @@ public partial class MainWindow : Window
         Closed += OnClosed;
     }
 
-    [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
-    static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
-
-    /// <summary>Gives the title bar and the window frame the colours of the window, instead of the light system ones.</summary>
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        try
-        {
-            var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-            int on = 1, caption = 0x101114, border = 0x24282E, text = 0xE6ECF3; // COLORREF: 0x00BBGGRR
-            DwmSetWindowAttribute(hwnd, 20, ref on, sizeof(int));        // dark title bar (Windows 10 2004 and later)
-            DwmSetWindowAttribute(hwnd, 34, ref border, sizeof(int));    // frame colour (Windows 11)
-            DwmSetWindowAttribute(hwnd, 35, ref caption, sizeof(int));   // title bar colour (Windows 11)
-            DwmSetWindowAttribute(hwnd, 36, ref text, sizeof(int));      // title text colour (Windows 11)
-        }
-        catch (Exception) { /* an older Windows keeps its normal frame */ }
+        ThemeManager.ApplyChrome(this);
     }
 
+    // ---- appearance and updates ----
+
+    readonly UpdateChecker _updates;
+    string? _releaseUrl;
+
+    void ApplyAppearance()
+    {
+        ThemeManager.Apply(_vm.Prefs);
+        ThemeManager.ApplyChrome(this);
+        foreach (var r in AccentRow.Children.OfType<System.Windows.Controls.RadioButton>())
+            r.IsChecked = r.Tag is string t && Enum.TryParse<AccentChoice>(t, out var a) && a == _vm.Prefs.Accent;
+    }
+
+    void BuildAccentRow()
+    {
+        foreach (var accent in Enum.GetValues<AccentChoice>())
+        {
+            var swatch = new System.Windows.Controls.RadioButton
+            {
+                GroupName = "Accent", Tag = accent.ToString(), Style = (Style)FindResource("Swatch"),
+                Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(ThemePalette.For(true, accent)["AccentBrush"])),
+            };
+            System.Windows.Automation.AutomationProperties.SetName(swatch, accent + " accent");
+            swatch.Click += (_, _) => Remember(_vm.Prefs with { Accent = accent });
+            AccentRow.Children.Add(swatch);
+        }
+    }
+
+    void OnThemePicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string t } && Enum.TryParse<ThemeMode>(t, out var mode))
+            Remember(_vm.Prefs with { Theme = mode });
+    }
+
+    void OnChannelPicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string t } && Enum.TryParse<UpdateChannel>(t, out var c))
+            Remember(_vm.Prefs with { Channel = c });
+    }
+
+    void OnAutoUpdateToggled(object sender, RoutedEventArgs e) =>
+        Remember(_vm.Prefs with { AutoCheckUpdates = ((System.Windows.Controls.CheckBox)sender).IsChecked == true });
+
+    async void OnCheckUpdates(object sender, RoutedEventArgs e) => await CheckForUpdatesAsync(announce: true);
+
+    async Task CheckForUpdatesAsync(bool announce)
+    {
+        UpdateNote.Text = "Checking...";
+        OpenReleaseButton.Visibility = Visibility.Collapsed;
+        var result = await _updates.CheckAsync(AppInfo.Version, _vm.Prefs.Channel);
+        _releaseUrl = result.Release?.Url;
+        UpdateNote.Text = result.Message;
+        OpenReleaseButton.Visibility = _releaseUrl is null ? Visibility.Collapsed : Visibility.Visible;
+        if (announce) Announce(UpdateNote);
+    }
+
+    void OnOpenRelease(object sender, RoutedEventArgs e)
+    {
+        // Only a github.com release page found by the checker is ever opened.
+        if (_releaseUrl is { } url && Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps && u.Host == "github.com")
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(u.AbsoluteUri) { UseShellExecute = true }); }
+            catch (Exception) { UpdateNote.Text = "Could not open the browser."; }
+    }
     void GrabScreen()
     {
         try
@@ -265,7 +320,9 @@ public partial class MainWindow : Window
 
     void Remember(AppPreferences prefs)
     {
+        var look = prefs.Theme != _vm.Prefs.Theme || prefs.Accent != _vm.Prefs.Accent;
         SettingsNote.Text = _vm.Update(prefs) ? "" : "Could not save this setting; it applies until you close Ember.";
+        if (look) ApplyAppearance();
         Announce(SettingsNote);
     }
 

@@ -48,4 +48,24 @@ public class AppPreferencesTests : IDisposable
         File.WriteAllText(PathFor("file"), "x"); // a file where a folder is needed
         Assert.False(new PreferencesStore(PathFor("file/app.json")).TrySave(AppPreferences.Default));
     }
+
+    [Fact]
+    public void Appearance_and_update_choices_round_trip()
+    {
+        var store = new PreferencesStore(PathFor("look.json"));
+        var prefs = new AppPreferences(TemperatureUnit.Celsius, StartPage.Dashboard, ThemeMode.Light, AccentChoice.Purple, UpdateChannel.Beta, true);
+        Assert.True(store.TrySave(prefs));
+        Assert.Equal(prefs, store.Load());
+    }
+
+    [Fact]
+    public void An_old_file_without_the_new_fields_gets_their_defaults()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(PathFor("old.json"), "{\"Unit\":\"Fahrenheit\",\"StartPage\":\"Fans\"}");
+        var loaded = new PreferencesStore(PathFor("old.json")).Load();
+        Assert.Equal(ThemeMode.Dark, loaded.Theme);
+        Assert.Equal(AccentChoice.Orange, loaded.Accent);
+        Assert.False(loaded.AutoCheckUpdates);
+    }
 }

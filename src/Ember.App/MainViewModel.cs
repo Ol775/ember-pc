@@ -73,6 +73,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public Visibility BetaGamesVisibility => BuildFeatures.Current.GameDetection && _fansPage.Experimental ? Visibility.Visible : Visibility.Collapsed;
     public Visibility ExperimentalAvailableVisibility => BuildFeatures.Current.GameDetection || BuildFeatures.Current.GpuFan ? Visibility.Visible : Visibility.Collapsed;
     public Visibility BetaGpuVisibility => BuildFeatures.Current.GpuFan && _fansPage.Experimental ? Visibility.Visible : Visibility.Collapsed;
+    public bool ThemeDark => Prefs.Theme == ThemeMode.Dark;
+    public bool ThemeLight => Prefs.Theme == ThemeMode.Light;
+    public bool ThemeSystem => Prefs.Theme == ThemeMode.System;
+    public bool ChannelStable => Prefs.Channel == UpdateChannel.Stable;
+    public bool ChannelBeta => Prefs.Channel == UpdateChannel.Beta;
+    public bool AutoCheckUpdates => Prefs.AutoCheckUpdates;
+    public string VersionText => "Ember " + AppInfo.Version;
     public string ModeChipText => "Mode: " + FansViewState.Label(_fansPage.Mode);
     public string BuildLabel => BuildFeatures.Channel == "beta" ? "Beta build" : "Alpha build";
     public Visibility DetectedGameVisibility => _fansPage.DetectedGame is null ? Visibility.Collapsed : Visibility.Visible;

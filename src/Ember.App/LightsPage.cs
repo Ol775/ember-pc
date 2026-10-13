@@ -89,7 +89,8 @@ public sealed class LightsPage : UserControl
 
         var canvasBox = new StackPanel();
         canvasBox.Children.Add(Text("Drag a device to where it sits in your room, or select it and use the arrow keys (Ctrl with the arrows changes its size). Effects are painted across this canvas, so devices side by side show one picture.", muted: true));
-        var frame = new Border { Background = Res("TrackBrush"), CornerRadius = new CornerRadius(12), Margin = new Thickness(0, 10, 0, 0), Child = _canvas, Padding = new Thickness(0) };
+        var frame = new Border { CornerRadius = new CornerRadius(12), Margin = new Thickness(0, 10, 0, 0), Child = _canvas, Padding = new Thickness(0) };
+        frame.SetResourceReference(Border.BackgroundProperty, "TrackBrush");
         _canvas.SizeChanged += (_, _) => LayoutVisuals();
         canvasBox.Children.Add(frame);
         _root.Children.Add(Panel("Canvas", canvasBox));
@@ -262,7 +263,7 @@ public sealed class LightsPage : UserControl
     {
         var tri = new FrameworkElementFactory(typeof(System.Windows.Shapes.Polygon));
         tri.SetValue(System.Windows.Shapes.Polygon.PointsProperty, new PointCollection([new Point(14, 0), new Point(14, 14), new Point(0, 14)]));
-        tri.SetValue(System.Windows.Shapes.Shape.FillProperty, Res("MutedBrush"));
+        tri.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "MutedBrush");
         return new ControlTemplate(typeof(Thumb)) { VisualTree = tri };
     }
 

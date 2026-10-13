@@ -29,6 +29,7 @@ public sealed class DevicesPage : UserControl
         _root.Children.Add(title);
         _root.Children.Add(_cards);
         _root.Children.Add(Panel("All devices", _rows, new Thickness(0)));
+        ThemeManager.Changed += () => _key = null;
     }
 
     public void Update(MainViewModel vm, LightingManager lights)
@@ -75,8 +76,8 @@ public sealed class DevicesPage : UserControl
         var chip = new Border
         {
             CornerRadius = new CornerRadius(10), Padding = new Thickness(10, 2, 10, 2),
-            Background = new SolidColorBrush(good ? System.Windows.Media.Color.FromRgb(0x12, 0x30, 0x1f) : System.Windows.Media.Color.FromRgb(0x2a, 0x1c, 0x12)),
-            Child = new TextBlock { Text = pill, FontSize = 12, Foreground = new SolidColorBrush(good ? System.Windows.Media.Color.FromRgb(0x5f, 0xd3, 0x8d) : System.Windows.Media.Color.FromRgb(0xff, 0xb3, 0x47)) },
+            Background = good ? ThemeManager.GoodSoft : (Brush)Application.Current.FindResource("AccentSoftBrush"),
+            Child = new TextBlock { Text = pill, FontSize = 12, Foreground = good ? ThemeManager.Good : (Brush)Application.Current.FindResource("AccentTextBrush") },
         };
         DockPanel.SetDock(chip, Dock.Right);
         head.Children.Add(chip);
@@ -99,7 +100,7 @@ public sealed class DevicesPage : UserControl
         {
             var t = Text(cells[i], muted: header || i is 1 or 2, size: header ? 12 : 14);
             if (i == 3 && !header)
-                t.Foreground = new SolidColorBrush(warn ? System.Windows.Media.Color.FromRgb(0xff, 0xb3, 0x47) : System.Windows.Media.Color.FromRgb(0x5f, 0xd3, 0x8d));
+                t.Foreground = warn ? (Brush)Application.Current.FindResource("AccentTextBrush") : ThemeManager.Good;
             Grid.SetColumn(t, i);
             g.Children.Add(t);
         }

@@ -6,7 +6,10 @@ namespace Ember.Core;
 public enum StartPage { Dashboard, Fans }
 
 /// <summary>What the app itself remembers for one Windows user (the service's own settings live elsewhere).</summary>
-public sealed record AppPreferences(TemperatureUnit Unit, StartPage StartPage)
+public enum UpdateChannel { Stable, Beta }
+
+public sealed record AppPreferences(TemperatureUnit Unit, StartPage StartPage, ThemeMode Theme = ThemeMode.Dark,
+    AccentChoice Accent = AccentChoice.Orange, UpdateChannel Channel = UpdateChannel.Stable, bool AutoCheckUpdates = false)
 {
     public static readonly AppPreferences Default = new(TemperatureUnit.Celsius, StartPage.Dashboard);
 }
@@ -34,7 +37,11 @@ public sealed class PreferencesStore(string path)
             if (doc.RootElement.ValueKind != JsonValueKind.Object) return AppPreferences.Default;
             return new AppPreferences(
                 Field(doc.RootElement, "Unit", AppPreferences.Default.Unit),
-                Field(doc.RootElement, "StartPage", AppPreferences.Default.StartPage));
+                Field(doc.RootElement, "StartPage", AppPreferences.Default.StartPage),
+                Field(doc.RootElement, "Theme", AppPreferences.Default.Theme),
+                Field(doc.RootElement, "Accent", AppPreferences.Default.Accent),
+                Field(doc.RootElement, "Channel", AppPreferences.Default.Channel),
+                Field(doc.RootElement, "AutoCheckUpdates", AppPreferences.Default.AutoCheckUpdates));
         }
         catch (Exception)
         {

@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Ember.App"
         mc:Ignorable="d" d:DataContext="{d:DesignInstance local:MainViewModel}"
         Title="Ember" Width="1100" Height="720" MinWidth="820" MinHeight="560"
-        Background="{StaticResource WindowBrush}" Foreground="{StaticResource TextBrush}"
+        Background="{DynamicResource WindowBrush}" Foreground="{DynamicResource TextBrush}"
         FontFamily="Segoe UI" FontSize="14">
     <Grid>
         <Grid.ColumnDefinitions>
@@ -15,20 +15,20 @@
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <DockPanel Grid.Column="0" Background="{StaticResource SidebarBrush}">
+        <DockPanel Grid.Column="0" Background="{DynamicResource SidebarBrush}">
             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="20,24,20,24">
                 <Path Data="M12,3 C13,7 17,8 17,13 A5,5 0 0 1 7,13 C7,11 8,10 9,9 C9,11 10,12 11,12 C11,9 10,7 12,3 Z"
-                      Stroke="{StaticResource AccentBrush}" StrokeThickness="2" StrokeLineJoin="Round" Width="24" Height="24"
+                      Stroke="{DynamicResource AccentBrush}" StrokeThickness="2" StrokeLineJoin="Round" Width="24" Height="24"
                       Stretch="None" VerticalAlignment="Center" Margin="0,0,10,0" />
-                <TextBlock Text="Ember" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextBrush}"
+                <TextBlock Text="Ember" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}"
                            VerticalAlignment="Center" AutomationProperties.HeadingLevel="Level1" />
             </StackPanel>
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="20,0,20,20">
                 <Ellipse Width="10" Height="10" Fill="{Binding ConnectionBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                <TextBlock x:Name="ConnectionLabel" Text="{Binding ConnectionText}" Foreground="{StaticResource MutedBrush}"
+                <TextBlock x:Name="ConnectionLabel" Text="{Binding ConnectionText}" Foreground="{DynamicResource MutedBrush}"
                            AutomationProperties.LiveSetting="Polite" />
             </StackPanel>
-            <TextBlock DockPanel.Dock="Bottom" Text="{Binding BuildLabel}" Foreground="{StaticResource MutedBrush}" Margin="20,0,20,12" />
+            <TextBlock DockPanel.Dock="Bottom" Text="{Binding BuildLabel}" Foreground="{DynamicResource MutedBrush}" Margin="20,0,20,12" />
             <Button DockPanel.Dock="Bottom" Content="Restart as administrator" Click="OnRestartAsAdmin" Margin="20,0,20,12"
                     Style="{StaticResource ActionButton}" Visibility="{Binding NotElevatedVisibility}"
                     ToolTip="Needed to close fan-control programs that run as administrator." />
@@ -50,40 +50,40 @@
         <ScrollViewer x:Name="DashboardPage" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False">
             <StackPanel Margin="24">
                 <DockPanel Margin="0,0,0,16">
-                    <Border DockPanel.Dock="Right" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="14"
+                    <Border DockPanel.Dock="Right" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1" CornerRadius="14"
                             Padding="12,5" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding ModeChipText}" FontSize="13" Foreground="{StaticResource MutedBrush}" />
+                        <TextBlock Text="{Binding ModeChipText}" FontSize="13" Foreground="{DynamicResource MutedBrush}" />
                     </Border>
                     <TextBlock Text="Dashboard" FontSize="24" FontWeight="SemiBold"
                                AutomationProperties.HeadingLevel="Level2" />
                 </DockPanel>
 
-                <Border Background="{StaticResource BannerBrush}" BorderBrush="{StaticResource AccentBrush}"
+                <Border Background="{DynamicResource BannerBrush}" BorderBrush="{DynamicResource AccentBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
                         Visibility="{Binding DriverBannerVisibility}">
                     <TextBlock x:Name="BannerLabel" Text="{Binding DriverBannerText}" TextWrapping="Wrap"
                                AutomationProperties.LiveSetting="Assertive" />
                 </Border>
 
-                <TextBlock Text="Sensor data is stale" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,8"
+                <TextBlock Text="Sensor data is stale" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,8"
                            Visibility="{Binding StaleNoteVisibility}" AutomationProperties.LiveSetting="Polite" />
 
                 <UniformGrid Columns="4" Margin="-6,0,-6,16">
                     <GroupBox Header="CPU" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding CpuText, StringFormat=CPU temperature {0}}">
-                        <StackPanel><TextBlock Text="{Binding CpuText}" Style="{StaticResource StatValue}" Foreground="{StaticResource AccentBrush}" /><TextBlock Text="{Binding CpuSub}" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
+                        <StackPanel><TextBlock Text="{Binding CpuText}" Style="{StaticResource StatValue}" Foreground="{DynamicResource AccentBrush}" /><TextBlock Text="{Binding CpuSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                     <GroupBox Header="GPU" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding GpuText, StringFormat=GPU temperature {0}}">
-                        <StackPanel><TextBlock Text="{Binding GpuText}" Style="{StaticResource StatValue}" Foreground="{StaticResource GpuBrush}" /><TextBlock Text="{Binding GpuSub}" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
+                        <StackPanel><TextBlock Text="{Binding GpuText}" Style="{StaticResource StatValue}" Foreground="{DynamicResource GpuBrush}" /><TextBlock Text="{Binding GpuSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                     <GroupBox Header="Motherboard" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding MotherboardText, StringFormat=Motherboard temperature {0}}">
-                        <StackPanel><TextBlock Text="{Binding MotherboardText}" Style="{StaticResource StatValue}" /><TextBlock Text="{Binding MotherboardSub}" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
+                        <StackPanel><TextBlock Text="{Binding MotherboardText}" Style="{StaticResource StatValue}" /><TextBlock Text="{Binding MotherboardSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                     <GroupBox Header="Fans (average)" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding FanAverageText, StringFormat=Fans average {0}}">
-                        <StackPanel><TextBlock Text="{Binding FanAverageText}" Style="{StaticResource StatValue}" /><TextBlock Text="{Binding FansSub}" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
+                        <StackPanel><TextBlock Text="{Binding FanAverageText}" Style="{StaticResource StatValue}" /><TextBlock Text="{Binding FansSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                 </UniformGrid>
 
@@ -101,15 +101,15 @@
                     </AutomationProperties.Name>
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-                            <Rectangle Width="14" Height="3" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                            <Rectangle Width="14" Height="3" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
                             <TextBlock Text="CPU" Margin="6,0,16,0" />
-                            <Rectangle Width="14" Height="3" Fill="{StaticResource GpuBrush}" VerticalAlignment="Center" />
+                            <Rectangle Width="14" Height="3" Fill="{DynamicResource GpuBrush}" VerticalAlignment="Center" />
                             <TextBlock Text="GPU" Margin="6,0,0,0" />
                         </StackPanel>
                         <Canvas Height="260" ClipToBounds="True" SizeChanged="OnChartSizeChanged">
-                            <Polyline Points="{Binding CpuLine}" Stroke="{StaticResource AccentBrush}" StrokeThickness="2"
+                            <Polyline Points="{Binding CpuLine}" Stroke="{DynamicResource AccentBrush}" StrokeThickness="2"
                                       StrokeLineJoin="Round" />
-                            <Polyline Points="{Binding GpuLine}" Stroke="{StaticResource GpuBrush}" StrokeThickness="2"
+                            <Polyline Points="{Binding GpuLine}" Stroke="{DynamicResource GpuBrush}" StrokeThickness="2"
                                       StrokeLineJoin="Round" />
                         </Canvas>
                     </DockPanel>
@@ -117,7 +117,7 @@
 
                 <GroupBox Grid.Column="1" Header="Fans" Style="{StaticResource Panel}" AutomationProperties.Name="Fans">
                     <StackPanel>
-                        <TextBlock Text="No fan readings" Foreground="{StaticResource MutedBrush}"
+                        <TextBlock Text="No fan readings" Foreground="{DynamicResource MutedBrush}"
                                    Visibility="{Binding NoFansVisibility}" />
                         <ItemsControl ItemsSource="{Binding Fans}" Focusable="False">
                             <ItemsControl.ItemTemplate>
@@ -130,11 +130,11 @@
                                         <Grid.RowDefinitions><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Name}" FontSize="13" VerticalAlignment="Center" />
                                         <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,6" Height="6" Minimum="0" Maximum="1" Value="{Binding Fraction, Mode=OneWay}"
-                                                     Foreground="{StaticResource AccentBrush}" Background="{StaticResource PanelBorderBrush}"
+                                                     Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource PanelBorderBrush}"
                                                      BorderThickness="0" VerticalAlignment="Center"
                                                      AutomationProperties.Name="{Binding Name}"
                                                      AutomationProperties.HelpText="{Binding RpmText}" />
-                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RpmText}" FontSize="13" Foreground="{StaticResource MutedBrush}"
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RpmText}" FontSize="13" Foreground="{DynamicResource MutedBrush}"
                                                    TextAlignment="Right" VerticalAlignment="Center" />
                                     </Grid>
                                 </DataTemplate>
@@ -153,10 +153,10 @@
                 <TextBlock Text="Fans" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"
                            AutomationProperties.HeadingLevel="Level2" />
 
-                <TextBlock Text="{Binding FansPage.Message}" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,12"
+                <TextBlock Text="{Binding FansPage.Message}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,12"
                            Visibility="{Binding FansMessageVisibility}" AutomationProperties.LiveSetting="Polite" />
 
-                <Border Background="{StaticResource BannerBrush}" BorderBrush="{StaticResource AccentBrush}"
+                <Border Background="{DynamicResource BannerBrush}" BorderBrush="{DynamicResource AccentBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
                         Visibility="{Binding CompetitorVisibility}">
                     <StackPanel>
@@ -171,7 +171,7 @@
                     </StackPanel>
                 </Border>
 
-                <Border Background="{StaticResource BannerBrush}" BorderBrush="{StaticResource AccentBrush}"
+                <Border Background="{DynamicResource BannerBrush}" BorderBrush="{DynamicResource AccentBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
                         Visibility="{Binding SafetyVisibility}">
                     <TextBlock Text="{Binding FansPage.SafetyNote}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
@@ -195,7 +195,7 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         </Border>
-                        <TextBlock Text="{Binding FansPage.SourceText}" Foreground="{StaticResource MutedBrush}" Margin="0,8,0,0" />
+                        <TextBlock Text="{Binding FansPage.SourceText}" Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,0" />
                     </StackPanel>
                 </GroupBox>
 
@@ -206,7 +206,7 @@
                 <GroupBox Header="Games" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Games"
                           Visibility="{Binding BetaGamesVisibility}">
                     <StackPanel>
-                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Ember switches to game mode when a full-screen program keeps your GPU busy. If it guesses wrong, mark the program as not a game." />
                         <DockPanel Margin="0,8,0,0" Visibility="{Binding DetectedGameVisibility}">
                             <Button DockPanel.Dock="Right" Content="Not a game" Tag="{Binding FansPage.DetectedGame}" Click="OnNotAGame"
@@ -214,7 +214,7 @@
                                     AutomationProperties.Name="{Binding FansPage.DetectedGame, StringFormat=Mark {0} as not a game}" />
                             <TextBlock Text="{Binding FansPage.DetectedGame, StringFormat=Game detected: {0}}" VerticalAlignment="Center" />
                         </DockPanel>
-                        <TextBlock Text="Not games" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,4"
+                        <TextBlock Text="Not games" Foreground="{DynamicResource MutedBrush}" Margin="0,12,0,4"
                                    Visibility="{Binding NotGamesVisibility}" />
                         <ItemsControl ItemsSource="{Binding FansPage.NotGames}" Focusable="False">
                             <ItemsControl.ItemTemplate>
@@ -251,7 +251,7 @@
                         <CheckBox Content="Allow Ember to control the GPU fan (optional, test it first)" IsChecked="{Binding FansPage.GpuControl, Mode=OneWay}"
                                   Click="OnGpuControl" Style="{StaticResource SwitchBox}" Margin="0,0,0,8"
                                   Visibility="{Binding BetaGpuVisibility}" />
-                        <TextBlock Text="No fan headers reported" Foreground="{StaticResource MutedBrush}"
+                        <TextBlock Text="No fan headers reported" Foreground="{DynamicResource MutedBrush}"
                                    Visibility="{Binding NoHeadersVisibility}" />
                         <ItemsControl ItemsSource="{Binding FansPage.Headers}" Focusable="False">
                             <ItemsControl.ItemTemplate>
@@ -263,7 +263,7 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" Text="{Binding StateText}" Foreground="{StaticResource MutedBrush}"
+                                        <TextBlock Grid.Column="1" Text="{Binding StateText}" Foreground="{DynamicResource MutedBrush}"
                                                    VerticalAlignment="Center" TextWrapping="Wrap" />
                                         <StackPanel Grid.Column="2" Orientation="Horizontal">
                                             <Button Content="Test" Tag="{Binding Id}" Click="OnTestHeader" IsEnabled="{Binding CanTest}"
@@ -282,11 +282,11 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    Text="This board cannot hand a fan back to automatic control while Windows is running. When Ember stops it leaves each system fan at its saved speed and the CPU fan at 100% until you restart the PC. The pump is left to the board." />
                         <TextBlock x:Name="TestLabel" Text="{Binding FansPage.TestMessage}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    AutomationProperties.LiveSetting="Polite" />
-                        <TextBlock x:Name="ActionLabel" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{StaticResource MutedBrush}"
+                        <TextBlock x:Name="ActionLabel" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{DynamicResource MutedBrush}"
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </GroupBox>
@@ -300,8 +300,10 @@
               <Grid.ColumnDefinitions><ColumnDefinition Width="170" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
               <StackPanel Grid.Column="0" Margin="0,48,16,0">
                 <RadioButton x:Name="SetGeneral" GroupName="SettingsNav" Content="General" Tag="general" IsChecked="True" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="Appearance" Tag="appearance" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Fan control" Tag="fan" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Lighting" Tag="lights" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="Updates" Tag="updates" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="About" Tag="about" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
               </StackPanel>
               <StackPanel x:Name="SettingsSections" Grid.Column="1" MaxWidth="720" HorizontalAlignment="Left">
@@ -318,7 +320,7 @@
                                              IsChecked="{Binding UseFahrenheit, Mode=OneWay}" Style="{StaticResource Segment}" />
                             </StackPanel>
                         </Border>
-                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    Text="Used for the numbers and the temperature history. The fan curves are always drawn in °C." />
                     </StackPanel>
                 </GroupBox>
@@ -335,15 +337,29 @@
                         </Border>
                         <CheckBox x:Name="StartupSwitch" Content="Start Ember when I sign in to Windows" Click="OnStartupToggled"
                                   Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
-                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    Text="This only opens the window. Fan control runs in the Ember service, which starts with Windows whether or not the window is open." />
                     </StackPanel>
                 </GroupBox>
 
+                <GroupBox Tag="appearance" Header="Theme" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Theme">
+                    <StackPanel>
+                        <Border Style="{StaticResource SegmentTrack}">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton GroupName="Theme" Content="Dark" Tag="Dark" Click="OnThemePicked" IsChecked="{Binding ThemeDark, Mode=OneWay}" Style="{StaticResource Segment}" />
+                                <RadioButton GroupName="Theme" Content="Light" Tag="Light" Click="OnThemePicked" IsChecked="{Binding ThemeLight, Mode=OneWay}" Style="{StaticResource Segment}" />
+                                <RadioButton GroupName="Theme" Content="Match Windows" Tag="System" Click="OnThemePicked" IsChecked="{Binding ThemeSystem, Mode=OneWay}" Style="{StaticResource Segment}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Tag="appearance" Header="Accent colour" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Accent colour">
+                    <StackPanel x:Name="AccentRow" Orientation="Horizontal" />
+                </GroupBox>
                 <GroupBox Tag="fan" Header="Fan control" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan control">
                     <StackPanel>
                         <TextBlock TextWrapping="Wrap" Text="{Binding ConnectionText}" />
-                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    Text="Fan modes, curves and which headers Ember controls are kept by the service and are set on the Fans page. The safety rules (90 °C override, early CPU ramp, speed floors) cannot be switched off." />
                         <WrapPanel Margin="0,12,0,0">
                             <Button Content="Open settings folder" Click="OnOpenSettingsFolder" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
@@ -359,14 +375,14 @@
                     <StackPanel>
                         <CheckBox x:Name="ExperimentalSwitch" Content="Turn on experimental features" Click="OnExperimentalToggled"
                                   IsChecked="{Binding FansPage.Experimental, Mode=OneWay}" Style="{StaticResource SwitchBox}" />
-                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    Text="Game detection switches the fan mode to your game mode while a full-screen program keeps the GPU busy, and lets you mark programs as not a game. GPU fan control lets Ember drive the graphics card fan once you have tested it. Both are still being proven on real hardware, so they are off until you turn them on. Turning this off ends any game mode and hands the GPU fan back to the card." />
                     </StackPanel>
                 </GroupBox></StackPanel>
 
                 <GroupBox Tag="lights" Header="Govee" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Govee lamps">
                     <StackPanel>
-                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Lamps are found on your network when LAN control is switched on for them in the Govee app. An API key is only needed for lamps that cannot do that; they are reached through Govee's cloud and follow slow changes only." />
                         <WrapPanel Margin="0,10,0,0">
                             <PasswordBox x:Name="GoveeKey" Width="320" Padding="10,6" Margin="0,0,8,6" MaxLength="200"
@@ -375,16 +391,39 @@
                             <Button Content="Test key" Click="OnTestGoveeKey" Style="{StaticResource ActionButton}" Margin="0,0,8,6" />
                             <Button Content="Remove key" Click="OnRemoveGoveeKey" Style="{StaticResource ActionButton}" Margin="0,0,8,6" />
                         </WrapPanel>
-                        <TextBlock x:Name="GoveeNote" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                        <TextBlock x:Name="GoveeNote" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
                                    AutomationProperties.LiveSetting="Polite" />
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Tag="updates" Header="Updates" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Updates">
+                    <StackPanel>
+                        <TextBlock Text="{Binding VersionText}" FontWeight="SemiBold" />
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                   Text="Ember never installs anything by itself. A check only asks GitHub for the list of releases; you download and install an update from its release page." />
+                        <WrapPanel Margin="0,12,0,0">
+                            <Button Content="Check now" Click="OnCheckUpdates" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
+                            <Button x:Name="OpenReleaseButton" Content="Open release page" Click="OnOpenRelease" Style="{StaticResource ActionButton}" Margin="0" Visibility="Collapsed" />
+                        </WrapPanel>
+                        <TextBlock x:Name="UpdateNote" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
+                        <CheckBox Content="Check for updates when Ember starts" Click="OnAutoUpdateToggled" IsChecked="{Binding AutoCheckUpdates, Mode=OneWay}"
+                                  Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
+                        <TextBlock Text="Release channel" Foreground="{DynamicResource MutedBrush}" Margin="0,14,0,6" />
+                        <Border Style="{StaticResource SegmentTrack}">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton GroupName="Channel" Content="Stable" Tag="Stable" Click="OnChannelPicked" IsChecked="{Binding ChannelStable, Mode=OneWay}" Style="{StaticResource Segment}" />
+                                <RadioButton GroupName="Channel" Content="Beta" Tag="Beta" Click="OnChannelPicked" IsChecked="{Binding ChannelBeta, Mode=OneWay}" Style="{StaticResource Segment}" />
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                   Text="Beta also offers pre-releases, which get new features earlier and may have more bugs." />
                     </StackPanel>
                 </GroupBox>
                 <GroupBox Tag="about" Header="About" Style="{StaticResource Panel}" AutomationProperties.Name="About Ember">
                     <StackPanel>
                         <TextBlock Text="{Binding BuildLabel}" FontWeight="SemiBold" />
-                        <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"
                                    Text="Ember monitors your PC's temperatures and fans and controls the fans on supported motherboards. Game detection and GPU fan control arrive in the beta build." />
-                        <TextBlock x:Name="SettingsNote" TextWrapping="Wrap" Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}"
+                        <TextBlock x:Name="SettingsNote" TextWrapping="Wrap" Margin="0,8,0,0" Foreground="{DynamicResource MutedBrush}"
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </GroupBox>
