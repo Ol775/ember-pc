@@ -16,7 +16,7 @@ mode to Performance.
 - [ ] **Logitech lighting on more keyboards and mice**: per-device colour and effects work on each model tried. Seen: _
 - [ ] **Game detection**: with Experimental on, a game starting raises the fans, and closing it releases them.
       A browser or video player is not mistaken for a game. Seen: _
-- [ ] **GPU fan control**: with Experimental on and the GPU option ticked, the GPU fans follow the curve, and
+- [ ] **GPU fan control** (tried 2026-10-13 on an RTX 3060: the header shows Controllable and the fan did spin up when the mode went to Performance, but with control on it kept its own zero-RPM cycle, 0 to about 66% every 40 seconds, and never held a steady speed from the curve; see docs/FIXES.md): with Experimental on and the GPU option ticked, the GPU fans follow the curve, and
       automatic control comes back when Ember stops. Seen: _
 
 ## Tray icon and start minimised
