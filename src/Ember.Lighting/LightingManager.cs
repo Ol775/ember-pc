@@ -2,7 +2,7 @@ using Ember.Lighting.OpenRgb;
 
 namespace Ember.Lighting;
 
-public sealed record DeviceInfo(string Id, string Name, string Kind, string Source, int LedCount, bool Realtime);
+public sealed record DeviceInfo(string Id, string Name, string Kind, string Source, int LedCount, bool Realtime, int Columns = 0);
 
 /// <summary>
 /// Owns the lighting state of the app: the scenes, the devices found by the sources, and the render loop (about 30 pictures
@@ -26,6 +26,7 @@ public sealed class LightingManager : IAsyncDisposable
     List<DeviceInfo> _devices = [];
     Dictionary<string, Color[]> _preview = [];
     double? _cpu, _gpu;
+    AudioLevels? _audio;
     IReadOnlyList<Color>? _screen;
     DateTimeOffset _lastRefresh = DateTimeOffset.MinValue, _lastChanged = DateTimeOffset.MinValue;
     bool _refreshNow = true;
@@ -64,6 +65,17 @@ public sealed class LightingManager : IAsyncDisposable
     public void SetInputs(double? cpuTemp, double? gpuTemp, IReadOnlyList<Color>? screenZones)
     {
         lock (_gate) { _cpu = cpuTemp; _gpu = gpuTemp; _screen = screenZones; }
+    }
+
+    public void SetAudio(AudioLevels? audio)
+    {
+        lock (_gate) _audio = audio;
+    }
+
+    /// <summary>True when an enabled layer follows the music, so the app listens to the sound only when it is needed.</summary>
+    public bool WantsAudio
+    {
+        get { lock (_gate) return _state.On && _state.Current.Layers.Any(l => l.Enabled && l.Effect is AudioPulseEffect or AudioSpectrumEffect); }
     }
 
     /// <summary>True when an enabled layer wants the screen picture, so the app only captures the screen when it is needed.</summary>
@@ -187,7 +199,7 @@ public sealed class LightingManager : IAsyncDisposable
         {
             state = _state;
             sinks = _sinks.ToList();
-            inputs = new LightingInputs((now - _t0).TotalSeconds, _cpu, _gpu, _screen);
+            inputs = new LightingInputs((now - _t0).TotalSeconds, _cpu, _gpu, _screen, _audio);
         }
         var frame = await _engine.StepAsync(state.Current, state.On, inputs, sinks, ct, state.Scenes).ConfigureAwait(false);
         foreach (var id in _engine.Failures.Keys)
@@ -214,7 +226,7 @@ public sealed class LightingManager : IAsyncDisposable
         lock (_gate)
         {
             _sinks = sinks;
-            _devices = sinks.Select(s => new DeviceInfo(s.Id, s.Name, s.Kind, SourceOf(s), s.LedCount, s.Realtime)).ToList();
+            _devices = sinks.Select(s => new DeviceInfo(s.Id, s.Name, s.Kind, SourceOf(s), s.LedCount, s.Realtime, s.Columns)).ToList();
             var withPlacements = Placed(_state, sinks);
             if (!ReferenceEquals(withPlacements, _state))
             {
@@ -225,7 +237,7 @@ public sealed class LightingManager : IAsyncDisposable
         Changed?.Invoke();
     }
 
-    string SourceOf(IDeviceSink sink) => sink.Id.StartsWith("govee", StringComparison.Ordinal) ? "Govee" : "OpenRGB";
+    string SourceOf(IDeviceSink sink) => sink.Id.StartsWith("govee", StringComparison.Ordinal) ? "Govee" : sink.Id.StartsWith("logitech", StringComparison.Ordinal) ? "Logitech" : "OpenRGB";
 
     /// <summary>Gives every new device a row on the canvas of the current scene, so it can be seen and moved.</summary>
     public static LightingState Placed(LightingState state, IReadOnlyList<IDeviceSink> sinks)
@@ -238,7 +250,7 @@ public sealed class LightingManager : IAsyncDisposable
         foreach (var sink in missing)
         {
             var row = placements.Count;
-            placements.Add(new DevicePlacement(sink.Id, 0.08, Math.Min(0.80, 0.05 + 0.19 * row), 0.84, 0.14, Enabled: true));
+            placements.Add(new DevicePlacement(sink.Id, 0.08, Math.Min(0.80, 0.05 + 0.19 * row), 0.84, sink.Columns > 1 ? 0.30 : 0.14, Enabled: true));
         }
         var changed = scene with { Placements = placements };
         return state with { Scenes = state.Scenes.Select(x => x.Name == scene.Name ? changed : x).ToList() };

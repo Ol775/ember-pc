@@ -20,20 +20,34 @@ public class LogitechTests
     }
 
     [Fact]
-    public async Task The_keyboard_gets_one_colour_per_key_column_in_blue_green_red_order()
+    public async Task The_keyboard_is_a_grid_of_126_keys_sent_in_blue_green_red_order()
     {
         var api = new FakeLed();
         var ctx = new LogitechContext(api);
         Assert.True(ctx.Start());
-        var leds = Enumerable.Range(0, 21).Select(i => i == 0 ? new Color(1, 0.5, 0) : Color.Black).ToArray();
-        await new LogitechKeyboardSink(ctx).SendAsync(leds, default);
+        var sink = new LogitechKeyboardSink(ctx);
+        Assert.Equal(126, sink.LedCount);
+        Assert.Equal(21, sink.Columns);
+        var leds = Enumerable.Range(0, 126).Select(i => i == 0 || i == 22 ? new Color(1, 0.5, 0) : Color.Black).ToArray(); // key 0, and row 1 column 1
+        await sink.SendAsync(leds, default);
 
         Assert.Equal(21 * 6 * 4, api.Bitmap!.Length);
         Assert.Equal([0, 128, 255, 255], api.Bitmap[..4]); // row 0, column 0: B, G, R, A
-        var lastRow = (5 * 21) * 4;
-        Assert.Equal([0, 128, 255, 255], api.Bitmap[lastRow..(lastRow + 4)]); // every row of the column
-        Assert.Equal([0, 0, 0, 255], api.Bitmap[4..8]); // column 1 is black
+        Assert.Equal([0, 0, 0, 255], api.Bitmap[4..8]);    // row 0, column 1 is black
+        var o = 22 * 4;
+        Assert.Equal([0, 128, 255, 255], api.Bitmap[o..(o + 4)]); // row 1, column 1
         Assert.Contains("target PerKeyRgb", api.Calls);
+    }
+
+    [Fact]
+    public async Task A_short_list_of_colours_leaves_the_rest_of_the_keys_dark()
+    {
+        var api = new FakeLed();
+        var ctx = new LogitechContext(api);
+        ctx.Start();
+        await new LogitechKeyboardSink(ctx).SendAsync([new Color(1, 1, 1)], default);
+        Assert.Equal([255, 255, 255, 255], api.Bitmap![..4]);
+        Assert.Equal([0, 0, 0, 255], api.Bitmap[4..8]);
     }
 
     [Fact]

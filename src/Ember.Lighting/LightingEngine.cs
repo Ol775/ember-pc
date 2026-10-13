@@ -7,6 +7,8 @@ public interface IDeviceSink
     string Name { get; }
     string Kind { get; }
     int LedCount { get; }
+    /// <summary>Above 1 when the LEDs form a grid (a keyboard): this many to a row. 0 for a line of LEDs.</summary>
+    int Columns => 0;
     /// <summary>The least time between two sends to this device.</summary>
     TimeSpan MinInterval { get; }
     /// <summary>Resend an unchanged picture now and then (devices that fall back to their own effect when left alone).</summary>
@@ -51,7 +53,8 @@ public sealed class LightingEngine(TimeProvider clock)
     {
         var byId = sinks.ToDictionary(s => s.Id);
         var counts = sinks.ToDictionary(s => s.Id, s => s.LedCount);
-        var frame = on ? Compositor.Render(scene, counts, inputs, profiles) : [];
+        var columns = sinks.Where(s => s.Columns > 1).ToDictionary(s => s.Id, s => s.Columns);
+        var frame = on ? Compositor.Render(scene, counts, inputs, profiles, columns) : [];
 
         if (!on)
         {

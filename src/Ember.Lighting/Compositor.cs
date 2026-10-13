@@ -27,7 +27,7 @@ public static class Compositor
 
     /// <param name="ledCounts">LED count per device id. Devices without a placement, or switched off, are left out.</param>
     public static Dictionary<string, Color[]> Render(Scene scene, IReadOnlyDictionary<string, int> ledCounts, LightingInputs inputs,
-        IReadOnlyList<Scene>? profiles = null)
+        IReadOnlyList<Scene>? profiles = null, IReadOnlyDictionary<string, int>? columns = null)
     {
         var frame = new Dictionary<string, Color[]>();
         foreach (var p in scene.Placements)
@@ -37,8 +37,10 @@ public static class Compositor
             var leds = new Color[count];
             for (var i = 0; i < count; i++)
             {
-                var (x, y) = p.LedPosition(i, count);
-                leds[i] = SamplePoint(look, x, y, inputs);
+                var (x, y) = p.LedPosition(i, count, columns is not null && columns.TryGetValue(p.DeviceId, out var cols) ? cols : 0);
+                leds[i] = p.Paint is { } paint && i < paint.Count && Color.TryParseHex(paint[i]) is { } fixedColour
+                    ? fixedColour.Scaled(Math.Clamp(look.Brightness, 0, 1))
+                    : SamplePoint(look, x, y, inputs);
             }
             frame[p.DeviceId] = leds;
         }

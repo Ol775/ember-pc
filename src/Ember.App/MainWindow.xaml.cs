@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     readonly Task _run;
     readonly GameDetection _detection = new([]);
     readonly DispatcherTimer _gameTimer, _screenTimer;
+    readonly AudioCapture _audio;
     Ember.Lighting.Color[]? _screen;
     double? _gpuLoad, _cpuTemp, _gpuTemp, _caseTemp;
     string? _announcedConnection, _announcedBanner, _announcedCompetitor, _announcedTest;
@@ -63,6 +64,7 @@ public partial class MainWindow : Window
         // Game detection: once a second look at the foreground program and report start, end and heartbeat to the service.
         _gameTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (_, _) => DetectGame(), Dispatcher);
         // Screen sync: look at the screen ten times a second, but only while an enabled Screen sync layer wants it.
+        _audio = new AudioCapture(levels => _lights.SetAudio(levels));
         _screenTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Background, (_, _) => GrabScreen(), Dispatcher);
         _screenTimer.Start();
         if (BuildFeatures.Current.GameDetection) _gameTimer.Start(); // beta feature: off in the alpha build
@@ -157,6 +159,8 @@ public partial class MainWindow : Window
     {
         try
         {
+            if (_lights.WantsAudio) { if (!_audio.Running) _audio.Start(); _audio.CheckSilence(); }
+            else if (_audio.Running) _audio.Stop();
             if (!_lights.WantsScreen) { _screen = null; _lights.SetInputs(_cpuTemp, _gpuTemp, null); return; }
             var zones = ScreenGrabber.Capture();
             _screen = zones is null ? null : ScreenZones.Smooth(_screen, zones, 0.6);
@@ -419,6 +423,7 @@ public partial class MainWindow : Window
         _refresh.Stop();
         _gameTimer.Stop();
         _screenTimer.Stop();
+        _audio.Dispose();
         _cts.Cancel();
         try { _lights.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3)); } catch (Exception) { /* closing anyway */ }
         // RunAsync returns on cancellation and never needs the UI thread, so a short wait cannot deadlock.

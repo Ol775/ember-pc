@@ -7,15 +7,24 @@ public sealed record Layer(string Id, string Name, Effect Effect, double Opacity
 /// <summary>
 /// Where a device sits on the canvas (the unit square). Its LEDs run along the longer side. <paramref name="Profile"/> is
 /// the name of another scene whose layers this device shows instead of the current scene's (its own light profile); null follows the scene.
+/// <paramref name="Paint"/> fixes single LEDs to a colour ("#RRGGBB", or null to leave that LED to the layers).
 /// </summary>
-public sealed record DevicePlacement(string DeviceId, double X, double Y, double Width, double Height, bool Enabled = true, string? Profile = null)
+public sealed record DevicePlacement(string DeviceId, double X, double Y, double Width, double Height, bool Enabled = true, string? Profile = null, IReadOnlyList<string?>? Paint = null)
 {
-    /// <summary>The canvas position of LED <paramref name="index"/> of <paramref name="count"/>.</summary>
-    public (double X, double Y) LedPosition(int index, int count)
+    /// <summary>
+    /// The canvas position of LED <paramref name="index"/> of <paramref name="count"/>. With <paramref name="columns"/> above 1
+    /// the LEDs are a grid (row by row, that many to a row) spread over the whole rectangle, like the keys of a keyboard.
+    /// </summary>
+    public (double X, double Y) LedPosition(int index, int count, int columns = 0)
     {
         var cx = X + Width / 2;
         var cy = Y + Height / 2;
         if (count <= 1) return (cx, cy);
+        if (columns > 1 && count % columns == 0)
+        {
+            var rows = count / columns;
+            return (X + (index % columns + 0.5) / columns * Width, Y + (index / columns + 0.5) / rows * Height);
+        }
         var f = (index + 0.5) / count;
         return Width >= Height ? (X + f * Width, cy) : (cx, Y + f * Height);
     }

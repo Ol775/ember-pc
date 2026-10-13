@@ -51,34 +51,32 @@ public sealed class LogitechContext(ILogitechLed api)
     }
 }
 
-/// <summary>A per-key keyboard seen as 21 LEDs, one per key column: every key in a column gets that column's colour.</summary>
+/// <summary>A per-key keyboard as a grid of 21 columns by 6 rows of keys, one LED per key position (row by row).</summary>
 public sealed class LogitechKeyboardSink(LogitechContext context) : IDeviceSink
 {
-    public const int Columns = 21, Rows = 6, Bytes = Columns * Rows * 4;
+    public const int KeyColumns = 21, KeyRows = 6, Bytes = KeyColumns * KeyRows * 4;
 
     public string Id => "logitech:keyboard";
     public string Name => "Logitech keyboard";
     public string Kind => "Keyboard";
-    public int LedCount => Columns;
+    public int LedCount => KeyColumns * KeyRows;
+    public int Columns => KeyColumns;
     public TimeSpan MinInterval => TimeSpan.FromMilliseconds(50);
     public bool Keepalive => true;
 
     public Task SendAsync(IReadOnlyList<Color> leds, CancellationToken ct)
     {
         var bitmap = new byte[Bytes];
-        for (var row = 0; row < Rows; row++)
-            for (var col = 0; col < Columns; col++)
-            {
-                var c = col < leds.Count ? leds[col] : Color.Black;
-                var (r, g, b) = c.ToBytes();
-                var i = (row * Columns + col) * 4;
-                bitmap[i] = b; bitmap[i + 1] = g; bitmap[i + 2] = r; bitmap[i + 3] = 255;
-            }
+        for (var i = 0; i < KeyColumns * KeyRows; i++)
+        {
+            var (r, g, b) = (i < leds.Count ? leds[i] : Color.Black).ToBytes();
+            var o = i * 4;
+            bitmap[o] = b; bitmap[o + 1] = g; bitmap[o + 2] = r; bitmap[o + 3] = 255;
+        }
         context.Keyboard(bitmap);
         return Task.CompletedTask;
     }
 }
-
 /// <summary>The Logitech mice (and other non-per-key RGB devices) as one lamp that takes the average colour.</summary>
 public sealed class LogitechMouseSink(LogitechContext context) : IDeviceSink
 {

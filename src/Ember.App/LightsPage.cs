@@ -25,6 +25,9 @@ public sealed class LightsPage : UserControl
         public required TextBlock Label;
         public required Thumb Handle;
         public double X, Y, W, H;
+        public UniformGrid? Grid;
+        public int Columns, RealCount;
+        public IReadOnlyList<string?>? Paint;
     }
 
     readonly StackPanel _root = new() { Margin = new Thickness(24) };
@@ -37,6 +40,8 @@ public sealed class LightsPage : UserControl
     LightingManager? _m;
     LightingState? _rendered;
     string? _selectedLayer, _selectedDevice;
+    bool _paintMode;
+    LColor _paintColour = new(1.0, 0.45, 0.1);
     bool _updating;
 
     public LightsPage()
@@ -93,6 +98,13 @@ public sealed class LightsPage : UserControl
         frame.SetResourceReference(Border.BackgroundProperty, "TrackBrush");
         _canvas.SizeChanged += (_, _) => LayoutVisuals();
         canvasBox.Children.Add(frame);
+        var paintRow = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
+        paintRow.Children.Add(Switch("Paint single LEDs", _paintMode, on => { _paintMode = on; if (on && _selectedDevice is null) SetNote("Click a device on the canvas first, then click its LEDs."); }));
+        paintRow.Children.Add(new Border { Width = 12 });
+        paintRow.Children.Add(ColorField("Paint colour", _paintColour, c => _paintColour = c));
+        paintRow.Children.Add(Pill("Clear paint on this device", ClearPaint));
+        canvasBox.Children.Add(paintRow);
+        canvasBox.Children.Add(Text("With painting on, click an LED to give it a fixed colour and right-click to let the layers colour it again. Painted LEDs ignore the effects.", muted: true, size: 12));
         _root.Children.Add(Panel("Canvas", canvasBox));
 
         var layerBox = new StackPanel();
@@ -104,6 +116,8 @@ public sealed class LightsPage : UserControl
         add.Children.Add(Pill("Breathing", () => AddLayer(new BreathingEffect(new LColor(1.0, 0.45, 0.1)))));
         add.Children.Add(Pill("Temperature glow", () => AddLayer(new TemperatureGlowEffect(TempSensor.Cpu, new LColor(0.1, 0.4, 1.0), new LColor(1.0, 0.1, 0.05)))));
         add.Children.Add(Pill("Screen sync", () => AddLayer(new ScreenSyncEffect())));
+        add.Children.Add(Pill("Music pulse", () => AddLayer(new AudioPulseEffect(new LColor(0.05, 0.02, 0.1), new LColor(1.0, 0.2, 0.5), AudioBand.Bass))));
+        add.Children.Add(Pill("Music spectrum", () => AddLayer(new AudioSpectrumEffect(new LColor(1.0, 0.1, 0.2), new LColor(0.2, 0.4, 1.0)))));
         layerBox.Children.Add(add);
         layerBox.Children.Add(Text("Layers are stacked like in a photo editor: the top one is painted last.", muted: true));
         layerBox.Children.Add(_layers);
@@ -222,14 +236,17 @@ public sealed class LightsPage : UserControl
         foreach (var p in state.Current.Placements)
         {
             devices.TryGetValue(p.DeviceId, out var info);
-            var ledCount = Math.Clamp(info?.LedCount ?? 8, 1, 60);
+            var columns = info?.Columns > 1 ? info.Columns : 0;
+            var ledCount = columns > 0 ? Math.Clamp(info!.LedCount, 1, 400) : Math.Clamp(info?.LedCount ?? 8, 1, 60);
             var leds = new List<SolidColorBrush>();
-            var grid = new UniformGrid { Rows = p.Width >= p.Height ? 1 : 0, Columns = p.Width >= p.Height ? 0 : 1, IsHitTestVisible = false };
+            var grid = columns > 0
+                ? new UniformGrid { Columns = columns, IsHitTestVisible = false }
+                : new UniformGrid { Rows = p.Width >= p.Height ? 1 : 0, Columns = p.Width >= p.Height ? 0 : 1, IsHitTestVisible = false };
             for (var i = 0; i < ledCount; i++)
             {
                 var brush = new SolidColorBrush(WColor.FromRgb(30, 26, 24));
                 leds.Add(brush);
-                grid.Children.Add(new Border { Background = brush, Margin = new Thickness(1), CornerRadius = new CornerRadius(3) });
+                grid.Children.Add(new Border { Background = brush, Margin = new Thickness(columns > 0 ? 0.5 : 1), CornerRadius = new CornerRadius(columns > 0 ? 1.5 : 3) });
             }
             var label = new TextBlock { Text = info?.Name ?? p.DeviceId, FontSize = 11, TextTrimming = TextTrimming.CharacterEllipsis, IsHitTestVisible = false, Margin = new Thickness(6, 2, 6, 0) };
             label.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
@@ -250,7 +267,8 @@ public sealed class LightsPage : UserControl
                 Opacity = p.Enabled ? 1 : 0.4,
             };
             AutomationProperties.SetName(root, "Device on canvas: " + label.Text);
-            var v = new DeviceVisual { Root = root, Leds = leds, Label = label, Handle = handle, X = p.X, Y = p.Y, W = p.Width, H = p.Height };
+            var v = new DeviceVisual { Root = root, Leds = leds, Label = label, Handle = handle, X = p.X, Y = p.Y, W = p.Width, H = p.Height,
+                Grid = grid, Columns = columns, RealCount = info?.LedCount ?? ledCount, Paint = p.Paint };
             _visuals[p.DeviceId] = v;
             Wire(p.DeviceId, v);
             _canvas.Children.Add(root);
@@ -293,12 +311,24 @@ public sealed class LightsPage : UserControl
         double sx = 0, sy = 0;
         var dragging = false;
 
+        v.Root.MouseRightButtonDown += (_, e) =>
+        {
+            if (!_paintMode || _selectedDevice != id || e.OriginalSource == v.Handle) return;
+            PaintAt(id, v, e.GetPosition(v.Grid), null);
+            e.Handled = true;
+        };
         v.Root.MouseLeftButtonDown += (_, e) =>
         {
             if (e.OriginalSource == v.Handle) return;
             _selectedDevice = id;
             MarkSelection();
             v.Root.Focus();
+            if (_paintMode)
+            {
+                PaintAt(id, v, e.GetPosition(v.Grid), _paintColour.ToHex());
+                e.Handled = true;
+                return;
+            }
             start = e.GetPosition(_canvas);
             sx = v.X; sy = v.Y;
             dragging = true;
@@ -349,6 +379,49 @@ public sealed class LightsPage : UserControl
         };
     }
 
+    /// <summary>Paints (or, with null, clears) the LED under the pointer. The list is kept as long as the device has LEDs.</summary>
+    void PaintAt(string id, DeviceVisual v, Point at, string? hex)
+    {
+        var w = v.Grid!.ActualWidth;
+        var h = v.Grid.ActualHeight;
+        if (w <= 0 || h <= 0 || v.RealCount <= 0) return;
+        int index;
+        if (v.Columns > 1 && v.RealCount % v.Columns == 0)
+        {
+            var rows = v.RealCount / v.Columns;
+            index = Math.Clamp((int)(at.Y / h * rows), 0, rows - 1) * v.Columns + Math.Clamp((int)(at.X / w * v.Columns), 0, v.Columns - 1);
+        }
+        else
+        {
+            var f = v.W >= v.H ? at.X / w : at.Y / h;
+            index = Math.Clamp((int)(f * v.RealCount), 0, v.RealCount - 1);
+        }
+        var count = v.RealCount;
+        _m!.EditScene(sc => sc with
+        {
+            Placements = sc.Placements.Select(p =>
+            {
+                if (p.DeviceId != id) return p;
+                var list = (p.Paint ?? []).ToList();
+                while (list.Count < count) list.Add(null);
+                list[index] = hex;
+                v.Paint = list.All(x => x is null) ? null : list;
+                return p with { Paint = v.Paint };
+            }).ToList(),
+        });
+        _rendered = _m.State;
+        UpdatePreview();
+    }
+
+    void ClearPaint()
+    {
+        if (_selectedDevice is not { } id) { SetNote("Select a device on the canvas first."); return; }
+        _m!.EditScene(sc => sc with { Placements = sc.Placements.Select(p => p.DeviceId == id ? p with { Paint = null } : p).ToList() });
+        if (_visuals.TryGetValue(id, out var v)) v.Paint = null;
+        _rendered = _m.State;
+        UpdatePreview();
+    }
+
     void CommitPlacement(string id, DeviceVisual v)
     {
         _m!.EditScene(sc => sc with
@@ -366,7 +439,13 @@ public sealed class LightsPage : UserControl
             frame.TryGetValue(id, out var colours);
             for (var i = 0; i < v.Leds.Count; i++)
             {
-                if (colours is null || colours.Length == 0) { v.Leds[i].Color = WColor.FromRgb(30, 26, 24); continue; }
+                if (colours is null || colours.Length == 0)
+                {
+                    // Lights are off: still show which LEDs are painted, dimly, so painting can be seen.
+                    var painted = v.Paint is { } pl && v.Leds.Count == v.RealCount && i < pl.Count ? LColor.TryParseHex(pl[i]) : null;
+                    v.Leds[i].Color = painted is { } pc ? ToWpf(pc.Scaled(0.5)) : WColor.FromRgb(30, 26, 24);
+                    continue;
+                }
                 var src = v.Leds.Count == colours.Length ? i : (int)((i + 0.5) / v.Leds.Count * colours.Length);
                 v.Leds[i].Color = ToWpf(colours[Math.Clamp(src, 0, colours.Length - 1)]);
             }
@@ -496,6 +575,20 @@ public sealed class LightsPage : UserControl
                 _editor.Children.Add(ColorField("When hot", e.Hot, c => Effect(x => ((TemperatureGlowEffect)x) with { Hot = c })));
                 _editor.Children.Add(Labelled("Cool up to", 20, 100, e.MinC, v => $"{v:0} °C", v => Effect(x => ((TemperatureGlowEffect)x) with { MinC = v }), 1));
                 _editor.Children.Add(Labelled("Hot from", 20, 100, e.MaxC, v => $"{v:0} °C", v => Effect(x => ((TemperatureGlowEffect)x) with { MaxC = v }), 1));
+                break;
+            case AudioPulseEffect e:
+                _editor.Children.Add(Text("Follows this part of the sound", muted: true));
+                _editor.Children.Add(Segments(["Everything", "Bass", "Middle", "Treble"], (int)e.Band, i => Effect(x => ((AudioPulseEffect)x) with { Band = (AudioBand)i }), "Band" + id));
+                _editor.Children.Add(ColorField("When quiet", e.Quiet, c => Effect(x => ((AudioPulseEffect)x) with { Quiet = c })));
+                _editor.Children.Add(ColorField("When loud", e.Loud, c => Effect(x => ((AudioPulseEffect)x) with { Loud = c })));
+                _editor.Children.Add(Labelled("Sensitivity", 10, 400, e.Sensitivity * 100, v => $"{v / 100:0.0}x", v => Effect(x => ((AudioPulseEffect)x) with { Sensitivity = v / 100 }), 5));
+                _editor.Children.Add(Text("Listens to what your PC is playing while this layer is on. Nothing is recorded or kept.", muted: true));
+                break;
+            case AudioSpectrumEffect e:
+                _editor.Children.Add(ColorField("Low pitches", e.Low, c => Effect(x => ((AudioSpectrumEffect)x) with { Low = c })));
+                _editor.Children.Add(ColorField("High pitches", e.High, c => Effect(x => ((AudioSpectrumEffect)x) with { High = c })));
+                _editor.Children.Add(Labelled("Sensitivity", 10, 400, e.Sensitivity * 100, v => $"{v / 100:0.0}x", v => Effect(x => ((AudioSpectrumEffect)x) with { Sensitivity = v / 100 }), 5));
+                _editor.Children.Add(Text("Low pitches on the left of the canvas, high on the right. Listens to what your PC is playing while this layer is on. Nothing is recorded or kept.", muted: true));
                 break;
             case ScreenSyncEffect:
                 _editor.Children.Add(Text("Copies the colours of your main screen onto the canvas in four vertical strips, left to right. It looks at the screen only while this layer is on.", muted: true));

@@ -5,7 +5,7 @@ namespace Ember.Lighting;
 public enum TempSensor { Cpu, Gpu }
 
 /// <summary>Everything an effect may look at for one frame.</summary>
-public sealed record LightingInputs(double Seconds, double? CpuTemp = null, double? GpuTemp = null, IReadOnlyList<Color>? ScreenZones = null);
+public sealed record LightingInputs(double Seconds, double? CpuTemp = null, double? GpuTemp = null, IReadOnlyList<Color>? ScreenZones = null, AudioLevels? Audio = null);
 
 /// <summary>A pattern over the unit square (x and y from 0 to 1) that changes with time and sensors.</summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
@@ -14,6 +14,8 @@ public sealed record LightingInputs(double Seconds, double? CpuTemp = null, doub
 [JsonDerivedType(typeof(BreathingEffect), "breathing")]
 [JsonDerivedType(typeof(TemperatureGlowEffect), "temperature")]
 [JsonDerivedType(typeof(ScreenSyncEffect), "screen")]
+[JsonDerivedType(typeof(AudioPulseEffect), "audiopulse")]
+[JsonDerivedType(typeof(AudioSpectrumEffect), "audiospectrum")]
 public abstract record Effect
 {
     public abstract Color Sample(double x, double y, LightingInputs inputs);
