@@ -26,6 +26,8 @@ public partial class MainWindow : Window
     readonly AudioCapture _audio;
     readonly KeyWatcher _keys;
     readonly DxgiGrabber _dxgi = new();
+    readonly TrayIcon _tray;
+    bool _quitting;
     Ember.Lighting.Color[]? _screen;
     double? _gpuLoad, _cpuTemp, _gpuTemp, _caseTemp;
     string? _announcedConnection, _announcedBanner, _announcedCompetitor, _announcedTest;
@@ -74,6 +76,8 @@ public partial class MainWindow : Window
         if (BuildFeatures.Current.GameDetection) _gameTimer.Start(); // beta feature: off in the alpha build
 
         StartupSwitch.IsChecked = StartupRegistration.IsEnabled();
+        TraySwitch.IsChecked = _vm.Prefs.KeepInTray;
+        MinimisedSwitch.IsChecked = _vm.Prefs.StartMinimised;
         OnSettingsSection(SetGeneral, new RoutedEventArgs());
         _updates = new UpdateChecker(_http);
         BuildAccentRow();
@@ -88,6 +92,8 @@ public partial class MainWindow : Window
         Curve.CopyRequested += OnCurveCopy;
 
         _run = Task.Run(() => connection.RunAsync(_cts.Token));
+        _tray = new TrayIcon(ShowFromTray, Quit, mode => _ = SendAsync(new SetMode(mode)));
+        Closing += OnClosing;
         Closed += OnClosed;
     }
 
@@ -382,13 +388,49 @@ public partial class MainWindow : Window
     void OnStartupToggled(object sender, RoutedEventArgs e)
     {
         var want = StartupSwitch.IsChecked == true;
-        if (!StartupRegistration.Set(want))
+        if (!StartupRegistration.Set(want, _vm.Prefs.StartMinimised))
         {
             StartupSwitch.IsChecked = StartupRegistration.IsEnabled();
             SettingsNote.Text = "Windows would not let Ember change its start-up entry.";
         }
         else SettingsNote.Text = want ? "Ember will open when you sign in." : "Ember will no longer open when you sign in.";
         Announce(SettingsNote);
+    }
+
+    void OnTrayToggled(object sender, RoutedEventArgs e) =>
+        Remember(_vm.Prefs with { KeepInTray = TraySwitch.IsChecked == true });
+
+    void OnMinimisedToggled(object sender, RoutedEventArgs e)
+    {
+        var want = MinimisedSwitch.IsChecked == true;
+        Remember(_vm.Prefs with { StartMinimised = want });
+        if (StartupRegistration.IsEnabled()) StartupRegistration.Set(true, want); // the sign-in entry carries the switch
+    }
+
+    // ---- tray ----
+
+    /// <summary>False when the window has to be shown at start: the terms have not been accepted yet.</summary>
+    public bool CanStayHidden => Legal.IsAccepted(_vm.Prefs.AcceptedTerms, TermsAcceptance.ByInstaller());
+
+    void ShowFromTray()
+    {
+        Show();
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        Activate();
+    }
+
+    void Quit()
+    {
+        _quitting = true;
+        Close();
+    }
+
+    void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        // With "Keep running in the tray" on, the close button only hides the window. Quit in the tray menu really closes it.
+        if (_quitting || !_vm.Prefs.KeepInTray) return;
+        e.Cancel = true;
+        Hide();
     }
 
     void OnOpenSettingsFolder(object sender, RoutedEventArgs e)
@@ -436,6 +478,7 @@ public partial class MainWindow : Window
         if (DevicesPageView.Visibility == Visibility.Visible) Devices.Update(_vm, _lights);
         // WPF only announces a live region when the app raises LiveRegionChanged itself.
         Curve.SetState(_vm.FansPage.Mode, _vm.FansPage.Curves, _cpuTemp, _caseTemp);
+        _tray.SetMode(_vm.FansPage.Mode, _cpuTemp is { } t ? $"CPU {t:0} °C" : null);
         if (_vm.ConnectionText != _announcedConnection)
         {
             _announcedConnection = _vm.ConnectionText;
@@ -469,6 +512,7 @@ public partial class MainWindow : Window
         _refresh.Stop();
         _gameTimer.Stop();
         _screenTimer.Stop();
+        _tray.Dispose();
         _audio.Dispose();
         _keys.Dispose();
         _dxgi.Dispose();

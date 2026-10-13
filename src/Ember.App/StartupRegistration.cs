@@ -1,3 +1,4 @@
+using Ember.Core;
 using Microsoft.Win32;
 
 namespace Ember.App;
@@ -19,7 +20,7 @@ public static class StartupRegistration
     }
 
     /// <summary>False when the registry could not be written.</summary>
-    public static bool Set(bool enabled)
+    public static bool Set(bool enabled, bool minimised = false)
     {
         try
         {
@@ -28,7 +29,7 @@ public static class StartupRegistration
             {
                 var exe = Environment.ProcessPath;
                 if (string.IsNullOrEmpty(exe)) return false;
-                key.SetValue(ValueName, "\"" + exe + "\"");
+                key.SetValue(ValueName, LaunchOptions.StartupCommand(exe, minimised));
             }
             else key.DeleteValue(ValueName, throwOnMissingValue: false);
             return true;

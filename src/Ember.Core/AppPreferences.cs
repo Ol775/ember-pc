@@ -9,7 +9,8 @@ public enum StartPage { Dashboard, Fans }
 public enum UpdateChannel { Stable, Beta }
 
 public sealed record AppPreferences(TemperatureUnit Unit, StartPage StartPage, ThemeMode Theme = ThemeMode.Dark,
-    AccentChoice Accent = AccentChoice.Orange, UpdateChannel Channel = UpdateChannel.Stable, bool AutoCheckUpdates = false, int AcceptedTerms = 0)
+    AccentChoice Accent = AccentChoice.Orange, UpdateChannel Channel = UpdateChannel.Stable, bool AutoCheckUpdates = false, int AcceptedTerms = 0,
+    bool KeepInTray = false, bool StartMinimised = false)
 {
     public static readonly AppPreferences Default = new(TemperatureUnit.Celsius, StartPage.Dashboard);
 }
@@ -42,7 +43,9 @@ public sealed class PreferencesStore(string path)
                 Field(doc.RootElement, "Accent", AppPreferences.Default.Accent),
                 Field(doc.RootElement, "Channel", AppPreferences.Default.Channel),
                 Field(doc.RootElement, "AutoCheckUpdates", AppPreferences.Default.AutoCheckUpdates),
-                Math.Clamp(Field(doc.RootElement, "AcceptedTerms", AppPreferences.Default.AcceptedTerms), 0, 1000));
+                Math.Clamp(Field(doc.RootElement, "AcceptedTerms", AppPreferences.Default.AcceptedTerms), 0, 1000),
+                Field(doc.RootElement, "KeepInTray", AppPreferences.Default.KeepInTray),
+                Field(doc.RootElement, "StartMinimised", AppPreferences.Default.StartMinimised));
         }
         catch (Exception)
         {

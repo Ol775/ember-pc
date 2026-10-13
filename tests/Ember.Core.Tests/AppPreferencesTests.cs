@@ -68,4 +68,15 @@ public class AppPreferencesTests : IDisposable
         Assert.Equal(AccentChoice.Orange, loaded.Accent);
         Assert.False(loaded.AutoCheckUpdates);
     }
+
+    [Fact]
+    public void Tray_settings_default_to_off_and_survive_a_save()
+    {
+        Assert.False(AppPreferences.Default.KeepInTray);
+        Assert.False(AppPreferences.Default.StartMinimised);
+        var store = new PreferencesStore(PathFor("tray.json"));
+        var prefs = AppPreferences.Default with { KeepInTray = true, StartMinimised = true };
+        Assert.True(store.TrySave(prefs));
+        Assert.Equal(prefs, store.Load());
+    }
 }

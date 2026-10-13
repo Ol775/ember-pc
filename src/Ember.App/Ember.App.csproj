@@ -3,9 +3,15 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>Assets\ember.ico</ApplicationIcon>
   </PropertyGroup>
+  <!-- WinForms is here only for the tray icon: keep its names out of the WPF code. -->
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
   <!-- OpenRGB, fetched by scripts/fetch-openrgb.ps1, ships in an "OpenRGB" folder next to the app. -->
   <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\third-party\openrgb\OpenRGB.exe')">
     <Content Include="..\..\third-party\openrgb\**\*" Link="OpenRGB\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />

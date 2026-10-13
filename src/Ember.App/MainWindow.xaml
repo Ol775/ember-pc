@@ -340,6 +340,10 @@
                         </Border>
                         <CheckBox x:Name="StartupSwitch" Content="Start Ember when I sign in to Windows" Click="OnStartupToggled"
                                   Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
+                        <CheckBox x:Name="TraySwitch" Content="Keep running in the tray when I close the window" Click="OnTrayToggled"
+                                  Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
+                        <CheckBox x:Name="MinimisedSwitch" Content="Start minimised, in the tray" Click="OnMinimisedToggled"
+                                  Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    Text="This only opens the window. Fan control runs in the Ember service, which starts with Windows whether or not the window is open." />
                     </StackPanel>
