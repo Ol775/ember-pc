@@ -42,7 +42,7 @@ public sealed class DxgiGrabber : IDisposable
             }
 
             var dup = _duplication!;
-            var result = dup.AcquireNextFrame(0, out _, out var resource);
+            var result = dup.AcquireNextFrame(0, out var info, out var resource);
             if (result.Failure)
             {
                 if (result == Vortice.DXGI.ResultCode.WaitTimeout) return _last; // nothing changed since the last frame
@@ -52,6 +52,9 @@ public sealed class DxgiGrabber : IDisposable
             }
             try
             {
+                // A frame that carries no picture update (only the mouse pointer or metadata changed) can have an empty texture.
+                // Read it and the lights go black, which an HDR desktop does all the time, so keep the last real picture.
+                if (info.AccumulatedFrames == 0 && info.LastPresentTime == 0) return _last;
                 using var frame = resource.QueryInterface<ID3D11Texture2D>();
                 var desc = frame.Description;
                 if (desc.Format is not (Format.B8G8R8A8_UNorm or Format.R10G10B10A2_UNorm or Format.R16G16B16A16_Float))
