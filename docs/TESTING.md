@@ -37,8 +37,8 @@ reach the tray): the menu, double-click to open, and Quit.
 
 ## Continuous integration and signing
 
-- [ ] A push to GitHub runs the build workflow and it goes green (see the Actions tab).
-- [ ] The workflow artifact (installer and zip) installs on a clean PC.
+- [x] A push to GitHub runs the build workflow and it goes green (seen 2026-10-13, run 38393319698).
+- [ ] The workflow artifact (installer and zip) installs on a clean PC. (The Release build workflow itself ran green and produced them, run 38393640897.)
 - [ ] After a signing certificate is added to the repository secrets: the installer shows the publisher name in the
       Windows prompt instead of "Unknown publisher", and `signtool verify /pa` passes.
 
