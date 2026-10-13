@@ -41,11 +41,14 @@
 
 <p align="center">
   <img src="docs/images/fans.png" alt="Fans page with modes and curve graph" width="48%">
-  <img src="docs/images/lights.png" alt="Lights page with devices, effects and scenes" width="48%">
+  <img src="docs/images/lights.png" alt="Lights page with the device canvas, per-LED painting and gradient tools" width="48%">
 </p>
 <p align="center">
-  <img src="docs/images/fan-headers.png" alt="Fan header testing and enabling" width="48%">
+  <img src="docs/images/fan-headers.png" alt="Devices page with every device and the fan header tests" width="48%">
   <img src="docs/images/settings.png" alt="Settings page" width="48%">
+</p>
+<p align="center">
+  <img src="docs/images/installer.png" alt="The Ember installer" width="48%">
 </p>
 
 ## Requirements
