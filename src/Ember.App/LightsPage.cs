@@ -43,7 +43,7 @@ public sealed class LightsPage : UserControl
     {
         Content = _root;
         Focusable = false;
-        _root.Children.Add(new TextBlock { Text = "Lights", FontSize = 22, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 16) });
+        _root.Children.Add(new TextBlock { Text = "Lights", FontSize = 24, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 16) });
         AutomationProperties.SetHeadingLevel(_root.Children[0], AutomationHeadingLevel.Level2);
     }
 
@@ -74,7 +74,7 @@ public sealed class LightsPage : UserControl
         top.Children.Add(row);
         top.Children.Add(Text("Lights start switched off, so Ember never takes over a device until you ask. Turning them off sends one dark frame; closing Ember leaves them as they are.", muted: true));
         top.Children.Add(_status);
-        _root.Children.Add(Panel("Lights", top));
+        var pLights = Panel("Lights", top);
 
         var sceneBox = new StackPanel();
         sceneBox.Children.Add(_scenes);
@@ -85,14 +85,14 @@ public sealed class LightsPage : UserControl
         save.Children.Add(Pill("Save as new scene", SaveScene));
         save.Children.Add(Pill("Delete this scene", () => { m.DeleteScene(m.State.CurrentScene); }));
         sceneBox.Children.Add(save);
-        _root.Children.Add(Panel("Scenes", sceneBox));
+        var pScenes = Panel("Scenes", sceneBox);
 
         var canvasBox = new StackPanel();
         canvasBox.Children.Add(Text("Drag a device to where it sits in your room, or select it and use the arrow keys (Ctrl with the arrows changes its size). Effects are painted across this canvas, so devices side by side show one picture.", muted: true));
         var frame = new Border { Background = Res("TrackBrush"), CornerRadius = new CornerRadius(12), Margin = new Thickness(0, 10, 0, 0), Child = _canvas, Padding = new Thickness(0) };
         _canvas.SizeChanged += (_, _) => LayoutVisuals();
         canvasBox.Children.Add(frame);
-        _root.Children.Add(Panel("Canvas", canvasBox));
+        var pCanvas = Panel("Canvas", canvasBox);
 
         var layerBox = new StackPanel();
         var add = new WrapPanel { Margin = new Thickness(0, 0, 0, 8) };
@@ -107,7 +107,17 @@ public sealed class LightsPage : UserControl
         layerBox.Children.Add(Text("Layers are stacked like in a photo editor: the top one is painted last.", muted: true));
         layerBox.Children.Add(_layers);
         layerBox.Children.Add(_editor);
-        _root.Children.Add(Panel("Layers", layerBox));
+        var pLayers = Panel("Layers", layerBox);
+        var cols = new Grid { Margin = new Thickness(0, 0, 0, 0) };
+        cols.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        cols.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(440) });
+        var left = new StackPanel { Margin = new Thickness(0, 0, 16, 0) };
+        left.Children.Add(pCanvas); left.Children.Add(pLights);
+        var right = new StackPanel();
+        right.Children.Add(pScenes); right.Children.Add(pLayers);
+        Grid.SetColumn(right, 1);
+        cols.Children.Add(left); cols.Children.Add(right);
+        _root.Children.Add(cols);
 
         _root.Children.Add(Panel("Devices", BuildDevicesBox()));
     }

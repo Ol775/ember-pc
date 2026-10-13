@@ -67,6 +67,7 @@ public partial class MainWindow : Window
         if (BuildFeatures.Current.GameDetection) _gameTimer.Start(); // beta feature: off in the alpha build
 
         StartupSwitch.IsChecked = StartupRegistration.IsEnabled();
+        OnSettingsSection(SetGeneral, new RoutedEventArgs());
         if (_vm.Prefs.StartPage == StartPage.Fans) NavFans.IsChecked = true;
         Curve.Committed += OnCurveCommitted;
         Curve.CopyRequested += OnCurveCopy;
@@ -231,6 +232,13 @@ public partial class MainWindow : Window
     async void OnUndoNotAGame(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string exe }) await SendAsync(new SetNotGame(exe, false));
+    }
+
+    void OnSettingsSection(object sender, RoutedEventArgs e)
+    {
+        if (SettingsSections is null || sender is not FrameworkElement { Tag: string section }) return;
+        foreach (var child in SettingsSections.Children.OfType<FrameworkElement>())
+            if (child.Tag is string t) child.Visibility = t == section ? Visibility.Visible : Visibility.Collapsed;
     }
 
     void OnNavChanged(object sender, RoutedEventArgs e)
