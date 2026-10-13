@@ -2,6 +2,20 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 0.1.0-beta.10 (2026-10-13)
+
+### Added
+
+- **OLED black theme.** Settings, Appearance has a fourth theme with a pure black background for OLED screens, next to Dark, Light and Match Windows.
+- **Colour scheme.** Warm (the original), Neutral grey or Cool blue-grey surfaces, for every theme.
+- **More accent colours.** Red, Teal and Gold join the five from before, and a Custom colour takes any `#rrggbb`. A colour that would be hard to read is lightened or darkened a little.
+- **Highlight strength.** Subtle, Normal or Vivid for how strongly the accent tints the selected menu item and banners, with a preview.
+
+### Changed
+
+- **Updates look tidier.** The version and its status sit together with a coloured dot, a newer release shows in a card with its notes and the Update now button, and the options are grouped below.
+- **Roadmap** is grouped (being checked, next, later, not planned) with the finished work folded away, and **Legal** opens with a short plain summary, folds the terms into sections and links to the full text on GitHub. **About** shows the version, links, a button that copies version details for a problem report, and what Ember is built on.
+
 ## 0.1.0-beta.9 (2026-10-13)
 
 ### Added

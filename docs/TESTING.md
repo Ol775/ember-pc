@@ -35,6 +35,15 @@ reach the tray): the menu, double-click to open, and Quit.
 - [ ] With "Keep running in the tray" off, closing the window closes the app as before.
 - [ ] The tray icon looks right on a light and a dark taskbar, and at 125% and 150% scaling.
 
+## Appearance and the settings pages
+
+- [x] Settings, Appearance: Dark, OLED black, Light and Match Windows switch at once; OLED black is pure black behind everything (checked on the PC, with the Cool scheme and Vivid highlights).
+- [ ] Colour scheme Warm, Neutral and Cool, and each accent colour including Red, Teal and Gold, look right on Dark, OLED black and Light.
+- [ ] A custom colour typed as `#rrggbb` is applied as you type, a wrong one is refused with a note, and a very dark or very light colour stays readable.
+- [ ] Subtle, Normal and Vivid change the selected menu item and banner fill, and the preview under Highlights matches.
+- [x] Updates, Roadmap, Legal and About pages show the new layout (checked on the PC); the settings menu ends with Legal, Updates, About.
+- [ ] Legal: Expand all, Collapse all and Read on GitHub work; About: the three links open the project pages and Copy version details puts the text on the clipboard.
+
 ## Updates
 
 - [x] Settings, Updates: Check now reads the public releases and, on the Beta channel, says "You have the latest version" when running beta.5 (2026-10-13).

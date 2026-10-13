@@ -29,13 +29,13 @@
 - **Light profile per device.** Any device, such as your keyboard, can show a different saved scene from the rest.
 - **Music-reactive lights.** Pulse to the bass or spread the spectrum across your devices; Ember listens to what the PC is playing, only while the effect is on.
 - **Paint single LEDs** and give any device its own colours; keyboards and other grid devices are drawn and lit as grids.
-- **Corsair, Razer and more.** Anything OpenRGB supports appears in Ember (close the maker's own software first).
+- **Corsair, ASUS, MSI and more.** Anything OpenRGB supports appears in Ember (close the maker's own software first).
 - **Layered effects.** Stack effects with blend modes and save them as scenes.
 - **Screen sync.** Lights follow the colours on your screen, read straight from the graphics card (DXGI) and including HDR desktops.
-- **Themes and accent colours.** Dark, light or match Windows, with five accent colours, chosen in Settings.
-- **Update checks.** On request (or at start-up if you turn it on), Ember asks GitHub whether a newer release exists on your channel (Stable or Beta). It never downloads or installs anything by itself.
+- **Make it yours.** Dark, **OLED black** (pure black for OLED screens), light or match Windows; a warm, neutral or cool colour scheme; nine accent colours or your own `#rrggbb`; and how strongly the accent shows in highlights. All in Settings, Appearance.
+- **Updates.** On request (or at start-up if you turn it on), Ember asks GitHub whether a newer release exists on your channel (Stable or Beta). **Update now** downloads the installer, checks it against the release checksum and updates in place, then opens Ember again. Nothing is downloaded until you press it.
 - **Experimental features.** Game detection (switches to a game mode) and GPU fan control sit behind an Experimental switch in Settings, off by default.
-- **Private by design.** The app and service make no network calls of their own, apart from the optional update check, the Govee cloud (used only if you add a key) the optional Hue bridge discovery (only when you press Find bridge) and the local Nanoleaf link, whose keys are stored in Windows Credential Manager.
+- **Private by design.** No accounts, no telemetry. The app and service make no network calls of their own, apart from the update check and Update now (GitHub only, on request), the Govee cloud (only if you add a key), Hue bridge discovery (only when you press Find bridge), and the local links to your Hue bridge, Nanoleaf controller and Razer Synapse. Keys are stored in Windows Credential Manager. See [PRIVACY.md](PRIVACY.md).
 
 ## Screenshots
 

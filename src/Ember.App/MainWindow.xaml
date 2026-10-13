@@ -307,10 +307,10 @@
                 <RadioButton GroupName="SettingsNav" Content="Appearance" Tag="appearance" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Fan control" Tag="fan" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Lighting" Tag="lights" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
-                <RadioButton GroupName="SettingsNav" Content="Updates" Tag="updates" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="What's new" Tag="changelog" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Roadmap" Tag="roadmap" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Legal" Tag="legal" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="Updates" Tag="updates" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="About" Tag="about" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
               </StackPanel>
               <StackPanel x:Name="SettingsSections" Grid.Column="1" MaxWidth="720" HorizontalAlignment="Left">
@@ -354,18 +354,16 @@
                 </GroupBox>
 
                 <GroupBox Tag="appearance" Header="Theme" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Theme">
-                    <StackPanel>
-                        <Border Style="{StaticResource SegmentTrack}">
-                            <StackPanel Orientation="Horizontal">
-                                <RadioButton GroupName="Theme" Content="Dark" Tag="Dark" Click="OnThemePicked" IsChecked="{Binding ThemeDark, Mode=OneWay}" Style="{StaticResource Segment}" />
-                                <RadioButton GroupName="Theme" Content="Light" Tag="Light" Click="OnThemePicked" IsChecked="{Binding ThemeLight, Mode=OneWay}" Style="{StaticResource Segment}" />
-                                <RadioButton GroupName="Theme" Content="Match Windows" Tag="System" Click="OnThemePicked" IsChecked="{Binding ThemeSystem, Mode=OneWay}" Style="{StaticResource Segment}" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
+                    <StackPanel x:Name="ThemeHost" />
+                </GroupBox>
+                <GroupBox Tag="appearance" Header="Colour scheme" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Colour scheme">
+                    <StackPanel x:Name="ToneHost" />
                 </GroupBox>
                 <GroupBox Tag="appearance" Header="Accent colour" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Accent colour">
-                    <StackPanel x:Name="AccentRow" Orientation="Horizontal" />
+                    <StackPanel x:Name="AccentHost" />
+                </GroupBox>
+                <GroupBox Tag="appearance" Header="Highlights" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Highlights">
+                    <StackPanel x:Name="HighlightHost" />
                 </GroupBox>
                 <GroupBox Tag="fan" Header="Fan control" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan control">
                     <StackPanel>
@@ -447,26 +445,47 @@
                 </GroupBox>
                 <GroupBox Tag="updates" Header="Updates" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Updates">
                     <StackPanel>
-                        <TextBlock Text="{Binding VersionText}" FontWeight="SemiBold" />
-                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"
-                                   Text="A check only asks GitHub for the list of releases. When a newer one exists, Update now downloads its installer, checks it against the release checksum, updates and opens Ember again (the installer only asks about the Terms of Use if they changed since you accepted them). Nothing is downloaded or installed until you press the button." />
-                        <WrapPanel Margin="0,12,0,0">
-                            <Button Content="Check now" Click="OnCheckUpdates" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
-                            <Button x:Name="UpdateNowButton" Content="Update now" Click="OnUpdateNow" Style="{StaticResource ActionButton}" Margin="0,0,8,0" Visibility="Collapsed" />
-                            <Button x:Name="OpenReleaseButton" Content="Open release page" Click="OnOpenRelease" Style="{StaticResource ActionButton}" Margin="0" Visibility="Collapsed" />
-                        </WrapPanel>
-                        <TextBlock x:Name="UpdateNote" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding VersionText}" FontSize="20" FontWeight="SemiBold" />
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <Ellipse x:Name="UpdateDot" Width="9" Height="9" Margin="0,2,8,0" VerticalAlignment="Center" Fill="{DynamicResource MutedBrush}" />
+                                    <TextBlock x:Name="UpdateNote" Text="Not checked yet." TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
+                                               AutomationProperties.LiveSetting="Polite" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Check now" Click="OnCheckUpdates" Style="{StaticResource ActionButton}" Margin="12,0,0,0" VerticalAlignment="Top" />
+                        </Grid>
+                        <Border x:Name="UpdateBanner" Visibility="Collapsed" Margin="0,16,0,0" Padding="16,14" CornerRadius="12" BorderThickness="1"
+                                Background="{DynamicResource BannerBrush}" BorderBrush="{DynamicResource AccentBrush}">
+                            <StackPanel>
+                                <TextBlock x:Name="UpdateBannerTitle" FontSize="15" FontWeight="SemiBold" />
+                                <TextBlock x:Name="UpdateNotes" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" MaxHeight="96" TextTrimming="CharacterEllipsis"
+                                           Margin="0,6,0,0" />
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button x:Name="UpdateNowButton" Content="Update now" Click="OnUpdateNow" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Visibility="Collapsed" />
+                                    <Button x:Name="OpenReleaseButton" Content="Release page" Click="OnOpenRelease" Style="{StaticResource ActionButton}" Margin="0" Visibility="Collapsed" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border Height="1" Background="{DynamicResource PanelBorderBrush}" Margin="0,18,0,14" />
                         <CheckBox Content="Check for updates when Ember starts" Click="OnAutoUpdateToggled" IsChecked="{Binding AutoCheckUpdates, Mode=OneWay}"
-                                  Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
-                        <TextBlock Text="Release channel" Foreground="{DynamicResource MutedBrush}" Margin="0,14,0,6" />
+                                  Style="{StaticResource SwitchBox}" />
+                        <TextBlock Text="Release channel" Margin="0,16,0,6" />
                         <Border Style="{StaticResource SegmentTrack}">
                             <StackPanel Orientation="Horizontal">
                                 <RadioButton GroupName="Channel" Content="Stable" Tag="Stable" Click="OnChannelPicked" IsChecked="{Binding ChannelStable, Mode=OneWay}" Style="{StaticResource Segment}" />
                                 <RadioButton GroupName="Channel" Content="Beta" Tag="Beta" Click="OnChannelPicked" IsChecked="{Binding ChannelBeta, Mode=OneWay}" Style="{StaticResource Segment}" />
                             </StackPanel>
                         </Border>
-                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
-                                   Text="Beta also offers pre-releases, which get new features earlier and may have more bugs." />
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Text="Beta also offers pre-releases: new features earlier, and more bugs." />
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,14,0,0"
+                                   Text="Ember contacts GitHub only when it checks and when you press Update now. The installer is verified against the checksum published with the release before it runs." />
                     </StackPanel>
                 </GroupBox>
                 <GroupBox Tag="changelog" Header="What's new" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Changelog">
@@ -480,9 +499,7 @@
                 </GroupBox>
                 <GroupBox Tag="about" Header="About" Style="{StaticResource Panel}" AutomationProperties.Name="About Ember">
                     <StackPanel>
-                        <TextBlock Text="{Binding BuildLabel}" FontWeight="SemiBold" />
-                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"
-                                   Text="Ember monitors your PC's temperatures and fans and controls the fans on supported motherboards. Game detection and GPU fan control arrive in the beta build." />
+<StackPanel x:Name="AboutHost" />
                         <TextBlock x:Name="SettingsNote" TextWrapping="Wrap" Margin="0,8,0,0" Foreground="{DynamicResource MutedBrush}"
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>

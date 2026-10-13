@@ -57,14 +57,15 @@ public static class DocView
     }
 
     /// <summary>
-    /// Like <see cref="Fill"/>, but each "##" heading (a release) is a button that folds its notes away. The first stays open,
-    /// the rest start closed with a one-line summary, and a long bullet shows two lines until "Show more" is pressed.
+    /// Like <see cref="Fill"/>, but each "##" heading (a release, a roadmap group) is a row that folds its notes away, with a one-line
+    /// summary on the right. By default the first stays open and the rest start closed; <paramref name="isOpen"/> decides otherwise.
+    /// A long bullet shows two lines until "Show more" is pressed. Returns a function that opens or closes every section.
     /// </summary>
-    public static void FillFolding(Panel host, string? markdown)
+    public static Action<bool> FillFolding(Panel host, string? markdown, Func<int, string, bool>? isOpen = null, Func<List<MdLine>, string>? summarise = null)
     {
         host.Children.Clear();
         var lines = MarkdownLite.Parse(markdown);
-        if (lines.Count == 0) { host.Children.Add(Block("Nothing to show.", muted: true)); return; }
+        if (lines.Count == 0) { host.Children.Add(Block("Nothing to show.", muted: true)); return _ => { }; }
 
         var sections = new List<(string? Title, List<MdLine> Body)>();
         foreach (var line in lines)
@@ -73,41 +74,50 @@ public static class DocView
             if (line.Kind != MdKind.Heading) sections[^1].Body.Add(line);
         }
 
+        var setters = new List<Action<bool>>();
         var index = 0;
         foreach (var (title, body) in sections)
         {
-            var panel = new StackPanel { Margin = new Thickness(18, 4, 0, 8) };
+            var panel = new StackPanel { Margin = new Thickness(18, 4, 0, 10) };
             AddBody(panel, body);
-            if (title is null) { host.Children.Add(panel); continue; }
+            if (title is null) { panel.Margin = new Thickness(0, 0, 0, 6); host.Children.Add(panel); continue; }
 
-            var open = index++ == 0;
+            var open = isOpen is null ? index == 0 : isOpen(index, title);
+            index++;
             var chevron = Block(open ? "▾" : "▸", muted: true);
-            chevron.Margin = new Thickness(0, 0, 8, 0);
+            chevron.Width = 18;
             var head = Block(title, size: 16, weight: FontWeights.SemiBold);
-            var summary = Block(Summarise(body), muted: true, size: 12);
-            summary.Margin = new Thickness(12, 2, 0, 0);
+            var summary = Block((summarise ?? Summarise)(body), muted: true, size: 12);
             summary.VerticalAlignment = VerticalAlignment.Center;
-            var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left };
+            summary.TextAlignment = TextAlignment.Right;
+            var row = new Grid();
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            Grid.SetColumn(head, 1);
+            Grid.SetColumn(summary, 2);
             row.Children.Add(chevron);
             row.Children.Add(head);
             row.Children.Add(summary);
-            var button = new Button { Content = row, HorizontalContentAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 6, 0, 0) };
-            if (Application.Current.TryFindResource("ActionButton") is Style style) button.Style = style;
-            System.Windows.Automation.AutomationProperties.SetName(button, "Release " + title);
+            var button = new Button { Content = row, HorizontalContentAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 2, 0, 0) };
+            if (Application.Current.TryFindResource("FoldButton") is Style style) button.Style = style;
+            System.Windows.Automation.AutomationProperties.SetName(button, title);
             panel.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
-            button.Click += (_, _) =>
+            void Set(bool show)
             {
-                var show = panel.Visibility != Visibility.Visible;
                 panel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
                 chevron.Text = show ? "▾" : "▸";
-            };
+            }
+            setters.Add(Set);
+            button.Click += (_, _) => Set(panel.Visibility != Visibility.Visible);
             host.Children.Add(button);
             host.Children.Add(panel);
         }
+        return show => { foreach (var set in setters) set(show); };
     }
 
     // "3 added, 1 changed" from the sub-headings and bullets under a release.
-    static string Summarise(List<MdLine> body)
+    public static string Summarise(List<MdLine> body)
     {
         var parts = new List<string>();
         string? group = null;
@@ -120,6 +130,13 @@ public static class DocView
         }
         Close();
         return parts.Count == 0 ? "" : string.Join(", ", parts);
+    }
+
+    /// <summary>"12 items" for a section made of bullets (the roadmap); nothing for a section without any.</summary>
+    public static string CountItems(List<MdLine> body)
+    {
+        var n = body.Count(l => l.Kind == MdKind.Bullet);
+        return n == 0 ? "" : n == 1 ? "1 item" : $"{n} items";
     }
 
     const int ClampAbove = 200;

@@ -102,3 +102,36 @@ public class AppPreferencesTests : IDisposable
         Assert.Equal(prefs, store.Load());
     }
 }
+
+public class AppearancePreferencesTests
+{
+    [Fact]
+    public void The_new_look_choices_round_trip_and_default_to_the_original_look()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "ember-look-" + Guid.NewGuid().ToString("N") + ".json");
+        try
+        {
+            Assert.Equal(SurfaceTone.Warm, AppPreferences.Default.Tone);
+            Assert.Equal(HighlightStrength.Normal, AppPreferences.Default.Highlight);
+            var prefs = AppPreferences.Default with { Theme = ThemeMode.Oled, Tone = SurfaceTone.Cool, Highlight = HighlightStrength.Vivid, Accent = AccentChoice.Custom, CustomAccent = "#1e90ff" };
+            var store = new PreferencesStore(path);
+            Assert.True(store.TrySave(prefs));
+            Assert.Equal(prefs, store.Load());
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+
+    [Fact]
+    public void A_damaged_custom_colour_in_the_file_loads_as_the_default()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "ember-look-" + Guid.NewGuid().ToString("N") + ".json");
+        try
+        {
+            File.WriteAllText(path, "{\"CustomAccent\":\"red\",\"Tone\":\"Sideways\"}");
+            var loaded = new PreferencesStore(path).Load();
+            Assert.Equal(ThemePalette.DefaultCustomAccent, loaded.CustomAccent);
+            Assert.Equal(SurfaceTone.Warm, loaded.Tone);
+        }
+        finally { if (File.Exists(path)) File.Delete(path); }
+    }
+}

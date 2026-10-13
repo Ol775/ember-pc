@@ -1,48 +1,66 @@
 # Roadmap
 
-What is done, what is being worked on and what is planned. See [CHANGELOG.md](CHANGELOG.md) for what changed in each version. Plans can change.
+Where Ember is and where it is going. Done work is folded away at the bottom. See [CHANGELOG.md](CHANGELOG.md) for what changed in each version. Plans can change.
 
-## Done
+## Being checked on real hardware
 
-- Live sensor dashboard with history
-- Fan modes: Super quiet, Quiet, Normal, Performance, Extreme, and Manual curves with an editor
-- Safety rules, header testing, conflict detection, watchdog service, stall recovery for fans that stop at low speed
-- Lighting through OpenRGB and Govee (LAN and cloud), layered effects, scenes, screen sync
-- Logitech G keyboard and mouse lighting through G HUB, and a light profile per device
-- Themes (dark, light, match Windows) and accent colours
-- Update checker with Stable and Beta channels, release zip and an install and upgrade script
-- Experimental switch for game detection and GPU fan control
-- Changelog and roadmap inside the app
-- Faster screen capture through DXGI, and music-reactive effects
-- Per-LED painting, a per-key Logitech keyboard grid, and Govee segments (experimental)
-- Philips Hue lights through the bridge (local network, no account)
-- Nanoleaf light panels through the controller (local network, no account)
-- Razer Chroma keyboards and other lights through Razer Synapse (local, switched on in Settings)
-- Gradients, rainbow, import and export for painted LEDs, and Govee segment detection
-- Spectrum bars, ripples and reactive keys
-- An installer with terms, runtimes included, and uninstall from Windows
-- Terms of Use, Privacy and third-party notices inside the app
-- Tray icon, keep running in the tray, and start minimised
-- AI assist: learns your temperatures and noise preference to suggest a curve you approve
-- Continuous integration builds, and a release workflow
-- Paint for several devices at once, and a paint library
-- More effects: fire, rain, and an effect per key group on keyboards
-
-## In progress
-
-- Checking Govee segments, per-key keyboard layout and HDR screen colours on more hardware
-- Verifying Logitech lighting on more keyboards and mice
-- Verifying game detection and GPU fan control on real hardware, then taking them out of Experimental
+- Philips Hue, Nanoleaf and Razer Chroma: written and unit-tested, but not yet tried on real devices
+- AI assist: needs a few days of real use to see that its suggested curves are sensible
+- Game detection and GPU fan control: working on the test PC, to be tried on other graphics cards before they leave Experimental
+- Per-key keyboard layouts and Govee segments on more keyboards and lamps
+- A clean install on a PC that never had Ember
 
 ## Next
 
-- Hardware checks of everything under "In progress" and in docs/TESTING.md
+- Move out of beta: a first stable release once the hardware checks above are done
+- Nanoleaf panels placed on the Lights canvas where they really are, not in one row
+- Razer devices: only show the ones that are plugged in, once Synapse offers a way to tell
+
+## Later (ideas, no promise)
+
+- Share and import fan curves and lighting scenes as files
+- More fan sources, such as other fan controllers, if their makers publish a way to talk to them
+- A compact dashboard window for a second monitor
 
 ## Works through OpenRGB
 
-Corsair, Razer, ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up in Ember when OpenRGB supports them and their own software (iCUE, Synapse, Armoury Crate) is closed. They need no extra code in Ember.
+Corsair, ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up in Ember when OpenRGB supports them and their own software (iCUE, Armoury Crate and so on) is closed. They need no extra code in Ember.
 
 ## Not planned
 
 - Overclocking or voltage control
 - Cloud accounts or telemetry
+- Code signing: Ember is released unsigned, so Windows shows "Unknown publisher"
+
+## Done
+
+### Monitoring and fans
+
+- Live sensor dashboard with history
+- Fan modes: Super quiet, Quiet, Normal, Performance, Extreme, and Manual curves with an editor
+- Safety rules, header testing, conflict detection, watchdog service, stall recovery for fans that stop at low speed
+- AI assist: learns your temperatures and noise preference to suggest a curve you approve
+- Experimental game detection and GPU fan control, made to suit a graphics card
+
+### Lighting
+
+- Lighting through OpenRGB and Govee (LAN and cloud), layered effects, scenes, screen sync, music-reactive effects
+- Logitech G keyboards and mice through G HUB, per key
+- Philips Hue lights through the bridge, Nanoleaf light panels through the controller, Razer Chroma through Synapse
+- Per-LED painting, gradients, rainbow, import and export, a paint library, and paint for several devices at once
+- Effects: spectrum bars, ripples, reactive keys, key highlight, fire, rain, and an effect per key group
+- Own lighting for one device, switching a device off, and arranging devices on the canvas
+- Govee segments and segment detection, and Govee over a VPN
+
+### The app
+
+- Themes: dark, OLED black, light and match Windows, with colour schemes, accent colours and highlight strength
+- Tray icon, keep running in the tray, and start minimised
+- Update checker with Stable and Beta channels, and Update now with a checksum
+- Changelog, roadmap, terms, privacy and third-party notices inside the app
+
+### The project
+
+- An installer with terms, runtimes included, upgrade and uninstall from Windows
+- Continuous integration builds and a release workflow
+- The repository is public, with a safety audit and cleaned history

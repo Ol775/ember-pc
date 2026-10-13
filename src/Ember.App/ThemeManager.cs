@@ -13,6 +13,7 @@ namespace Ember.App;
 public static class ThemeManager
 {
     public static bool IsDark { get; private set; } = true;
+    static Look _look = new(true);
     public static event Action? Changed;
 
     public static Brush Good => Frozen(IsDark ? "#5fd38d" : "#1c7f45");
@@ -28,8 +29,9 @@ public static class ThemeManager
     public static void Apply(AppPreferences prefs)
     {
         IsDark = prefs.Theme switch { ThemeMode.Light => false, ThemeMode.System => !SystemIsLight(), _ => true };
+        _look = new Look(IsDark, prefs.Accent, prefs.Theme == ThemeMode.Oled, prefs.Tone, prefs.Highlight, prefs.CustomAccent);
         var resources = Application.Current.Resources;
-        foreach (var (key, hex) in ThemePalette.For(IsDark, prefs.Accent))
+        foreach (var (key, hex) in ThemePalette.For(_look))
         {
             var color = (Color)ColorConverter.ConvertFromString(hex);
             if (resources[key] is SolidColorBrush { IsFrozen: false } brush) brush.Color = color;
@@ -48,7 +50,7 @@ public static class ThemeManager
         {
             var hwnd = new System.Windows.Interop.WindowInteropHelper(window).Handle;
             if (hwnd == IntPtr.Zero) return;
-            var p = ThemePalette.For(IsDark, AccentChoice.Orange);
+            var p = ThemePalette.For(_look);
             int on = IsDark ? 1 : 0, caption = Colorref(p["SidebarBrush"]), border = Colorref(p["PanelBorderBrush"]), text = Colorref(p["TextBrush"]);
             DwmSetWindowAttribute(hwnd, 20, ref on, sizeof(int));       // dark title bar (Windows 10 2004 and later)
             DwmSetWindowAttribute(hwnd, 34, ref border, sizeof(int));   // frame colour (Windows 11)

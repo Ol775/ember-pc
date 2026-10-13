@@ -94,10 +94,11 @@ public partial class MainWindow : Window
         OnSettingsSection(SetGeneral, new RoutedEventArgs());
         _updates = new UpdateChecker(_http);
         _installer = new UpdateInstaller(_http);
-        BuildAccentRow();
+        BuildAppearance();
         DocView.FillFolding(ChangelogHost, DocView.ReadEmbedded("CHANGELOG.md"));
-        DocView.Fill(RoadmapHost, DocView.ReadEmbedded("ROADMAP.md"));
+        DocView.FillFolding(RoadmapHost, DocView.ReadEmbedded("ROADMAP.md"), (_, title) => title != "Done", DocView.CountItems);
         BuildLegal();
+        BuildAbout();
         ApplyAppearance();
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, _) => { if (_vm.Prefs.Theme == ThemeMode.System) Dispatcher.InvokeAsync(ApplyAppearance); };
         if (_vm.Prefs.AutoCheckUpdates) _ = Task.Delay(8000).ContinueWith(_ => Dispatcher.InvokeAsync(() => CheckForUpdatesAsync(announce: false)));
@@ -128,29 +129,6 @@ public partial class MainWindow : Window
         else Application.Current.Shutdown();
     }
 
-    /// <summary>Settings, Legal: the terms, the privacy notice, the third-party notices and the licence, all kept inside the app.</summary>
-    void BuildLegal()
-    {
-        var docs = new (string Label, string Resource, bool Plain)[]
-        {
-            ("Terms of use", "TERMS.md", false), ("Privacy", "PRIVACY.md", false),
-            ("Third-party notices", "THIRD-PARTY.md", false), ("Licence", "LICENSE.txt", true),
-        };
-        var body = new StackPanel { Margin = new Thickness(0, 8, 0, 0) };
-        void Show(int i)
-        {
-            var (_, resource, plain) = docs[i];
-            var text = DocView.ReadEmbedded(resource);
-            if (!plain) { DocView.Fill(body, text); return; }
-            body.Children.Clear();
-            var t = new TextBlock { Text = text ?? "Nothing to show.", TextWrapping = TextWrapping.Wrap };
-            t.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
-            body.Children.Add(t);
-        }
-        LegalHost.Children.Add(LightsUi.Segments(docs.Select(d => d.Label).ToList(), 0, Show, "LegalDoc"));
-        LegalHost.Children.Add(body);
-        Show(0);
-    }
 
     protected override void OnSourceInitialized(EventArgs e)
     {
@@ -165,34 +143,6 @@ public partial class MainWindow : Window
     ReleaseInfo? _found;
     readonly UpdateInstaller _installer;
 
-    void ApplyAppearance()
-    {
-        ThemeManager.Apply(_vm.Prefs);
-        ThemeManager.ApplyChrome(this);
-        foreach (var r in AccentRow.Children.OfType<System.Windows.Controls.RadioButton>())
-            r.IsChecked = r.Tag is string t && Enum.TryParse<AccentChoice>(t, out var a) && a == _vm.Prefs.Accent;
-    }
-
-    void BuildAccentRow()
-    {
-        foreach (var accent in Enum.GetValues<AccentChoice>())
-        {
-            var swatch = new System.Windows.Controls.RadioButton
-            {
-                GroupName = "Accent", Tag = accent.ToString(), Style = (Style)FindResource("Swatch"),
-                Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(ThemePalette.For(true, accent)["AccentBrush"])),
-            };
-            System.Windows.Automation.AutomationProperties.SetName(swatch, accent + " accent");
-            swatch.Click += (_, _) => Remember(_vm.Prefs with { Accent = accent });
-            AccentRow.Children.Add(swatch);
-        }
-    }
-
-    void OnThemePicked(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { Tag: string t } && Enum.TryParse<ThemeMode>(t, out var mode))
-            Remember(_vm.Prefs with { Theme = mode });
-    }
 
     void OnChannelPicked(object sender, RoutedEventArgs e)
     {
@@ -208,14 +158,41 @@ public partial class MainWindow : Window
     async Task CheckForUpdatesAsync(bool announce)
     {
         UpdateNote.Text = "Checking...";
-        OpenReleaseButton.Visibility = UpdateNowButton.Visibility = Visibility.Collapsed;
+        UpdateDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "MutedBrush");
+        UpdateBanner.Visibility = Visibility.Collapsed;
         var result = await _updates.CheckAsync(AppInfo.Version, _vm.Prefs.Channel);
         _releaseUrl = result.Release?.Url;
         _found = result.Release;
-        UpdateNowButton.Visibility = result.Release is { InstallerUrl: not null, HashUrl: not null } ? Visibility.Visible : Visibility.Collapsed;
         UpdateNote.Text = result.Message;
-        OpenReleaseButton.Visibility = _releaseUrl is null ? Visibility.Collapsed : Visibility.Visible;
+        switch (result.Status)
+        {
+            case UpdateStatus.UpToDate: UpdateDot.Fill = ThemeManager.Good; break;
+            case UpdateStatus.Available: UpdateDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "AccentBrush"); break;
+            default: UpdateDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "MutedBrush"); break;
+        }
+        if (result.Release is { } r)
+        {
+            UpdateBanner.Visibility = Visibility.Visible;
+            UpdateBannerTitle.Text = $"Ember {r.Version}" + (r.Prerelease ? " (pre-release)" : "") + " is ready";
+            var notes = ReleaseNotesPreview(r.Notes);
+            UpdateNotes.Text = notes;
+            UpdateNotes.Visibility = notes.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+            UpdateNowButton.Visibility = r is { InstallerUrl: not null, HashUrl: not null } ? Visibility.Visible : Visibility.Collapsed;
+            OpenReleaseButton.Visibility = Visibility.Visible;
+        }
         if (announce) Announce(UpdateNote);
+    }
+
+    /// <summary>The release notes as plain lines: headings and bold marks dropped, bullets kept.</summary>
+    static string ReleaseNotesPreview(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return "";
+        var lines = notes.Replace("\r", "").Split('\n')
+            .Select(l => l.Trim().Replace("**", "").Replace("`", ""))
+            .Where(l => l.Length > 0 && !l.StartsWith('#'))
+            .Select(l => l.StartsWith("- ") ? "• " + l[2..] : l)
+            .Take(6);
+        return string.Join("\n", lines);
     }
 
     async void OnUpdateNow(object sender, RoutedEventArgs e)
@@ -592,7 +569,7 @@ public partial class MainWindow : Window
 
     void Remember(AppPreferences prefs)
     {
-        var look = prefs.Theme != _vm.Prefs.Theme || prefs.Accent != _vm.Prefs.Accent;
+        var look = prefs.Theme != _vm.Prefs.Theme || prefs.Accent != _vm.Prefs.Accent || prefs.Tone != _vm.Prefs.Tone || prefs.Highlight != _vm.Prefs.Highlight || prefs.CustomAccent != _vm.Prefs.CustomAccent;
         SettingsNote.Text = _vm.Update(prefs) ? "" : "Could not save this setting; it applies until you close Ember.";
         if (look) ApplyAppearance();
         Announce(SettingsNote);
