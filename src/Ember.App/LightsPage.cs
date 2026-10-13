@@ -41,7 +41,10 @@ public sealed class LightsPage : UserControl
     LightingManager? _m;
     LightingState? _rendered;
     string? _selectedLayer, _selectedDevice;
-    bool _paintMode;
+    bool _paintMode, _fillAll;
+    readonly PaintLibrary _library = new(PaintLibrary.DefaultFolder);
+    readonly StackPanel _libraryList = new();
+    string _libraryName = "";
     LColor _paintColour = new(1.0, 0.45, 0.1), _paintEnd = new(0.2, 0.3, 1.0);
     double _paintAngle;
     bool _updating;
@@ -112,15 +115,28 @@ public sealed class LightsPage : UserControl
         fills.Children.Add(new Border { Width = 12 });
         canvasBox.Children.Add(fills);
         canvasBox.Children.Add(Labelled("Gradient direction", 0, 360, _paintAngle, v => $"{v:0}°", v => _paintAngle = v, 5));
+        canvasBox.Children.Add(Text("Fills and the library apply to", muted: true));
+        canvasBox.Children.Add(Segments(["The selected device", "Every device on the canvas"], _fillAll ? 1 : 0, i => _fillAll = i == 1, "FillTarget"));
         var fillRow = new WrapPanel { Margin = new Thickness(0, 4, 0, 0) };
-        fillRow.Children.Add(Pill("Fill with colour", () => FillSelected((n, cols) => PaintTools.Fill(n, _paintColour))));
-        fillRow.Children.Add(Pill("Fill with gradient", () => FillSelected((n, cols) => PaintTools.Gradient(n, cols, _paintColour, _paintEnd, _paintAngle))));
-        fillRow.Children.Add(Pill("Fill with rainbow", () => FillSelected((n, cols) => PaintTools.Rainbow(n, cols, _paintAngle))));
+        fillRow.Children.Add(Pill("Fill with colour", () => Fill((n, cols) => PaintTools.Fill(n, _paintColour), null)));
+        fillRow.Children.Add(Pill("Fill with gradient", () => Fill((n, cols) => PaintTools.Gradient(n, cols, _paintColour, _paintEnd, _paintAngle), (p, c) => CanvasPaint.Gradient(p, c.Counts, c.Columns, _paintColour, _paintEnd, _paintAngle))));
+        fillRow.Children.Add(Pill("Fill with rainbow", () => Fill((n, cols) => PaintTools.Rainbow(n, cols, _paintAngle), (p, c) => CanvasPaint.Rainbow(p, c.Counts, c.Columns, _paintAngle))));
         fillRow.Children.Add(Pill("Flip left to right", MirrorSelected));
         fillRow.Children.Add(Pill("Export paint…", ExportPaint));
         fillRow.Children.Add(Pill("Import paint…", ImportPaint));
         canvasBox.Children.Add(fillRow);
         canvasBox.Children.Add(Text("A gradient runs from the paint colour to the gradient end colour in the direction above (0° is left to right, 90° is top to bottom). Exported paint is a small JSON file you can share or keep; importing fits it to the LEDs of the selected device.", muted: true, size: 12));
+        canvasBox.Children.Add(Text("Paint library", weight: FontWeights.SemiBold));
+        var libRow = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
+        var libName = new TextBox { Text = _libraryName, Style = Sty("TextField"), Width = 200, MaxLength = PaintLibrary.MaxNameLength, Margin = new Thickness(0, 0, 8, 4) };
+        AutomationProperties.SetName(libName, "Paint library name");
+        libName.TextChanged += (_, _) => _libraryName = libName.Text;
+        libRow.Children.Add(libName);
+        libRow.Children.Add(Pill("Save the selected device paint", () => LibrarySave()));
+        canvasBox.Children.Add(libRow);
+        canvasBox.Children.Add(_libraryList);
+        canvasBox.Children.Add(Text("Saved pictures stay on this PC in your Ember folder, and can be used on any device: they are fitted to its number of LEDs. Copy the files in that folder to share them.", muted: true, size: 12));
+        RebuildLibrary();
         _root.Children.Add(Panel("Canvas", canvasBox));
 
         var layerBox = new StackPanel();
@@ -458,6 +474,94 @@ public sealed class LightsPage : UserControl
         UpdatePreview();
     }
 
+    // ---- several devices and the library ----
+
+    /// <summary>The devices a fill reaches: the placed, enabled ones when "every device" is on, otherwise the selected one.</summary>
+    List<string> FillTargets()
+    {
+        if (!_fillAll) return _selectedDevice is { } id && _visuals.ContainsKey(id) ? [id] : [];
+        var placed = _m!.State.Current.Placements.Where(p => p.Enabled).Select(p => p.DeviceId);
+        return placed.Where(_visuals.ContainsKey).ToList();
+    }
+
+    void SetPaintMany(IReadOnlyDictionary<string, IReadOnlyList<string?>?> paints)
+    {
+        foreach (var (id, paint) in paints)
+            if (_visuals.TryGetValue(id, out var v)) v.Paint = paint is null || paint.All(x => x is null) ? null : paint;
+        _m!.EditScene(sc => sc with
+        {
+            Placements = sc.Placements.Select(p => paints.ContainsKey(p.DeviceId) && _visuals.TryGetValue(p.DeviceId, out var v) ? p with { Paint = v.Paint } : p).ToList(),
+        });
+        _rendered = _m.State;
+        UpdatePreview();
+    }
+
+    /// <summary>Gradients and rainbows run across the whole canvas when "every device" is on, so devices side by side share one picture.</summary>
+    void Fill(Func<int, int, IReadOnlyList<string?>> single, Func<IReadOnlyList<DevicePlacement>, (Dictionary<string, int> Counts, Dictionary<string, int> Columns), Dictionary<string, IReadOnlyList<string?>>>? acrossCanvas)
+    {
+        var targets = FillTargets();
+        if (targets.Count == 0) { SetNote(_fillAll ? "No devices are on the canvas yet." : "Select a device on the canvas first."); return; }
+        SetNote("");
+        var paints = new Dictionary<string, IReadOnlyList<string?>?>();
+        if (_fillAll && acrossCanvas is not null)
+        {
+            var counts = targets.ToDictionary(t => t, t => _visuals[t].RealCount);
+            var columns = targets.ToDictionary(t => t, t => _visuals[t].Columns);
+            var placements = _m!.State.Current.Placements.Where(p => targets.Contains(p.DeviceId)).ToList();
+            foreach (var (id, paint) in acrossCanvas(placements, (counts, columns))) paints[id] = paint;
+        }
+        else foreach (var id in targets) paints[id] = single(_visuals[id].RealCount, _visuals[id].Columns);
+        SetPaintMany(paints);
+    }
+
+    void LibrarySave()
+    {
+        if (!Selected(out _, out var v)) return;
+        if (v.Paint is null) { SetNote("Nothing is painted on the selected device yet, so there is nothing to save."); return; }
+        if (PaintLibrary.Clean(_libraryName) is not { } name) { SetNote("Type a name for the picture first."); return; }
+        SetNote(_library.Save(name, PaintTools.Resample(v.Paint, v.RealCount), v.Columns) ? "Saved " + name + " to the library." : "Could not save it: the library may be full or the folder is not writable.");
+        RebuildLibrary();
+    }
+
+    void LibraryUse(string name, bool everyDevice)
+    {
+        var paint = _library.Load(name);
+        if (paint is null) { SetNote("Could not read " + name + ": the file is missing or damaged."); RebuildLibrary(); return; }
+        var targets = everyDevice ? _m!.State.Current.Placements.Where(p => p.Enabled).Select(p => p.DeviceId).Where(_visuals.ContainsKey).ToList()
+            : _selectedDevice is { } id && _visuals.ContainsKey(id) ? [id] : [];
+        if (targets.Count == 0) { SetNote(everyDevice ? "No devices are on the canvas yet." : "Select a device on the canvas first."); return; }
+        SetNote("Applied " + name + " to " + targets.Count + " device" + (targets.Count == 1 ? "" : "s") + ", fitted to each one.");
+        SetPaintMany(targets.ToDictionary(t => t, t => (IReadOnlyList<string?>?)PaintTools.Resample(paint, _visuals[t].RealCount)));
+    }
+
+    void RebuildLibrary()
+    {
+        _libraryList.Children.Clear();
+        var entries = _library.List();
+        if (entries.Count == 0) { _libraryList.Children.Add(Text("No saved pictures yet.", muted: true, size: 12)); return; }
+        foreach (var entry in entries)
+        {
+            var e = entry;
+            var row = new Grid { Margin = new Thickness(0, 4, 0, 0) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.Children.Add(Text($"{e.Name}  ·  {e.Leds} LED{(e.Leds == 1 ? "" : "s")}", size: 13));
+            var actions = new StackPanel { Orientation = Orientation.Horizontal };
+            actions.Children.Add(Pill("Use on selected", () => LibraryUse(e.Name, false), "Use " + e.Name + " on the selected device"));
+            actions.Children.Add(Pill("Use on all", () => LibraryUse(e.Name, true), "Use " + e.Name + " on every device"));
+            actions.Children.Add(Pill("Rename", () =>
+            {
+                if (PaintLibrary.Clean(_libraryName) is not { } to) { SetNote("Type the new name in the name box first."); return; }
+                SetNote(_library.Rename(e.Name, to) ? "Renamed " + e.Name + " to " + to + "." : "Could not rename it: that name is already used.");
+                RebuildLibrary();
+            }, "Rename " + e.Name + " to the name in the box"));
+            actions.Children.Add(Pill("Delete", () => { SetNote(_library.Delete(e.Name) ? "Deleted " + e.Name + "." : "Could not delete " + e.Name + "."); RebuildLibrary(); }, "Delete " + e.Name));
+            Grid.SetColumn(actions, 1);
+            row.Children.Add(actions);
+            _libraryList.Children.Add(row);
+        }
+    }
+
     // ---- paint tools ----
 
     bool Selected(out string id, out DeviceVisual v)
@@ -476,19 +580,12 @@ public sealed class LightsPage : UserControl
         UpdatePreview();
     }
 
-    void FillSelected(Func<int, int, IReadOnlyList<string?>> make)
-    {
-        if (!Selected(out var id, out var v)) return;
-        SetNote("");
-        SetPaint(id, v, make(v.RealCount, v.Columns));
-    }
-
     void MirrorSelected()
     {
-        if (!Selected(out var id, out var v)) return;
-        if (v.Paint is null) { SetNote("Nothing is painted on this device yet."); return; }
+        var targets = FillTargets().Where(t => _visuals[t].Paint is not null).ToList();
+        if (targets.Count == 0) { SetNote("Nothing is painted yet on " + (_fillAll ? "any device." : "this device.")); return; }
         SetNote("");
-        SetPaint(id, v, PaintTools.Mirror(PaintTools.Resample(v.Paint, v.RealCount), v.Columns));
+        SetPaintMany(targets.ToDictionary(t => t, t => (IReadOnlyList<string?>?)PaintTools.Mirror(PaintTools.Resample(_visuals[t].Paint!, _visuals[t].RealCount), _visuals[t].Columns)));
     }
 
     void ExportPaint()

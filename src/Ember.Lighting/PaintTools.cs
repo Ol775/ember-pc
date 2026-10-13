@@ -53,6 +53,9 @@ public static class PaintTools
         return ((index + 0.5) / count, 0.5);
     }
 
+    /// <summary>One colour of the rainbow, from red at 0 to violet at 1.</summary>
+    public static Color RainbowAt(double t) => FromHue(Math.Clamp(t, 0, 1) * 300);
+
     static Color FromHue(double degrees)
     {
         var h = (degrees % 360 + 360) % 360 / 60;

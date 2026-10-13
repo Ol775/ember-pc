@@ -51,6 +51,10 @@ reach the tray): the menu, double-click to open, and Quit.
 
 ## Several devices and shared paint files
 
+Unit-tested (fills across the canvas, the library folder, name safety). The buttons on the Lights page were not reached by
+UI automation, so they still need a person to click them.
+
+
 - [ ] Painting a picture and applying it to several devices at once resamples sensibly on each.
 - [ ] Saving a paint to the library, closing Ember and loading it back gives the same picture.
 - [ ] Deleting and renaming library entries works, and a damaged file in the library folder is ignored.
