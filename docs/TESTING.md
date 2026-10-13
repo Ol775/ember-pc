@@ -49,7 +49,7 @@ reach the tray): the menu, double-click to open, and Quit.
 - [x] Settings, Updates: Check now reads the public releases and, on the Beta channel, says "You have the latest version" when running beta.5 (2026-10-13).
 - [x] With an older Ember installed (checked with beta.6 on the PC), the check on the Beta channel offers beta.7 and links to its release page.
 - [x] Update now (checked beta.7 to beta.8 on the PC): downloads the installer, checks it, closes Ember and opens the upgrade wizard; after accepting the terms Ember is beta.8, the services run and the fans read.
-- [x] Update now without the wizard (checked on the PC by running the beta.9 installer the way the app starts it, with the terms already accepted): about 11 seconds, no window, Ember reopened by itself as beta.9 with both services running. When the terms changed since you accepted them it should show the wizard instead (not tried).
+- [x] Update now without the wizard (checked on the PC with the button, beta.9 to beta.10): about 16 seconds, no window, Ember reopened by itself as beta.10 with both services running. When the terms changed since you accepted them it should show the wizard instead (not tried).
 
 ## Continuous integration
 
