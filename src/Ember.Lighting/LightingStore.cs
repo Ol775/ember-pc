@@ -26,7 +26,7 @@ public sealed record LightingState(
     {
         if (s.Scenes is not { Count: > 0 and <= MaxScenes } scenes || s.CurrentScene is null) return false;
         if (scenes.Select(x => x?.Name).Distinct().Count() != scenes.Count) return false;
-        if (s.DisabledDevices is { } off && (off.Count > 200 || off.Any(d => string.IsNullOrEmpty(d) || d.Length > 80))) return false;
+        if (s.DisabledDevices is { } off && (off.Count > 200 || off.Any(d => string.IsNullOrEmpty(d) || d.Length > 400))) return false;
         if (s.Segments is { } seg && (seg.Count > 100 || seg.Any(kv => kv.Key.Length is 0 or > 80 || kv.Value is < 1 or > GoveeRazerLimit))) return false;
         return scenes.All(Valid);
     }

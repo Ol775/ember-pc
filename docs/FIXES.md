@@ -22,3 +22,6 @@ Problems found while testing on real hardware, to fix. Move an item to the chang
       for every Logitech device") gives the old one-colour behaviour for all Logitech devices instead. Windows Dynamic Lighting
       would address them separately, but it only lets the foreground app (or a chosen background app) control them, which does
       not suit a tray app.
+- [x] **Devices page "Use" switch did nothing for the motherboard and NZXT.** Their OpenRGB ids are about 115 characters (they contain
+      the Windows device path) and the saved list only accepted ids up to 80, so the change was silently rejected. The limit is now 400.
+      Found 2026-10-13 and confirmed on the PC (NZXT shows Disabled and is left alone).

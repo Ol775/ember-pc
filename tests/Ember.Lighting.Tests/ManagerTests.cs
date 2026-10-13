@@ -227,3 +227,23 @@ public class ManagerTests : IDisposable
         Assert.True(m.WantsScreen);
     }
 }
+
+public class LongDeviceIdTests
+{
+    [Fact]
+    public void An_openrgb_device_with_a_long_windows_path_id_can_be_disabled_and_saved()
+    {
+        var id = @"openrgb:NZXT Smart Device V2|HID:\?\HID#VID_1E71&PID_200F#8&21d8e76&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}";
+        Assert.True(id.Length > 80);
+        var state = LightingState.Default with { DisabledDevices = [id] };
+        Assert.True(LightingState.IsValid(state));
+        var dir = Path.Combine(Path.GetTempPath(), "ember-long-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var store = new LightingStore(Path.Combine(dir, "l.json"));
+            Assert.True(store.TrySave(state));
+            Assert.Equal([id], store.Load().DisabledDevices);
+        }
+        finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
+    }
+}
