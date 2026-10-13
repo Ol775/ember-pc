@@ -8,7 +8,7 @@ mode to Performance.
 
 ## Carried over from "in progress"
 
-- [ ] **Govee segments**: detection finds the right segment count on a segmented lamp, per-segment colours land on the
+- [x] **Govee segments** (H6056: detected 12, a 12-colour rainbow showed in order on the bars, seen by the owner 2026-10-13): detection finds the right segment count on a segmented lamp, per-segment colours land on the
       right segments, and gradients run in the right direction. Seen: _
 - [ ] **Per-key keyboard layout**: reactive keys, ripples and per-key painting line up with the real keys on the
       Logitech keyboard (and on a keyboard from another brand through OpenRGB). Seen: _
