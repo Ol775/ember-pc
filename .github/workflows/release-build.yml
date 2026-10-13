@@ -1,0 +1,39 @@
+name: Release build
+
+# Builds the portable zip and the installer and keeps them as a workflow artifact. It does not create a GitHub release:
+# publishing stays a manual step. Add the repository secrets below to sign the programs and the installer.
+#   EMBER_SIGN_PFX       the code-signing certificate (.pfx file) as base64 text
+#   EMBER_SIGN_PASSWORD  its password
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Test first
+        run: dotnet test Ember.sln -c Release --nologo
+      - name: Build the zip and the installer
+        shell: pwsh
+        env:
+          EMBER_SIGN_PFX: ${{ secrets.EMBER_SIGN_PFX }}
+          EMBER_SIGN_PASSWORD: ${{ secrets.EMBER_SIGN_PASSWORD }}
+        run: ./scripts/build-release.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ember-release
+          path: |
+            dist/Ember-*.zip
+            dist/Ember-*.zip.sha256
+            dist/Ember-Setup-*.exe
+            dist/Ember-Setup-*.exe.sha256
+          if-no-files-found: error

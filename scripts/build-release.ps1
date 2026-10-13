@@ -29,6 +29,9 @@ try {
     foreach ($s in 'install-ember.ps1', 'uninstall-ember.ps1', 'install-service.ps1', 'install-watchdog.ps1', 'uninstall-service.ps1', 'uninstall-watchdog.ps1', 'install-pawnio.ps1') {
         Copy-Item (Join-Path $PSScriptRoot $s) $scripts
     }
+    # With a signing certificate in the environment (see sign-files.ps1) Ember's own programs are signed before they are packed.
+    $own = Get-ChildItem $out -Recurse -Include 'Ember.App.exe', 'Ember.Service.exe', 'Ember.Watchdog.exe' | ForEach-Object FullName
+    & (Join-Path $PSScriptRoot 'sign-files.ps1') @own
     foreach ($doc in 'LICENSE', 'TERMS.md', 'PRIVACY.md', 'THIRD-PARTY.md', 'SECURITY.md', 'CHANGELOG.md', 'README.md') { Copy-Item (Join-Path $root $doc) $out }
 
     $zip = "$out.zip"
@@ -47,6 +50,7 @@ try {
         $setup = $setup.Replace('$Configuration', $Configuration)
         $setupOut = Join-Path $root "dist\Ember-Setup-$version.exe"
         Copy-Item $setup $setupOut -Force
+        & (Join-Path $PSScriptRoot 'sign-files.ps1') $setupOut
         $setupHash = (Get-FileHash $setupOut -Algorithm SHA256).Hash
         Set-Content -Path "$setupOut.sha256" -Value "$setupHash  $(Split-Path $setupOut -Leaf)" -Encoding ascii
         Write-Host ("Built {0} ({1:N1} MB)" -f $setupOut, ((Get-Item $setupOut).Length / 1MB))
