@@ -35,10 +35,16 @@ reach the tray): the menu, double-click to open, and Quit.
 - [ ] With "Keep running in the tray" off, closing the window closes the app as before.
 - [ ] The tray icon looks right on a light and a dark taskbar, and at 125% and 150% scaling.
 
+## Updates
+
+- [x] Settings, Updates: Check now reads the public releases and, on the Beta channel, says "You have the latest version" when running beta.5 (2026-10-13).
+- [ ] With an older Ember installed (for example beta.4), Check now on the Beta channel offers beta.5 and links to its release page.
+
 ## Continuous integration and signing
 
 - [x] A push to GitHub runs the build workflow and it goes green (seen 2026-10-13, run 38393319698).
-- [ ] The workflow artifact (installer and zip) installs on a clean PC. (The Release build workflow itself ran green and produced them, run 38393640897.)
+- [x] The released installer upgrades an existing install silently (beta.5 over a dev build, 2026-10-13: services running, fans on Super quiet, settings kept).
+- [ ] The released installer on a clean PC (never had Ember). (The Release build workflow itself ran green and produced them, run 38393640897.)
 - [ ] After a signing certificate is added to the repository secrets: the installer shows the publisher name in the
       Windows prompt instead of "Unknown publisher", and `signtool verify /pa` passes.
 
