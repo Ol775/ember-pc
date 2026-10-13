@@ -27,8 +27,11 @@
 - **Lighting.** Drives PC devices through **OpenRGB** (bundled with the app) and **Govee** lamps over your LAN, or through the Govee cloud with your own API key.
 - **Logitech G keyboards and mice.** Lit through G HUB's own lighting engine (Ember loads it from your G HUB install; nothing from Logitech is bundled). Needs G HUB running, with "Allow games and applications to control lighting" switched on for the device.
 - **Light profile per device.** Any device, such as your keyboard, can show a different saved scene from the rest.
+- **Music-reactive lights.** Pulse to the bass or spread the spectrum across your devices; Ember listens to what the PC is playing, only while the effect is on.
+- **Paint single LEDs** and give any device its own colours; keyboards and other grid devices are drawn and lit as grids.
+- **Corsair, Razer and more.** Anything OpenRGB supports appears in Ember (close the maker's own software first).
 - **Layered effects.** Stack effects with blend modes and save them as scenes.
-- **Screen sync.** Lights follow the colours on your screen.
+- **Screen sync.** Lights follow the colours on your screen, read straight from the graphics card (DXGI) and including HDR desktops.
 - **Themes and accent colours.** Dark, light or match Windows, with five accent colours, chosen in Settings.
 - **Update checks.** On request (or at start-up if you turn it on), Ember asks GitHub whether a newer release exists on your channel (Stable or Beta). It never downloads or installs anything by itself.
 - **Experimental features.** Game detection (switches to a game mode) and GPU fan control sit behind an Experimental switch in Settings, off by default.

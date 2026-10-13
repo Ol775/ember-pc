@@ -101,6 +101,12 @@ public sealed class GoveeLanClient
     public Task SetColorAsync(IPAddress ip, byte r, byte g, byte b, CancellationToken ct = default) =>
         Send(ip, "{\"msg\":{\"cmd\":\"colorwc\",\"data\":{\"color\":{\"r\":" + r + ",\"g\":" + g + ",\"b\":" + b + "},\"colorTemInKelvin\":0}}}", ct);
 
+    public Task SetSegmentsModeAsync(IPAddress ip, bool on, CancellationToken ct = default) =>
+        Send(ip, GoveeRazer.Message(on ? GoveeRazer.Enable : GoveeRazer.Disable), ct);
+
+    public Task SendSegmentsAsync(IPAddress ip, IReadOnlyList<Color> segments, CancellationToken ct = default) =>
+        Send(ip, GoveeRazer.Message(GoveeRazer.Frame(segments)), ct);
+
     async Task Send(IPAddress ip, string json, CancellationToken ct)
     {
         using var udp = new UdpClient(AddressFamily.InterNetwork);
@@ -109,19 +115,37 @@ public sealed class GoveeLanClient
 }
 
 /// <summary>A lamp on the local network. It shows one colour: the average of the picture under it.</summary>
-public sealed class GoveeLanSink(GoveeLanClient client, GoveeLanDevice device) : IDeviceSink
+public sealed class GoveeLanSink(GoveeLanClient client, GoveeLanDevice device, Func<int>? segments = null) : IDeviceSink
 {
     bool? _on;
+    bool _razer;
+
+    /// <summary>1 treats the lamp as one colour; more asks it for that many segments (lamps that support per-segment control).</summary>
+    int Segments => Math.Clamp(segments?.Invoke() ?? 1, 1, GoveeRazer.MaxSegments);
 
     public string Id => "govee:" + device.Id;
     public string Name => "Govee " + device.Sku;
     public string Kind => "Light";
-    public int LedCount => 1;
-    public TimeSpan MinInterval => TimeSpan.FromMilliseconds(120);
-    public bool Keepalive => false;
+    public int LedCount => Segments;
+    public TimeSpan MinInterval => Segments > 1 ? TimeSpan.FromMilliseconds(60) : TimeSpan.FromMilliseconds(120);
+    public bool Keepalive => Segments > 1;
 
     public async Task SendAsync(IReadOnlyList<Color> leds, CancellationToken ct)
     {
+        if (Segments > 1)
+        {
+            if (leds.All(c => c.ToBytes() is (0, 0, 0)))
+            {
+                if (_razer) { await client.SetSegmentsModeAsync(device.Ip, false, ct).ConfigureAwait(false); _razer = false; }
+                if (_on != false) { await client.TurnAsync(device.Ip, false, ct).ConfigureAwait(false); _on = false; }
+                return;
+            }
+            if (_on != true) { await client.TurnAsync(device.Ip, true, ct).ConfigureAwait(false); _on = true; }
+            if (!_razer) { await client.SetSegmentsModeAsync(device.Ip, true, ct).ConfigureAwait(false); _razer = true; }
+            await client.SendSegmentsAsync(device.Ip, leds, ct).ConfigureAwait(false);
+            return;
+        }
+        if (_razer) { await client.SetSegmentsModeAsync(device.Ip, false, ct).ConfigureAwait(false); _razer = false; }
         var c = Compositor.Average(leds);
         var (r, g, b) = c.ToBytes();
         if (r == 0 && g == 0 && b == 0)

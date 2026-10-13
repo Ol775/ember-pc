@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     readonly GameDetection _detection = new([]);
     readonly DispatcherTimer _gameTimer, _screenTimer;
     readonly AudioCapture _audio;
+    readonly DxgiGrabber _dxgi = new();
     Ember.Lighting.Color[]? _screen;
     double? _gpuLoad, _cpuTemp, _gpuTemp, _caseTemp;
     string? _announcedConnection, _announcedBanner, _announcedCompetitor, _announcedTest;
@@ -35,7 +36,7 @@ public partial class MainWindow : Window
         LightingManager? lights = null;
         _lights = lights = new LightingManager(new LightingStore(LightingStore.DefaultPath), TimeProvider.System,
             [new OpenRgbSource(() => string.IsNullOrWhiteSpace(lights?.State.OpenRgbPath) ? BundledOpenRgb : lights!.State.OpenRgbPath, () => lights?.State.ShouldStartOpenRgb ?? true),
-             new GoveeSource(new GoveeLanClient(), GoveeCloud),
+             new GoveeSource(new GoveeLanClient(), GoveeCloud, id => lights?.SegmentsOf(id) ?? 1),
              new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad())]);
         Lights.Attach(_lights);
         _lights.Start();
@@ -162,7 +163,10 @@ public partial class MainWindow : Window
             if (_lights.WantsAudio) { if (!_audio.Running) _audio.Start(); _audio.CheckSilence(); }
             else if (_audio.Running) _audio.Stop();
             if (!_lights.WantsScreen) { _screen = null; _lights.SetInputs(_cpuTemp, _gpuTemp, null); return; }
-            var zones = ScreenGrabber.Capture();
+            // The graphics card hands over the frame when it can (fast); otherwise the older, slower copy through Windows.
+            var zones = _dxgi.Capture() ?? ScreenGrabber.Capture();
+            var wanted = TimeSpan.FromMilliseconds(_dxgi.Active ? 40 : 100);
+            if (_screenTimer.Interval != wanted) _screenTimer.Interval = wanted;
             _screen = zones is null ? null : ScreenZones.Smooth(_screen, zones, 0.6);
             _lights.SetInputs(_cpuTemp, _gpuTemp, _screen);
         }
@@ -424,6 +428,7 @@ public partial class MainWindow : Window
         _gameTimer.Stop();
         _screenTimer.Stop();
         _audio.Dispose();
+        _dxgi.Dispose();
         _cts.Cancel();
         try { _lights.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3)); } catch (Exception) { /* closing anyway */ }
         // RunAsync returns on cancellation and never needs the UI thread, so a short wait cannot deadlock.

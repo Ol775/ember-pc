@@ -639,6 +639,20 @@ public sealed class LightsPage : UserControl
                 profile.ToolTip = names.Count == 0 ? "Save another scene first: a device can show any other scene as its own profile." : "Click to choose which scene this device shows: the current scene, or one of your other scenes.";
                 right.Children.Add(profile);
             }
+            if (info.Source == "Govee" && info.Realtime)
+            {
+                var steps = new[] { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20 };
+                var now = _m.SegmentsOf(info.Id);
+                var seg = Pill(now <= 1 ? "Segments: whole lamp" : $"Segments: {now}", () =>
+                {
+                    var next = steps[(Array.IndexOf(steps, now) + 1) % steps.Length];
+                    _m.SetSegments(info.Id, next);
+                    _m.RefreshDevices();
+                }, "Segments for " + info.Name);
+                seg.Margin = new Thickness(0, 4, 0, 0);
+                seg.ToolTip = "Experimental. For lamps that can light parts of themselves separately (light bars, strips): choose how many parts to drive. Whole lamp is one colour. If the lamp ignores it, set it back to whole lamp.";
+                right.Children.Add(seg);
+            }
             Grid.SetColumn(right, 1);
             row.Children.Add(text);
             row.Children.Add(right);

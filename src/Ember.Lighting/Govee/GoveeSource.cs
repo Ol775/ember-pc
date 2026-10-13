@@ -6,7 +6,7 @@ namespace Ember.Lighting.Govee;
 /// Finds Govee lamps: first on the local network, then (when an API key is saved) in the cloud, for the ones the network
 /// scan did not find. A lamp that is missed by one scan is kept for a minute, because Govee devices answer scans unreliably.
 /// </summary>
-public sealed class GoveeSource(GoveeLanClient lan, Func<GoveeCloudClient?> cloud) : IDeviceSource
+public sealed class GoveeSource(GoveeLanClient lan, Func<GoveeCloudClient?> cloud, Func<string, int>? segments = null) : IDeviceSource
 {
     static readonly TimeSpan KeepFor = TimeSpan.FromMinutes(1), ScanFor = TimeSpan.FromSeconds(1.5);
     readonly Dictionary<string, (GoveeLanDevice Device, DateTime Seen)> _known = new();
@@ -33,7 +33,7 @@ public sealed class GoveeSource(GoveeLanClient lan, Func<GoveeCloudClient?> clou
         var result = new List<IDeviceSink>();
         foreach (var (id, (device, _)) in _known)
         {
-            if (!_sinks.TryGetValue("govee:" + id, out var sink) || sink is not GoveeLanSink) _sinks["govee:" + id] = sink = new GoveeLanSink(lan, device);
+            if (!_sinks.TryGetValue("govee:" + id, out var sink) || sink is not GoveeLanSink) _sinks["govee:" + id] = sink = new GoveeLanSink(lan, device, () => segments?.Invoke("govee:" + id) ?? 1);
             result.Add(sink);
         }
 

@@ -126,6 +126,16 @@ public sealed class LightingManager : IAsyncDisposable
         return s with { Scenes = s.Scenes.Select(x => x.Name == current.Name ? changed : x).ToList() };
     });
 
+    /// <summary>How many segments a lamp is driven as (1 = one colour for the whole lamp).</summary>
+    public void SetSegments(string deviceId, int count) => Mutate(s =>
+    {
+        var map = (s.Segments ?? new Dictionary<string, int>()).ToDictionary(kv => kv.Key, kv => kv.Value);
+        if (count <= 1) map.Remove(deviceId); else map[deviceId] = Math.Min(count, 255);
+        return s with { Segments = map.Count == 0 ? null : map };
+    });
+
+    public int SegmentsOf(string deviceId) => State.Segments is { } m && m.TryGetValue(deviceId, out var n) ? n : 1;
+
     public void SetOpenRgb(string? path, bool? start) => Mutate(s => s with { OpenRgbPath = string.IsNullOrWhiteSpace(path) ? null : path.Trim(), StartOpenRgb = start });
 
     // Writing the file waits until the changes stop (a slider produces dozens a second) and is done once on shutdown.

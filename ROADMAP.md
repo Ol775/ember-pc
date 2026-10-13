@@ -13,9 +13,12 @@ What is done, what is being worked on and what is planned. See [CHANGELOG.md](CH
 - Update checker with Stable and Beta channels, release zip and an install and upgrade script
 - Experimental switch for game detection and GPU fan control
 - Changelog and roadmap inside the app
+- Faster screen capture through DXGI, and music-reactive effects
+- Per-LED painting, a per-key Logitech keyboard grid, and Govee segments (experimental)
 
 ## In progress
 
+- Checking Govee segments, per-key keyboard layout and HDR screen colours on more hardware
 - Verifying Logitech lighting on more keyboards and mice
 - Verifying game detection and GPU fan control on real hardware, then taking them out of Experimental
 
@@ -25,9 +28,12 @@ What is done, what is being worked on and what is planned. See [CHANGELOG.md](CH
 - AI mode: learns your temperatures and noise preference to suggest a curve you approve
 - Signed releases and a proper installer (MSI or similar)
 - Continuous integration builds
-- Faster screen capture (DXGI) and audio-reactive effects
-- Per-LED editing, Govee segments, per-key Logitech effects
-- Corsair, Razer and other brands, through OpenRGB where it supports them
+- Per-LED editing beyond single colours (gradients, import and export), Govee segment auto-detection
+- More effects: reactive keys, ripples, spectrum bars on grids
+
+## Works through OpenRGB
+
+Corsair, Razer, ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up in Ember when OpenRGB supports them and their own software (iCUE, Synapse, Armoury Crate) is closed. They need no extra code in Ember.
 
 ## Not planned
 
