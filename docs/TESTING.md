@@ -61,6 +61,14 @@ reach the tray): the menu, double-click to open, and Quit.
 - [ ] Black or the lights switched off turns the Hue lights off, and switching on brings them back.
 - [ ] Unlink forgets the bridge and its key; linking again works. A bridge whose address changes shows "could not reach" and recovers when its address is updated.
 
+## Nanoleaf (written and unit-tested against a pretend controller only)
+
+- [ ] Find controller lists the controller, or typing its address works.
+- [ ] Hold the controller power button 5 to 7 seconds, then Link: the note says linked, and one Nanoleaf device appears on the Lights and Devices pages.
+- [ ] Effects run across the panels from left to right; a colour fill lights them all.
+- [ ] Black or the lights switched off turns the panels off, and switching on brings them back.
+- [ ] Unlink forgets the controller; linking again works.
+
 ## Several devices and shared paint files
 
 Unit-tested (fills across the canvas, the library folder, name safety). The buttons on the Lights page were not reached by

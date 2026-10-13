@@ -8,6 +8,7 @@ using Ember.Core;
 using Ember.Lighting;
 using Ember.Lighting.Govee;
 using Ember.Lighting.Hue;
+using Ember.Lighting.Nanoleaf;
 using Ember.Lighting.OpenRgb;
 
 namespace Ember.App;
@@ -47,7 +48,8 @@ public partial class MainWindow : Window
             [new OpenRgbSource(() => string.IsNullOrWhiteSpace(lights?.State.OpenRgbPath) ? BundledOpenRgb : lights!.State.OpenRgbPath, () => lights?.State.ShouldStartOpenRgb ?? true),
              new GoveeSource(new GoveeLanClient(), GoveeCloud, id => lights?.SegmentsOf(id) ?? 1),
              new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad(), () => lights?.State.LogitechOneColour ?? false),
-             new Ember.Lighting.Hue.HueSource(HueConnection)]);
+             new Ember.Lighting.Hue.HueSource(HueConnection),
+             new Ember.Lighting.Nanoleaf.NanoleafSource(NanoleafConnection)]);
         Lights.Attach(_lights);
         _lights.Start();
 
@@ -86,6 +88,7 @@ public partial class MainWindow : Window
         TraySwitch.IsChecked = _vm.Prefs.KeepInTray;
         MinimisedSwitch.IsChecked = _vm.Prefs.StartMinimised;
         HueHost.Text = _hueStore.Load()?.Host ?? "";
+        NanoleafHost.Text = _nanoStore.Load()?.Host ?? "";
         OnSettingsSection(SetGeneral, new RoutedEventArgs());
         _updates = new UpdateChecker(_http);
         _installer = new UpdateInstaller(_http);
@@ -385,6 +388,68 @@ public partial class MainWindow : Window
         HueNote.Text = ok ? "Unlinked. Ember forgot the bridge and its key. (The bridge still lists Ember; remove it in the Hue app if you like.)" : "Could not remove everything.";
         _lights.RefreshDevices();
         Announce(HueNote);
+    }
+
+    // ---- Nanoleaf ----
+
+    readonly NanoleafSettingsStore _nanoStore = new(NanoleafSettingsStore.DefaultPath);
+    NanoleafClient? _nanoClient;
+    string? _nanoCacheKey;
+    readonly HttpClient _nanoHttp = new() { Timeout = TimeSpan.FromSeconds(4) };
+
+    /// <summary>The linked controller, or null while none is linked.</summary>
+    NanoleafClient? NanoleafConnection()
+    {
+        var settings = _nanoStore.Load();
+        var token = _secrets.Get(NanoleafSettings.KeyName);
+        if (settings is null || string.IsNullOrWhiteSpace(token)) { _nanoClient = null; _nanoCacheKey = null; return null; }
+        var cacheKey = settings.Host + "|" + token;
+        if (_nanoClient is null || _nanoCacheKey != cacheKey) { _nanoClient = new NanoleafClient(_nanoHttp, settings.Host, token); _nanoCacheKey = cacheKey; }
+        return _nanoClient;
+    }
+
+    async void OnNanoleafFind(object sender, RoutedEventArgs e)
+    {
+        NanoleafNote.Text = "Searching your network for Nanoleaf controllers…";
+        Announce(NanoleafNote);
+        try
+        {
+            var found = await NanoleafDiscovery.FindAsync(TimeSpan.FromSeconds(3));
+            if (found.Count == 0) NanoleafNote.Text = "None answered. Type the controller address (find it in the Nanoleaf app or your router) and try Link.";
+            else { NanoleafHost.Text = found[0]; NanoleafNote.Text = "Found " + string.Join(", ", found) + ". Hold the power button on the controller for 5 to 7 seconds, then press Link within 30 seconds."; }
+        }
+        catch (Exception ex) { NanoleafNote.Text = "The search failed (" + ex.Message + "). Type the controller address instead."; }
+        Announce(NanoleafNote);
+    }
+
+    async void OnNanoleafLink(object sender, RoutedEventArgs e)
+    {
+        var host = NanoleafHost.Text.Trim();
+        if (!NanoleafSettings.IsValidHost(host)) { NanoleafNote.Text = "Type the controller address first, for example 192.168.1.30."; Announce(NanoleafNote); return; }
+        NanoleafNote.Text = "Linking… (the controller must be in pairing mode)";
+        Announce(NanoleafNote);
+        try
+        {
+            var token = await NanoleafClient.PairAsync(_nanoHttp, host);
+            if (!_secrets.Set(NanoleafSettings.KeyName, token) || !_nanoStore.TrySave(new NanoleafSettings(host)))
+            {
+                NanoleafNote.Text = "Linked, but Windows would not store the token or the settings, so it was not kept.";
+                _secrets.Set(NanoleafSettings.KeyName, null);
+            }
+            else NanoleafNote.Text = "Linked to the controller at " + host + ". Its panels appear on the Lights page in a few seconds.";
+            _lights.RefreshDevices();
+        }
+        catch (NanoleafPairingException ex) { NanoleafNote.Text = ex.Message; }
+        catch (Exception ex) { NanoleafNote.Text = "Could not link: " + (ex is HttpRequestException or TaskCanceledException ? "no answer from " + host : ex.Message); }
+        Announce(NanoleafNote);
+    }
+
+    void OnNanoleafUnlink(object sender, RoutedEventArgs e)
+    {
+        var ok = _secrets.Set(NanoleafSettings.KeyName, null) & _nanoStore.TrySave(null);
+        NanoleafNote.Text = ok ? "Unlinked. Ember forgot the controller and its token." : "Could not remove everything.";
+        _lights.RefreshDevices();
+        Announce(NanoleafNote);
     }
 
     async void OnCurveCommitted(CurveGroup group, IReadOnlyList<CurvePoint> points)

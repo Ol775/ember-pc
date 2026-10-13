@@ -16,6 +16,7 @@ What is done, what is being worked on and what is planned. See [CHANGELOG.md](CH
 - Faster screen capture through DXGI, and music-reactive effects
 - Per-LED painting, a per-key Logitech keyboard grid, and Govee segments (experimental)
 - Philips Hue lights through the bridge (local network, no account)
+- Nanoleaf light panels through the controller (local network, no account)
 - Gradients, rainbow, import and export for painted LEDs, and Govee segment detection
 - Spectrum bars, ripples and reactive keys
 - An installer with terms, runtimes included, and uninstall from Windows

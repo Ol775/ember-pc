@@ -24,7 +24,7 @@
 - **Safety first.** At 90 °C every controlled fan goes to 100%, a lost sensor sends fans to 100%, and a separate **watchdog** service restores safe speeds if Ember stops responding.
 - **Header testing.** Nothing is written to a fan header until you have tested and enabled it yourself. Headers with no fan attached are hidden.
 - **Conflict detection.** Warns by name if NZXT CAM, MSI Center, Fan Control, iCUE or similar is running, and can close them for you.
-- **Lighting.** Drives PC devices through **OpenRGB** (bundled with the app) **Govee** lamps over your LAN (or the Govee cloud with your own API key), **Logitech** G keyboards through G HUB, and **Philips Hue** lights through the bridge on your network (no Hue account).
+- **Lighting.** Drives PC devices through **OpenRGB** (bundled with the app) **Govee** lamps over your LAN (or the Govee cloud with your own API key), **Logitech** G keyboards through G HUB, **Philips Hue** lights through the bridge on your network (no Hue account), and **Nanoleaf** light panels through their controller (no account).
 - **Logitech G keyboards and mice.** Lit through G HUB's own lighting engine (Ember loads it from your G HUB install; nothing from Logitech is bundled). Needs G HUB running, with "Allow games and applications to control lighting" switched on for the device.
 - **Light profile per device.** Any device, such as your keyboard, can show a different saved scene from the rest.
 - **Music-reactive lights.** Pulse to the bass or spread the spectrum across your devices; Ember listens to what the PC is playing, only while the effect is on.
@@ -35,7 +35,7 @@
 - **Themes and accent colours.** Dark, light or match Windows, with five accent colours, chosen in Settings.
 - **Update checks.** On request (or at start-up if you turn it on), Ember asks GitHub whether a newer release exists on your channel (Stable or Beta). It never downloads or installs anything by itself.
 - **Experimental features.** Game detection (switches to a game mode) and GPU fan control sit behind an Experimental switch in Settings, off by default.
-- **Private by design.** The app and service make no network calls of their own, apart from the optional update check, the Govee cloud (used only if you add a key) and the optional Hue bridge discovery (only when you press Find bridge), which is stored in Windows Credential Manager.
+- **Private by design.** The app and service make no network calls of their own, apart from the optional update check, the Govee cloud (used only if you add a key) the optional Hue bridge discovery (only when you press Find bridge) and the local Nanoleaf link, whose keys are stored in Windows Credential Manager.
 
 ## Screenshots
 

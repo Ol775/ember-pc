@@ -2,11 +2,12 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
-## 0.1.0-beta.7 (unreleased)
+## 0.1.0-beta.7 (2026-10-13)
 
 ### Added
 
 - **Update now.** When a newer release exists, Settings, Updates has an "Update now" button: it downloads the installer from the release, checks it against the checksum published with the release, then starts it (Windows asks for permission, Ember closes and the installer upgrades it). Nothing is downloaded until you press the button. Needs a release that carries the installer and its checksum file, as beta.6 and later do.
+- **Nanoleaf.** Settings has a Nanoleaf section: find or type the controller address, hold its power button for 5 to 7 seconds and press Link. The panels then appear as one device on the Lights page, one light per panel from left to right, over the controller's local API (no account, no cloud). Not yet tried on real panels.
 
 ## 0.1.0-beta.6 (2026-10-13)
 
