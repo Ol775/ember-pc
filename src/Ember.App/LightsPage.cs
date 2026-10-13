@@ -529,9 +529,26 @@ public sealed class LightsPage : UserControl
             });
             AutomationProperties.SetName(on, "Use " + info.Name + " in this scene");
             on.Margin = new Thickness(0);
-            Grid.SetColumn(on, 1);
+            var right = new StackPanel { HorizontalAlignment = HorizontalAlignment.Right };
+            right.Children.Add(on);
+            if (placed.TryGetValue(info.Id, out var placement))
+            {
+                var names = state.Scenes.Select(x => x.Name).Where(n => n != state.Current.Name).ToList();
+                var own = placement.Profile is { } pn && names.Contains(pn) ? pn : null;
+                var profile = Pill(own is null ? "Light profile: follows the scene" : "Light profile: " + own, () =>
+                {
+                    var next = own is null ? names.FirstOrDefault() : names.IndexOf(own) + 1 < names.Count ? names[names.IndexOf(own) + 1] : null;
+                    _m.EditScene(sc => sc with { Placements = sc.Placements.Select(x => x.DeviceId == info.Id ? x with { Profile = next } : x).ToList() });
+                    _rendered = _m.State;
+                    RebuildDevices(_m.State);
+                }, "Light profile for " + info.Name);
+                profile.Margin = new Thickness(0, 4, 0, 0);
+                profile.ToolTip = names.Count == 0 ? "Save another scene first: a device can show any other scene as its own profile." : "Click to choose which scene this device shows: the current scene, or one of your other scenes.";
+                right.Children.Add(profile);
+            }
+            Grid.SetColumn(right, 1);
             row.Children.Add(text);
-            row.Children.Add(on);
+            row.Children.Add(right);
             _devices.Children.Add(row);
         }
     }

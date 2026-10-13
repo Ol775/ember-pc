@@ -304,6 +304,8 @@
                 <RadioButton GroupName="SettingsNav" Content="Fan control" Tag="fan" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Lighting" Tag="lights" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Updates" Tag="updates" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="What's new" Tag="changelog" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="Roadmap" Tag="roadmap" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="About" Tag="about" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
               </StackPanel>
               <StackPanel x:Name="SettingsSections" Grid.Column="1" MaxWidth="720" HorizontalAlignment="Left">
@@ -417,6 +419,12 @@
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    Text="Beta also offers pre-releases, which get new features earlier and may have more bugs." />
                     </StackPanel>
+                </GroupBox>
+                <GroupBox Tag="changelog" Header="What's new" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Changelog">
+                    <StackPanel x:Name="ChangelogHost" />
+                </GroupBox>
+                <GroupBox Tag="roadmap" Header="Roadmap" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Roadmap">
+                    <StackPanel x:Name="RoadmapHost" />
                 </GroupBox>
                 <GroupBox Tag="about" Header="About" Style="{StaticResource Panel}" AutomationProperties.Name="About Ember">
                     <StackPanel>

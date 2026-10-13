@@ -14,3 +14,5 @@ folder next to `Ember.App.exe`.
 ## Libraries used by the app and service
 
 LibreHardwareMonitorLib (MPL-2.0), PawnIO driver (installed separately, signed by its publisher). See `Directory.Packages.props`.
+
+- **Logitech G HUB** (not bundled): if it is installed, Ember loads its LED SDK engine (sdk_legacy_led_x64.dll, found through G HUB's own registry entry and only if it sits under Program Files) to light Logitech G keyboards and mice. Logitech and G HUB are trademarks of Logitech; Ember is not affiliated with Logitech.

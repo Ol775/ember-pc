@@ -189,7 +189,7 @@ public sealed class LightingManager : IAsyncDisposable
             sinks = _sinks.ToList();
             inputs = new LightingInputs((now - _t0).TotalSeconds, _cpu, _gpu, _screen);
         }
-        var frame = await _engine.StepAsync(state.Current, state.On, inputs, sinks, ct).ConfigureAwait(false);
+        var frame = await _engine.StepAsync(state.Current, state.On, inputs, sinks, ct, state.Scenes).ConfigureAwait(false);
         foreach (var id in _engine.Failures.Keys)
             foreach (var source in _sources) source.ReportFailure(id);
 

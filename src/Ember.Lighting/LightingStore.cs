@@ -32,6 +32,7 @@ public sealed record LightingState(
         && double.IsFinite(s.Brightness) && s.Brightness is >= 0 and <= 1
         && s.Layers.All(l => l is { Effect: not null, Id: not null, Name: not null } && double.IsFinite(l.Opacity) && l.Opacity is >= 0 and <= 1)
         && s.Placements.All(p => p is { DeviceId: not null }
+            && (p.Profile is null || p.Profile.Length <= 60)
             && new[] { p.X, p.Y, p.Width, p.Height }.All(v => double.IsFinite(v) && v is >= -1 and <= 2));
 }
 

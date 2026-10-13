@@ -46,11 +46,12 @@ public sealed class LightingEngine(TimeProvider clock)
 
     /// <returns>The picture for the canvas preview (empty while the lights are off).</returns>
     public async Task<Dictionary<string, Color[]>> StepAsync(
-        Scene scene, bool on, LightingInputs inputs, IReadOnlyList<IDeviceSink> sinks, CancellationToken ct = default)
+        Scene scene, bool on, LightingInputs inputs, IReadOnlyList<IDeviceSink> sinks, CancellationToken ct = default,
+        IReadOnlyList<Scene>? profiles = null)
     {
         var byId = sinks.ToDictionary(s => s.Id);
         var counts = sinks.ToDictionary(s => s.Id, s => s.LedCount);
-        var frame = on ? Compositor.Render(scene, counts, inputs) : [];
+        var frame = on ? Compositor.Render(scene, counts, inputs, profiles) : [];
 
         if (!on)
         {

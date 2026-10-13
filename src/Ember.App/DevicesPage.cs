@@ -16,7 +16,7 @@ namespace Ember.App;
 public sealed class DevicesPage : UserControl
 {
     readonly StackPanel _root = new() { Margin = new Thickness(24) };
-    readonly UniformGrid _cards = new() { Columns = 3, Margin = new Thickness(-6, 0, -6, 10) };
+    readonly UniformGrid _cards = new() { Columns = 2, Margin = new Thickness(-6, 0, -6, 10) };
     readonly StackPanel _rows = new();
     string? _key;
 
@@ -50,6 +50,7 @@ public sealed class DevicesPage : UserControl
             $"{headers.Count} fan headers shown, {controllable} controlled by Ember"));
         _cards.Children.Add(Source("OpenRGB", "SDK server on localhost, started with Ember", devices, status));
         _cards.Children.Add(Source("Govee", "LAN first; cloud only with your API key", devices, status));
+        _cards.Children.Add(Source("Logitech", "Keyboards and mice, through G HUB", devices, status));
 
         _rows.Children.Clear();
         _rows.Children.Add(Row("Name", "Source", "Type", "Status", header: true));

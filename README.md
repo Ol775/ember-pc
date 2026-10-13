@@ -25,6 +25,8 @@
 - **Header testing.** Nothing is written to a fan header until you have tested and enabled it yourself. Headers with no fan attached are hidden.
 - **Conflict detection.** Warns by name if NZXT CAM, MSI Center, Fan Control, iCUE or similar is running, and can close them for you.
 - **Lighting.** Drives PC devices through **OpenRGB** (bundled with the app) and **Govee** lamps over your LAN, or through the Govee cloud with your own API key.
+- **Logitech G keyboards and mice.** Lit through G HUB's own lighting engine (Ember loads it from your G HUB install; nothing from Logitech is bundled). Needs G HUB running, with "Allow games and applications to control lighting" switched on for the device.
+- **Light profile per device.** Any device, such as your keyboard, can show a different saved scene from the rest.
 - **Layered effects.** Stack effects with blend modes and save them as scenes.
 - **Screen sync.** Lights follow the colours on your screen.
 - **Themes and accent colours.** Dark, light or match Windows, with five accent colours, chosen in Settings.
@@ -136,9 +138,9 @@ Motherboard sensors and fan headers sit behind port I/O that user mode cannot re
 
 **Does it send data anywhere?** No. See [PRIVACY.md](PRIVACY.md).
 
-**Can I use it with SignalRGB or NZXT CAM?** Not at the same time on the same devices. Ember warns you about fan-control programs and can close them.
+**Can I use it with SignalRGB or NZXT CAM?** Not at the same time on the same devices (Logitech G HUB, SignalRGB and Ember all want to set the lighting; only one should be active at a time). Ember warns you about fan-control programs and can close them.
 
-**Where is the roadmap?** See [ROADMAP.md](ROADMAP.md).
+**Where is the roadmap?** See [ROADMAP.md](ROADMAP.md), and [CHANGELOG.md](CHANGELOG.md) for what changed in each version. Both are also inside the app, in Settings.
 
 ## Contributing
 
@@ -150,4 +152,4 @@ MIT. See [LICENSE](LICENSE). Third-party components are listed in [THIRD-PARTY.m
 
 ## Disclaimer
 
-Ember is an independent project by Ol775. It is not affiliated with, endorsed by or sponsored by NZXT, MSI, Govee, OpenRGB, SignalRGB, Noctua, AMD, Intel or NVIDIA. Product names are trademarks of their respective owners. Use at your own risk: you are responsible for your hardware.
+Ember is an independent project by Ol775. It is not affiliated with, endorsed by or sponsored by NZXT, MSI, Govee, Logitech, OpenRGB, SignalRGB, Noctua, AMD, Intel or NVIDIA. Product names are trademarks of their respective owners. Use at your own risk: you are responsible for your hardware.

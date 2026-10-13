@@ -4,8 +4,11 @@ public enum BlendMode { Normal, Add, Screen, Multiply }
 
 public sealed record Layer(string Id, string Name, Effect Effect, double Opacity = 1, BlendMode Blend = BlendMode.Normal, bool Enabled = true);
 
-/// <summary>Where a device sits on the canvas (the unit square). Its LEDs run along the longer side.</summary>
-public sealed record DevicePlacement(string DeviceId, double X, double Y, double Width, double Height, bool Enabled = true)
+/// <summary>
+/// Where a device sits on the canvas (the unit square). Its LEDs run along the longer side. <paramref name="Profile"/> is
+/// the name of another scene whose layers this device shows instead of the current scene's (its own light profile); null follows the scene.
+/// </summary>
+public sealed record DevicePlacement(string DeviceId, double X, double Y, double Width, double Height, bool Enabled = true, string? Profile = null)
 {
     /// <summary>The canvas position of LED <paramref name="index"/> of <paramref name="count"/>.</summary>
     public (double X, double Y) LedPosition(int index, int count)

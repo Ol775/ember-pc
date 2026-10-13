@@ -13,6 +13,7 @@ Please report security problems privately, not in a public issue. Use GitHub's "
 - **The service folder must be admin-only.** `install-service.ps1` refuses folders that normal users can write, so a user cannot swap the executable that runs as SYSTEM.
 - **Settings are protected.** `%ProgramData%\Ember` is writable only by SYSTEM and Administrators; users can read it.
 - **Driver.** Ember uses the signed PawnIO driver, not WinRing0 (CVE-2020-14979). The install script checks the SHA-256 and signature.
+- **Logitech.** Ember loads G HUB's lighting engine only from the file G HUB registers, and only if its name is `sdk_legacy_led_x64.dll` and it sits under Program Files (administrator-writable).
 - **OpenRGB** is bundled, pinned by SHA-256 and listens on localhost only.
 - **Secrets.** A Govee cloud API key is stored in Windows Credential Manager, never in a settings file or in the repository.
 - **No telemetry.** See [PRIVACY.md](PRIVACY.md).

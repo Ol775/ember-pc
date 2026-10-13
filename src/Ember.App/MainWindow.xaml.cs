@@ -34,7 +34,8 @@ public partial class MainWindow : Window
         LightingManager? lights = null;
         _lights = lights = new LightingManager(new LightingStore(LightingStore.DefaultPath), TimeProvider.System,
             [new OpenRgbSource(() => string.IsNullOrWhiteSpace(lights?.State.OpenRgbPath) ? BundledOpenRgb : lights!.State.OpenRgbPath, () => lights?.State.ShouldStartOpenRgb ?? true),
-             new GoveeSource(new GoveeLanClient(), GoveeCloud)]);
+             new GoveeSource(new GoveeLanClient(), GoveeCloud),
+             new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad())]);
         Lights.Attach(_lights);
         _lights.Start();
 
@@ -70,6 +71,8 @@ public partial class MainWindow : Window
         OnSettingsSection(SetGeneral, new RoutedEventArgs());
         _updates = new UpdateChecker(_http);
         BuildAccentRow();
+        DocView.Fill(ChangelogHost, DocView.ReadEmbedded("CHANGELOG.md"));
+        DocView.Fill(RoadmapHost, DocView.ReadEmbedded("ROADMAP.md"));
         ApplyAppearance();
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, _) => { if (_vm.Prefs.Theme == ThemeMode.System) Dispatcher.InvokeAsync(ApplyAppearance); };
         if (_vm.Prefs.AutoCheckUpdates) _ = Task.Delay(8000).ContinueWith(_ => Dispatcher.InvokeAsync(() => CheckForUpdatesAsync(announce: false)));
