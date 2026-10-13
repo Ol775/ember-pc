@@ -54,14 +54,14 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="Bar" Padding="12,8" CornerRadius="6" Background="Transparent"
-                                BorderBrush="Transparent" BorderThickness="3,0,0,0">
-                            <ContentPresenter />
+                        <Border x:Name="Bar" Padding="12,9" CornerRadius="8" Background="Transparent">
+                            <ContentPresenter x:Name="Label" TextElement.Foreground="{StaticResource MutedBrush}" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bar" Property="Background" Value="{StaticResource PanelBrush}" />
-                                <Setter TargetName="Bar" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Bar" Property="Background" Value="#2a1c12" />
+                                <Setter TargetName="Label" Property="TextElement.Foreground" Value="#ffb347" />
+                                <Setter TargetName="Label" Property="TextElement.FontWeight" Value="SemiBold" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

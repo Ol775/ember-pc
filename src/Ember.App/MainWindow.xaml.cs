@@ -235,7 +235,8 @@ public partial class MainWindow : Window
 
     void OnNavChanged(object sender, RoutedEventArgs e)
     {
-        if (DashboardPage is null || FansPageView is null || SettingsPageView is null || LightsPageView is null) return; // fires once during InitializeComponent
+        if (DashboardPage is null || FansPageView is null || SettingsPageView is null || LightsPageView is null || DevicesPageView is null) return;
+        DevicesPageView.Visibility = NavDevices.IsChecked == true ? Visibility.Visible : Visibility.Collapsed; // fires once during InitializeComponent
         LightsPageView.Visibility = NavLights.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         DashboardPage.Visibility = NavDashboard.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         FansPageView.Visibility = NavFans.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
@@ -314,6 +315,7 @@ public partial class MainWindow : Window
     void Refresh()
     {
         _vm.Refresh(DateTimeOffset.UtcNow);
+        if (DevicesPageView.Visibility == Visibility.Visible) Devices.Update(_vm, _lights);
         // WPF only announces a live region when the app raises LiveRegionChanged itself.
         Curve.SetState(_vm.FansPage.Mode, _vm.FansPage.Curves, _cpuTemp, _caseTemp);
         if (_vm.ConnectionText != _announcedConnection)

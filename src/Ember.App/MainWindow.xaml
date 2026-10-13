@@ -10,15 +10,19 @@
         FontFamily="Segoe UI" FontSize="14">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="208" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
         <DockPanel Grid.Column="0" Background="{StaticResource SidebarBrush}">
-            <TextBlock DockPanel.Dock="Top" Text="Ember" FontSize="24" FontWeight="Bold"
-                       Foreground="{StaticResource AccentBrush}" Margin="20,24,20,24"
-                       AutomationProperties.HeadingLevel="Level1" />
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="20,24,20,24">
+                <Path Data="M12,3 C13,7 17,8 17,13 A5,5 0 0 1 7,13 C7,11 8,10 9,9 C9,11 10,12 11,12 C11,9 10,7 12,3 Z"
+                      Stroke="{StaticResource AccentBrush}" StrokeThickness="2" StrokeLineJoin="Round" Width="24" Height="24"
+                      Stretch="None" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <TextBlock Text="Ember" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextBrush}"
+                           VerticalAlignment="Center" AutomationProperties.HeadingLevel="Level1" />
+            </StackPanel>
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="20,0,20,20">
                 <Ellipse Width="10" Height="10" Fill="{Binding ConnectionBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <TextBlock x:Name="ConnectionLabel" Text="{Binding ConnectionText}" Foreground="{StaticResource MutedBrush}"
@@ -35,6 +39,8 @@
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
                 <RadioButton x:Name="NavLights" GroupName="Nav" Content="Lights"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
+                <RadioButton x:Name="NavDevices" GroupName="Nav" Content="Devices"
+                             Style="{StaticResource NavItem}" Checked="OnNavChanged" />
                 <RadioButton x:Name="NavSettings" GroupName="Nav" Content="Settings"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
             </StackPanel>
@@ -43,8 +49,14 @@
         <!-- Dashboard -->
         <ScrollViewer x:Name="DashboardPage" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False">
             <StackPanel Margin="24">
-                <TextBlock Text="Dashboard" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"
-                           AutomationProperties.HeadingLevel="Level2" />
+                <DockPanel Margin="0,0,0,16">
+                    <Border DockPanel.Dock="Right" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="14"
+                            Padding="12,5" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ModeChipText}" FontSize="13" Foreground="{StaticResource MutedBrush}" />
+                    </Border>
+                    <TextBlock Text="Dashboard" FontSize="24" FontWeight="SemiBold"
+                               AutomationProperties.HeadingLevel="Level2" />
+                </DockPanel>
 
                 <Border Background="{StaticResource BannerBrush}" BorderBrush="{StaticResource AccentBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
@@ -59,11 +71,11 @@
                 <UniformGrid Columns="4" Margin="-6,0,-6,16">
                     <GroupBox Header="CPU" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding CpuText, StringFormat=CPU temperature {0}}">
-                        <TextBlock Text="{Binding CpuText}" Style="{StaticResource StatValue}" />
+                        <TextBlock Text="{Binding CpuText}" Style="{StaticResource StatValue}" Foreground="{StaticResource AccentBrush}" />
                     </GroupBox>
                     <GroupBox Header="GPU" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding GpuText, StringFormat=GPU temperature {0}}">
-                        <TextBlock Text="{Binding GpuText}" Style="{StaticResource StatValue}" />
+                        <TextBlock Text="{Binding GpuText}" Style="{StaticResource StatValue}" Foreground="{StaticResource GpuBrush}" />
                     </GroupBox>
                     <GroupBox Header="Motherboard" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding MotherboardText, StringFormat=Motherboard temperature {0}}">
@@ -75,7 +87,12 @@
                     </GroupBox>
                 </UniformGrid>
 
-                <GroupBox Header="{Binding ChartTitle}" Style="{StaticResource Panel}" Margin="0,0,0,16">
+                <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" MinWidth="250" />
+                </Grid.ColumnDefinitions>
+                <GroupBox Header="{Binding ChartTitle}" Style="{StaticResource Panel}" Margin="0,0,16,0">
                     <AutomationProperties.Name>
                         <MultiBinding StringFormat="Temperature history chart, last 10 minutes. CPU now {0}, GPU now {1}">
                             <Binding Path="CpuText" />
@@ -89,7 +106,7 @@
                             <Rectangle Width="14" Height="3" Fill="{StaticResource GpuBrush}" VerticalAlignment="Center" />
                             <TextBlock Text="GPU" Margin="6,0,0,0" />
                         </StackPanel>
-                        <Canvas Height="200" ClipToBounds="True" SizeChanged="OnChartSizeChanged">
+                        <Canvas Height="260" ClipToBounds="True" SizeChanged="OnChartSizeChanged">
                             <Polyline Points="{Binding CpuLine}" Stroke="{StaticResource AccentBrush}" StrokeThickness="2"
                                       StrokeLineJoin="Round" />
                             <Polyline Points="{Binding GpuLine}" Stroke="{StaticResource GpuBrush}" StrokeThickness="2"
@@ -98,7 +115,7 @@
                     </DockPanel>
                 </GroupBox>
 
-                <GroupBox Header="Fans" Style="{StaticResource Panel}" AutomationProperties.Name="Fans">
+                <GroupBox Grid.Column="1" Header="Fans" Style="{StaticResource Panel}" AutomationProperties.Name="Fans">
                     <StackPanel>
                         <TextBlock Text="No fan readings" Foreground="{StaticResource MutedBrush}"
                                    Visibility="{Binding NoFansVisibility}" />
@@ -107,23 +124,25 @@
                                 <DataTemplate>
                                     <Grid Margin="0,4">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="180" />
                                             <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center" />
-                                        <ProgressBar Grid.Column="1" Height="8" Minimum="0" Maximum="1" Value="{Binding Fraction, Mode=OneWay}"
+                                        <Grid.RowDefinitions><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Name}" FontSize="13" VerticalAlignment="Center" />
+                                        <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,6" Height="6" Minimum="0" Maximum="1" Value="{Binding Fraction, Mode=OneWay}"
                                                      Foreground="{StaticResource AccentBrush}" Background="{StaticResource PanelBorderBrush}"
                                                      BorderThickness="0" VerticalAlignment="Center"
                                                      AutomationProperties.Name="{Binding Name}"
                                                      AutomationProperties.HelpText="{Binding RpmText}" />
-                                        <TextBlock Grid.Column="2" Text="{Binding RpmText}" TextAlignment="Right" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RpmText}" FontSize="13" Foreground="{StaticResource MutedBrush}"
+                                                   TextAlignment="Right" VerticalAlignment="Center" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
                 </GroupBox>
+                </Grid>
             </StackPanel>
         </ScrollViewer>
 
@@ -156,6 +175,11 @@
                         BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
                         Visibility="{Binding SafetyVisibility}">
                     <TextBlock Text="{Binding FansPage.SafetyNote}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
+                </Border>
+
+                <Border BorderBrush="#5a4a3e" BorderThickness="1" CornerRadius="12" Padding="16,12" Margin="0,0,0,16">
+                    <TextBlock Foreground="#c7b8aa" TextWrapping="Wrap" FontSize="13"
+                               Text="Safety: every controlled fan goes to 100% at 90 °C, a lost sensor sends fans to 100%, and Ember leaves them at a safe speed if it stops." />
                 </Border>
 
                 <GroupBox Header="Mode" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan mode">
@@ -263,6 +287,12 @@
         <ScrollViewer x:Name="LightsPageView" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
                       Visibility="Collapsed">
             <local:LightsPage x:Name="Lights" />
+        </ScrollViewer>
+
+        <!-- Devices -->
+        <ScrollViewer x:Name="DevicesPageView" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
+                      Visibility="Collapsed">
+            <local:DevicesPage x:Name="Devices" />
         </ScrollViewer>
 
         <!-- Settings -->
