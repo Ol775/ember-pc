@@ -2,6 +2,13 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 0.1.0-beta.6 (2026-10-13)
+
+### Fixed
+
+- **Screen sync no longer goes black on an HDR desktop.** Windows sends capture frames that only report the mouse pointer or metadata, with an empty picture, and Ember was reading those as a black screen. They are now skipped.
+- **GPU fan control now suits a graphics card.** The fan is driven only at 60% or more (below that a card fan stops and starts) and is handed back to the card's own silent idle when the curve asks for less; the header test fits a card that is stopped at idle; and switching GPU control off really gives the fan back to the card. Still Experimental.
+
 ## 0.1.0-beta.5 (2026-10-13)
 
 ### Added
@@ -25,8 +32,6 @@ All notable changes to Ember. Newest first. Ember follows [semantic versioning](
 - **Philips Hue.** Settings has a Philips Hue section: find or type your bridge address, press the bridge button and Link. Each colour light then shows up on the Lights page and follows the scene as one colour, over the bridge's local API (no Hue account, no cloud). Not yet tried on a real bridge.
 - **A save at the moment Ember closes can no longer be lost.** A delayed save still writing the lighting file and the closing save now take turns.
 - **The update check knew which version it was.** A build id after the version number made Ember read its own version as beta.1, so beta-channel users would have been offered an update they already had.
-- **Screen sync no longer goes black on an HDR desktop.** Windows sends capture frames that only report the mouse pointer or metadata, with an empty picture, and Ember was reading those as a black screen. They are now skipped.
-- **GPU fan control now suits a graphics card.** The fan is driven only at 60% or more (below that a card fan stops and starts) and is handed back to the card's own silent idle when the curve asks for less; the header test fits a card that is stopped at idle; and switching GPU control off really gives the fan back to the card. Still Experimental.
 - **Key highlight.** A layer that lights chosen letter and number keys (W A S D by default) in one colour and leaves the other keys to the layers below, for gaming. Type any letters or numbers to light; the bottom letter row (Z to M) has not been checked against a real keyboard.
 - **Logitech keyboard shows per-key effects again.** The mouse's single colour used to overwrite the whole keyboard every frame (G HUB cannot do both at once). The keyboard is now lit key by key and the mouse is left to G HUB; a switch on the Lights page makes every Logitech device take one colour instead.
 - **Govee lamps did not change colour when a VPN covered the home network.** Ember found the lamp but sent its colours into the VPN (for example a Tailscale subnet route for 192.168.1.0/24). Commands now go out from the PC's own address on the lamp's network.
