@@ -68,7 +68,7 @@ public static class FansViewState
             HeaderState.Controllable => h.Tested ? "Tested, not enabled" : "Not tested",
             HeaderState.Enabled => "Enabled (Ember controls this fan)",
             HeaderState.Failed => "Test failed",
-            HeaderState.Unknown when h.Id.StartsWith("/gpu-", StringComparison.Ordinal) && !gpuInBuild => "GPU fan control arrives in the beta build",
+            HeaderState.Unknown when h.Id.StartsWith("/gpu-", StringComparison.Ordinal) && !gpuInBuild => "GPU fan control is only in the beta build",
             HeaderState.Unknown when h.Id.StartsWith("/gpu-", StringComparison.Ordinal) && !experimental => "GPU fan control is experimental: switch on Experimental features in Settings",
             HeaderState.Unknown when h.Id.StartsWith("/gpu-", StringComparison.Ordinal) => "GPU fan control is off (allow it above)",
             HeaderState.Unknown => "Left to the board (Ember does not control this header)",

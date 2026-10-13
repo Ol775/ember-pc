@@ -2,6 +2,25 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.0.0 (2026-10-13)
+
+The first production release. It holds what has been checked on real hardware; the newer, less-tested parts stay in the beta builds.
+
+### Added
+
+- **Monitoring.** A live dashboard of CPU, GPU, motherboard and fan sensors with a ten-minute history, in Celsius or Fahrenheit.
+- **Fan control.** Super quiet, Quiet, Normal, Performance and Extreme modes, manual curves with an editor, and header tests before anything is written. Safety rules stay on: every controlled fan goes to full speed at 90 °C or when a sensor is lost, a watchdog service restores safe speeds, and fans that stall at low speed are kicked back to life. Ember warns when NZXT CAM, MSI Center, Fan Control or iCUE is running.
+- **AI assist.** Off by default. Learns how hot your PC runs and suggests curves; nothing changes until you press Apply.
+- **Lighting.** Devices through OpenRGB, Govee lamps (LAN, cloud and segments, also over a VPN) and Logitech G keyboards and mice, key by key. Layered effects, scenes, painting single LEDs with a library, own lighting for one device, screen sync (HDR too) and music-reactive effects.
+- **Make it yours.** Dark, OLED black, light or match Windows; warm, neutral or cool surfaces; nine accent colours or your own; Subtle, Normal or Vivid highlights. A tray icon, keep running in the tray and start minimised.
+- **Updates.** Check for updates on request or at start; Update now downloads the installer, checks it against the release checksum, updates and opens Ember again.
+- **Install.** An installer with the Terms of Use, runtimes included, upgrade in place and uninstall from Windows.
+- **Private.** No accounts and no telemetry; the only network use is what you switch on.
+
+### Only in the beta builds
+
+Game detection and GPU fan control (Experimental), Philips Hue, Nanoleaf and Razer Chroma lighting, and the roadmap page. They arrive in the production build when they have been checked on real hardware.
+
 ## 0.1.0-beta.10 (2026-10-13)
 
 ### Added

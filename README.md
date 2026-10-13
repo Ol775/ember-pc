@@ -3,7 +3,8 @@
 </p>
 
 <p align="center">
-  <img alt="Beta" src="https://img.shields.io/badge/release-beta-orange">
+  <img alt="Production 1.0" src="https://img.shields.io/badge/release-1.0-success">
+  <img alt="Beta builds available" src="https://img.shields.io/badge/beta-builds%20available-orange">
   <img alt="Licence: MIT" src="https://img.shields.io/badge/licence-MIT-blue">
   <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
   <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8-512BD4">
@@ -24,7 +25,7 @@
 - **Safety first.** At 90 °C every controlled fan goes to 100%, a lost sensor sends fans to 100%, and a separate **watchdog** service restores safe speeds if Ember stops responding.
 - **Header testing.** Nothing is written to a fan header until you have tested and enabled it yourself. Headers with no fan attached are hidden.
 - **Conflict detection.** Warns by name if NZXT CAM, MSI Center, Fan Control, iCUE or similar is running, and can close them for you.
-- **Lighting.** Drives PC devices through **OpenRGB** (bundled with the app) **Govee** lamps over your LAN (or the Govee cloud with your own API key), **Logitech** G keyboards through G HUB, **Philips Hue** lights through the bridge on your network (no Hue account), **Razer Chroma** devices through Razer Synapse, and **Nanoleaf** light panels through their controller (no account).
+- **Lighting.** Drives PC devices through **OpenRGB** (bundled with the app), **Govee** lamps over your LAN (or the Govee cloud with your own API key) and **Logitech** G keyboards through G HUB. The beta builds add **Philips Hue** lights through the bridge on your network (no Hue account), **Razer Chroma** devices through Razer Synapse, and **Nanoleaf** light panels through their controller (no account).
 - **Logitech G keyboards and mice.** Lit through G HUB's own lighting engine (Ember loads it from your G HUB install; nothing from Logitech is bundled). Needs G HUB running, with "Allow games and applications to control lighting" switched on for the device.
 - **Light profile per device.** Any device, such as your keyboard, can show a different saved scene from the rest.
 - **Music-reactive lights.** Pulse to the bass or spread the spectrum across your devices; Ember listens to what the PC is playing, only while the effect is on.
@@ -34,7 +35,7 @@
 - **Screen sync.** Lights follow the colours on your screen, read straight from the graphics card (DXGI) and including HDR desktops.
 - **Make it yours.** Dark, **OLED black** (pure black for OLED screens), light or match Windows; a warm, neutral or cool colour scheme; nine accent colours or your own `#rrggbb`; and how strongly the accent shows in highlights. All in Settings, Appearance.
 - **Updates.** On request (or at start-up if you turn it on), Ember asks GitHub whether a newer release exists on your channel (Stable or Beta). **Update now** downloads the installer, checks it against the release checksum and updates in place, then opens Ember again. Nothing is downloaded until you press it.
-- **Experimental features.** Game detection (switches to a game mode) and GPU fan control sit behind an Experimental switch in Settings, off by default.
+- **Experimental features (beta builds).** Game detection (switches to a game mode) and GPU fan control sit behind an Experimental switch in Settings, off by default.
 - **Private by design.** No accounts, no telemetry. The app and service make no network calls of their own, apart from the update check and Update now (GitHub only, on request), the Govee cloud (only if you add a key), Hue bridge discovery (only when you press Find bridge), and the local links to your Hue bridge, Nanoleaf controller and Razer Synapse. Keys are stored in Windows Credential Manager. See [PRIVACY.md](PRIVACY.md).
 
 ## Screenshots
@@ -60,7 +61,7 @@
 
 ## Install
 
-Ember is in beta.
+Ember comes in two kinds of release. The **production build** (for example 1.0.0) holds what has been checked on real hardware, and its updates are production releases only. The **beta builds** (for example 1.1.0-beta.1, marked as pre-releases on the releases page) add what is still being checked: game detection, GPU fan control, Philips Hue, Nanoleaf and Razer Chroma lighting, and the roadmap page. Download the one you want from the [releases page](https://github.com/Ol775/ember-pc/releases); a beta build stays on beta updates, a production build on production updates.
 
 **Installer (easiest).** Download `Ember-Setup-<version>.exe` from the [releases page](https://github.com/Ol775/ember-pc/releases), run it, read and accept the Terms of Use, and follow the pages. It installs the .NET 8 and Visual C++ runtimes if your PC lacks them, adds the services, and downloads the PawnIO driver (checked before it runs). Ember appears in the Start menu and under Installed apps in Windows Settings, where you can also remove it. Windows will show an "unknown publisher" warning because the installer is not code-signed yet. For a scripted install: `Ember-Setup-<version>.exe /S /ACCEPT` (add `/D=C:\Path\Ember` for another folder, `/NODESKTOP`, `/NOPAWNIO`; `/ACCEPT` says you have read TERMS.md).
 

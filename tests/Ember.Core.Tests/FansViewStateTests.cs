@@ -146,7 +146,7 @@ public class FansViewGpuTests
     {
         var status = new FanControlStatus(FanMode.Normal, ModeSource.User, false, null,
             new[] { new HeaderStatus("/gpu-nvidia/0/control/1", "GPU Fan", HeaderState.Unknown, false) }, Array.Empty<string>(), null);
-        Assert.Contains("beta build", Assert.Single(FansViewState.Render(status, true, BuildFeatures.Alpha).Headers).StateText);
+        Assert.Contains("beta build", Assert.Single(FansViewState.Render(status, true, BuildFeatures.Production).Headers).StateText);
         Assert.Contains("Experimental features", Assert.Single(FansViewState.Render(status, true, BuildFeatures.All).Headers).StateText);
     }
 

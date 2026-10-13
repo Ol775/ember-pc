@@ -13,6 +13,19 @@ public partial class MainWindow
     TextBlock? _customNote;
     bool _syncingCustom;
 
+    /// <summary>The production build shows only what has been checked on real hardware: no roadmap, no beta channel, no newer lighting.</summary>
+    void ApplyBuildChannel()
+    {
+        if (!BuildFeatures.IsProduction) return;
+        NavRoadmap.Visibility = Visibility.Collapsed;
+        foreach (var box in new[] { RoadmapBox, HueBox, NanoleafBox, RazerBox }) box.Tag = "off";
+        ChannelLabel.Visibility = ChannelTrack.Visibility = ChannelNote.Visibility = Visibility.Collapsed;
+    }
+
+    UpdateChannel UpdateChannelInUse => BuildFeatures.IsProduction ? UpdateChannel.Stable : _vm.Prefs.Channel;
+
+    string? ChangelogText() => BuildFeatures.IsProduction ? ReleaseNotesFilter.ProductionOnly(DocView.ReadEmbedded("CHANGELOG.md")) : DocView.ReadEmbedded("CHANGELOG.md");
+
     void ApplyAppearance()
     {
         ThemeManager.Apply(_vm.Prefs);

@@ -78,7 +78,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool AutoCheckUpdates => Prefs.AutoCheckUpdates;
     public string VersionText => "Ember " + AppInfo.Version;
     public string ModeChipText => "Mode: " + FansViewState.Label(_fansPage.Mode);
-    public string BuildLabel => BuildFeatures.Channel == "beta" ? "Beta build" : "Alpha build";
+    public string BuildLabel => BuildFeatures.IsProduction ? "Production build" : "Beta build";
     public Visibility DetectedGameVisibility => _fansPage.DetectedGame is null ? Visibility.Collapsed : Visibility.Visible;
     public Visibility NotGamesVisibility => _fansPage.NotGames is { Count: > 0 } ? Visibility.Visible : Visibility.Collapsed;
     public Visibility NoHeadersVisibility => _fansPage.ServiceAvailable && _fansPage.Headers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;

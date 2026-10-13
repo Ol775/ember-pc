@@ -12,7 +12,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 
 ## Next
 
-- Move out of beta: a first stable release once the hardware checks above are done
+- Bring game detection, GPU fan control, Hue, Nanoleaf and Razer into the production build once the hardware checks above are done
 - Nanoleaf panels placed on the Lights canvas where they really are, not in one row
 - Razer devices: only show the ones that are plugged in, once Synapse offers a way to tell
 
@@ -63,4 +63,5 @@ Corsair, ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands 
 
 - An installer with terms, runtimes included, upgrade and uninstall from Windows
 - Continuous integration builds and a release workflow
+- The first production release, 1.0.0, with beta builds continuing alongside it
 - The repository is public, with a safety audit and cleaned history

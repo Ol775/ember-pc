@@ -48,9 +48,9 @@ public partial class MainWindow : Window
             [new OpenRgbSource(() => string.IsNullOrWhiteSpace(lights?.State.OpenRgbPath) ? BundledOpenRgb : lights!.State.OpenRgbPath, () => lights?.State.ShouldStartOpenRgb ?? true),
              new GoveeSource(new GoveeLanClient(), GoveeCloud, id => lights?.SegmentsOf(id) ?? 1),
              new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad(), () => lights?.State.LogitechOneColour ?? false),
-             new Ember.Lighting.Hue.HueSource(HueConnection),
+             .. BuildFeatures.Current.NewIntegrations ? new IDeviceSource[] { new Ember.Lighting.Hue.HueSource(HueConnection),
              new Ember.Lighting.Nanoleaf.NanoleafSource(NanoleafConnection),
-             new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp))]);
+             new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp)) } : []]);
         Lights.Attach(_lights);
         _lights.Start();
 
@@ -95,8 +95,9 @@ public partial class MainWindow : Window
         _updates = new UpdateChecker(_http);
         _installer = new UpdateInstaller(_http);
         BuildAppearance();
-        DocView.FillFolding(ChangelogHost, DocView.ReadEmbedded("CHANGELOG.md"));
+        DocView.FillFolding(ChangelogHost, ChangelogText());
         DocView.FillFolding(RoadmapHost, DocView.ReadEmbedded("ROADMAP.md"), (_, title) => title != "Done", DocView.CountItems);
+        ApplyBuildChannel();
         BuildLegal();
         BuildAbout();
         ApplyAppearance();
@@ -160,7 +161,7 @@ public partial class MainWindow : Window
         UpdateNote.Text = "Checking...";
         UpdateDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "MutedBrush");
         UpdateBanner.Visibility = Visibility.Collapsed;
-        var result = await _updates.CheckAsync(AppInfo.Version, _vm.Prefs.Channel);
+        var result = await _updates.CheckAsync(AppInfo.Version, UpdateChannelInUse);
         _releaseUrl = result.Release?.Url;
         _found = result.Release;
         UpdateNote.Text = result.Message;

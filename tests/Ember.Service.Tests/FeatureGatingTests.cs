@@ -17,7 +17,7 @@ public sealed class FeatureGatingTests : IDisposable
         var store = new SettingsStore(Path.Combine(_dir, "settings.json"));
         store.Save(settings ?? EmberSettings.Default);
         return new FanControlLoop(new SnapshotHub(), _fans, store, () => [], TimeProvider.System,
-            NullLogger<FanControlLoop>.Instance, new FanControlIdentity("B", "1"), BuildFeatures.Alpha);
+            NullLogger<FanControlLoop>.Instance, new FanControlIdentity("B", "1"), BuildFeatures.Production);
     }
 
     [Theory]

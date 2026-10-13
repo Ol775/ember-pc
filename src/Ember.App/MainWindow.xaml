@@ -308,7 +308,7 @@
                 <RadioButton GroupName="SettingsNav" Content="Fan control" Tag="fan" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Lighting" Tag="lights" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="What's new" Tag="changelog" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
-                <RadioButton GroupName="SettingsNav" Content="Roadmap" Tag="roadmap" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton x:Name="NavRoadmap" GroupName="SettingsNav" Content="Roadmap" Tag="roadmap" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Legal" Tag="legal" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Updates" Tag="updates" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="About" Tag="about" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
@@ -404,7 +404,7 @@
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </GroupBox>
-                <GroupBox Tag="lights" Header="Philips Hue" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Philips Hue">
+                <GroupBox x:Name="HueBox" Tag="lights" Header="Philips Hue" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Philips Hue">
                     <StackPanel>
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Ember talks to your Hue bridge directly on your home network: no Hue account and no cloud. Type the bridge address (or press Find bridge), press the round button on top of the bridge, then press Link bridge within 30 seconds. The key the bridge gives is kept in Windows Credential Manager. Hue lights follow the scene as one colour each, a few times a second." />
@@ -419,7 +419,7 @@
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </GroupBox>
-                <GroupBox Tag="lights" Header="Nanoleaf" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Nanoleaf">
+                <GroupBox x:Name="NanoleafBox" Tag="lights" Header="Nanoleaf" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Nanoleaf">
                     <StackPanel>
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Ember talks to your Nanoleaf controller directly on your home network: no account and no cloud. Type its address (or press Find controller), hold the power button on the controller for 5 to 7 seconds until it flashes, then press Link within 30 seconds. The token it gives is kept in Windows Credential Manager. Each panel is one light, ordered left to right, so effects run across the panels." />
@@ -434,7 +434,7 @@
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </GroupBox>
-                <GroupBox Tag="lights" Header="Razer Chroma" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Razer Chroma">
+                <GroupBox x:Name="RazerBox" Tag="lights" Header="Razer Chroma" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Razer Chroma">
                     <StackPanel>
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Lights Razer keyboards, keypads, mousepads, headsets and Chroma Link strips through Razer Synapse on this PC (its local Chroma SDK; nothing leaves the PC). Razer Synapse must be running with Chroma Connect on. Ember cannot tell which Razer devices are plugged in, so switch off the ones you do not have on the Devices page. Razer mice are not used." />
@@ -475,14 +475,14 @@
                         <Border Height="1" Background="{DynamicResource PanelBorderBrush}" Margin="0,18,0,14" />
                         <CheckBox Content="Check for updates when Ember starts" Click="OnAutoUpdateToggled" IsChecked="{Binding AutoCheckUpdates, Mode=OneWay}"
                                   Style="{StaticResource SwitchBox}" />
-                        <TextBlock Text="Release channel" Margin="0,16,0,6" />
-                        <Border Style="{StaticResource SegmentTrack}">
+                        <TextBlock x:Name="ChannelLabel" Text="Release channel" Margin="0,16,0,6" />
+                        <Border x:Name="ChannelTrack" Style="{StaticResource SegmentTrack}">
                             <StackPanel Orientation="Horizontal">
                                 <RadioButton GroupName="Channel" Content="Stable" Tag="Stable" Click="OnChannelPicked" IsChecked="{Binding ChannelStable, Mode=OneWay}" Style="{StaticResource Segment}" />
                                 <RadioButton GroupName="Channel" Content="Beta" Tag="Beta" Click="OnChannelPicked" IsChecked="{Binding ChannelBeta, Mode=OneWay}" Style="{StaticResource Segment}" />
                             </StackPanel>
                         </Border>
-                        <TextBlock Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
+                        <TextBlock x:Name="ChannelNote" Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
                                    Text="Beta also offers pre-releases: new features earlier, and more bugs." />
                         <TextBlock Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,14,0,0"
                                    Text="Ember contacts GitHub only when it checks and when you press Update now. The installer is verified against the checksum published with the release before it runs." />
@@ -491,7 +491,7 @@
                 <GroupBox Tag="changelog" Header="What's new" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Changelog">
                     <StackPanel x:Name="ChangelogHost" />
                 </GroupBox>
-                <GroupBox Tag="roadmap" Header="Roadmap" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Roadmap">
+                <GroupBox x:Name="RoadmapBox" Tag="roadmap" Header="Roadmap" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Roadmap">
                     <StackPanel x:Name="RoadmapHost" />
                 </GroupBox>
                 <GroupBox Tag="legal" Header="Legal" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Legal">
