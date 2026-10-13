@@ -18,6 +18,10 @@ All notable changes to Ember. Newest first. Ember follows [semantic versioning](
 - **Switch off a device.** Each device on the Devices page has a "Use" switch. Off, Ember leaves it out of every scene and stops sending to it; the choice is remembered.
 - **Arrange devices.** Lamps found later (for example more Govee lights) get room on the canvas instead of overlapping, and a button tidies the canvas into one row per device.
 
+### Fixed
+
+- **Govee lamps did not change colour when a VPN covered the home network.** Ember found the lamp but sent its colours into the VPN (for example a Tailscale subnet route for 192.168.1.0/24). Commands now go out from the PC's own address on the lamp's network.
+
 ### Changed
 
 - What's new in Settings folds each release: the newest is open, older ones open with a click, and long entries show two lines with "Show more".

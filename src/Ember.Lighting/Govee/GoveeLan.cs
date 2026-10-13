@@ -109,8 +109,35 @@ public sealed class GoveeLanClient
 
     async Task Send(IPAddress ip, string json, CancellationToken ct)
     {
-        using var udp = new UdpClient(AddressFamily.InterNetwork);
+        // Send from the PC's own address on the lamp's network. Left to itself Windows follows the routing table, and a VPN
+        // route that covers the home network (Tailscale with a subnet route, for one) swallows the command: the lamp still
+        // answers the scan, which goes out of each adapter, but never sees a colour.
+        using var udp = LocalAddressFor(ip) is { } local ? new UdpClient(new IPEndPoint(local, 0)) : new UdpClient(AddressFamily.InterNetwork);
         await udp.SendAsync(Encoding.UTF8.GetBytes(json), new IPEndPoint(ip, _controlPort), ct).ConfigureAwait(false);
+    }
+
+    /// <summary>The address of this PC on the same subnet as the device, or null when no adapter is on it.</summary>
+    static IPAddress? LocalAddressFor(IPAddress device)
+    {
+        try
+        {
+            return NetworkInterface.GetAllNetworkInterfaces()
+                .Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                .SelectMany(n => n.GetIPProperties().UnicastAddresses)
+                .Where(a => a.Address.AddressFamily == AddressFamily.InterNetwork && SameSubnet(a.Address, device, a.IPv4Mask))
+                .Select(a => a.Address)
+                .FirstOrDefault();
+        }
+        catch (Exception) { return null; }
+    }
+
+    public static bool SameSubnet(IPAddress a, IPAddress b, IPAddress? mask)
+    {
+        if (mask is null || a.AddressFamily != AddressFamily.InterNetwork || b.AddressFamily != AddressFamily.InterNetwork) return false;
+        var (x, y, m) = (a.GetAddressBytes(), b.GetAddressBytes(), mask.GetAddressBytes());
+        if (m.All(v => v == 0)) return false;
+        for (var i = 0; i < 4; i++) if ((x[i] & m[i]) != (y[i] & m[i])) return false;
+        return true;
     }
 }
 

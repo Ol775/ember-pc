@@ -58,6 +58,15 @@ public class GoveeLanTests
         public void Dispose() { _cts.Cancel(); _scan.Dispose(); _control.Dispose(); }
     }
 
+    [Theory]
+    [InlineData("192.168.1.97", "192.168.1.46", "255.255.255.0", true)]
+    [InlineData("192.168.1.97", "192.168.2.46", "255.255.255.0", false)]
+    [InlineData("10.0.0.5", "10.0.3.9", "255.255.0.0", true)]
+    [InlineData("100.85.243.81", "192.168.1.46", "255.255.255.255", false)]
+    [InlineData("192.168.1.97", "192.168.1.46", "0.0.0.0", false)]
+    public void The_pc_address_for_a_lamp_is_the_one_on_the_lamps_own_subnet(string pc, string lamp, string mask, bool same) =>
+        Assert.Equal(same, GoveeLanClient.SameSubnet(IPAddress.Parse(pc), IPAddress.Parse(lamp), IPAddress.Parse(mask)));
+
     [Fact]
     public async Task Finds_a_lamp_that_answers_the_scan()
     {
