@@ -12,7 +12,7 @@ public sealed record HeaderTestResult(bool Passed, string Message, double Baseli
 /// </summary>
 public sealed class HeaderTestRunner
 {
-    const double Step = 20, MinMove = 0.15;
+    const double Step = 20, MinMove = 0.15, GpuTestPercent = 80;
     static readonly TimeSpan Tick = TimeSpan.FromSeconds(1);
     const int WaitTicks = 10;
 
@@ -55,6 +55,31 @@ public sealed class HeaderTestRunner
             var header = _fans.Enumerate().FirstOrDefault(h => h.Id == headerId);
             if (header is null || !header.HasControl) return Fail("This header cannot be controlled.");
             if (!header.HasRpm) return Fail("This header has no RPM reading, so the test cannot tell if the fan responds.");
+
+            if (headerId.StartsWith("/gpu-", StringComparison.Ordinal))
+            {
+                // A graphics card fan often sits still at idle and only holds a steady speed from about 60%, so the usual "go 20 points
+                // lower and watch it follow" test does not fit. Ask for a clearly steady speed, watch the RPM rise, give the fan back.
+                var before = _readRpm(headerId) ?? 0;
+                restoreName = header.Name;
+                restoreFrom = null;
+                _fans.SetPercent(headerId, GpuTestPercent);
+                written = true;
+                var reached = before;
+                var turning = false;
+                for (var i = 0; i < WaitTicks && !turning; i++)
+                {
+                    await _delay(Tick, ct).ConfigureAwait(false);
+                    reached = _readRpm(headerId) ?? reached;
+                    if (_safetyOverride()) return Fail("Stopped because a safety override or a competing app started.");
+                    turning = reached >= Math.Max(300, before * (1 + MinMove));
+                }
+                Restore(header.Name, headerId, null);
+                written = false;
+                return turning
+                    ? new HeaderTestResult(true, $"Passed: {before:0} RPM, {reached:0} RPM at {GpuTestPercent:0}%. The card has its fan back.", before, reached, reached)
+                    : Fail($"The fan did not follow: {before:0} RPM before, {reached:0} RPM at {GpuTestPercent:0}%.", before, reached);
+            }
 
             var baseline = _readRpm(headerId);
             if (baseline is not > 0) return Fail("No fan is spinning on this header.");

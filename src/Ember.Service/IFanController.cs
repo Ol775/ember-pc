@@ -23,4 +23,10 @@ public interface IFanController : IDisposable
 
     /// <summary>Ends Ember's management of the header. Does not change the fan speed; write the safe speed first.</summary>
     void Release(string headerId);
+
+    /// <summary>
+    /// Gives the fan back to the device's own automatic control (a graphics card's firmware, which stops its fans at idle).
+    /// Only for devices where that restore is safe: the motherboard headers keep using <see cref="Release"/>.
+    /// </summary>
+    void ReleaseToAutomatic(string headerId) => Release(headerId);
 }

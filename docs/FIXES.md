@@ -33,6 +33,15 @@ Problems found while testing on real hardware, to fix. Move an item to the chang
 - [x] **Update check thought Ember was 0.1.0-beta.1.** The version string a build reports ends in a long commit hash (`+4560d21…`), and the parser rejected anything over 40 characters, so the app fell back to beta.1 and would have offered beta-channel users the version they already had. Found 2026-10-13 while testing the update check against the public release.
 - [x] **Screen sync followed nothing on an HDR desktop.** DXGI desktop duplication also hands out frames with no picture update (pointer or metadata only, `AccumulatedFrames == 0`), whose texture is empty on an HDR desktop; Ember read them as a black screen. Found 2026-10-13 with the owner's HDR monitor; confirmed with two HDR videos.
 
-## Open (found while testing)
-
-- [ ] **GPU fan control does not hold a speed on an RTX 3060.** With Experimental and "GPU fan control" on, the header reads Controllable and the fan responds to a mode change (0 to 66% in Performance), but at Super quiet it never settles at the case-curve speed (about 38%, never below the 30% floor): it runs the card's own zero-RPM cycle instead, ramping 66% down to a stop and back up about every 40 seconds. Likely the card's firmware overriding manual fan values near its zero-RPM threshold, or Ember's write not being applied between ramps. Needs a look at what is written and read back each cycle, and perhaps a hold-off while the card is below its own minimum. Until then the option should stay Experimental and say so.
+- [x] **GPU fan control on an RTX 3060: wrong at low speeds, and it could not be tested.** Found 2026-10-13, in three parts.
+      (1) Measured against the card with LibreHardwareMonitor: the fan holds a steady speed only from about 60%; at 40 to 50% it stops and
+      starts, and at 35% it does not turn. Ember's 30% floor sat inside that zone and its stall recovery then kicked the fan to full speed in
+      a loop. Now a graphics card fan is driven only at 60% or more, and given back to the card's own control (which stops the fan quietly at
+      idle) while the curve asks for less than 45% (back under it at 55%, always driven above 70 C or when the temperature is unknown); stall
+      kicks are skipped for it.
+      (2) Switching GPU control off left the card in manual mode at a fixed speed until the PC restarted; the library restore is now used for
+      graphics cards (it is only skipped for motherboard headers).
+      (3) The header test lowered the speed by 20 points and expected the RPM to drop, which does not suit a card that is stopped at idle; for
+      graphics cards it now commands 80%, checks the RPM rises, and hands the fan back.
+      Checked on the PC: Super quiet leaves the fan at the card's silent 0%, Extreme holds it steady at the curve (86%, about 2,150 RPM), and
+      switching control off returns it to the card.

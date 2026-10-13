@@ -407,12 +407,12 @@ public sealed class FanControlLoopTests : IDisposable
     }
 
     [Fact]
-    public void Gpu_floor_is_30_and_turning_it_off_releases_it()
+    public void Gpu_floor_is_60_when_it_is_driven_and_turning_it_off_releases_it()
     {
         var loop = Loop(EmberSettings.Default with { GpuControlEnabled = true, Headers = new[] { Rec(Gpu) } });
         loop.Handle(new SetMode(FanMode.Quiet));
-        loop.OnSnapshot(Snap(30, 30, 30)); // Quiet at 30 = 20, floor 30
-        Assert.Equal(30, LastSet(Gpu));
+        loop.OnSnapshot(Snap(75, 75, 75)); // hot enough that the card is driven, not left to itself
+        Assert.True(LastSet(Gpu) >= 60, "a card fan is never driven below the 60% it can hold");
         Assert.True(loop.Status.GpuControl);
         loop.Handle(new SetGpuControl(false));
         Assert.Contains(("release", Gpu, (double?)null), _fans.Calls);

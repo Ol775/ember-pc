@@ -18,7 +18,10 @@ public sealed class FanControlLoop : BackgroundService
 
     static readonly TempSource[] AllSources = [TempSource.Cpu, TempSource.Gpu, TempSource.Motherboard];
     static readonly TimeSpan ScanEvery = TimeSpan.FromSeconds(5);
-    const double GpuFloor = 30;
+    // Measured on an RTX 3060: its fan only holds a steady speed from about 60%; at 40 to 50% it stops and starts, and below that it
+    // does not turn. So Ember drives a graphics card fan only at 60% or more, and below that hands it to the card's own control, which
+    // stops the fan quietly at idle. The gaps keep it from flapping between the two.
+    const double GpuManualFloor = 60, GpuHandBackBelow = 45, GpuTakeOverAt = 55, GpuHotAbove = 70;
     // Extra care for the CPU: ramp early above these temperatures (on top of the curve, the 90 °C rule and the 100% on a lost sensor).
     static readonly (double TempC, double Percent)[] CpuGuard = [(70, 60), (75, 85), (80, 100)];
     /// <summary>Bounds settings.json: any local user can reach the control pipe, so the list must not grow without limit.</summary>
@@ -47,6 +50,7 @@ public sealed class FanControlLoop : BackgroundService
     readonly Dictionary<string, int> _kicks = new();
     readonly Dictionary<string, double> _learnedFloor = new(); // a stall at X% raises this fan's minimum to X+5% until the service restarts
     readonly HashSet<string> _everSpun = new(); // control ids whose fan has been seen turning since the service started
+    readonly HashSet<string> _gpuAutomatic = new(); // graphics card fans currently handed to the card's own control
     double? _lastCpuTemp;
     bool _stopped;
     readonly BuildFeatures _features;
@@ -207,8 +211,24 @@ public sealed class FanControlLoop : BackgroundService
                 percents[group] = percent;
                 _lastPercent[group] = percent;
             }
-            var floor = IsGpu(header.Id) ? GpuFloor : header.Name == "CPU Fan" ? ReleaseRules.CpuFloor : ReleaseRules.SystemFloor;
+            var floor = IsGpu(header.Id) ? GpuManualFloor : header.Name == "CPU Fan" ? ReleaseRules.CpuFloor : ReleaseRules.SystemFloor;
             _names[header.Id] = header.Name;
+            if (IsGpu(header.Id) && GpuBelongsToCard(header.Id, percent, temps.GetValueOrDefault(TempSource.Gpu)))
+            {
+                driven.Add(header.Id);
+                if (_gpuAutomatic.Add(header.Id))
+                {
+                    try { _fans.ReleaseToAutomatic(header.Id); _written.Remove(header.Id); }
+                    catch (Exception ex)
+                    {
+                        _log.LogError(ex, "Handing {Header} back to the card failed", header.Id);
+                        _gpuAutomatic.Remove(header.Id);
+                        FailSafe(header.Id);
+                    }
+                }
+                continue;
+            }
+            _gpuAutomatic.Remove(header.Id);
             try
             {
                 var target = Math.Max(Math.Max(floor, percent), _learnedFloor.GetValueOrDefault(header.Id));
@@ -228,6 +248,16 @@ public sealed class FanControlLoop : BackgroundService
     }
 
     /// <summary>
+    /// True while a graphics card fan should be left to the card: the curve asks for little (under 45%, and not yet 55% once it is
+    /// being driven) and the GPU is known and not hot. An unknown or hot GPU is always driven, so the safety rules stay in charge.
+    /// </summary>
+    bool GpuBelongsToCard(string id, double percent, double? gpuTemp)
+    {
+        if (gpuTemp is not { } t || t >= GpuHotAbove) return false;
+        return _gpuAutomatic.Contains(id) ? percent < GpuTakeOverAt : percent < GpuHandBackBelow;
+    }
+
+    /// <summary>
     /// A fan that was turning but reads 0 RPM while we ask for a low speed has stalled (low duty cannot restart it).
     /// Give it 100% for a few seconds to spin it up, then go back to the curve. Gives up after a few kicks in a row,
     /// so a fan that is really dead is not blasted forever. Returns the speed to force (0 = no kick).
@@ -235,6 +265,7 @@ public sealed class FanControlLoop : BackgroundService
     double StallKick(string id, double percent)
     {
         var now = _clock.GetUtcNow();
+        if (IsGpu(id)) return 0; // a card fan that is not turning is the card's own zero-RPM mode or its minimum duty, not a stall to kick
         if (percent >= 100 || !_everSpun.Contains(id) || !_rpm.TryGetValue(id, out var rpm)) { _stalledSince.Remove(id); return 0; }
         if (rpm > 0) { _stalledSince.Remove(id); _kickUntil.Remove(id); _kicks.Remove(id); return 0; }
         if (_kickUntil.TryGetValue(id, out var until))
@@ -348,6 +379,7 @@ public sealed class FanControlLoop : BackgroundService
     void ReleaseWhere(Func<string, bool> match)
     {
         foreach (var id in _written.Where(match).ToList()) TryRelease(id);
+        _gpuAutomatic.RemoveWhere(id => match(id));
     }
 
     FanControlStatus BuildStatus(bool safetyOverride)

@@ -37,10 +37,27 @@ internal sealed class LhmFanController(LhmHardware hardware) : IFanController
 
     public void Release(string headerId)
     {
-        // Deliberately no SetDefault: on the NCT6687D it writes back a stale register value and leaves the fan low.
-        // The caller has already written the safe speed, which stays in force.
-        lock (hardware.Gate) _ = Find(headerId);
+        // Deliberately no SetDefault on a motherboard: on the NCT6687D it writes back a stale register value and leaves the fan
+        // low. The caller has already written the safe speed, which stays in force. A graphics card has no such problem, and
+        // without the restore it would stay in manual mode at that speed until the PC restarts.
+        lock (hardware.Gate)
+        {
+            var control = Find(headerId);
+            if (IsGpu(headerId)) control.SetDefault();
+        }
     }
+
+    /// <summary>Back to the card's own fan curve. Checked on an RTX 3060: the control reads Default and the fan follows the card again.</summary>
+    public void ReleaseToAutomatic(string headerId)
+    {
+        lock (hardware.Gate)
+        {
+            var control = Find(headerId);
+            if (IsGpu(headerId)) control.SetDefault(); else throw new InvalidOperationException("Only graphics card fans can be handed back to automatic control.");
+        }
+    }
+
+    static bool IsGpu(string id) => id.StartsWith("/gpu-", StringComparison.Ordinal);
 
     IControl Find(string headerId)
     {

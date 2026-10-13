@@ -30,6 +30,12 @@ internal sealed class FakeFanController(params FanHeader[] headers) : IFanContro
         Calls.Add(("release", headerId, null));
     }
 
+    public void ReleaseToAutomatic(string headerId)
+    {
+        Known(headerId);
+        Calls.Add(("auto", headerId, null));
+    }
+
     void Known(string id)
     {
         if (!headers.Any(h => h.Id == id)) throw new InvalidOperationException($"Unknown fan header {id}.");

@@ -154,3 +154,49 @@ public class HeaderTestRunnerTests
         Assert.False((await Runner(s).RunAsync("/lpc/x/0/control/9", CancellationToken.None)).Passed);
     }
 }
+
+public class GpuHeaderTestTests
+{
+    const string Gpu = "/gpu-nvidia/0/control/1";
+
+    sealed class Card
+    {
+        public FakeFanController Fans { get; } = new(new FanHeader(Gpu, "GPU Fan", true, true, false));
+        public double IdleRpm = 0;
+        public bool Responds = true;
+
+        double? Held { get { var last = Fans.Calls.LastOrDefault(c => c.Id == Gpu); return last.Op == "set" ? last.Value : null; } }
+        public double? Rpm(string _) => Held is { } p && Responds ? 18.0 * p : IdleRpm;     // 1440 RPM at 80%
+        public double? Percent(string _) => Held ?? 0;
+    }
+
+    static HeaderTestRunner Runner(Card c) => new(c.Fans, c.Rpm, c.Percent, (_, _) => Task.CompletedTask);
+
+    [Fact]
+    public async Task A_card_that_sits_still_at_idle_can_pass_and_is_asked_for_a_steady_80_percent()
+    {
+        var c = new Card();
+        var r = await Runner(c).RunAsync(Gpu, CancellationToken.None);
+        Assert.True(r.Passed, r.Message);
+        Assert.Equal(("set", Gpu, (double?)80), c.Fans.Calls[0]);
+        Assert.Equal("release", c.Fans.Calls[^1].Op);          // handed back, even though the fan was never "spinning" to start with
+    }
+
+    [Fact]
+    public async Task A_card_fan_that_does_not_turn_fails_and_is_still_handed_back()
+    {
+        var c = new Card { Responds = false };
+        var r = await Runner(c).RunAsync(Gpu, CancellationToken.None);
+        Assert.False(r.Passed);
+        Assert.Equal("release", c.Fans.Calls[^1].Op);
+    }
+
+    [Fact]
+    public async Task The_card_test_never_goes_below_80_percent_while_it_runs()
+    {
+        var c = new Card();
+        await Runner(c).RunAsync(Gpu, CancellationToken.None);
+        Assert.All(c.Fans.Calls.Where(x => x.Op == "set" && x.Value is { } v && v < 80), x => Assert.True(x.Value >= 30));   // only the safe release speed
+        Assert.DoesNotContain(c.Fans.Calls, x => x.Op == "set" && x.Value is > 40 and < 60);       // never the card's stop-and-start zone
+    }
+}
