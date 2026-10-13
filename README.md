@@ -45,10 +45,11 @@
   <img src="docs/images/lights.png" alt="Lights page with the device canvas, per-LED painting and gradient tools" width="48%">
 </p>
 <p align="center">
-  <img src="docs/images/fan-headers.png" alt="Devices page with every device and the fan header tests" width="48%">
-  <img src="docs/images/settings.png" alt="Settings page" width="48%">
+  <img src="docs/images/fan-headers.png" alt="Devices page with every integration and device" width="48%">
+  <img src="docs/images/settings.png" alt="Settings, Appearance: theme, colour scheme, accent colour and highlights" width="48%">
 </p>
 <p align="center">
+  <img src="docs/images/updates.png" alt="Settings, Updates: check for updates and Update now" width="48%">
   <img src="docs/images/installer.png" alt="The Ember installer" width="48%">
 </p>
 
