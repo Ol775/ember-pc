@@ -12,7 +12,7 @@ mode to Performance.
       right segments, and gradients run in the right direction. Seen: _
 - [ ] **Per-key keyboard layout**: reactive keys, ripples and per-key painting line up with the real keys on the
       Logitech keyboard (and on a keyboard from another brand through OpenRGB). Seen: _
-- [ ] **HDR screen colours**: screen sync on an HDR display gives sensible colours, not washed out or too dark. Seen: _
+- [x] **HDR screen colours** (HDR desktop on the main monitor, two HDR videos, seen by the owner 2026-10-13; needed the empty-frame fix below): screen sync on an HDR display gives sensible colours, not washed out or too dark. Seen: _
 - [ ] **Logitech lighting on more keyboards and mice**: per-device colour and effects work on each model tried. Seen: _
 - [ ] **Game detection**: with Experimental on, a game starting raises the fans, and closing it releases them.
       A browser or video player is not mistaken for a game. Seen: _
