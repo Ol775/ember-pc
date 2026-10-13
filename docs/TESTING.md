@@ -26,10 +26,10 @@ window and keeps the app running, and the tooltip shows the mode and CPU tempera
 reach the tray): the menu, double-click to open, and Quit.
 
 
-- [ ] Closing the window with "Keep running in the tray" on hides it; the tray icon stays and fan control carries on.
-- [ ] Double-clicking the tray icon, or Open Ember in its menu, brings the window back to the front.
-- [ ] Quit Ember in the tray menu really closes the app (no Ember.App process left in Task Manager).
-- [ ] The fan mode items in the tray menu change the mode, and the tick follows the current mode.
+- [x] Closing the window with "Keep running in the tray" on hides it; the tray icon stays and fan control carries on.
+- [x] Double-clicking the tray icon, or Open Ember in its menu, brings the window back to the front.
+- [x] Quit Ember in the tray menu really closes the app (no Ember.App process left in Task Manager).
+- [ ] The fan mode items in the tray menu change the mode, and the tick follows the current mode. (Menu shows and works per the owner 2026-10-13, but a watch on the service never saw the mode leave Super quiet: repeat while watching.)
 - [ ] With "Start Ember when I sign in" and "Start minimised" both on: sign out and in again, Ember starts in the
       tray with no window.
 - [ ] With "Keep running in the tray" off, closing the window closes the app as before.

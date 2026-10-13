@@ -25,3 +25,8 @@ Problems found while testing on real hardware, to fix. Move an item to the chang
 - [x] **Devices page "Use" switch did nothing for the motherboard and NZXT.** Their OpenRGB ids are about 115 characters (they contain
       the Windows device path) and the saved list only accepted ids up to 80, so the change was silently rejected. The limit is now 400.
       Found 2026-10-13 and confirmed on the PC (NZXT shows Disabled and is left alone).
+
+## Notes from testing
+
+- The tray icon could not be opened on this PC until Explorer was restarted (two Explorer sessions were running, the second belonging to
+  a disconnected Plex user). Not an Ember fault, but worth a line in a troubleshooting page.
