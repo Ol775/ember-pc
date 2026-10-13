@@ -23,7 +23,6 @@ What is done, what is being worked on and what is planned. See [CHANGELOG.md](CH
 - Tray icon, keep running in the tray, and start minimised
 - AI assist: learns your temperatures and noise preference to suggest a curve you approve
 - Continuous integration builds, and a release workflow
-- Signing in the release build (needs a code-signing certificate, see docs/SIGNING.md)
 - Paint for several devices at once, and a paint library
 - More effects: fire, rain, and an effect per key group on keyboards
 
@@ -35,7 +34,6 @@ What is done, what is being worked on and what is planned. See [CHANGELOG.md](CH
 
 ## Next
 
-- A code-signing certificate, so Windows does not warn about an unknown publisher
 - Hardware checks of everything under "In progress" and in docs/TESTING.md
 
 ## Works through OpenRGB
