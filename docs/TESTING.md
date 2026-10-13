@@ -14,7 +14,7 @@ mode to Performance.
       Logitech keyboard (and on a keyboard from another brand through OpenRGB). Seen: _
 - [x] **HDR screen colours** (HDR desktop on the main monitor, two HDR videos, seen by the owner 2026-10-13; needed the empty-frame fix below): screen sync on an HDR display gives sensible colours, not washed out or too dark. Seen: _
 - [ ] **Logitech lighting on more keyboards and mice**: per-device colour and effects work on each model tried. Seen: _
-- [ ] **Game detection**: with Experimental on, a game starting raises the fans, and closing it releases them.
+- [x] **Game detection** (LEGO Batman: Legacy of the Dark Knight, 2026-10-13: detected about 10 s after the GPU passed 50%, fans to Performance, back to Super quiet within seconds of leaving, detected again on return; the browser-not-mistaken-for-a-game part is covered by the exclusion list, not yet tried with a full-screen browser at high GPU load): with Experimental on, a game starting raises the fans, and closing it releases them.
       A browser or video player is not mistaken for a game. Seen: _
 - [x] **GPU fan control** (RTX 3060, 2026-10-13, after the fixes in docs/FIXES.md: silent card idle in Super quiet, steady curve-following in Extreme, hand-back on switching off): with Experimental on and the GPU option ticked, the GPU fans follow the curve, and
       automatic control comes back when Ember stops. Seen: _
