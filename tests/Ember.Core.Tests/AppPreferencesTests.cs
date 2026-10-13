@@ -70,6 +70,28 @@ public class AppPreferencesTests : IDisposable
     }
 
     [Fact]
+    public void Ai_settings_default_to_off_and_balanced_and_survive_a_save()
+    {
+        Assert.False(AppPreferences.Default.AiLearning);
+        Assert.Equal(0.35, AppPreferences.Default.AiPreference);
+        var store = new PreferencesStore(PathFor("ai.json"));
+        var prefs = AppPreferences.Default with { AiLearning = true, AiPreference = 0.8 };
+        Assert.True(store.TrySave(prefs));
+        Assert.Equal(prefs, store.Load());
+    }
+
+    [Theory]
+    [InlineData("7", 1.0)]
+    [InlineData("-3", 0.0)]
+    [InlineData("\"loud\"", 0.35)]
+    public void A_wild_ai_preference_is_clamped_or_defaulted(string value, double expected)
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(PathFor("p.json"), "{\"AiPreference\":" + value + "}");
+        Assert.Equal(expected, new PreferencesStore(PathFor("p.json")).Load().AiPreference);
+    }
+
+    [Fact]
     public void Tray_settings_default_to_off_and_survive_a_save()
     {
         Assert.False(AppPreferences.Default.KeepInTray);

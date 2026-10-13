@@ -87,7 +87,7 @@ public static class FansViewState
         return new HeaderRow(h.Id, h.Name, text, canEnable, h.State == HeaderState.Enabled, canTest, reason);
     }
 
-    public static string Label(FanMode m) => m switch { FanMode.Ai => "AI (coming later)", FanMode.SuperQuiet => "Super quiet", _ => m.ToString() };
+    public static string Label(FanMode m) => m switch { FanMode.Ai => "AI (see AI assist below)", FanMode.SuperQuiet => "Super quiet", _ => m.ToString() };
 
     static string Join(IReadOnlyList<string> items) => items.Count switch
     {

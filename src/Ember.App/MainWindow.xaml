@@ -203,6 +203,10 @@
                     <local:CurveEditor x:Name="Curve" />
                 </GroupBox>
 
+                <GroupBox Header="AI assist" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="AI assist">
+                    <StackPanel x:Name="AiHost" />
+                </GroupBox>
+
                 <GroupBox Header="Games" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Games"
                           Visibility="{Binding BetaGamesVisibility}">
                     <StackPanel>

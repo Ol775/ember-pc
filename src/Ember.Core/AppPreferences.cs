@@ -10,7 +10,7 @@ public enum UpdateChannel { Stable, Beta }
 
 public sealed record AppPreferences(TemperatureUnit Unit, StartPage StartPage, ThemeMode Theme = ThemeMode.Dark,
     AccentChoice Accent = AccentChoice.Orange, UpdateChannel Channel = UpdateChannel.Stable, bool AutoCheckUpdates = false, int AcceptedTerms = 0,
-    bool KeepInTray = false, bool StartMinimised = false)
+    bool KeepInTray = false, bool StartMinimised = false, bool AiLearning = false, double AiPreference = 0.35)
 {
     public static readonly AppPreferences Default = new(TemperatureUnit.Celsius, StartPage.Dashboard);
 }
@@ -45,13 +45,17 @@ public sealed class PreferencesStore(string path)
                 Field(doc.RootElement, "AutoCheckUpdates", AppPreferences.Default.AutoCheckUpdates),
                 Math.Clamp(Field(doc.RootElement, "AcceptedTerms", AppPreferences.Default.AcceptedTerms), 0, 1000),
                 Field(doc.RootElement, "KeepInTray", AppPreferences.Default.KeepInTray),
-                Field(doc.RootElement, "StartMinimised", AppPreferences.Default.StartMinimised));
+                Field(doc.RootElement, "StartMinimised", AppPreferences.Default.StartMinimised),
+                Field(doc.RootElement, "AiLearning", AppPreferences.Default.AiLearning),
+                ClampUnit(Field(doc.RootElement, "AiPreference", AppPreferences.Default.AiPreference)));
         }
         catch (Exception)
         {
             return AppPreferences.Default;
         }
     }
+
+    static double ClampUnit(double v) => double.IsFinite(v) ? Math.Clamp(v, 0, 1) : AppPreferences.Default.AiPreference;
 
     static T Field<T>(JsonElement root, string name, T fallback)
     {

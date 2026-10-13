@@ -16,7 +16,7 @@ public class FansViewStateTests
         Assert.All(v.Modes.Where(m => m.Mode != FanMode.Ai), m => Assert.True(m.Enabled));
         var ai = v.Modes.Single(m => m.Mode == FanMode.Ai);
         Assert.False(ai.Enabled);
-        Assert.Equal("AI (coming later)", ai.Label);
+        Assert.Equal("AI (see AI assist below)", ai.Label);
     }
 
     [Fact]

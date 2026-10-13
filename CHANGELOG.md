@@ -2,6 +2,22 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 0.1.0-beta.5 (2026-10-13)
+
+### Added
+
+- **Tray icon.** Ember now has an icon in the notification area. Double-click it to open the window; its menu changes the fan mode or quits Ember. Settings has two new switches: "Keep running in the tray when I close the window" and "Start minimised, in the tray" (used when Ember starts with Windows). Both are off by default.
+- **AI assist** (Fans page). If you switch on "Learn from my temperatures", Ember keeps a count of how hot your CPU and case run, one count per degree, in a small file on your PC. After about two hours it can suggest fan curves that stay low through your usual range and only climb above it, tilted towards quiet or cool with a slider. It only suggests: nothing changes until you press Apply, and the safety rules (full speed at 90 °C) and the service's own curve checks still apply.
+- **More effects.** "Fire" (flames that are hot at the bottom and flicker upwards), "Rain" (drops that fall down a keyboard or run along a strip) and "Key group" (any of Colour, Wave, Breathing, Fire or Rain on just the function row, number row, letters, space bar row, arrows and navigation, or number pad).
+- **Paint several devices at once.** A switch on the Lights page applies fills to every device on the canvas, and a gradient or rainbow then runs across the whole canvas so devices side by side share one picture.
+- **Paint library.** Save the painted LEDs of a device under a name, and use a saved picture on the selected device or on all of them. Rename and delete are there too. The pictures are plain files in your Ember folder that you can copy to another PC.
+- **Continuous integration.** The repository builds and tests itself on GitHub for every push, and a release workflow builds the zip and the installer.
+- **Signing.** The release build signs Ember's programs and the installer when a code-signing certificate is provided (see docs/SIGNING.md). Until one is, Windows still shows "Unknown publisher".
+
+### Changed
+
+- The AI chip in the mode list now points to the AI assist panel instead of saying "coming later". It is not a mode the service runs.
+
 ## 0.1.0-beta.4 (2026-10-13)
 
 ### Added

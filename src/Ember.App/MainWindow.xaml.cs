@@ -27,6 +27,10 @@ public partial class MainWindow : Window
     readonly KeyWatcher _keys;
     readonly DxgiGrabber _dxgi = new();
     readonly TrayIcon _tray;
+    readonly ThermalStore _thermalStore = new(ThermalStore.DefaultPath);
+    readonly ThermalProfile _thermal = new ThermalStore(ThermalStore.DefaultPath).Load();
+    readonly AiPanel _ai;
+    readonly DispatcherTimer _thermalSave;
     bool _quitting;
     Ember.Lighting.Color[]? _screen;
     double? _gpuLoad, _cpuTemp, _gpuTemp, _caseTemp;
@@ -59,6 +63,7 @@ public partial class MainWindow : Window
             _gpuTemp = s.Stale ? null : sum.GpuTemp;
             _lights.SetInputs(s.Stale ? null : sum.CpuTemp, s.Stale ? null : sum.GpuTemp, _screen);
             _caseTemp = s.Stale ? null : new[] { sum.CpuTemp, sum.GpuTemp, sum.MotherboardTemp }.Where(v => v is not null).Max();
+            if (_vm.Prefs.AiLearning && !s.Stale) _thermal.Add(DateTimeOffset.UtcNow, _cpuTemp, _caseTemp);
         });
 
         // Throttle: redraw at most twice a second, whatever the snapshot rate.
@@ -92,6 +97,10 @@ public partial class MainWindow : Window
         Curve.CopyRequested += OnCurveCopy;
 
         _run = Task.Run(() => connection.RunAsync(_cts.Token));
+        _ai = new AiPanel(_thermal, () => _vm.Prefs, p => Remember(p), ApplySuggestionAsync, ForgetThermal);
+        AiHost.Children.Add(_ai);
+        _thermalSave = new DispatcherTimer(TimeSpan.FromMinutes(5), DispatcherPriority.Background, (_, _) => SaveThermal(), Dispatcher);
+        _thermalSave.Start();
         _tray = new TrayIcon(ShowFromTray, Quit, mode => _ = SendAsync(new SetMode(mode)));
         Closing += OnClosing;
         Closed += OnClosed;
@@ -288,6 +297,31 @@ public partial class MainWindow : Window
         if (!reply.Ok) Curve.ReportFailure("The service did not accept that curve: " + (reply.Error ?? "unknown reason") + ".");
     }
 
+    // ---- AI assist ----
+
+    /// <summary>Applies a suggestion the owner approved: both manual curves, then Manual mode. The service checks the curves again against the safety rules.</summary>
+    async Task<string?> ApplySuggestionAsync(CurveSuggestion s)
+    {
+        if (!_vm.FansPage.Curves.Equals(ManualCurves.Default)
+            && MessageBox.Show(this, "This replaces both of your manual curves with the suggestion. Continue?", "Apply the suggested curves",
+                MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return "Nothing was changed.";
+        foreach (var (group, points) in new[] { (CurveGroup.Cpu, s.Cpu), (CurveGroup.Case, s.Case) })
+        {
+            var reply = await ControlClient.SendAsync(new SetCurve(group, points));
+            if (!reply.Ok) return "The service did not accept the curve: " + (reply.Error ?? "unknown reason") + ".";
+        }
+        var mode = await ControlClient.SendAsync(new SetMode(FanMode.Manual));
+        return mode.Ok ? null : "The curves were saved but Manual mode could not be switched on: " + (mode.Error ?? "unknown reason") + ".";
+    }
+
+    void ForgetThermal()
+    {
+        _thermal.Clear();
+        _thermalStore.Delete();
+    }
+
+    void SaveThermal() { if (_thermal.LastSample is not null) _thermalStore.TrySave(_thermal); }
+
     async void OnCurveCopy(IReadOnlyList<CurvePoint> points)
     {
         if (!_vm.FansPage.Curves.Equals(ManualCurves.Default)
@@ -478,6 +512,7 @@ public partial class MainWindow : Window
         if (DevicesPageView.Visibility == Visibility.Visible) Devices.Update(_vm, _lights);
         // WPF only announces a live region when the app raises LiveRegionChanged itself.
         Curve.SetState(_vm.FansPage.Mode, _vm.FansPage.Curves, _cpuTemp, _caseTemp);
+        _ai.Refresh();
         _tray.SetMode(_vm.FansPage.Mode, _cpuTemp is { } t ? $"CPU {t:0} °C" : null);
         if (_vm.ConnectionText != _announcedConnection)
         {
@@ -512,6 +547,8 @@ public partial class MainWindow : Window
         _refresh.Stop();
         _gameTimer.Stop();
         _screenTimer.Stop();
+        _thermalSave.Stop();
+        SaveThermal();
         _tray.Dispose();
         _audio.Dispose();
         _keys.Dispose();

@@ -60,10 +60,14 @@ UI automation, so they still need a person to click them.
 - [ ] Deleting and renaming library entries works, and a damaged file in the library folder is ignored.
 - [ ] Importing a paint file from another PC works.
 
-## AI mode
+## AI assist
 
-- [ ] After a few days of use, AI mode shows a suggested curve and explains it.
+Seen on the PC with seeded learning data: the panel shows, "Suggest a curve" gives readable notes and two curves, and the
+Apply button was pressed (the mode and curves were put back to Super quiet and the Normal curve afterwards). Not yet seen:
+real learning over days, and that the applied curve keeps temperatures sensible.
+
+- [ ] After a few days of use, AI assist shows a suggested curve and explains it.
 - [ ] Nothing changes on the fans until Apply is pressed; Dismiss leaves the current curve alone.
 - [ ] The applied curve still obeys the safety rules (full speed at 90 °C, never below the stall floor).
-- [ ] The suggestion follows the noise preference slider (quieter to cooler).
+- [ ] The suggestion follows the noise or cooling slider (quieter to cooler).
 - [ ] The learning data stays on this PC (see PRIVACY.md) and can be cleared from Settings.

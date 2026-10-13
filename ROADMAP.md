@@ -19,6 +19,12 @@ What is done, what is being worked on and what is planned. See [CHANGELOG.md](CH
 - Spectrum bars, ripples and reactive keys
 - An installer with terms, runtimes included, and uninstall from Windows
 - Terms of Use, Privacy and third-party notices inside the app
+- Tray icon, keep running in the tray, and start minimised
+- AI assist: learns your temperatures and noise preference to suggest a curve you approve
+- Continuous integration builds, and a release workflow
+- Signing in the release build (needs a code-signing certificate, see docs/SIGNING.md)
+- Paint for several devices at once, and a paint library
+- More effects: fire, rain, and an effect per key group on keyboards
 
 ## In progress
 
@@ -28,12 +34,8 @@ What is done, what is being worked on and what is planned. See [CHANGELOG.md](CH
 
 ## Next
 
-- Tray icon and start minimised
-- AI mode: learns your temperatures and noise preference to suggest a curve you approve
-- Continuous integration builds
-- Signed installer, so Windows does not warn about an unknown publisher
-- Per-LED painting for several devices at once, and a library of shared paint files
-- More effects: fire, rain, an effect per key group on keyboards
+- A code-signing certificate, so Windows does not warn about an unknown publisher
+- Hardware checks of everything under "In progress" and in docs/TESTING.md
 
 ## Works through OpenRGB
 
