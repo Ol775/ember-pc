@@ -20,6 +20,9 @@ public sealed record LightingInputs(double Seconds, double? CpuTemp = null, doub
 [JsonDerivedType(typeof(RippleEffect), "ripple")]
 [JsonDerivedType(typeof(AudioBarsEffect), "audiobars")]
 [JsonDerivedType(typeof(ReactiveKeysEffect), "reactivekeys")]
+[JsonDerivedType(typeof(FireEffect), "fire")]
+[JsonDerivedType(typeof(RainEffect), "rain")]
+[JsonDerivedType(typeof(KeyGroupEffect), "keygroup")]
 public abstract record Effect
 {
     public abstract Color Sample(double x, double y, LightingInputs inputs);

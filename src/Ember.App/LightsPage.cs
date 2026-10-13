@@ -137,6 +137,9 @@ public sealed class LightsPage : UserControl
         add.Children.Add(Pill("Spectrum bars", () => AddLayer(new AudioBarsEffect(new LColor(0.1, 1.0, 0.3), new LColor(1.0, 0.1, 0.1)))));
         add.Children.Add(Pill("Ripples", () => AddLayer(new RippleEffect(new LColor(0.2, 0.6, 1.0)))));
         add.Children.Add(Pill("Reactive keys", () => AddLayer(new ReactiveKeysEffect(new LColor(1.0, 1.0, 1.0), new LColor(1.0, 0.3, 0.05)))));
+        add.Children.Add(Pill("Fire", () => AddLayer(new FireEffect(new LColor(1.0, 0.2, 0.0), new LColor(1.0, 0.9, 0.3)))));
+        add.Children.Add(Pill("Rain", () => AddLayer(new RainEffect(new LColor(0.2, 0.6, 1.0)))));
+        add.Children.Add(Pill("Key group", () => AddLayer(new KeyGroupEffect(KeyGroup.FunctionRow, new StaticEffect(new LColor(1.0, 0.45, 0.1))))));
         layerBox.Children.Add(add);
         layerBox.Children.Add(Text("Layers are stacked like in a photo editor: the top one is painted last.", muted: true));
         layerBox.Children.Add(_layers);
@@ -650,71 +653,111 @@ public sealed class LightsPage : UserControl
         _editor.Children.Add(Segments(["Normal", "Add", "Screen", "Multiply"], (int)layer.Blend, i => EditLayer(id, x => x with { Blend = (BlendMode)i }), "Blend" + id));
         _editor.Children.Add(Labelled("Opacity", 0, 100, layer.Opacity * 100, v => $"{v:0}%", v => EditLayer(id, x => x with { Opacity = v / 100 }), 1));
 
-        void Effect(Func<Effect, Effect> change) => EditLayer(id, x => x with { Effect = change(x.Effect) });
+        EffectFields(layer.Effect, id, change => EditLayer(id, x => x with { Effect = change(x.Effect) }));
+    }
 
-        switch (layer.Effect)
+    /// <summary>The fields for one effect. <paramref name="apply"/> hands a change of the effect to whoever owns it (a layer, or the group effect around it).</summary>
+    void EffectFields(Effect effect, string id, Action<Func<Effect, Effect>> apply)
+    {
+        switch (effect)
         {
             case StaticEffect e:
-                _editor.Children.Add(ColorField("Colour", e.Color, c => Effect(x => ((StaticEffect)x) with { Color = c })));
+                _editor.Children.Add(ColorField("Colour", e.Color, c => apply(x => ((StaticEffect)x) with { Color = c })));
                 break;
             case WaveEffect e:
-                _editor.Children.Add(ColorField("First colour", e.A, c => Effect(x => ((WaveEffect)x) with { A = c })));
-                _editor.Children.Add(ColorField("Second colour", e.B, c => Effect(x => ((WaveEffect)x) with { B = c })));
-                _editor.Children.Add(Labelled("Speed", 0, 200, e.Speed * 100, v => $"{v / 100:0.00} /s", v => Effect(x => ((WaveEffect)x) with { Speed = v / 100 }), 1));
-                _editor.Children.Add(Labelled("Wavelength", 10, 400, e.Wavelength * 100, v => $"{v / 100:0.0} wide", v => Effect(x => ((WaveEffect)x) with { Wavelength = v / 100 }), 1));
-                _editor.Children.Add(Labelled("Direction", 0, 360, e.AngleDegrees, v => $"{v:0}°", v => Effect(x => ((WaveEffect)x) with { AngleDegrees = v }), 1));
+                _editor.Children.Add(ColorField("First colour", e.A, c => apply(x => ((WaveEffect)x) with { A = c })));
+                _editor.Children.Add(ColorField("Second colour", e.B, c => apply(x => ((WaveEffect)x) with { B = c })));
+                _editor.Children.Add(Labelled("Speed", 0, 200, e.Speed * 100, v => $"{v / 100:0.00} /s", v => apply(x => ((WaveEffect)x) with { Speed = v / 100 }), 1));
+                _editor.Children.Add(Labelled("Wavelength", 10, 400, e.Wavelength * 100, v => $"{v / 100:0.0} wide", v => apply(x => ((WaveEffect)x) with { Wavelength = v / 100 }), 1));
+                _editor.Children.Add(Labelled("Direction", 0, 360, e.AngleDegrees, v => $"{v:0}°", v => apply(x => ((WaveEffect)x) with { AngleDegrees = v }), 1));
                 break;
             case BreathingEffect e:
-                _editor.Children.Add(ColorField("Colour", e.Color, c => Effect(x => ((BreathingEffect)x) with { Color = c })));
-                _editor.Children.Add(Labelled("One breath takes", 1, 20, e.PeriodSeconds, v => $"{v:0.#} s", v => Effect(x => ((BreathingEffect)x) with { PeriodSeconds = v }), 0.5));
+                _editor.Children.Add(ColorField("Colour", e.Color, c => apply(x => ((BreathingEffect)x) with { Color = c })));
+                _editor.Children.Add(Labelled("One breath takes", 1, 20, e.PeriodSeconds, v => $"{v:0.#} s", v => apply(x => ((BreathingEffect)x) with { PeriodSeconds = v }), 0.5));
                 break;
             case TemperatureGlowEffect e:
                 _editor.Children.Add(Text("Follows the temperature of", muted: true));
-                _editor.Children.Add(Segments(["CPU", "GPU"], (int)e.Source, i => Effect(x => ((TemperatureGlowEffect)x) with { Source = (TempSensor)i }), "Sensor" + id));
-                _editor.Children.Add(ColorField("When cool", e.Cold, c => Effect(x => ((TemperatureGlowEffect)x) with { Cold = c })));
-                _editor.Children.Add(ColorField("When hot", e.Hot, c => Effect(x => ((TemperatureGlowEffect)x) with { Hot = c })));
-                _editor.Children.Add(Labelled("Cool up to", 20, 100, e.MinC, v => $"{v:0} °C", v => Effect(x => ((TemperatureGlowEffect)x) with { MinC = v }), 1));
-                _editor.Children.Add(Labelled("Hot from", 20, 100, e.MaxC, v => $"{v:0} °C", v => Effect(x => ((TemperatureGlowEffect)x) with { MaxC = v }), 1));
+                _editor.Children.Add(Segments(["CPU", "GPU"], (int)e.Source, i => apply(x => ((TemperatureGlowEffect)x) with { Source = (TempSensor)i }), "Sensor" + id));
+                _editor.Children.Add(ColorField("When cool", e.Cold, c => apply(x => ((TemperatureGlowEffect)x) with { Cold = c })));
+                _editor.Children.Add(ColorField("When hot", e.Hot, c => apply(x => ((TemperatureGlowEffect)x) with { Hot = c })));
+                _editor.Children.Add(Labelled("Cool up to", 20, 100, e.MinC, v => $"{v:0} °C", v => apply(x => ((TemperatureGlowEffect)x) with { MinC = v }), 1));
+                _editor.Children.Add(Labelled("Hot from", 20, 100, e.MaxC, v => $"{v:0} °C", v => apply(x => ((TemperatureGlowEffect)x) with { MaxC = v }), 1));
                 break;
             case AudioPulseEffect e:
                 _editor.Children.Add(Text("Follows this part of the sound", muted: true));
-                _editor.Children.Add(Segments(["Everything", "Bass", "Middle", "Treble"], (int)e.Band, i => Effect(x => ((AudioPulseEffect)x) with { Band = (AudioBand)i }), "Band" + id));
-                _editor.Children.Add(ColorField("When quiet", e.Quiet, c => Effect(x => ((AudioPulseEffect)x) with { Quiet = c })));
-                _editor.Children.Add(ColorField("When loud", e.Loud, c => Effect(x => ((AudioPulseEffect)x) with { Loud = c })));
-                _editor.Children.Add(Labelled("Sensitivity", 10, 400, e.Sensitivity * 100, v => $"{v / 100:0.0}x", v => Effect(x => ((AudioPulseEffect)x) with { Sensitivity = v / 100 }), 5));
+                _editor.Children.Add(Segments(["Everything", "Bass", "Middle", "Treble"], (int)e.Band, i => apply(x => ((AudioPulseEffect)x) with { Band = (AudioBand)i }), "Band" + id));
+                _editor.Children.Add(ColorField("When quiet", e.Quiet, c => apply(x => ((AudioPulseEffect)x) with { Quiet = c })));
+                _editor.Children.Add(ColorField("When loud", e.Loud, c => apply(x => ((AudioPulseEffect)x) with { Loud = c })));
+                _editor.Children.Add(Labelled("Sensitivity", 10, 400, e.Sensitivity * 100, v => $"{v / 100:0.0}x", v => apply(x => ((AudioPulseEffect)x) with { Sensitivity = v / 100 }), 5));
                 _editor.Children.Add(Text("Listens to what your PC is playing while this layer is on. Nothing is recorded or kept.", muted: true));
                 break;
             case AudioSpectrumEffect e:
-                _editor.Children.Add(ColorField("Low pitches", e.Low, c => Effect(x => ((AudioSpectrumEffect)x) with { Low = c })));
-                _editor.Children.Add(ColorField("High pitches", e.High, c => Effect(x => ((AudioSpectrumEffect)x) with { High = c })));
-                _editor.Children.Add(Labelled("Sensitivity", 10, 400, e.Sensitivity * 100, v => $"{v / 100:0.0}x", v => Effect(x => ((AudioSpectrumEffect)x) with { Sensitivity = v / 100 }), 5));
+                _editor.Children.Add(ColorField("Low pitches", e.Low, c => apply(x => ((AudioSpectrumEffect)x) with { Low = c })));
+                _editor.Children.Add(ColorField("High pitches", e.High, c => apply(x => ((AudioSpectrumEffect)x) with { High = c })));
+                _editor.Children.Add(Labelled("Sensitivity", 10, 400, e.Sensitivity * 100, v => $"{v / 100:0.0}x", v => apply(x => ((AudioSpectrumEffect)x) with { Sensitivity = v / 100 }), 5));
                 _editor.Children.Add(Text("Low pitches on the left of the canvas, high on the right. Listens to what your PC is playing while this layer is on. Nothing is recorded or kept.", muted: true));
                 break;
             case AudioBarsEffect e:
-                _editor.Children.Add(ColorField("Bottom of the bars", e.Low, c => Effect(x => ((AudioBarsEffect)x) with { Low = c })));
-                _editor.Children.Add(ColorField("Top of the bars", e.High, c => Effect(x => ((AudioBarsEffect)x) with { High = c })));
-                _editor.Children.Add(Labelled("Sensitivity", 10, 400, e.Sensitivity * 100, v => $"{v / 100:0.0}x", v => Effect(x => ((AudioBarsEffect)x) with { Sensitivity = v / 100 }), 5));
+                _editor.Children.Add(ColorField("Bottom of the bars", e.Low, c => apply(x => ((AudioBarsEffect)x) with { Low = c })));
+                _editor.Children.Add(ColorField("Top of the bars", e.High, c => apply(x => ((AudioBarsEffect)x) with { High = c })));
+                _editor.Children.Add(Labelled("Sensitivity", 10, 400, e.Sensitivity * 100, v => $"{v / 100:0.0}x", v => apply(x => ((AudioBarsEffect)x) with { Sensitivity = v / 100 }), 5));
                 _editor.Children.Add(Text("Drawn on", muted: true));
-                _editor.Children.Add(Segments(["Each device", "The whole canvas"], (int)e.Scope, i => Effect(x => ((AudioBarsEffect)x) with { Scope = (EffectScope)i }), "BarsScope" + id));
+                _editor.Children.Add(Segments(["Each device", "The whole canvas"], (int)e.Scope, i => apply(x => ((AudioBarsEffect)x) with { Scope = (EffectScope)i }), "BarsScope" + id));
                 _editor.Children.Add(Text("One bar per pitch, low on the left. On a keyboard the bars rise up the keys; on a single strip they become brightness. Listens to what your PC is playing while this layer is on. Nothing is recorded or kept.", muted: true));
                 break;
             case RippleEffect e:
-                _editor.Children.Add(ColorField("Ring colour", e.Colour, c => Effect(x => ((RippleEffect)x) with { Colour = c })));
-                _editor.Children.Add(Labelled("A new ring every", 0.2, 10, e.IntervalSeconds, v => $"{v:0.0} s", v => Effect(x => ((RippleEffect)x) with { IntervalSeconds = v }), 0.1));
-                _editor.Children.Add(Labelled("Speed", 5, 200, e.Speed * 100, v => $"{v / 100:0.00} /s", v => Effect(x => ((RippleEffect)x) with { Speed = v / 100 }), 1));
-                _editor.Children.Add(Labelled("Ring width", 2, 60, e.Width * 100, v => $"{v:0}%", v => Effect(x => ((RippleEffect)x) with { Width = v / 100 }), 1));
-                _editor.Children.Add(Labelled("Centre across", 0, 100, e.CenterX * 100, v => $"{v:0}%", v => Effect(x => ((RippleEffect)x) with { CenterX = v / 100 }), 1));
-                _editor.Children.Add(Labelled("Centre down", 0, 100, e.CenterY * 100, v => $"{v:0}%", v => Effect(x => ((RippleEffect)x) with { CenterY = v / 100 }), 1));
+                _editor.Children.Add(ColorField("Ring colour", e.Colour, c => apply(x => ((RippleEffect)x) with { Colour = c })));
+                _editor.Children.Add(Labelled("A new ring every", 0.2, 10, e.IntervalSeconds, v => $"{v:0.0} s", v => apply(x => ((RippleEffect)x) with { IntervalSeconds = v }), 0.1));
+                _editor.Children.Add(Labelled("Speed", 5, 200, e.Speed * 100, v => $"{v / 100:0.00} /s", v => apply(x => ((RippleEffect)x) with { Speed = v / 100 }), 1));
+                _editor.Children.Add(Labelled("Ring width", 2, 60, e.Width * 100, v => $"{v:0}%", v => apply(x => ((RippleEffect)x) with { Width = v / 100 }), 1));
+                _editor.Children.Add(Labelled("Centre across", 0, 100, e.CenterX * 100, v => $"{v:0}%", v => apply(x => ((RippleEffect)x) with { CenterX = v / 100 }), 1));
+                _editor.Children.Add(Labelled("Centre down", 0, 100, e.CenterY * 100, v => $"{v:0}%", v => apply(x => ((RippleEffect)x) with { CenterY = v / 100 }), 1));
                 _editor.Children.Add(Text("Drawn on", muted: true));
-                _editor.Children.Add(Segments(["The whole canvas", "Each device"], (int)e.Scope == 1 ? 0 : 1, i => Effect(x => ((RippleEffect)x) with { Scope = i == 0 ? EffectScope.Canvas : EffectScope.Device }), "RippleScope" + id));
+                _editor.Children.Add(Segments(["The whole canvas", "Each device"], (int)e.Scope == 1 ? 0 : 1, i => apply(x => ((RippleEffect)x) with { Scope = i == 0 ? EffectScope.Canvas : EffectScope.Device }), "RippleScope" + id));
                 _editor.Children.Add(Text("Only the rings are coloured, so put this above another layer to see it spread over it.", muted: true));
                 break;
             case ReactiveKeysEffect e:
-                _editor.Children.Add(ColorField("Key colour", e.Colour, c => Effect(x => ((ReactiveKeysEffect)x) with { Colour = c })));
-                _editor.Children.Add(ColorField("Fades to", e.Tail, c => Effect(x => ((ReactiveKeysEffect)x) with { Tail = c })));
-                _editor.Children.Add(Labelled("Fade out over", 0.1, 4, e.FadeSeconds, v => $"{v:0.0} s", v => Effect(x => ((ReactiveKeysEffect)x) with { FadeSeconds = v }), 0.1));
-                _editor.Children.Add(Labelled("Glow size", 3, 40, e.Radius * 100, v => $"{v:0}%", v => Effect(x => ((ReactiveKeysEffect)x) with { Radius = v / 100 }), 1));
+                _editor.Children.Add(ColorField("Key colour", e.Colour, c => apply(x => ((ReactiveKeysEffect)x) with { Colour = c })));
+                _editor.Children.Add(ColorField("Fades to", e.Tail, c => apply(x => ((ReactiveKeysEffect)x) with { Tail = c })));
+                _editor.Children.Add(Labelled("Fade out over", 0.1, 4, e.FadeSeconds, v => $"{v:0.0} s", v => apply(x => ((ReactiveKeysEffect)x) with { FadeSeconds = v }), 0.1));
+                _editor.Children.Add(Labelled("Glow size", 3, 40, e.Radius * 100, v => $"{v:0}%", v => apply(x => ((ReactiveKeysEffect)x) with { Radius = v / 100 }), 1));
                 _editor.Children.Add(Text("Flashes where you press a key on a keyboard. While this layer is on, Ember notes that a key went down and where it sits on the keyboard, and nothing else: no text, nothing is saved or sent. Put it above another layer so the glow shows over it.", muted: true));
+                break;
+            case FireEffect e:
+                _editor.Children.Add(ColorField("Flame colour", e.Base, c => apply(x => ((FireEffect)x) with { Base = c })));
+                _editor.Children.Add(ColorField("Hottest colour", e.Tip, c => apply(x => ((FireEffect)x) with { Tip = c })));
+                _editor.Children.Add(Labelled("Speed", 10, 500, e.Speed * 100, v => $"{v / 100:0.0}x", v => apply(x => ((FireEffect)x) with { Speed = v / 100 }), 5));
+                _editor.Children.Add(Labelled("Heat", 10, 150, e.Intensity * 100, v => $"{v:0}%", v => apply(x => ((FireEffect)x) with { Intensity = v / 100 }), 1));
+                _editor.Children.Add(Text("Drawn on", muted: true));
+                _editor.Children.Add(Segments(["Each device", "The whole canvas"], (int)e.Scope, i => apply(x => ((FireEffect)x) with { Scope = (EffectScope)i }), "FireScope" + id));
+                _editor.Children.Add(Text("Hot at the bottom and cooler towards the top. On a single strip the heat flickers along it. It covers the layers below, so put it at the bottom of the stack.", muted: true));
+                break;
+            case RainEffect e:
+                _editor.Children.Add(ColorField("Drop colour", e.Colour, c => apply(x => ((RainEffect)x) with { Colour = c })));
+                _editor.Children.Add(Labelled("How many drops", 0, 100, e.Density * 100, v => $"{v:0}%", v => apply(x => ((RainEffect)x) with { Density = v / 100 }), 1));
+                _editor.Children.Add(Labelled("Speed", 5, 300, e.Speed * 100, v => $"{v / 100:0.00} /s", v => apply(x => ((RainEffect)x) with { Speed = v / 100 }), 1));
+                _editor.Children.Add(Labelled("Trail length", 5, 100, e.Length * 100, v => $"{v:0}%", v => apply(x => ((RainEffect)x) with { Length = v / 100 }), 1));
+                _editor.Children.Add(Text("Drawn on", muted: true));
+                _editor.Children.Add(Segments(["Each device", "The whole canvas"], (int)e.Scope, i => apply(x => ((RainEffect)x) with { Scope = (EffectScope)i }), "RainScope" + id));
+                _editor.Children.Add(Text("Drops fall down a keyboard or grid and run along a single strip. Only the drops are coloured, so put this above another layer.", muted: true));
+                break;
+            case KeyGroupEffect e:
+                _editor.Children.Add(Text("Only on these keys", muted: true));
+                var groups = Enum.GetValues<KeyGroup>();
+                _editor.Children.Add(Segments(groups.Select(KeyGroups.Label).ToList(), Array.IndexOf(groups, e.Group), i => apply(x => ((KeyGroupEffect)x) with { Group = groups[i] }), "KeyGroup" + id));
+                _editor.Children.Add(Text("What they show", muted: true));
+                var kinds = new (string Label, Func<Effect> Make)[]
+                {
+                    ("Colour", () => new StaticEffect(new LColor(1.0, 0.45, 0.1))),
+                    ("Wave", () => new WaveEffect(new LColor(1.0, 0.45, 0.1), new LColor(0.2, 0.3, 1.0))),
+                    ("Breathing", () => new BreathingEffect(new LColor(1.0, 0.45, 0.1))),
+                    ("Fire", () => new FireEffect(new LColor(1.0, 0.2, 0.0), new LColor(1.0, 0.9, 0.3))),
+                    ("Rain", () => new RainEffect(new LColor(0.2, 0.6, 1.0))),
+                };
+                var current = e.Inner switch { StaticEffect => 0, WaveEffect => 1, BreathingEffect => 2, FireEffect => 3, RainEffect => 4, _ => -1 };
+                _editor.Children.Add(Segments(kinds.Select(k => k.Label).ToList(), current, i => apply(x => ((KeyGroupEffect)x) with { Inner = kinds[i].Make() }), "KeyInner" + id));
+                EffectFields(e.Inner, id + "i", change => apply(x => ((KeyGroupEffect)x) with { Inner = change(((KeyGroupEffect)x).Inner) }));
+                _editor.Children.Add(Text("Works on keyboards only; other devices ignore it. Add one layer per group to give each part of the keyboard its own look.", muted: true));
                 break;
             case ScreenSyncEffect:
                 _editor.Children.Add(Text("Copies the colours of your main screen onto the canvas in four vertical strips, left to right. It looks at the screen only while this layer is on.", muted: true));
