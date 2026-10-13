@@ -38,7 +38,7 @@ reach the tray): the menu, double-click to open, and Quit.
 ## Updates
 
 - [x] Settings, Updates: Check now reads the public releases and, on the Beta channel, says "You have the latest version" when running beta.5 (2026-10-13).
-- [ ] With an older Ember installed (for example beta.4), Check now on the Beta channel offers beta.5 and links to its release page.
+- [x] With an older Ember installed (checked with beta.6 on the PC), the check on the Beta channel offers beta.7 and links to its release page.
 
 ## Continuous integration
 
