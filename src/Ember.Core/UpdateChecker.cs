@@ -111,14 +111,14 @@ public sealed class UpdateChecker(HttpClient http, string releasesUrl = UpdateCh
             req.Headers.Accept.ParseAdd("application/vnd.github+json");
             using var res = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
             if (res.StatusCode == HttpStatusCode.NotFound)
-                return new UpdateResult(UpdateStatus.NoReleases, null, "No releases are published yet.");
+                return new UpdateResult(UpdateStatus.NoReleases, null, "No public releases found. If the repository is private, the check cannot see them.");
             if (!res.IsSuccessStatusCode)
                 return new UpdateResult(UpdateStatus.Failed, null, $"GitHub answered {(int)res.StatusCode}. Try again later.");
             if (res.Content.Headers.ContentLength > MaxBytes)
                 return new UpdateResult(UpdateStatus.Failed, null, "The reply was too large to read.");
             var body = await ReadLimitedAsync(res, ct).ConfigureAwait(false);
             var releases = UpdateRules.Parse(body);
-            if (releases.Count == 0) return new UpdateResult(UpdateStatus.NoReleases, null, "No releases are published yet.");
+            if (releases.Count == 0) return new UpdateResult(UpdateStatus.NoReleases, null, "No public releases found. If the repository is private, the check cannot see them.");
             return UpdateRules.Newer(releases, current, channel) is { } r
                 ? new UpdateResult(UpdateStatus.Available, r, $"Ember {r.Version} is available.")
                 : new UpdateResult(UpdateStatus.UpToDate, null, "You have the latest version.");
