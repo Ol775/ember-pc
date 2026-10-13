@@ -57,6 +57,7 @@ UI automation, so they still need a person to click them.
 
 - [ ] Lamps found later by Govee make room on the canvas without overlapping, and "Arrange devices" tidies a hand-made layout.
 - [ ] Logitech: with the default (per-key) the keyboard shows individual keys for Rain, Fire and Key group, and the mouse keeps its G HUB colour; with "one colour for every Logitech device" on, both take the effect colour, and switching back restores per-key.
+- [x] Key highlight: W A S D light correctly on the G915 (seen 2026-10-13). Still to check: other letters and the number row, the bottom letter row (Z to M), and a different keyboard model.
 - [ ] "Give it its own lighting" on the Logitech keyboard: its layers can be edited alone (banner on the layer list), the Govee lamps and fans keep the scene, and "Follow the scene again" puts it back.
 - [ ] Devices page: switching a device off under "Use" stops Ember sending to it (it keeps its last colour), it shows "Disabled", the choice survives a restart, and switching it on brings it back.
 - [ ] Painting a picture and applying it to several devices at once resamples sensibly on each.

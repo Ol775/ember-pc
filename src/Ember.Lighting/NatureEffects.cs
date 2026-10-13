@@ -138,3 +138,35 @@ public sealed record KeyGroupEffect(KeyGroup Group, Effect Inner) : Effect
 
     public override string Label => "Key group: " + KeyGroups.Label(Group);
 }
+
+/// <summary>Where a letter or number key sits in the 21 by 6 picture that G HUB turns into key lights (column, row).</summary>
+public static class KeyCells
+{
+    /// <summary>
+    /// Worked out against a real G915: S, D and F are columns 2 to 4 of the home row and E is column 3 of the row above, so
+    /// the picture's columns run half a key to the left of <see cref="KeyboardLayout"/>. The bottom letter row has not been checked.
+    /// </summary>
+    public static (int Col, int Row)? Of(char key)
+    {
+        key = char.ToUpperInvariant(key);
+        if (!(key is >= 'A' and <= 'Z' or >= '0' and <= '9')) return null;
+        if (KeyboardLayout.Position(key) is not { } p) return null;
+        return ((int)Math.Floor(p.X * 22.5 - 0.5), (int)(p.Y * 6));
+    }
+}
+
+/// <summary>Lights chosen letter and number keys in one colour (W A S D for gaming) and leaves every other key to the layers below.</summary>
+public sealed record KeyHighlightEffect(Color Colour, string Keys = "WASD") : Effect
+{
+    public override Color Sample(double x, double y, LightingInputs inputs)
+    {
+        if (inputs.Local is not { Rows: 6 } l) return new Color(0, 0, 0, 0);
+        var col = Math.Clamp((int)(Math.Clamp(l.X, 0, 1) * 21), 0, 20);
+        var row = Math.Clamp((int)(Math.Clamp(l.Y, 0, 1) * 6), 0, 5);
+        foreach (var key in (Keys ?? "").Take(30))
+            if (KeyCells.Of(key) is { } c && c.Col == col && c.Row == row) return Colour with { A = 1 };
+        return new Color(0, 0, 0, 0);
+    }
+
+    public override string Label => "Key highlight";
+}

@@ -191,3 +191,39 @@ public class NatureEffectsSaveTests
         finally { File.Delete(path); }
     }
 }
+
+public class KeyHighlightTests
+{
+    [Theory]
+    [InlineData('W', 2, 2)]
+    [InlineData('A', 1, 3)]
+    [InlineData('S', 2, 3)]
+    [InlineData('D', 3, 3)]
+    [InlineData('E', 3, 2)]
+    [InlineData('F', 4, 3)]
+    [InlineData('a', 1, 3)]
+    public void Letter_keys_sit_where_the_G915_showed_them(char key, int col, int row) => Assert.Equal((col, row), KeyCells.Of(key));
+
+    [Theory]
+    [InlineData(' ')]
+    [InlineData('-')]
+    public void Anything_but_letters_and_numbers_has_no_cell(char key) => Assert.Null(KeyCells.Of(key));
+
+    [Fact]
+    public void Only_the_named_keys_light_on_a_keyboard_and_nothing_elsewhere()
+    {
+        var effect = new KeyHighlightEffect(new Color(1, 0, 0), "WASD");
+        var p = new DevicePlacement("kb", 0, 0, 1, 0.3);
+        var lit = Enumerable.Range(0, 126).Where(i => effect.Sample(0, 0, new LightingInputs(0, null) { Local = p.LocalPosition(i, 126, 21) }).A > 0.5).ToList();
+        Assert.Equal([2 * 21 + 2, 3 * 21 + 1, 3 * 21 + 2, 3 * 21 + 3], lit);
+        Assert.Equal(0, effect.Sample(0.5, 0.5, new LightingInputs(0, null) { Local = p.LocalPosition(2, 8, 0) }).A);   // a strip
+        Assert.Equal(0, effect.Sample(0.5, 0.5, new LightingInputs(0, null)).A);                                      // no local position
+    }
+
+    [Fact]
+    public void It_survives_being_saved_and_loaded()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize<Effect>(new KeyHighlightEffect(new Color(1, 0, 0), "WASD"));
+        Assert.Equal("WASD", ((KeyHighlightEffect)System.Text.Json.JsonSerializer.Deserialize<Effect>(json)!).Keys);
+    }
+}

@@ -23,6 +23,7 @@ public sealed record LightingInputs(double Seconds, double? CpuTemp = null, doub
 [JsonDerivedType(typeof(FireEffect), "fire")]
 [JsonDerivedType(typeof(RainEffect), "rain")]
 [JsonDerivedType(typeof(KeyGroupEffect), "keygroup")]
+[JsonDerivedType(typeof(KeyHighlightEffect), "keys")]
 public abstract record Effect
 {
     public abstract Color Sample(double x, double y, LightingInputs inputs);

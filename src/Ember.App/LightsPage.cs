@@ -164,6 +164,7 @@ public sealed class LightsPage : UserControl
         add.Children.Add(Pill("Fire", () => AddLayer(new FireEffect(new LColor(1.0, 0.2, 0.0), new LColor(1.0, 0.9, 0.3)))));
         add.Children.Add(Pill("Rain", () => AddLayer(new RainEffect(new LColor(0.2, 0.6, 1.0)))));
         add.Children.Add(Pill("Key group", () => AddLayer(new KeyGroupEffect(KeyGroup.FunctionRow, new StaticEffect(new LColor(1.0, 0.45, 0.1))))));
+        add.Children.Add(Pill("Key highlight", () => AddLayer(new KeyHighlightEffect(new LColor(1.0, 0.15, 0.1)))));
         layerBox.Children.Add(add);
         layerBox.Children.Add(Text("Layers are stacked like in a photo editor: the top one is painted last.", muted: true));
         layerBox.Children.Add(_layers);
@@ -877,6 +878,15 @@ public sealed class LightsPage : UserControl
                 _editor.Children.Add(Text("Drawn on", muted: true));
                 _editor.Children.Add(Segments(["Each device", "The whole canvas"], (int)e.Scope, i => apply(x => ((RainEffect)x) with { Scope = (EffectScope)i }), "RainScope" + id));
                 _editor.Children.Add(Text("Drops fall down a keyboard or grid and run along a single strip. Only the drops are coloured, so put this above another layer.", muted: true));
+                break;
+            case KeyHighlightEffect e:
+                _editor.Children.Add(ColorField("Key colour", e.Colour, c => apply(x => ((KeyHighlightEffect)x) with { Colour = c })));
+                _editor.Children.Add(Text("Keys to light (letters and numbers, for example WASD)", muted: true));
+                var keys = new TextBox { Text = e.Keys, Style = Sty("TextField"), Width = 220, MaxLength = 30, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 4, 0, 6) };
+                AutomationProperties.SetName(keys, "Keys to light");
+                keys.LostFocus += (_, _) => apply(x => ((KeyHighlightEffect)x) with { Keys = new string(keys.Text.Where(char.IsLetterOrDigit).Take(30).ToArray()).ToUpperInvariant() });
+                _editor.Children.Add(keys);
+                _editor.Children.Add(Text("Only the keyboard shows it, and only on the keys named. Put it above other layers so they show on every other key.", muted: true, size: 12));
                 break;
             case KeyGroupEffect e:
                 _editor.Children.Add(Text("Only on these keys", muted: true));
