@@ -2,6 +2,12 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.1.0-beta.1 (2026-10-13)
+
+### Changed
+
+- **The beta line continues after the first production release.** This build has everything in 1.0.0 plus what is still being checked: game detection and GPU fan control (Experimental), Philips Hue, Nanoleaf and Razer Chroma lighting, the roadmap page and the Beta update channel. Production builds hide these.
+
 ## 1.0.0 (2026-10-13)
 
 The first production release. It holds what has been checked on real hardware; the newer, less-tested parts stay in the beta builds.
