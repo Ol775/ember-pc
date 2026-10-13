@@ -79,7 +79,7 @@ Then, in an **elevated** PowerShell, from the unzipped `dist\Ember-<version>` fo
 scripts\install-ember.ps1          # installs to C:\Program Files\Ember, adds both services and a Start Menu shortcut
 ```
 
-Run the same script again to upgrade; your settings are kept. `scripts\uninstall-ember.ps1` removes it (add `-RemoveFiles` to delete the program files too).
+Run the same script again to upgrade; your settings are kept. An installed Ember can also update itself: Settings, Updates, Check now, then Update now. `scripts\uninstall-ember.ps1` removes it (add `-RemoveFiles` to delete the program files too).
 
 **Manual install** (the steps the script follows):
 1. Fetch the bundled OpenRGB (checks a pinned SHA-256) and publish:
@@ -141,17 +141,17 @@ Motherboard sensors and fan headers sit behind port I/O that user mode cannot re
 
 ## FAQ
 
-**Is it safe to run?** Fan control has unit tests and has been checked on one real PC, and the safety rules above are enforced in the service. It is still beta. Test one header at a time and watch your temperatures.
+**Is it safe to run?** Fan control has unit tests and has been checked on one real PC, and the safety rules above are enforced in the service. The production build (1.0) only holds what has been checked on real hardware; the beta builds add features still being tested. Either way, test one header at a time and watch your temperatures.
 
 **Does it work on my motherboard?** It is built and tested on an MSI B550-A PRO (NCT6687D). Other chips supported by LibreHardwareMonitor may work; [docs/windows-checklist.md](docs/windows-checklist.md) shows what has been verified.
 
 **Why are some of my fans at 0 RPM in Super quiet?** Some fans stop below about 20% speed. Pick Quiet, or use Manual to set a higher minimum.
 
-**Does it send data anywhere?** No. See [PRIVACY.md](PRIVACY.md).
+**Does it send data anywhere?** Not on its own: no accounts and no telemetry, and the only network use is what you switch on. See [PRIVACY.md](PRIVACY.md).
 
 **Can I use it with SignalRGB or NZXT CAM?** Not at the same time on the same devices (Logitech G HUB, SignalRGB and Ember all want to set the lighting; only one should be active at a time). Ember warns you about fan-control programs and can close them.
 
-**Where is the roadmap?** See [ROADMAP.md](ROADMAP.md), and [CHANGELOG.md](CHANGELOG.md) for what changed in each version. Both are also inside the app, in Settings.
+**Where is the roadmap?** See [ROADMAP.md](ROADMAP.md), and [CHANGELOG.md](CHANGELOG.md) for what changed in each version. The changelog is also inside the app, in Settings; the roadmap page is in the beta builds.
 
 ## Contributing
 
@@ -163,4 +163,4 @@ MIT. See [LICENSE](LICENSE). Using Ember is also covered by the [Terms of Use](T
 
 ## Disclaimer
 
-Ember is an independent project by Ol775. It is not affiliated with, endorsed by or sponsored by NZXT, MSI, Govee, Logitech, Philips Hue (Signify), OpenRGB, SignalRGB, Noctua, AMD, Intel or NVIDIA. Product names are trademarks of their respective owners. Use at your own risk: you are responsible for your hardware.
+Ember is an independent project by Ol775. It is not affiliated with, endorsed by or sponsored by NZXT, MSI, Govee, Logitech, Philips Hue (Signify), Nanoleaf, Razer, OpenRGB, SignalRGB, Noctua, AMD, Intel or NVIDIA. Product names are trademarks of their respective owners. Use at your own risk: you are responsible for your hardware.
