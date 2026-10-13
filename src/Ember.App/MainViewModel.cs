@@ -70,8 +70,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public Visibility ExperimentalAvailableVisibility => BuildFeatures.Current.GameDetection || BuildFeatures.Current.GpuFan ? Visibility.Visible : Visibility.Collapsed;
     public Visibility BetaGpuVisibility => BuildFeatures.Current.GpuFan && _fansPage.Experimental ? Visibility.Visible : Visibility.Collapsed;
     public string ModeChipText => "Mode: " + FansViewState.Label(_fansPage.Mode);
-    public string CpuFanText => Fans.FirstOrDefault(f => f.Name.StartsWith("CPU Fan", StringComparison.OrdinalIgnoreCase))?.RpmText ?? "—";
-    public string SystemFanText { get { var s = Fans.Where(f => f.Name.StartsWith("System Fan", StringComparison.OrdinalIgnoreCase) && f.Fraction > 0).ToList(); return s.Count == 0 ? "—" : s.Count + (s.Count == 1 ? " fan" : " fans") + " spinning"; } }
     public string BuildLabel => BuildFeatures.Channel == "beta" ? "Beta build" : "Alpha build";
     public Visibility DetectedGameVisibility => _fansPage.DetectedGame is null ? Visibility.Collapsed : Visibility.Visible;
     public Visibility NotGamesVisibility => _fansPage.NotGames is { Count: > 0 } ? Visibility.Visible : Visibility.Collapsed;

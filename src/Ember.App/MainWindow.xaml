@@ -177,37 +177,6 @@
                     <TextBlock Text="{Binding FansPage.SafetyNote}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
                 </Border>
 
-                <Grid Margin="0,0,0,16">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="250" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                        <Border Background="#2a1c12" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" CornerRadius="12" Padding="16,14" Margin="0,0,0,10">
-                            <StackPanel>
-                                <DockPanel>
-                                    <TextBlock DockPanel.Dock="Right" Text="{Binding CpuFanText}" Foreground="#ffb347" />
-                                    <TextBlock Text="CPU fan" FontWeight="SemiBold" />
-                                </DockPanel>
-                                <TextBlock Text="Follows the CPU temperature" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,4,0,0" />
-                            </StackPanel>
-                        </Border>
-                        <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16,14" Margin="0,0,0,10">
-                            <StackPanel>
-                                <DockPanel>
-                                    <TextBlock DockPanel.Dock="Right" Text="{Binding SystemFanText}" Foreground="{StaticResource MutedBrush}" />
-                                    <TextBlock Text="System fans" FontWeight="SemiBold" />
-                                </DockPanel>
-                                <TextBlock Text="Follow the case temperature" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,4,0,0" />
-                            </StackPanel>
-                        </Border>
-                        <Border BorderBrush="#5a4a3e" BorderThickness="1" CornerRadius="12" Padding="16,14">
-                            <TextBlock Foreground="#c7b8aa" TextWrapping="Wrap" FontSize="13"
-                                       Text="Safety: every controlled fan goes to 100% at 90 &#176;C, a lost sensor sends fans to 100%, and Ember leaves them at a safe speed if it stops." />
-                        </Border>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1">
-
                 <GroupBox Header="Mode" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan mode">
                     <StackPanel>
                         <Border Style="{StaticResource SegmentTrack}">
@@ -233,8 +202,6 @@
                 <GroupBox Header="Fan curve" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan curve">
                     <local:CurveEditor x:Name="Curve" />
                 </GroupBox>
-                    </StackPanel>
-                </Grid>
 
                 <GroupBox Header="Games" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Games"
                           Visibility="{Binding BetaGamesVisibility}">
