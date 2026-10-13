@@ -13,11 +13,12 @@ public sealed record AppVersion(int Major, int Minor, int Patch, string? Pre) : 
     public static bool TryParse(string? text, out AppVersion version)
     {
         version = new AppVersion(0, 0, 0, null);
-        if (string.IsNullOrWhiteSpace(text) || text.Length > 40) return false;
+        if (string.IsNullOrWhiteSpace(text) || text.Length > 100) return false;   // the build id after a plus sign can be a long hash
         var s = text.Trim();
         if (s[0] is 'v' or 'V') s = s[1..];
         var plus = s.IndexOf('+');
         if (plus >= 0) s = s[..plus];
+        if (s.Length > 40) return false;
         string? pre = null;
         var dash = s.IndexOf('-');
         if (dash >= 0) { pre = s[(dash + 1)..]; s = s[..dash]; if (pre.Length == 0) return false; }

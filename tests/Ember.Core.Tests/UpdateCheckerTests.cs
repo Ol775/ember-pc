@@ -111,3 +111,18 @@ public class UpdateCheckerTests
         Assert.Equal(UpdateStatus.Failed, (await c.CheckAsync(V("0.1.0"), UpdateChannel.Stable)).Status);
     }
 }
+
+public class BuildMetadataVersionTests
+{
+    [Fact]
+    public void The_version_a_build_reports_with_a_long_git_hash_still_parses()
+    {
+        Assert.True(AppVersion.TryParse("0.1.0-beta.5+4560d21f0e3b7a9c1d2e3f405162738495a6b7c8", out var v));
+        Assert.Equal("0.1.0-beta.5", v.ToString());
+        Assert.True(v.CompareTo(new AppVersion(0, 1, 0, "beta.4")) > 0);
+        Assert.Equal(0, v.CompareTo(new AppVersion(0, 1, 0, "beta.5")));
+    }
+
+    [Fact]
+    public void An_absurdly_long_version_is_still_refused() => Assert.False(AppVersion.TryParse("0.1.0-" + new string('x', 60), out _));
+}

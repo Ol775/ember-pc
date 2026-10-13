@@ -30,3 +30,4 @@ Problems found while testing on real hardware, to fix. Move an item to the chang
 
 - The tray icon could not be opened on this PC until Explorer was restarted (two Explorer sessions were running, the second belonging to
   a disconnected Plex user). Not an Ember fault, but worth a line in a troubleshooting page.
+- [x] **Update check thought Ember was 0.1.0-beta.1.** The version string a build reports ends in a long commit hash (`+4560d21…`), and the parser rejected anything over 40 characters, so the app fell back to beta.1 and would have offered beta-channel users the version they already had. Found 2026-10-13 while testing the update check against the public release.
