@@ -146,6 +146,40 @@ public sealed class LightingManager : IAsyncDisposable
         return s with { Scenes = s.Scenes.Select(x => x.Name == current.Name ? changed : x).ToList() };
     });
 
+    /// <summary>Changes the scene of that name (a device's own lighting is a scene), whether or not it is the current one.</summary>
+    public void EditSceneNamed(string name, Func<Scene, Scene> edit) => Mutate(s =>
+        s.Scenes.Any(x => x.Name == name) ? s with { Scenes = s.Scenes.Select(x => x.Name == name ? edit(x) : x).ToList() } : s);
+
+    /// <summary>
+    /// Gives one device lighting of its own: a copy of the current scene's layers, saved as a scene called "&lt;device&gt; lights",
+    /// that only that device shows. Returns the scene's name (the copy is reused if the device already has one), or null when
+    /// there is no room for another scene.
+    /// </summary>
+    public string? GiveOwnLighting(string deviceId, string deviceName)
+    {
+        string? result = null;
+        Mutate(s =>
+        {
+            var current = s.Current;
+            var placement = current.Placements.FirstOrDefault(p => p.DeviceId == deviceId);
+            if (placement is null) return s;
+            if (placement.Profile is { } have && have != current.Name && s.Scenes.Any(x => x.Name == have)) { result = have; return s; }
+            if (s.Scenes.Count >= LightingState.MaxScenes) return s;
+            var baseName = deviceName.Trim().Length == 0 ? "Device" : deviceName.Trim();
+            baseName = (baseName.Length > 50 ? baseName[..50] : baseName) + " lights";
+            var name = baseName;
+            for (var n = 2; s.Scenes.Any(x => x.Name == name); n++) name = baseName + " " + n;
+            var copy = current with { Name = name };
+            var changed = current with { Placements = current.Placements.Select(p => p.DeviceId == deviceId ? p with { Profile = name } : p).ToList() };
+            result = name;
+            return s with { Scenes = s.Scenes.Select(x => x.Name == current.Name ? changed : x).Append(copy).ToList() };
+        });
+        return result;
+    }
+
+    /// <summary>Puts a device back on the current scene's lighting. Its own scene is kept, in case it is wanted again.</summary>
+    public void FollowScene(string deviceId) => EditScene(sc => sc with { Placements = sc.Placements.Select(p => p.DeviceId == deviceId ? p with { Profile = null } : p).ToList() });
+
     /// <summary>How many segments a lamp is driven as (1 = one colour for the whole lamp).</summary>
     public void SetSegments(string deviceId, int count) => Mutate(s =>
     {

@@ -101,6 +101,28 @@ public class ManagerTests : IDisposable
     }
 
     [Fact]
+    public async Task One_device_can_have_its_own_lighting_edited_without_touching_the_others()
+    {
+        await using var m = new LightingManager(new LightingStore(P), TimeProvider.System, [new Source(new Sink("kb"), new Sink("fan"))]);
+        m.Start();
+        await Until(() => m.State.Current.Placements.Count == 2);
+        var before = m.State.Current.Layers;
+
+        var name = m.GiveOwnLighting("kb", "Logitech keyboard");
+        Assert.Equal("Logitech keyboard lights", name);
+        Assert.Equal(name, m.State.Current.Placements.First(p => p.DeviceId == "kb").Profile);
+        Assert.Null(m.State.Current.Placements.First(p => p.DeviceId == "fan").Profile);
+        Assert.Equal(name, m.GiveOwnLighting("kb", "Logitech keyboard")); // asking again reuses it
+
+        m.EditSceneNamed(name!, sc => sc with { Layers = [new Layer("own", "Blue", new StaticEffect(new Color(0, 0, 1)))] });
+        Assert.Equal(before, m.State.Current.Layers);
+        Assert.Equal("own", m.State.Scenes.First(s => s.Name == name).Layers[0].Id);
+
+        m.FollowScene("kb");
+        Assert.Null(m.State.Current.Placements.First(p => p.DeviceId == "kb").Profile);
+    }
+
+    [Fact]
     public async Task Lights_start_off_and_nothing_is_sent_until_switched_on()
     {
         var sink = new Sink("a");

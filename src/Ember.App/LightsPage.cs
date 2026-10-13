@@ -658,12 +658,37 @@ public sealed class LightsPage : UserControl
 
     // ---- layers ----
 
+    // When a device has lighting of its own, the layer editor can work on that instead of the scene everything else follows.
+    string? _editingScene, _editingDevice;
+
+    Scene LayerScene(LightingState state) =>
+        _editingScene is { } name && state.Current.Placements.Any(p => p.Profile == name) && state.Scenes.FirstOrDefault(s => s.Name == name) is { } own ? own : state.Current;
+
+    bool EditingOwn(LightingState state) => !ReferenceEquals(LayerScene(state), state.Current);
+
+    void EditLayers(Func<Scene, Scene> edit)
+    {
+        var state = _m!.State;
+        if (EditingOwn(state)) _m.EditSceneNamed(LayerScene(state).Name, edit); else _m.EditScene(edit);
+    }
+
+    void EditOwnLighting(string deviceId, string deviceName)
+    {
+        var name = _m!.GiveOwnLighting(deviceId, deviceName);
+        if (name is null) { SetNote("There are too many scenes to add one for " + deviceName + ". Delete a scene first."); return; }
+        _editingScene = name; _editingDevice = deviceName; _selectedLayer = null;
+        SetNote(deviceName + " now has lighting of its own. The layers below are only for it; everything else keeps following the scene.");
+        _rendered = _m.State;
+        RebuildLayers(_m.State);
+        RebuildDevices(_m.State);
+    }
+
     void AddLayer(Effect effect)
     {
         var m = _m!;
-        if (m.State.Current.Layers.Count >= LightingState.MaxLayers) { SetNote("A scene can have up to 20 layers."); return; }
+        if (LayerScene(m.State).Layers.Count >= LightingState.MaxLayers) { SetNote("A scene can have up to 20 layers."); return; }
         var id = Guid.NewGuid().ToString("N")[..8];
-        m.EditScene(sc => sc with { Layers = [.. sc.Layers, new Layer(id, effect.Label, effect)] });
+        EditLayers(sc => sc with { Layers = [.. sc.Layers, new Layer(id, effect.Label, effect)] });
         _selectedLayer = id;
         _rendered = m.State;
         RebuildLayers(m.State);
@@ -671,14 +696,14 @@ public sealed class LightsPage : UserControl
 
     void EditLayer(string id, Func<Layer, Layer> change, bool rebuild = false)
     {
-        _m!.EditScene(sc => sc with { Layers = sc.Layers.Select(l => l.Id == id ? change(l) : l).ToList() });
-        _rendered = _m.State;
+        EditLayers(sc => sc with { Layers = sc.Layers.Select(l => l.Id == id ? change(l) : l).ToList() });
+        _rendered = _m!.State;
         if (rebuild) RebuildLayers(_m.State);
     }
 
     void MoveLayer(string id, int delta)
     {
-        _m!.EditScene(sc =>
+        EditLayers(sc =>
         {
             var list = sc.Layers.ToList();
             var i = list.FindIndex(l => l.Id == id);
@@ -687,22 +712,29 @@ public sealed class LightsPage : UserControl
             (list[i], list[j]) = (list[j], list[i]);
             return sc with { Layers = list };
         });
-        _rendered = _m.State;
+        _rendered = _m!.State;
         RebuildLayers(_m.State);
     }
 
     void RemoveLayer(string id)
     {
-        _m!.EditScene(sc => sc with { Layers = sc.Layers.Where(l => l.Id != id).ToList() });
+        EditLayers(sc => sc with { Layers = sc.Layers.Where(l => l.Id != id).ToList() });
         if (_selectedLayer == id) _selectedLayer = null;
-        _rendered = _m.State;
+        _rendered = _m!.State;
         RebuildLayers(_m.State);
     }
 
     void RebuildLayers(LightingState state)
     {
         _layers.Children.Clear();
-        var layers = state.Current.Layers;
+        var layers = LayerScene(state).Layers;
+        if (EditingOwn(state))
+        {
+            var banner = new WrapPanel { Margin = new Thickness(0, 0, 0, 6) };
+            banner.Children.Add(Text($"Editing the lights of {_editingDevice} only. Everything else keeps following the scene.", weight: FontWeights.SemiBold));
+            banner.Children.Add(Pill("Back to the whole scene", () => { _editingScene = null; _selectedLayer = null; _rendered = _m!.State; RebuildLayers(_m.State); RebuildDevices(_m.State); }, "Back to the whole scene"));
+            _layers.Children.Add(banner);
+        }
         if (layers.Count == 0) _layers.Children.Add(Text("This scene has no layers, so every light stays dark. Add one above.", muted: true));
         if (_selectedLayer is null || layers.All(l => l.Id != _selectedLayer)) _selectedLayer = layers.LastOrDefault()?.Id;
 
@@ -739,7 +771,7 @@ public sealed class LightsPage : UserControl
     void RebuildEditor(LightingState state)
     {
         _editor.Children.Clear();
-        var layer = state.Current.Layers.FirstOrDefault(l => l.Id == _selectedLayer);
+        var layer = LayerScene(state).Layers.FirstOrDefault(l => l.Id == _selectedLayer);
         if (layer is null) return;
         var id = layer.Id;
         _editor.Children.Add(new Border { Height = 1, Background = Res("PanelBorderBrush"), Margin = new Thickness(0, 12, 0, 12) });
@@ -905,6 +937,17 @@ public sealed class LightsPage : UserControl
                     _rendered = _m.State;
                     RebuildDevices(_m.State);
                 }, "Light profile for " + info.Name);
+                var hasOwn = placement.Profile is { } pf && pf != state.Current.Name && state.Scenes.Any(x => x.Name == pf);
+                var ownLights = Pill(hasOwn ? "Edit its own lighting" : "Give it its own lighting", () => EditOwnLighting(info.Id, info.Name), "Own lighting for " + info.Name);
+                ownLights.Margin = new Thickness(0, 4, 0, 0);
+                ownLights.ToolTip = "Lets this device show different effects from the rest. It starts as a copy of the current layers; the layer editor then works on it alone.";
+                right.Children.Add(ownLights);
+                if (hasOwn)
+                {
+                    var follow = Pill("Follow the scene again", () => { _m.FollowScene(info.Id); if (_editingScene == placement.Profile) _editingScene = null; _rendered = _m.State; RebuildLayers(_m.State); RebuildDevices(_m.State); }, "Follow the scene: " + info.Name);
+                    follow.Margin = new Thickness(0, 4, 0, 0);
+                    right.Children.Add(follow);
+                }
                 profile.Margin = new Thickness(0, 4, 0, 0);
                 profile.ToolTip = names.Count == 0 ? "Save another scene first: a device can show any other scene as its own profile." : "Click to choose which scene this device shows: the current scene, or one of your other scenes.";
                 right.Children.Add(profile);

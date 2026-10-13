@@ -14,6 +14,9 @@ All notable changes to Ember. Newest first. Ember follows [semantic versioning](
 - **Continuous integration.** The repository builds and tests itself on GitHub for every push, and a release workflow builds the zip and the installer.
 - **Signing.** The release build signs Ember's programs and the installer when a code-signing certificate is provided (see docs/SIGNING.md). Until one is, Windows still shows "Unknown publisher".
 
+- **Own lighting for one device.** "Give it its own lighting" (Lights page, device list) makes a copy of the layers just for that device, so a keyboard can show a different look from the Govee lamps and fans. The layer editor then works on that device alone until you press "Back to the whole scene".
+- **Arrange devices.** Lamps found later (for example more Govee lights) get room on the canvas instead of overlapping, and a button tidies the canvas into one row per device.
+
 ### Changed
 
 - The AI chip in the mode list now points to the AI assist panel instead of saying "coming later". It is not a mode the service runs.

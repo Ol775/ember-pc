@@ -56,6 +56,7 @@ UI automation, so they still need a person to click them.
 
 
 - [ ] Lamps found later by Govee make room on the canvas without overlapping, and "Arrange devices" tidies a hand-made layout.
+- [ ] "Give it its own lighting" on the Logitech keyboard: its layers can be edited alone (banner on the layer list), the Govee lamps and fans keep the scene, and "Follow the scene again" puts it back.
 - [ ] Painting a picture and applying it to several devices at once resamples sensibly on each.
 - [ ] Saving a paint to the library, closing Ember and loading it back gives the same picture.
 - [ ] Deleting and renaming library entries works, and a damaged file in the library folder is ignored.
