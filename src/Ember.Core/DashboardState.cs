@@ -12,7 +12,8 @@ public sealed record DashboardView(
     string ConnectionText, string CpuText, string GpuText, string MotherboardText, string FanAverageText,
     IReadOnlyList<FanBar> Fans, string? DriverBannerText, bool ShowStaleNote,
     IReadOnlyList<(double X, double Y)> CpuLine, IReadOnlyList<(double X, double Y)> GpuLine,
-    FanControlStatus? Control = null);
+    FanControlStatus? Control = null,
+    string CpuSub = "", string GpuSub = "", string MotherboardSub = "", string FansSub = "");
 
 /// <summary>
 /// Turns connection state and snapshots into what the dashboard shows. Not thread-safe:
@@ -82,8 +83,16 @@ public sealed class DashboardState
             connected && _latest is { } l && (l.Stale || now - l.Timestamp > StaleAfter), // also stale when the service stops sending (hung sensor read)
             Line(CpuId),
             Line(GpuId),
-            connected ? _latest?.Control : null);
+            connected ? _latest?.Control : null,
+            Join(s?.CpuLoad is { } cl ? Pct(cl) + " load" : null, s?.CpuClockMhz is { } mhz and > 0 ? (mhz / 1000).ToString("0.0", CultureInfo.InvariantCulture) + " GHz" : null),
+            s?.GpuLoad is { } gl ? Pct(gl) + " load" : "",
+            Join(s?.VrmTemp is { } v ? "VRM " + Temperature.Format(v, unit) : null, s?.ChipsetTemp is { } c ? "chipset " + Temperature.Format(c, unit) : null),
+            fans.Count(f => f.Fraction > 0) is var n and > 0 ? n + (n == 1 ? " fan spinning" : " fans spinning") : "");
     }
+
+    static string Pct(double v) => Math.Round(v, MidpointRounding.AwayFromZero).ToString("0", CultureInfo.InvariantCulture) + "%";
+
+    static string Join(params string?[] parts) => string.Join(" · ",parts.Where(p => !string.IsNullOrEmpty(p)));
 
     static string Rpm(double rpm) =>
         Math.Round(rpm, MidpointRounding.AwayFromZero).ToString("0", CultureInfo.InvariantCulture) + " RPM";

@@ -40,6 +40,12 @@ public sealed class FanControlLoop : BackgroundService
     readonly HashSet<string> _written = new();
     readonly HashSet<string> _failed = new();
     readonly Dictionary<string, string> _names = new(); // header id -> name, for the ones Ember has written
+    static readonly TimeSpan StallAfter = TimeSpan.FromSeconds(6), KickFor = TimeSpan.FromSeconds(4);
+    const int MaxKicks = 3;
+    readonly Dictionary<string, double> _rpm = new();
+    readonly Dictionary<string, DateTimeOffset> _stalledSince = new(), _kickUntil = new();
+    readonly Dictionary<string, int> _kicks = new();
+    readonly Dictionary<string, double> _learnedFloor = new(); // a stall at X% raises this fan's minimum to X+5% until the service restarts
     readonly HashSet<string> _everSpun = new(); // control ids whose fan has been seen turning since the service started
     double? _lastCpuTemp;
     bool _stopped;
@@ -138,6 +144,10 @@ public sealed class FanControlLoop : BackgroundService
             _resolver.Expire(now);
 
             var summary = DashboardSummary.From(s);
+            _rpm.Clear();
+            if (!s.Stale)
+                foreach (var r in s.Readings)
+                    if (r.Kind == SensorKind.FanRpm) _rpm[r.Id.Replace("/fan/", "/control/", StringComparison.Ordinal)] = r.Value;
             _lastCpuTemp = s.Stale ? null : summary.CpuTemp;
             foreach (var r in s.Readings)
                 if (r.Kind == SensorKind.FanRpm && r.Value > 0) _everSpun.Add(r.Id.Replace("/fan/", "/control/", StringComparison.Ordinal));
@@ -201,7 +211,8 @@ public sealed class FanControlLoop : BackgroundService
             _names[header.Id] = header.Name;
             try
             {
-                _fans.SetPercent(header.Id, Math.Max(floor, percent));
+                var target = Math.Max(Math.Max(floor, percent), _learnedFloor.GetValueOrDefault(header.Id));
+                _fans.SetPercent(header.Id, Math.Max(target, StallKick(header.Id, target)));
                 _written.Add(header.Id);
                 driven.Add(header.Id);
             }
@@ -214,6 +225,32 @@ public sealed class FanControlLoop : BackgroundService
 
         // A header Ember wrote earlier but no longer drives (disabled, or a failed release last time): hand it back.
         foreach (var id in _written.Except(driven).ToList()) TryRelease(id);
+    }
+
+    /// <summary>
+    /// A fan that was turning but reads 0 RPM while we ask for a low speed has stalled (low duty cannot restart it).
+    /// Give it 100% for a few seconds to spin it up, then go back to the curve. Gives up after a few kicks in a row,
+    /// so a fan that is really dead is not blasted forever. Returns the speed to force (0 = no kick).
+    /// </summary>
+    double StallKick(string id, double percent)
+    {
+        var now = _clock.GetUtcNow();
+        if (percent >= 100 || !_everSpun.Contains(id) || !_rpm.TryGetValue(id, out var rpm)) { _stalledSince.Remove(id); return 0; }
+        if (rpm > 0) { _stalledSince.Remove(id); _kickUntil.Remove(id); _kicks.Remove(id); return 0; }
+        if (_kickUntil.TryGetValue(id, out var until))
+        {
+            if (now < until) return 100;
+            _kickUntil.Remove(id);
+            _stalledSince[id] = now;
+            return 0;
+        }
+        if (!_stalledSince.TryGetValue(id, out var since)) { _stalledSince[id] = now; return 0; }
+        if (now - since < StallAfter || _kicks.GetValueOrDefault(id) >= MaxKicks) return 0;
+        _kicks[id] = _kicks.GetValueOrDefault(id) + 1;
+        _learnedFloor[id] = Math.Min(60, percent + 5);
+        _kickUntil[id] = now + KickFor;
+        _log.LogInformation("{Header} reads 0 RPM at {Percent}%; spinning it up at 100% for {Seconds}s", id, percent, KickFor.TotalSeconds);
+        return 100;
     }
 
     /// <summary>The curve in force for a group: the preset of the effective mode, or the user's own curve in Manual mode.</summary>

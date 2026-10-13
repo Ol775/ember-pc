@@ -71,19 +71,19 @@
                 <UniformGrid Columns="4" Margin="-6,0,-6,16">
                     <GroupBox Header="CPU" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding CpuText, StringFormat=CPU temperature {0}}">
-                        <TextBlock Text="{Binding CpuText}" Style="{StaticResource StatValue}" Foreground="{StaticResource AccentBrush}" />
+                        <StackPanel><TextBlock Text="{Binding CpuText}" Style="{StaticResource StatValue}" Foreground="{StaticResource AccentBrush}" /><TextBlock Text="{Binding CpuSub}" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                     <GroupBox Header="GPU" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding GpuText, StringFormat=GPU temperature {0}}">
-                        <TextBlock Text="{Binding GpuText}" Style="{StaticResource StatValue}" Foreground="{StaticResource GpuBrush}" />
+                        <StackPanel><TextBlock Text="{Binding GpuText}" Style="{StaticResource StatValue}" Foreground="{StaticResource GpuBrush}" /><TextBlock Text="{Binding GpuSub}" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                     <GroupBox Header="Motherboard" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding MotherboardText, StringFormat=Motherboard temperature {0}}">
-                        <TextBlock Text="{Binding MotherboardText}" Style="{StaticResource StatValue}" />
+                        <StackPanel><TextBlock Text="{Binding MotherboardText}" Style="{StaticResource StatValue}" /><TextBlock Text="{Binding MotherboardSub}" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                     <GroupBox Header="Fans (average)" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding FanAverageText, StringFormat=Fans average {0}}">
-                        <TextBlock Text="{Binding FanAverageText}" Style="{StaticResource StatValue}" />
+                        <StackPanel><TextBlock Text="{Binding FanAverageText}" Style="{StaticResource StatValue}" /><TextBlock Text="{Binding FansSub}" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                 </UniformGrid>
 

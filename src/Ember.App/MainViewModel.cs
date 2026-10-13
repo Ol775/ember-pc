@@ -56,6 +56,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string GpuText { get; private set; } = "—";
     public string MotherboardText { get; private set; } = "—";
     public string FanAverageText { get; private set; } = "—";
+    public string CpuSub { get; private set; } = "";
+    public string GpuSub { get; private set; } = "";
+    public string MotherboardSub { get; private set; } = "";
+    public string FansSub { get; private set; } = "";
     public ObservableCollection<FanBar> Fans { get; } = new();
     public PointCollection CpuLine { get; private set; } = new();
     public PointCollection GpuLine { get; private set; } = new();
@@ -110,6 +114,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         GpuText = v.GpuText;
         MotherboardText = v.MotherboardText;
         FanAverageText = v.FanAverageText;
+        CpuSub = v.CpuSub; GpuSub = v.GpuSub; MotherboardSub = v.MotherboardSub; FansSub = v.FansSub;
         DriverBannerText = v.DriverBannerText;
         var fansView = FansViewState.Render(v.Control, _connected);
         if (!SameFans(_fansPage, fansView)) _fansPage = fansView; // keep the old instance when nothing changed, so focus is not lost
