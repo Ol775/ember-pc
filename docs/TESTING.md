@@ -61,9 +61,9 @@ UI automation, so they still need a person to click them.
 - [x] Key highlight: W A S D light correctly on the G915 (seen 2026-10-13). Still to check: other letters and the number row, the bottom letter row (Z to M), and a different keyboard model.
 - [ ] "Give it its own lighting" on the Logitech keyboard: its layers can be edited alone (banner on the layer list), the Govee lamps and fans keep the scene, and "Follow the scene again" puts it back.
 - [x] Devices page: switching a device off under "Use" stops Ember sending to it (it keeps its last colour), it shows "Disabled", the choice survives a restart, and switching it on brings it back.
-- [ ] Painting a picture and applying it to several devices at once resamples sensibly on each.
-- [ ] Saving a paint to the library, closing Ember and loading it back gives the same picture.
-- [ ] Deleting and renaming library entries works, and a damaged file in the library folder is ignored.
+- [x] Painting a picture and applying it to several devices at once resamples sensibly on each.
+- [x] Saving a paint to the library (saved, cleared and loaded back on the keyboard 2026-10-13; closing Ember not tried) and loading it back gives the same picture.
+- [x] Deleting and renaming library entries works, and a damaged file in the library folder is ignored.
 - [ ] Importing a paint file from another PC works.
 
 ## AI assist

@@ -379,12 +379,12 @@ public sealed class LightingManager : IAsyncDisposable
     /// <summary>Lays every device of the current scene out again, one row each, however it was arranged before.</summary>
     public void Arrange()
     {
-        Dictionary<string, IDeviceSink> known;
-        lock (_gate) known = _sinks.ToDictionary(s => s.Id);
+        Dictionary<string, bool> known;   // every device found, switched off ones too: id to "is a grid"
+        lock (_gate) known = _devices.ToDictionary(d => d.Id, d => d.Columns > 1);
         EditScene(sc =>
         {
             var present = sc.Placements.Where(p => known.ContainsKey(p.DeviceId)).ToList();
-            var rows = AutoLayout(present.Select(p => known[p.DeviceId].Columns > 1).ToList());
+            var rows = AutoLayout(present.Select(p => known[p.DeviceId]).ToList());
             var byId = present.Select((p, i) => (p.DeviceId, Row: rows[i])).ToDictionary(x => x.DeviceId, x => x.Row);
             return sc with { Placements = sc.Placements.Select(p => byId.TryGetValue(p.DeviceId, out var r) ? p with { X = 0.08, Width = 0.84, Y = r.Y, Height = r.H } : p).ToList() };
         });
