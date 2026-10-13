@@ -425,9 +425,10 @@
                     <StackPanel>
                         <TextBlock Text="{Binding VersionText}" FontWeight="SemiBold" />
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"
-                                   Text="Ember never installs anything by itself. A check only asks GitHub for the list of releases; you download and install an update from its release page." />
+                                   Text="A check only asks GitHub for the list of releases. When a newer one exists, Update now downloads its installer, checks it against the release checksum and starts it. Nothing is downloaded or installed until you press the button." />
                         <WrapPanel Margin="0,12,0,0">
                             <Button Content="Check now" Click="OnCheckUpdates" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
+                            <Button x:Name="UpdateNowButton" Content="Update now" Click="OnUpdateNow" Style="{StaticResource ActionButton}" Margin="0,0,8,0" Visibility="Collapsed" />
                             <Button x:Name="OpenReleaseButton" Content="Open release page" Click="OnOpenRelease" Style="{StaticResource ActionButton}" Margin="0" Visibility="Collapsed" />
                         </WrapPanel>
                         <TextBlock x:Name="UpdateNote" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />

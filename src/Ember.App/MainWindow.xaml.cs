@@ -88,6 +88,7 @@ public partial class MainWindow : Window
         HueHost.Text = _hueStore.Load()?.Host ?? "";
         OnSettingsSection(SetGeneral, new RoutedEventArgs());
         _updates = new UpdateChecker(_http);
+        _installer = new UpdateInstaller(_http);
         BuildAccentRow();
         DocView.FillFolding(ChangelogHost, DocView.ReadEmbedded("CHANGELOG.md"));
         DocView.Fill(RoadmapHost, DocView.ReadEmbedded("ROADMAP.md"));
@@ -156,6 +157,8 @@ public partial class MainWindow : Window
 
     readonly UpdateChecker _updates;
     string? _releaseUrl;
+    ReleaseInfo? _found;
+    readonly UpdateInstaller _installer;
 
     void ApplyAppearance()
     {
@@ -200,12 +203,34 @@ public partial class MainWindow : Window
     async Task CheckForUpdatesAsync(bool announce)
     {
         UpdateNote.Text = "Checking...";
-        OpenReleaseButton.Visibility = Visibility.Collapsed;
+        OpenReleaseButton.Visibility = UpdateNowButton.Visibility = Visibility.Collapsed;
         var result = await _updates.CheckAsync(AppInfo.Version, _vm.Prefs.Channel);
         _releaseUrl = result.Release?.Url;
+        _found = result.Release;
+        UpdateNowButton.Visibility = result.Release is { InstallerUrl: not null, HashUrl: not null } ? Visibility.Visible : Visibility.Collapsed;
         UpdateNote.Text = result.Message;
         OpenReleaseButton.Visibility = _releaseUrl is null ? Visibility.Collapsed : Visibility.Visible;
         if (announce) Announce(UpdateNote);
+    }
+
+    async void OnUpdateNow(object sender, RoutedEventArgs e)
+    {
+        if (_found is not { } release) return;
+        UpdateNowButton.IsEnabled = false;
+        try
+        {
+            var progress = new Progress<double>(p => UpdateNote.Text = $"Downloading Ember {release.Version}... {p:P0}");
+            UpdateNote.Text = $"Downloading Ember {release.Version}...";
+            var folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "EmberUpdate");
+            var got = await _installer.DownloadAsync(release, folder, progress);
+            UpdateNote.Text = got.Message;
+            if (!got.Ok || got.Path is null) return;
+            UpdateNote.Text = "Starting the installer. Windows will ask for permission, then Ember closes and the installer takes over.";
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(got.Path) { UseShellExecute = true }); }
+            catch (System.ComponentModel.Win32Exception) { UpdateNote.Text = "The installer was not started (permission was refused). Press Update now to try again."; return; }
+            Quit();
+        }
+        finally { UpdateNowButton.IsEnabled = true; }
     }
 
     void OnOpenRelease(object sender, RoutedEventArgs e)

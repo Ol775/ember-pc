@@ -5,7 +5,8 @@ using System.Text.Json;
 namespace Ember.Core;
 
 /// <summary>A release as the checker understands it: a version, whether it is a pre-release and where to read about it.</summary>
-public sealed record ReleaseInfo(AppVersion Version, string Tag, bool Prerelease, string Url, string? Notes);
+public sealed record ReleaseInfo(AppVersion Version, string Tag, bool Prerelease, string Url, string? Notes,
+    string? InstallerUrl = null, string? HashUrl = null);
 
 /// <summary>Major.minor.patch with an optional pre-release label ("beta.2"). A release sorts above any pre-release of the same numbers.</summary>
 public sealed record AppVersion(int Major, int Minor, int Patch, string? Pre) : IComparable<AppVersion>
@@ -73,7 +74,8 @@ public static class UpdateRules
                 var url = Str(e, "html_url");
                 if (url is null || !IsGitHubUrl(url)) continue;
                 var notes = Str(e, "body");
-                list.Add(new ReleaseInfo(v, tag, Bool(e, "prerelease") || v.Pre is not null, url, notes is { Length: > 600 } ? notes[..600] : notes));
+                var (installer, hash) = Assets(e);
+                list.Add(new ReleaseInfo(v, tag, Bool(e, "prerelease") || v.Pre is not null, url, notes is { Length: > 600 } ? notes[..600] : notes, installer, hash));
             }
         }
         catch (JsonException) { /* an unreadable reply is "no releases" */ }
@@ -85,6 +87,25 @@ public static class UpdateRules
         releases.Where(r => channel == UpdateChannel.Beta || !r.Prerelease)
             .Where(r => r.Version.CompareTo(current) > 0)
             .OrderByDescending(r => r.Version).FirstOrDefault();
+
+    /// <summary>The setup program and its checksum file among a release's assets; null when absent or not a download of this repository.</summary>
+    static (string? Installer, string? Hash) Assets(JsonElement release)
+    {
+        string? installer = null, hash = null;
+        if (release.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
+            foreach (var a in assets.EnumerateArray())
+            {
+                if (a.ValueKind != JsonValueKind.Object || Str(a, "name") is not { } name || Str(a, "browser_download_url") is not { } url || !IsDownloadUrl(url)) continue;
+                if (name.StartsWith("Ember-Setup-", StringComparison.Ordinal) && name.EndsWith(".exe", StringComparison.Ordinal)) installer = url;
+                else if (name.StartsWith("Ember-Setup-", StringComparison.Ordinal) && name.EndsWith(".exe.sha256", StringComparison.Ordinal)) hash = url;
+            }
+        return (installer, hash);
+    }
+
+    /// <summary>Only a release download of this repository on github.com is ever fetched.</summary>
+    public static bool IsDownloadUrl(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps && u.Host == "github.com"
+        && u.AbsolutePath.StartsWith("/Ol775/ember-pc/releases/download/", StringComparison.Ordinal);
 
     // The link is opened in the user's browser on request: only ever a github.com page.
     static bool IsGitHubUrl(string url) =>
