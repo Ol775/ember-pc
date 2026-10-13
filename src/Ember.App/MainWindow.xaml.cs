@@ -86,7 +86,7 @@ public partial class MainWindow : Window
         OnSettingsSection(SetGeneral, new RoutedEventArgs());
         _updates = new UpdateChecker(_http);
         BuildAccentRow();
-        DocView.Fill(ChangelogHost, DocView.ReadEmbedded("CHANGELOG.md"));
+        DocView.FillFolding(ChangelogHost, DocView.ReadEmbedded("CHANGELOG.md"));
         DocView.Fill(RoadmapHost, DocView.ReadEmbedded("ROADMAP.md"));
         BuildLegal();
         ApplyAppearance();

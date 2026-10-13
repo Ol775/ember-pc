@@ -20,6 +20,8 @@ All notable changes to Ember. Newest first. Ember follows [semantic versioning](
 
 ### Changed
 
+- What's new in Settings folds each release: the newest is open, older ones open with a click, and long entries show two lines with "Show more".
+
 - The AI chip in the mode list now points to the AI assist panel instead of saying "coming later". It is not a mode the service runs.
 
 ## 0.1.0-beta.4 (2026-10-13)
