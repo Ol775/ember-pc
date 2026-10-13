@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2e1a12"/><stop offset="1" stop-color="#120d0b"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.55" r="0.5"><stop offset="0" stop-color="#ff5a1f" stop-opacity="0.43"/><stop offset="1" stop-color="#ff5a1f" stop-opacity="0"/></radialGradient>
+    <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff4d12"/><stop offset="1" stop-color="#ffb347"/></linearGradient>
+    <linearGradient id="core" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffc15a"/><stop offset="1" stop-color="#fff1c9"/></linearGradient>
+  </defs>
+  <path d="M128 30 C152 66 198 90 198 148 C198 190 167 222 128 222 C89 222 58 190 58 148 C58 120 73 100 88 85 C92 106 102 119 115 123 C104 86 116 58 128 30 Z" fill="url(#flame)"/>
+  <path d="M128 116 C141 138 166 149 166 178 C166 199 149 212 128 212 C107 212 90 199 90 178 C90 163 99 153 108 144 C112 155 118 160 125 160 C120 143 122 130 128 116 Z" fill="url(#core)"/>
+</svg>

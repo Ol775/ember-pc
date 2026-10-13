@@ -4,6 +4,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>Assets\ember.ico</ApplicationIcon>
   </PropertyGroup>
   <!-- OpenRGB, fetched by scripts/fetch-openrgb.ps1, ships in an "OpenRGB" folder next to the app. -->
   <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\third-party\openrgb\OpenRGB.exe')">
@@ -15,6 +16,7 @@
     <PackageReference Include="NAudio.Wasapi" />
     <PackageReference Include="Vortice.Direct3D11" />
     <PackageReference Include="Vortice.DXGI" />
+    <Resource Include="Assets\ember.ico" />
     <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="CHANGELOG.md" />
     <EmbeddedResource Include="..\..\ROADMAP.md" LogicalName="ROADMAP.md" />
   </ItemGroup>

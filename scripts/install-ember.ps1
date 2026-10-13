@@ -63,6 +63,7 @@ $link = $shell.CreateShortcut($menu)
 $link.TargetPath = $appExe
 $link.WorkingDirectory = Split-Path $appExe
 $link.Description = 'Ember: monitor, cool and light your PC'
+$link.IconLocation = "$appExe,0"
 $link.Save()
 
 Write-Host "Ember is installed in $InstallDir."
