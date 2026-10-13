@@ -15,6 +15,7 @@ All notable changes to Ember. Newest first. Ember follows [semantic versioning](
 - **Signing.** The release build signs Ember's programs and the installer when a code-signing certificate is provided (see docs/SIGNING.md). Until one is, Windows still shows "Unknown publisher".
 
 - **Own lighting for one device.** "Give it its own lighting" (Lights page, device list) makes a copy of the layers just for that device, so a keyboard can show a different look from the Govee lamps and fans. The layer editor then works on that device alone until you press "Back to the whole scene".
+- **Switch off a device.** Each device on the Devices page has a "Use" switch. Off, Ember leaves it out of every scene and stops sending to it; the choice is remembered.
 - **Arrange devices.** Lamps found later (for example more Govee lights) get room on the canvas instead of overlapping, and a button tidies the canvas into one row per device.
 
 ### Changed

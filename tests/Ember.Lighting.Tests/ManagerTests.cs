@@ -123,6 +123,36 @@ public class ManagerTests : IDisposable
     }
 
     [Fact]
+    public async Task A_disabled_device_is_listed_but_receives_nothing_and_comes_back_when_enabled()
+    {
+        var a = new Sink("a");
+        var b = new Sink("b");
+        await using (var m = new LightingManager(new LightingStore(P), TimeProvider.System, [new Source(a, b)]))
+        {
+            m.Start();
+            await Until(() => m.Devices.Count == 2);
+            m.SetDeviceDisabled("b", true);
+            await Until(() => m.Devices.Single(d => d.Id == "b").Disabled);
+            Assert.False(m.Devices.Single(d => d.Id == "a").Disabled);
+            m.SetOn(true);
+            await Until(() => { lock (a.Sent) return a.Sent.Count > 3; });
+            lock (b.Sent) Assert.Empty(b.Sent);
+        }
+        // remembered after a restart
+        await using (var m2 = new LightingManager(new LightingStore(P), TimeProvider.System, [new Source(a, b)]))
+        {
+            m2.Start();
+            await Until(() => m2.Devices.Count == 2);
+            Assert.True(m2.Devices.Single(d => d.Id == "b").Disabled);
+            m2.SetDeviceDisabled("b", false);
+            await Until(() => !m2.Devices.Single(d => d.Id == "b").Disabled);
+            m2.SetOn(true);
+            await Until(() => { lock (b.Sent) return b.Sent.Count > 0; });
+            Assert.Null(m2.State.DisabledDevices);
+        }
+    }
+
+    [Fact]
     public async Task Lights_start_off_and_nothing_is_sent_until_switched_on()
     {
         var sink = new Sink("a");

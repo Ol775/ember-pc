@@ -209,7 +209,7 @@ public sealed class LightsPage : UserControl
             RebuildDynamic(state);
         }
         // Devices come and go without the scene changing (a source reconnects, a send fails).
-        var key = string.Join("|", m.Devices.Select(d => d.Id + d.LedCount)) + "#" + string.Join("|", m.Problems.Select(p => p.Key + p.Value));
+        var key = string.Join("|", m.Devices.Select(d => d.Id + d.LedCount + d.Disabled)) + "#" + string.Join("|", m.Problems.Select(p => p.Key + p.Value));
         if (key != _deviceKey)
         {
             _deviceKey = key;
@@ -914,7 +914,7 @@ public sealed class LightsPage : UserControl
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             var text = new StackPanel();
             text.Children.Add(Text(info.Name));
-            text.Children.Add(Text($"{info.Kind} · {info.LedCount} LED{(info.LedCount == 1 ? "" : "s")} · {info.Source}", muted: true, size: 12));
+            text.Children.Add(Text($"{info.Kind} · {info.LedCount} LED{(info.LedCount == 1 ? "" : "s")} · {info.Source}" + (info.Disabled ? " · disabled on the Devices page" : ""), muted: true, size: 12));
             if (_m.Problems.TryGetValue(info.Id, out var problem)) text.Children.Add(Text("Problem: " + problem, size: 12));
             var on = Switch("Use in this scene", placed.TryGetValue(info.Id, out var p) && p.Enabled, v =>
             {

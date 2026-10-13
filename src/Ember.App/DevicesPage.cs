@@ -38,7 +38,7 @@ public sealed class DevicesPage : UserControl
         var devices = lights.Devices;
         var status = lights.SourceStatus;
         var key = vm.FansPage.ServiceAvailable + "|" + string.Join(";", headers.Select(h => h.Id + h.Name + h.StateText)) + "#"
-            + string.Join(";", devices.Select(d => d.Id + d.Name + d.Source)) + "#" + string.Join(";", status)
+            + string.Join(";", devices.Select(d => d.Id + d.Name + d.Source + d.Disabled)) + "#" + string.Join(";", status)
             + "#" + string.Join(";", lights.Problems.Select(p => p.Key + p.Value));
         if (key == _key) return;
         _key = key;
@@ -53,11 +53,15 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Source("Logitech", "Keyboards and mice, through G HUB", devices, status));
 
         _rows.Children.Clear();
-        _rows.Children.Add(Row("Name", "Source", "Type", "Status", header: true));
+        _rows.Children.Add(Row("Name", "Source", "Type", "Status", header: true, use: Text("Use", muted: true, size: 12)));
         foreach (var d in devices.OrderBy(d => d.Source).ThenBy(d => d.Name))
         {
             var problem = lights.Problems.TryGetValue(d.Id, out var p) ? p : null;
-            _rows.Children.Add(Row(d.Name, d.Source, "Lighting", problem ?? (d.Realtime ? "Online" : "Online, slow (cloud)"), warn: problem is not null || !d.Realtime));
+            var id = d.Id;
+            var use = Switch("", !d.Disabled, on => lights.SetDeviceDisabled(id, !on));
+            use.Margin = new Thickness(0);
+            System.Windows.Automation.AutomationProperties.SetName(use, "Use " + d.Name + " in Ember");
+            _rows.Children.Add(Row(d.Name, d.Source, "Lighting", d.Disabled ? "Disabled" : problem ?? (d.Realtime ? "Online" : "Online, slow (cloud)"), warn: d.Disabled || problem is not null || !d.Realtime, use: use));
         }
         if (_rows.Children.Count == 1) _rows.Children.Add(Text("Nothing found yet", muted: true));
     }
@@ -92,10 +96,12 @@ public sealed class DevicesPage : UserControl
         return box;
     }
 
-    static FrameworkElement Row(string a, string b, string c, string d, bool header = false, bool warn = false)
+    static FrameworkElement Row(string a, string b, string c, string d, bool header = false, bool warn = false, FrameworkElement? use = null)
     {
         var g = new Grid { Margin = new Thickness(0, header ? 0 : 6, 0, 0) };
         foreach (var w in new[] { 2.0, 1.2, 1.0, 1.4 }) g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(w, GridUnitType.Star) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(64) });
+        if (use is not null) { Grid.SetColumn(use, 4); use.HorizontalAlignment = HorizontalAlignment.Right; g.Children.Add(use); }
         var cells = new[] { a, b, c, d };
         for (var i = 0; i < 4; i++)
         {

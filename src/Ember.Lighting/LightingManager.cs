@@ -2,7 +2,7 @@ using Ember.Lighting.OpenRgb;
 
 namespace Ember.Lighting;
 
-public sealed record DeviceInfo(string Id, string Name, string Kind, string Source, int LedCount, bool Realtime, int Columns = 0);
+public sealed record DeviceInfo(string Id, string Name, string Kind, string Source, int LedCount, bool Realtime, int Columns = 0, bool Disabled = false);
 
 /// <summary>
 /// Owns the lighting state of the app: the scenes, the devices found by the sources, and the render loop (about 30 pictures
@@ -204,6 +204,21 @@ public sealed class LightingManager : IAsyncDisposable
 
     public int SegmentsOf(string deviceId) => State.Segments is { } m && m.TryGetValue(deviceId, out var n) ? n : 1;
 
+    /// <summary>
+    /// Switches a device off for Ember altogether: it is left out of every scene and Ember stops sending to it, so it keeps
+    /// whatever colour it last had until its own software or a switch-on takes over. Applies at once.
+    /// </summary>
+    public void SetDeviceDisabled(string deviceId, bool disabled)
+    {
+        Mutate(s =>
+        {
+            var list = (s.DisabledDevices ?? []).Where(d => d != deviceId).ToList();
+            if (disabled) list.Add(deviceId);
+            return s with { DisabledDevices = list.Count == 0 ? null : list };
+        });
+        RefreshDevices();
+    }
+
     public void SetOpenRgb(string? path, bool? start) => Mutate(s => s with { OpenRgbPath = string.IsNullOrWhiteSpace(path) ? null : path.Trim(), StartOpenRgb = start });
 
     // Writing the file waits until the changes stop (a slider produces dozens a second) and is done once on shutdown.
@@ -305,8 +320,10 @@ public sealed class LightingManager : IAsyncDisposable
         _engine.Reset();
         lock (_gate)
         {
+            var off = _state.DisabledDevices is { } list ? list.ToHashSet() : [];
+            _devices = sinks.Select(s => new DeviceInfo(s.Id, s.Name, s.Kind, SourceOf(s), s.LedCount, s.Realtime, s.Columns, off.Contains(s.Id))).ToList();
+            sinks = sinks.Where(s => !off.Contains(s.Id)).ToList();
             _sinks = sinks;
-            _devices = sinks.Select(s => new DeviceInfo(s.Id, s.Name, s.Kind, SourceOf(s), s.LedCount, s.Realtime, s.Columns)).ToList();
             var withPlacements = Placed(_state, sinks);
             if (!ReferenceEquals(withPlacements, _state))
             {
