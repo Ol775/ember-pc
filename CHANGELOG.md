@@ -2,13 +2,18 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
-## Unreleased
+## 0.1.0-beta.2 (2026-10-13)
 
 ### Added
 
 - **Logitech G lighting.** Keyboards and mice are driven through G HUB's own lighting engine, which Ember loads from your G HUB install (nothing from Logitech is copied or shipped). The keyboard is lit per key column, the mouse as one lamp.
 - **Light profiles per device.** Any device on the Lights page can show a different saved scene from the rest, for example a keyboard with its own look while the fans and strips follow the main scene.
 - **Changelog and roadmap** in Settings, and as `CHANGELOG.md` and `ROADMAP.md` on GitHub.
+- **Devices page** now carries the fan header tests, so the Fans page is only modes and curves.
+
+### Fixed
+
+- The update checker now says plainly that a private repository hides its releases, instead of "no releases yet".
 
 ## 0.1.0-beta.1 (2026-10-13)
 
