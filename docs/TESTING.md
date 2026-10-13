@@ -55,6 +55,7 @@ Unit-tested (fills across the canvas, the library folder, name safety). The butt
 UI automation, so they still need a person to click them.
 
 
+- [ ] Lamps found later by Govee make room on the canvas without overlapping, and "Arrange devices" tidies a hand-made layout.
 - [ ] Painting a picture and applying it to several devices at once resamples sensibly on each.
 - [ ] Saving a paint to the library, closing Ember and loading it back gives the same picture.
 - [ ] Deleting and renaming library entries works, and a damaged file in the library folder is ignored.

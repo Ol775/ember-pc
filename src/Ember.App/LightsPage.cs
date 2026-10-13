@@ -103,6 +103,10 @@ public sealed class LightsPage : UserControl
         frame.SetResourceReference(Border.BackgroundProperty, "TrackBrush");
         _canvas.SizeChanged += (_, _) => LayoutVisuals();
         canvasBox.Children.Add(frame);
+        var arrange = new WrapPanel { Margin = new Thickness(0, 8, 0, 0) };
+        arrange.Children.Add(Pill("Arrange devices", () => m.Arrange(), "Arrange devices on the canvas"));
+        arrange.Children.Add(Text("Gives each device its own row. New lamps found later are placed in free space; use this to tidy up.", muted: true, size: 12));
+        canvasBox.Children.Add(arrange);
         var paintRow = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
         paintRow.Children.Add(Switch("Paint single LEDs", _paintMode, on => { _paintMode = on; if (on && _selectedDevice is null) SetNote("Click a device on the canvas first, then click its LEDs."); }));
         paintRow.Children.Add(new Border { Width = 12 });

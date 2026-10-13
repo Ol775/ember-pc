@@ -48,6 +48,58 @@ public class ManagerTests : IDisposable
         Assert.True(LightingState.IsValid(once));
     }
 
+    static bool Overlap(DevicePlacement a, DevicePlacement b) => a.Y < b.Y + b.Height - 1e-9 && b.Y < a.Y + a.Height - 1e-9;
+
+    [Theory]
+    [InlineData(5)]
+    [InlineData(12)]
+    [InlineData(30)]
+    public void However_many_devices_turn_up_each_keeps_its_own_row_inside_the_canvas(int count)
+    {
+        var sinks = Enumerable.Range(0, count).Select(i => (IDeviceSink)new Sink("d" + i)).ToList();
+        var placed = LightingManager.Placed(LightingState.Default, sinks).Current.Placements;
+        Assert.Equal(count, placed.Count);
+        Assert.All(placed, p => Assert.InRange(p.Y + p.Height, 0, 1.0001));
+        for (var i = 0; i < count; i++) for (var j = i + 1; j < count; j++) Assert.False(Overlap(placed[i], placed[j]), $"{i} overlaps {j}");
+    }
+
+    [Fact]
+    public void Lamps_found_later_make_room_on_a_canvas_nobody_has_arranged()
+    {
+        var first = new IDeviceSink[] { new Sink("a"), new Sink("b"), new Sink("c"), new Sink("d") };
+        var s = LightingManager.Placed(LightingState.Default, first);
+        var more = first.Concat(Enumerable.Range(0, 8).Select(i => (IDeviceSink)new Sink("govee" + i))).ToList();
+        var placed = LightingManager.Placed(s, more).Current.Placements;
+        Assert.Equal(12, placed.Count);
+        for (var i = 0; i < placed.Count; i++) for (var j = i + 1; j < placed.Count; j++) Assert.False(Overlap(placed[i], placed[j]));
+        Assert.All(placed, p => Assert.InRange(p.Y + p.Height, 0, 1.0001));
+    }
+
+    [Fact]
+    public void A_canvas_the_owner_arranged_keeps_their_places_and_newcomers_take_free_space()
+    {
+        var a = new Sink("a");
+        var s = LightingManager.Placed(LightingState.Default, [a]);
+        var moved = s.Current.Placements[0] with { X = 0.3, Y = 0.5, Width = 0.4, Height = 0.2 };
+        s = s with { Scenes = s.Scenes.Select(x => x.Name == s.Current.Name ? x with { Placements = [moved] } : x).ToList() };
+        var placed = LightingManager.Placed(s, [a, new Sink("b"), new Sink("c")]).Current.Placements;
+        Assert.Equal(moved, placed[0]);
+        Assert.Equal(3, placed.Count);
+        Assert.False(Overlap(placed[0], placed[1]) || Overlap(placed[0], placed[2]) || Overlap(placed[1], placed[2]));
+    }
+
+    [Fact]
+    public async Task Arrange_puts_a_tangled_canvas_back_into_one_row_per_device()
+    {
+        await using var m = new LightingManager(new LightingStore(P), TimeProvider.System, [new Source(new Sink("a"), new Sink("b"), new Sink("c"))]);
+        m.Start();
+        await Until(() => m.Devices.Count == 3 && m.State.Current.Placements.Count == 3);
+        m.EditScene(sc => sc with { Placements = sc.Placements.Select(p => p with { Y = 0.5, Height = 0.4 }).ToList() });
+        m.Arrange();
+        var placed = m.State.Current.Placements;
+        for (var i = 0; i < 3; i++) for (var j = i + 1; j < 3; j++) Assert.False(Overlap(placed[i], placed[j]));
+    }
+
     [Fact]
     public async Task Lights_start_off_and_nothing_is_sent_until_switched_on()
     {

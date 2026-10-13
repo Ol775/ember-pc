@@ -292,14 +292,80 @@ public sealed class LightingManager : IAsyncDisposable
         var have = scene.Placements.Select(p => p.DeviceId).ToHashSet();
         var missing = sinks.Where(s => !have.Contains(s.Id)).ToList();
         if (missing.Count == 0 || scene.Placements.Count + missing.Count > LightingState.MaxPlacements) return state;
+        var known = sinks.ToDictionary(s => s.Id);
         var placements = scene.Placements.ToList();
-        foreach (var sink in missing)
+        // A canvas the owner has not moved things on is laid out again with the newcomers, so every device keeps a row of its
+        // own however many turn up. One that has been arranged by hand is left alone and the newcomers take free space.
+        var untouched = placements.Count > 0 && placements.All(p => known.ContainsKey(p.DeviceId)) && MatchesAutoLayout(placements, known);
+        if (untouched || placements.Count == 0)
         {
-            var row = placements.Count;
-            placements.Add(new DevicePlacement(sink.Id, 0.08, Math.Min(0.80, 0.05 + 0.19 * row), 0.84, sink.Columns > 1 ? 0.30 : 0.14, Enabled: true));
+            var all = placements.Select(p => known[p.DeviceId]).Concat(missing).ToList();
+            var rows = AutoLayout(all.Select(s => s.Columns > 1).ToList());
+            var old = placements.ToDictionary(p => p.DeviceId);
+            placements = all.Select((s, i) => old.TryGetValue(s.Id, out var p)
+                ? p with { X = 0.08, Y = rows[i].Y, Width = 0.84, Height = rows[i].H }
+                : new DevicePlacement(s.Id, 0.08, rows[i].Y, 0.84, rows[i].H, Enabled: true)).ToList();
+        }
+        else
+        {
+            foreach (var sink in missing)
+            {
+                var h = sink.Columns > 1 ? 0.20 : 0.10;
+                placements.Add(new DevicePlacement(sink.Id, 0.08, FreeRow(placements, h), 0.84, h, Enabled: true));
+            }
         }
         var changed = scene with { Placements = placements };
         return state with { Scenes = state.Scenes.Select(x => x.Name == scene.Name ? changed : x).ToList() };
+    }
+
+    /// <summary>Lays every device of the current scene out again, one row each, however it was arranged before.</summary>
+    public void Arrange()
+    {
+        Dictionary<string, IDeviceSink> known;
+        lock (_gate) known = _sinks.ToDictionary(s => s.Id);
+        EditScene(sc =>
+        {
+            var present = sc.Placements.Where(p => known.ContainsKey(p.DeviceId)).ToList();
+            var rows = AutoLayout(present.Select(p => known[p.DeviceId].Columns > 1).ToList());
+            var byId = present.Select((p, i) => (p.DeviceId, Row: rows[i])).ToDictionary(x => x.DeviceId, x => x.Row);
+            return sc with { Placements = sc.Placements.Select(p => byId.TryGetValue(p.DeviceId, out var r) ? p with { X = 0.08, Width = 0.84, Y = r.Y, Height = r.H } : p).ToList() };
+        });
+    }
+
+    const double Margin = 0.04, Gap = 0.02;
+
+    /// <summary>One row per device from top to bottom, tall for keyboards and grids. Rows shrink together so they all fit.</summary>
+    static (double Y, double H)[] AutoLayout(IReadOnlyList<bool> grids)
+    {
+        var weights = grids.Select(g => g ? 2.0 : 1.0).ToList();
+        var unit = Math.Min(0.15, (1 - 2 * Margin) / weights.Sum());
+        var rows = new (double, double)[grids.Count];
+        var y = Margin;
+        for (var i = 0; i < rows.Length; i++)
+        {
+            rows[i] = (Math.Round(y, 4), Math.Round(Math.Max(0.02, weights[i] * unit - Gap), 4));
+            y += weights[i] * unit;
+        }
+        return rows;
+    }
+
+    static bool MatchesAutoLayout(IReadOnlyList<DevicePlacement> placements, Dictionary<string, IDeviceSink> known)
+    {
+        var rows = AutoLayout(placements.Select(p => known[p.DeviceId].Columns > 1).ToList());
+        for (var i = 0; i < rows.Length; i++)
+        {
+            var p = placements[i];
+            if (Math.Abs(p.X - 0.08) > 0.001 || Math.Abs(p.Width - 0.84) > 0.001 || Math.Abs(p.Y - rows[i].Y) > 0.001 || Math.Abs(p.Height - rows[i].H) > 0.001) return false;
+        }
+        return true;
+    }
+
+    /// <summary>The first free spot of the given height (a fraction of the canvas), or the bottom edge when nothing is free.</summary>
+    static double FreeRow(IReadOnlyList<DevicePlacement> placed, double height)
+    {
+        for (var y = Margin; y + height <= 1 - Margin + 1e-9; y += 0.01)
+            if (placed.All(p => y + height <= p.Y || y >= p.Y + p.Height)) return Math.Round(y, 4);
+        return Math.Round(1 - Margin - height, 4);
     }
 
     public async ValueTask DisposeAsync()
