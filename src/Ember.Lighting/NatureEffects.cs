@@ -66,7 +66,7 @@ public sealed record FireEffect(Color Base, Color Tip, double Speed = 1, double 
 /// Drops that fall down the picture, each with a fading trail. Speed is in heights per second. Only the drops are coloured,
 /// so put it above another layer. On a single row of LEDs the drops run along the row instead.
 /// </summary>
-public sealed record RainEffect(Color Colour, double Density = 0.6, double Speed = 0.5, double Length = 0.3, EffectScope Scope = EffectScope.Device) : Effect
+public sealed record RainEffect(Color Colour, double Density = 0.6, double Speed = 0.25, double Length = 0.3, EffectScope Scope = EffectScope.Device) : Effect
 {
     const int Lanes = 14;
 
@@ -116,13 +116,18 @@ public static class KeyGroups
         KeyGroup.BottomRow => "Space bar row", KeyGroup.Navigation => "Arrows and navigation", _ => "Number pad",
     };
 
-    /// <summary>The group of the key at this spot of a keyboard (0 to 1 each way), using the layout of <see cref="KeyboardLayout"/>.</summary>
+    /// <summary>
+    /// The group of the key at this spot of a keyboard (0 to 1 each way). Worked out against the 21 by 6 picture of a G915 with a
+    /// colour per column: the navigation block is columns 14 to 16 (13 to 15 on the top row, where Print Screen sits just left of
+    /// it, and 15 to 17 on the bottom row, where the Left, Down and Right arrows are), and the number pad is columns 17 to 20.
+    /// </summary>
     public static KeyGroup Of(double x, double y)
     {
-        var column = Math.Clamp(x, 0, 1) * Width;
+        var col = Math.Clamp((int)(Math.Clamp(x, 0, 1) * 21), 0, 20);
         var row = Math.Clamp((int)(Math.Clamp(y, 0, 1) * Rows), 0, (int)Rows - 1);
-        if (column >= NavEnd) return KeyGroup.Numpad;
-        if (column >= MainEnd) return KeyGroup.Navigation;
+        if (col >= 17 && !(col == 17 && row == 5)) return KeyGroup.Numpad;
+        var nav = row switch { 0 => col >= 13, 5 => col >= 15, _ => col >= 14 };
+        if (nav) return KeyGroup.Navigation;
         return row switch { 0 => KeyGroup.FunctionRow, 1 => KeyGroup.NumberRow, 5 => KeyGroup.BottomRow, _ => KeyGroup.Letters };
     }
 }

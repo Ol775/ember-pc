@@ -127,7 +127,7 @@ public class KeyGroupTests
         Assert.Equal(KeyGroup.NumberRow, Of(0x31));        // 1
         Assert.Equal(KeyGroup.Letters, Of(0x41));          // A
         Assert.Equal(KeyGroup.BottomRow, Of(0x20));        // Space
-        Assert.Equal(KeyGroup.Navigation, Of(0x25));       // Left arrow
+        Assert.Equal(KeyGroup.Navigation, KeyGroups.Of(15.5 / 21, 5.5 / 6));   // Left arrow (its cell on a G915; the generic map puts it half a key off)
         Assert.Equal(KeyGroup.Numpad, Of(0x65));           // Numpad 5
     }
 
@@ -225,5 +225,37 @@ public class KeyHighlightTests
     {
         var json = System.Text.Json.JsonSerializer.Serialize<Effect>(new KeyHighlightEffect(new Color(1, 0, 0), "WASD"));
         Assert.Equal("WASD", ((KeyHighlightEffect)System.Text.Json.JsonSerializer.Deserialize<Effect>(json)!).Keys);
+    }
+}
+
+public class KeyboardCellGroupTests
+{
+    // Cells of the 21 by 6 picture, as seen on a G915 with a colour per column (centre of the cell given).
+    static KeyGroup Cell(int col, int row) => KeyGroups.Of((col + 0.5) / 21, (row + 0.5) / 6);
+
+    [Theory]
+    [InlineData(17, 1)] [InlineData(17, 2)] [InlineData(17, 3)] [InlineData(17, 4)]   // NUM 7 4 1 column
+    [InlineData(18, 5)] [InlineData(19, 5)] [InlineData(20, 5)] [InlineData(20, 3)]
+    public void Number_pad_cells(int col, int row) => Assert.Equal(KeyGroup.Numpad, Cell(col, row));
+
+    [Fact]
+    public void The_right_arrow_cell_is_navigation_not_number_pad() => Assert.Equal(KeyGroup.Navigation, Cell(17, 5));
+
+    [Theory]
+    [InlineData(14, 1)] [InlineData(15, 2)] [InlineData(16, 2)] [InlineData(16, 5)]   // Insert, End, Page Down, Down
+    public void Navigation_cells(int col, int row) => Assert.Equal(KeyGroup.Navigation, Cell(col, row));
+}
+
+public class KeyboardCellEdgeTests
+{
+    static KeyGroup Cell(int col, int row) => KeyGroups.Of((col + 0.5) / 21, (row + 0.5) / 6);
+
+    [Fact]
+    public void Print_screen_joins_the_navigation_block_and_right_ctrl_stays_with_the_bottom_row()
+    {
+        Assert.Equal(KeyGroup.Navigation, Cell(13, 0));   // Print Screen
+        Assert.Equal(KeyGroup.FunctionRow, Cell(12, 0));  // F12
+        Assert.Equal(KeyGroup.BottomRow, Cell(14, 5));    // Right Ctrl
+        Assert.Equal(KeyGroup.Navigation, Cell(15, 5));   // Left arrow
     }
 }
