@@ -49,6 +49,14 @@ reach the tray): the menu, double-click to open, and Quit.
 - [ ] Key-group effects: a group colour only lights its own keys (function row, number row, letters, arrows, numpad).
 - [ ] None of the new effects flash fast enough to be uncomfortable at their default speed.
 
+## Philips Hue (written and unit-tested against a pretend bridge only)
+
+- [ ] Find bridge lists the bridge, or typing its address works.
+- [ ] Press the bridge button, then Link bridge: the note says linked, and the lights appear on the Lights page and the Devices page.
+- [ ] Hue lights follow the scene, with the right colour and brightness (xy colour conversion), without flooding the bridge when several lights are linked.
+- [ ] Black or the lights switched off turns the Hue lights off, and switching on brings them back.
+- [ ] Unlink forgets the bridge and its key; linking again works. A bridge whose address changes shows "could not reach" and recovers when its address is updated.
+
 ## Several devices and shared paint files
 
 Unit-tested (fills across the canvas, the library folder, name safety). The buttons on the Lights page were not reached by

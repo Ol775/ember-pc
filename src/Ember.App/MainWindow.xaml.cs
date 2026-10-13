@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using Ember.Core;
 using Ember.Lighting;
 using Ember.Lighting.Govee;
+using Ember.Lighting.Hue;
 using Ember.Lighting.OpenRgb;
 
 namespace Ember.App;
@@ -45,7 +46,8 @@ public partial class MainWindow : Window
         _lights = lights = new LightingManager(new LightingStore(LightingStore.DefaultPath), TimeProvider.System,
             [new OpenRgbSource(() => string.IsNullOrWhiteSpace(lights?.State.OpenRgbPath) ? BundledOpenRgb : lights!.State.OpenRgbPath, () => lights?.State.ShouldStartOpenRgb ?? true),
              new GoveeSource(new GoveeLanClient(), GoveeCloud, id => lights?.SegmentsOf(id) ?? 1),
-             new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad(), () => lights?.State.LogitechOneColour ?? false)]);
+             new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad(), () => lights?.State.LogitechOneColour ?? false),
+             new Ember.Lighting.Hue.HueSource(HueConnection)]);
         Lights.Attach(_lights);
         _lights.Start();
 
@@ -83,6 +85,7 @@ public partial class MainWindow : Window
         StartupSwitch.IsChecked = StartupRegistration.IsEnabled();
         TraySwitch.IsChecked = _vm.Prefs.KeepInTray;
         MinimisedSwitch.IsChecked = _vm.Prefs.StartMinimised;
+        HueHost.Text = _hueStore.Load()?.Host ?? "";
         OnSettingsSection(SetGeneral, new RoutedEventArgs());
         _updates = new UpdateChecker(_http);
         BuildAccentRow();
@@ -289,6 +292,74 @@ public partial class MainWindow : Window
         GoveeNote.Text = _secrets.Set(GoveeKeyName, null) ? "Key removed." : "Windows would not remove the key.";
         _lights.RefreshDevices();
         Announce(GoveeNote);
+    }
+
+    // ---- Philips Hue ----
+
+    readonly HueSettingsStore _hueStore = new(HueSettingsStore.DefaultPath);
+    HueClient? _hueClient;
+    string? _hueCacheKey;
+
+    /// <summary>The linked bridge, or null while none is linked. The same client is kept while nothing about the link changes.</summary>
+    HueClient? HueConnection()
+    {
+        var settings = _hueStore.Load();
+        var key = _secrets.Get(HueSettings.KeyName);
+        if (settings is null || string.IsNullOrEmpty(settings.CertThumbprint) || string.IsNullOrWhiteSpace(key)) { _hueClient = null; _hueCacheKey = null; return null; }
+        var cacheKey = settings.Host + "|" + settings.CertThumbprint + "|" + key;
+        if (_hueClient is null || _hueCacheKey != cacheKey)
+        {
+            _hueClient = new HueClient(HuePinning.CreateClient(() => settings.CertThumbprint), settings.Host, key);
+            _hueCacheKey = cacheKey;
+        }
+        return _hueClient;
+    }
+
+    async void OnHueFind(object sender, RoutedEventArgs e)
+    {
+        HueNote.Text = "Asking Signify's discovery service for bridges on your network (it sees your public address, nothing else)…";
+        Announce(HueNote);
+        try
+        {
+            var found = await HueDiscovery.FindAsync(_http);
+            if (found.Count == 0) HueNote.Text = "No bridge was listed. Type its address (find it in the Hue app under Settings, Bridges) instead.";
+            else { HueHost.Text = found[0]; HueNote.Text = found.Count == 1 ? "Found a bridge at " + found[0] + ". Press the button on the bridge, then Link bridge." : "Found " + string.Join(", ", found) + ". The first is filled in; change it if that is not your bridge."; }
+        }
+        catch (Exception ex) { HueNote.Text = "Could not ask the discovery service (" + ex.Message + "). Type the bridge address instead."; }
+        Announce(HueNote);
+    }
+
+    async void OnHueLink(object sender, RoutedEventArgs e)
+    {
+        var host = HueHost.Text.Trim();
+        if (!HueSettings.IsValidHost(host)) { HueNote.Text = "Type the bridge address first, for example 192.168.1.20."; Announce(HueNote); return; }
+        HueNote.Text = "Linking… (the button on the bridge must have been pressed in the last 30 seconds)";
+        Announce(HueNote);
+        string? thumbprint = null;
+        try
+        {
+            using var http = HuePinning.CreateClient(() => null, t => thumbprint = t, TimeSpan.FromSeconds(8));
+            var key = await HueClient.PairAsync(http, host);
+            if (string.IsNullOrEmpty(thumbprint)) { HueNote.Text = "The bridge did not show a certificate, so Ember will not link it."; Announce(HueNote); return; }
+            if (!_secrets.Set(HueSettings.KeyName, key) || !_hueStore.TrySave(new HueSettings(host, thumbprint)))
+            {
+                HueNote.Text = "Linked, but Windows would not store the key or the settings, so it was not kept.";
+                _secrets.Set(HueSettings.KeyName, null);
+            }
+            else HueNote.Text = "Linked to the bridge at " + host + ". Its lights appear on the Lights page in a few seconds.";
+            _lights.RefreshDevices();
+        }
+        catch (HueLinkButtonException ex) { HueNote.Text = ex.Message; }
+        catch (Exception ex) { HueNote.Text = "Could not link: " + (ex is HttpRequestException or TaskCanceledException ? "no answer from " + host : ex.Message); }
+        Announce(HueNote);
+    }
+
+    void OnHueUnlink(object sender, RoutedEventArgs e)
+    {
+        var ok = _secrets.Set(HueSettings.KeyName, null) & _hueStore.TrySave(null);
+        HueNote.Text = ok ? "Unlinked. Ember forgot the bridge and its key. (The bridge still lists Ember; remove it in the Hue app if you like.)" : "Could not remove everything.";
+        _lights.RefreshDevices();
+        Announce(HueNote);
     }
 
     async void OnCurveCommitted(CurveGroup group, IReadOnlyList<CurvePoint> points)

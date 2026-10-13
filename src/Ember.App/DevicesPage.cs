@@ -51,6 +51,7 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Source("OpenRGB", "SDK server on localhost, started with Ember", devices, status));
         _cards.Children.Add(Source("Govee", "LAN first; cloud only with your API key", devices, status));
         _cards.Children.Add(Source("Logitech", "Keyboards and mice, through G HUB", devices, status));
+        _cards.Children.Add(Source("Hue", "Philips Hue lights, through the bridge on your network", devices, status));
 
         _rows.Children.Clear();
         _rows.Children.Add(Row("Name", "Source", "Type", "Status", header: true, use: Text("Use", muted: true, size: 12)));
