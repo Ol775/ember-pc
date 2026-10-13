@@ -239,17 +239,23 @@ public sealed class LightingManager : IAsyncDisposable
         _saveTimer.Change(TimeSpan.FromMilliseconds(400), Timeout.InfiniteTimeSpan);
     }
 
+    // One save at a time: a closing save must wait for a delayed one that is still writing, not return while the file is half written.
+    readonly object _flushGate = new();
+
     void Flush()
     {
-        LightingState state;
-        lock (_gate)
+        lock (_flushGate)
         {
-            if (!_dirty) return;
-            _dirty = false;
-            state = _state;
+            LightingState state;
+            lock (_gate)
+            {
+                if (!_dirty) return;
+                _dirty = false;
+                state = _state;
+            }
+            var ok = _store.TrySave(state);
+            lock (_gate) _saveFailed = !ok;
         }
-        var ok = _store.TrySave(state);
-        lock (_gate) _saveFailed = !ok;
     }
 
     void Mutate(Func<LightingState, LightingState> change)

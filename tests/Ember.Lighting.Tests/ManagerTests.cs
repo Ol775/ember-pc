@@ -135,7 +135,8 @@ public class ManagerTests : IDisposable
             await Until(() => m.Devices.Single(d => d.Id == "b").Disabled);
             Assert.False(m.Devices.Single(d => d.Id == "a").Disabled);
             m.SetOn(true);
-            await Until(() => { lock (a.Sent) return a.Sent.Count > 3; });
+            await Until(() => { lock (a.Sent) return a.Sent.Count > 0; });
+            await Task.Delay(400);   // time enough for a frame to have reached b, had it been sent
             lock (b.Sent) Assert.Empty(b.Sent);
         }
         // remembered after a restart
