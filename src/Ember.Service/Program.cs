@@ -40,7 +40,7 @@ internal static class Program
             // The host may already be disposed, so logging can throw; always report to stderr too.
             try { log?.LogCritical(ex, "Ember service failed; exiting"); }
             catch { /* stderr below */ }
-            Console.Error.WriteLine($"Ember service failed: {ex.Message}");
+            Console.Error.WriteLine(Environment.GetEnvironmentVariable("EMBER_DEBUG") is null ? $"Ember service failed: {ex.Message}" : $"Ember service failed: {ex}");
             return 1;
         }
         finally { host?.Dispose(); }
