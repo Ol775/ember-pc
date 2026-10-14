@@ -154,6 +154,25 @@ public class ManagerTests : IDisposable
     }
 
     [Fact]
+    public async Task Identify_flashes_the_device_white_then_dark_and_works_even_on_a_disabled_device()
+    {
+        var a = new Sink("a");
+        await using var m = new LightingManager(new LightingStore(P), TimeProvider.System, [new Source(a)]);
+        m.Start();
+        await Until(() => m.Devices.Count == 1);
+        m.SetDeviceDisabled("a", true);
+        await Until(() => m.Devices.Single().Disabled);
+        await m.IdentifyAsync("a");
+        lock (a.Sent)
+        {
+            Assert.Equal(6, a.Sent.Count);                                   // three flashes: white, dark, white, dark, ...
+            Assert.All(a.Sent.Where((_, i) => i % 2 == 0), c => Assert.All(c, x => Assert.Equal(Color.White, x)));
+            Assert.All(a.Sent.Where((_, i) => i % 2 == 1), c => Assert.All(c, x => Assert.Equal(Color.Black, x)));
+        }
+        await m.IdentifyAsync("nothing"); // an unknown device is ignored
+    }
+
+    [Fact]
     public async Task A_switched_off_integration_is_not_asked_for_devices_and_comes_back_when_switched_on()
     {
         var a = new Sink("a");

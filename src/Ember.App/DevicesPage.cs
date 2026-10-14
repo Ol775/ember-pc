@@ -63,7 +63,7 @@ public sealed class DevicesPage : UserControl
         }
 
         _rows.Children.Clear();
-        _rows.Children.Add(Row("Name", "Source", "Type", "Status", header: true, use: Text("Use", muted: true, size: 12)));
+        _rows.Children.Add(Row("Name", "Source", "Type", "Status", header: true, use: Text("Identify and use", muted: true, size: 12)));
         foreach (var d in devices.OrderBy(d => d.Source).ThenBy(d => d.Name))
         {
             var problem = lights.Problems.TryGetValue(d.Id, out var p) ? p : null;
@@ -71,7 +71,13 @@ public sealed class DevicesPage : UserControl
             var use = Switch("", !d.Disabled, on => lights.SetDeviceDisabled(id, !on));
             use.Margin = new Thickness(0);
             System.Windows.Automation.AutomationProperties.SetName(use, "Use " + d.Name + " in Ember");
-            _rows.Children.Add(Row(d.Name, d.Source, "Lighting", d.Disabled ? "Disabled" : problem ?? (d.Realtime ? "Online" : "Online, slow (cloud)"), warn: d.Disabled || problem is not null || !d.Realtime, use: use));
+            var identify = Pill("Identify", () => _ = lights.IdentifyAsync(id), "Identify " + d.Name);
+            identify.Margin = new Thickness(0, 0, 14, 0);
+            identify.ToolTip = "Flash this device white a few times so you can see which one it is";
+            var useCell = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            useCell.Children.Add(identify);
+            useCell.Children.Add(use);
+            _rows.Children.Add(Row(d.Name, d.Source, "Lighting", d.Disabled ? "Disabled" : problem ?? (d.Realtime ? "Online" : "Online, slow (cloud)"), warn: d.Disabled || problem is not null || !d.Realtime, use: useCell));
         }
         if (_rows.Children.Count == 1) _rows.Children.Add(Text("Nothing found yet", muted: true));
     }
@@ -120,7 +126,7 @@ public sealed class DevicesPage : UserControl
     {
         var g = new Grid { Margin = new Thickness(0, header ? 0 : 6, 0, 0) };
         foreach (var w in new[] { 2.0, 1.2, 1.0, 1.4 }) g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(w, GridUnitType.Star) });
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(64) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
         if (use is not null) { Grid.SetColumn(use, 4); use.HorizontalAlignment = HorizontalAlignment.Right; g.Children.Add(use); }
         var cells = new[] { a, b, c, d };
         for (var i = 0; i < 4; i++)

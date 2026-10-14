@@ -16,6 +16,8 @@ public interface ICorsairApi : IDisposable
     IReadOnlyList<CorsairDevice> Devices();
     /// <summary>One colour per LED id, in order (red, green, blue bytes). False when iCUE refused (not connected, no control, device gone).</summary>
     bool SetColors(string deviceId, uint[] ledIds, byte[] rgb);
+    /// <summary>What the SDK last said, in plain words (session state, iCUE version, error codes), for the status line and the log.</summary>
+    string Detail => "";
     /// <summary>Hands the lighting back to iCUE.</summary>
     void Disconnect();
 }
@@ -59,6 +61,12 @@ public sealed class NativeCorsairApi : ICorsairApi
     volatile int _state; // the SDK's session state: 1 closed, 2 connecting, 3 timeout, 4 refused, 5 lost, 6 connected
     bool _started;
 
+    public string Detail { get; private set; } = "";
+
+    static string StateName(int s) => s switch { 1 => "closed", 2 => "connecting", 3 => "timed out", 4 => "refused (is Enable SDK on in iCUE?)", 5 => "lost", 6 => "connected", _ => "unknown " + s };
+
+    static string ErrorName(int e) => e switch { 0 => "ok", 1 => "not connected", 2 => "no control (another program has it)", 3 => "incompatible protocol", 4 => "invalid arguments", 5 => "invalid operation", 6 => "device not found", 7 => "not allowed", _ => "error " + e };
+
     NativeCorsairApi(nint lib)
     {
         _lib = lib;
@@ -67,7 +75,14 @@ public sealed class NativeCorsairApi : ICorsairApi
         _getDevices = Get<GetDevicesFn>("CorsairGetDevices");
         _getPositions = Get<GetPositionsFn>("CorsairGetLedPositions");
         _setColors = Get<SetColorsFn>("CorsairSetLedColors");
-        _onState = (_, e) => _state = Marshal.ReadInt32(e);
+        _onState = (_, e) =>
+        {
+            _state = Marshal.ReadInt32(e);
+            var host = $"{Marshal.ReadInt32(e, 28)}.{Marshal.ReadInt32(e, 32)}.{Marshal.ReadInt32(e, 36)}";
+            var server = $"{Marshal.ReadInt32(e, 16)}.{Marshal.ReadInt32(e, 20)}.{Marshal.ReadInt32(e, 24)}";
+            Detail = $"session {StateName(_state)}, iCUE {host}, SDK server {server}";
+            Ember.Core.DiagLog.Info("Corsair", "iCUE " + Detail);
+        };
     }
 
     /// <summary>Null when the SDK file is missing or cannot be loaded.</summary>
@@ -86,15 +101,26 @@ public sealed class NativeCorsairApi : ICorsairApi
 
     T Get<T>(string name) where T : Delegate => Marshal.GetDelegateForFunctionPointer<T>(NativeLibrary.GetExport(_lib, name));
 
+    DateTime _startedAt;
+
     public CorsairState Connect()
     {
         lock (_gate)
         {
+            // A connection the SDK says is refused or lost is started again, but not on every look: give it time first.
+            if (_started && _state is 4 or 5 or 1 && DateTime.UtcNow - _startedAt > TimeSpan.FromSeconds(15))
+            {
+                try { _disconnect(); } catch (Exception) { /* starting over anyway */ }
+                _started = false;
+            }
             if (!_started)
             {
                 _started = true;
+                _startedAt = DateTime.UtcNow;
                 _state = 2;
-                if (_connect(Marshal.GetFunctionPointerForDelegate(_onState), 0) != 0) _state = 1;
+                var rc = _connect(Marshal.GetFunctionPointerForDelegate(_onState), 0);
+                Ember.Core.DiagLog.Info("Corsair", "CorsairConnect: " + ErrorName(rc));
+                if (rc != 0) { _state = 1; Detail = "CorsairConnect said " + ErrorName(rc); }
             }
             return _state switch { 6 => CorsairState.Connected, 2 => CorsairState.Connecting, 3 or 4 or 5 => CorsairState.Unavailable, _ => CorsairState.Closed };
         }
@@ -111,7 +137,9 @@ public sealed class NativeCorsairApi : ICorsairApi
             try
             {
                 Marshal.WriteInt32(filter, -1); // every device type
-                if (_getDevices(filter, MaxDevices, buf, out var count) != 0) return list;
+                var rc = _getDevices(filter, MaxDevices, buf, out var count);
+                Ember.Core.DiagLog.Changed("Corsair", "CorsairGetDevices", ErrorName(rc) + ", " + count + " devices");
+                if (rc != 0) { Detail = "GetDevices said " + ErrorName(rc); return list; }
                 for (var i = 0; i < count; i++)
                 {
                     var at = buf + i * DeviceInfoSize;
@@ -119,7 +147,9 @@ public sealed class NativeCorsairApi : ICorsairApi
                     var id = ReadString(at + 4, IdSize);
                     var model = ReadString(at + 4 + IdSize * 2, IdSize);
                     if (!_idBytes.TryGetValue(id, out var idBytes)) _idBytes[id] = idBytes = IdBytes(at + 4);
-                    if (_getPositions(idBytes, MaxLeds, pos, out var n) != 0 || n <= 0) continue;
+                    var prc = _getPositions(idBytes, MaxLeds, pos, out var n);
+                    Ember.Core.DiagLog.Changed("Corsair", "LED positions of " + model, ErrorName(prc) + ", " + n + " LEDs");
+                    if (prc != 0 || n <= 0) continue;
                     var leds = new uint[n];
                     for (var k = 0; k < n; k++) leds[k] = (uint)Marshal.ReadInt32(pos + k * LedPositionSize);
                     list.Add(new CorsairDevice(id, model, type, leds));
@@ -147,7 +177,10 @@ public sealed class NativeCorsairApi : ICorsairApi
                     Marshal.WriteByte(at, 6, rgb[i * 3 + 2]);
                     Marshal.WriteByte(at, 7, 255);
                 }
-                return _setColors(idBytes, ledIds.Length, buf) == 0;
+                var src = _setColors(idBytes, ledIds.Length, buf);
+                Ember.Core.DiagLog.Changed("Corsair", "SetLedColors " + deviceId, ErrorName(src));
+                if (src != 0) Detail = "SetLedColors said " + ErrorName(src);
+                return src == 0;
             }
             finally { Marshal.FreeHGlobal(buf); }
         }

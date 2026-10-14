@@ -219,6 +219,50 @@ public sealed class LightingManager : IAsyncDisposable
         RefreshDevices();
     }
 
+    List<IDeviceSink> _known = [];
+    readonly HashSet<string> _identifying = [];
+
+    /// <summary>
+    /// Flashes one device white a few times so the owner can see which physical device a row is (even a device switched off in
+    /// Ember, or while the lights are off). The device is left dark when the lights are off, otherwise the scene comes back.
+    /// </summary>
+    public async Task IdentifyAsync(string deviceId, CancellationToken ct = default)
+    {
+        IDeviceSink? sink;
+        lock (_gate)
+        {
+            sink = _known.FirstOrDefault(s => s.Id == deviceId);
+            if (sink is null || !_identifying.Add(deviceId)) return;
+        }
+        Ember.Core.DiagLog.Info("Lighting", "Identify " + deviceId);
+        try
+        {
+            var white = Enumerable.Repeat(Color.White, Math.Max(1, sink.LedCount)).ToArray();
+            var dark = Enumerable.Repeat(Color.Black, Math.Max(1, sink.LedCount)).ToArray();
+            var gap = sink.MinInterval > TimeSpan.FromMilliseconds(450) ? sink.MinInterval : TimeSpan.FromMilliseconds(450);
+            if (sink.Realtime)
+                for (var i = 0; i < 3; i++)
+                {
+                    await sink.SendAsync(white, ct).ConfigureAwait(false);
+                    await Task.Delay(gap, ct).ConfigureAwait(false);
+                    await sink.SendAsync(dark, ct).ConfigureAwait(false);
+                    await Task.Delay(gap, ct).ConfigureAwait(false);
+                }
+            else
+            {
+                await sink.SendAsync(white, ct).ConfigureAwait(false); // a slow (cloud) device: one long flash
+                await Task.Delay(TimeSpan.FromSeconds(3), ct).ConfigureAwait(false);
+                await sink.SendAsync(dark, ct).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException) { Ember.Core.DiagLog.Warn("Lighting", "Identify failed for " + deviceId, ex); }
+        finally
+        {
+            lock (_gate) _identifying.Remove(deviceId);
+            _engine.Reset(); // the next picture goes to every device again, so the scene returns
+        }
+    }
+
     readonly HashSet<string> _stopped = [];
 
     public bool IsSourceDisabled(string source) => State.DisabledSources?.Contains(source) == true;
@@ -323,7 +367,7 @@ public sealed class LightingManager : IAsyncDisposable
         lock (_gate)
         {
             state = _state;
-            sinks = _sinks.ToList();
+            sinks = _sinks.Where(s => !_identifying.Contains(s.Id)).ToList();
             var seconds = (now - _t0).TotalSeconds;
             _pulses.RemoveAll(p => seconds - p.Seconds > 4);
             inputs = new LightingInputs(seconds, _cpu, _gpu, _screen, _audio, _pulses.Count == 0 ? null : _pulses.ToList());
@@ -364,6 +408,7 @@ public sealed class LightingManager : IAsyncDisposable
             var off = _state.DisabledDevices is { } list ? list.ToHashSet() : [];
             _devices = sinks.Select(s => new DeviceInfo(s.Id, s.Name, s.Kind, SourceOf(s), s.LedCount, s.Realtime, s.Columns, off.Contains(s.Id))).ToList();
             Ember.Core.DiagLog.Changed("Lighting", "devices", string.Join(", ", _devices.Select(d => d.Id + (d.Disabled ? " (disabled)" : ""))));
+            _known = sinks.ToList();
             sinks = sinks.Where(s => !off.Contains(s.Id)).ToList();
             _sinks = sinks;
             var withPlacements = Placed(_state, sinks);

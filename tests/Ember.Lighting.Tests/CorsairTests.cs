@@ -59,7 +59,6 @@ public class CorsairTests
         var src = new CorsairSource(() => api);
         Assert.Empty(await src.RefreshAsync(default));
         Assert.Contains("Enable SDK", src.Status);
-        Assert.Equal(1, api.Disconnects);
     }
 
     [Fact]

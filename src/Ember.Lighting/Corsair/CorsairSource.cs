@@ -56,14 +56,13 @@ public sealed class CorsairSource(Func<ICorsairApi?> open) : IDeviceSource, IAsy
             {
                 case CorsairState.Connected:
                     var devices = _api.Devices();
-                    Status = devices.Count == 0 ? "Connected to iCUE, but it lists no devices" : $"Connected through iCUE, {devices.Count} device{(devices.Count == 1 ? "" : "s")}";
+                    Status = devices.Count == 0 ? "Connected to iCUE, but it lists no devices (" + _api.Detail + ")" : $"Connected through iCUE, {devices.Count} device{(devices.Count == 1 ? "" : "s")}";
                     return Task.FromResult<IReadOnlyList<IDeviceSink>>(devices.Select(d => (IDeviceSink)new CorsairSink(_api, d)).ToList());
                 case CorsairState.Connecting:
-                    Status = "Connecting to iCUE…";
+                    Status = "Connecting to iCUE… " + _api.Detail;
                     break;
                 default:
-                    Status = "Start Corsair iCUE and switch on Enable SDK in its settings (Settings, Software and Games).";
-                    _api.Disconnect(); // try again from scratch on the next look
+                    Status = "Start Corsair iCUE and switch on Enable SDK in its settings (Settings, Software and Games). " + _api.Detail;
                     break;
             }
         }
