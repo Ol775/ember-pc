@@ -125,11 +125,11 @@ public sealed class LogitechSource(Func<ILogitechLed?> open, Func<bool>? oneColo
             if (_context!.Start())
             {
                 Status = one
-                    ? "Connected through G HUB: every Logitech device takes one colour (keyboard and mouse together)."
-                    : "Connected through G HUB: the keyboard is lit key by key; the mouse is left to G HUB (it cannot be coloured separately while the keyboard is per key). If a device does not change, switch on 'Allow games and applications to control lighting' for it in G HUB.";
+                    ? "Connected through G HUB, every Logitech device takes one colour."
+                    : "Connected through G HUB, keyboard lit key by key (the mouse stays with G HUB).";
                 return Task.FromResult<IReadOnlyList<IDeviceSink>>(one ? _oneColour : _perKey);
             }
-            Status = "G HUB is installed but not answering. Start Logitech G HUB.";
+            Status = "G HUB is installed but not answering. Start Logitech G HUB and switch on \"Allow games and applications to control lighting\" for your devices.";
         }
         catch (Exception ex) when (ex is not OperationCanceledException) { Status = "Logitech G HUB: " + ex.Message; }
         return Task.FromResult<IReadOnlyList<IDeviceSink>>([]);

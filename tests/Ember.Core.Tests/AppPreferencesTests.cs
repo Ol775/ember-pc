@@ -66,7 +66,8 @@ public class AppPreferencesTests : IDisposable
         var loaded = new PreferencesStore(PathFor("old.json")).Load();
         Assert.Equal(ThemeMode.Dark, loaded.Theme);
         Assert.Equal(AccentChoice.Orange, loaded.Accent);
-        Assert.False(loaded.AutoCheckUpdates);
+        Assert.True(loaded.AutoCheckUpdates); // a file from before the setting existed gets the default, which is on
+        Assert.Equal("", loaded.SkippedVersion);
     }
 
     [Fact]
@@ -133,5 +134,31 @@ public class AppearancePreferencesTests
             Assert.Equal(SurfaceTone.Warm, loaded.Tone);
         }
         finally { if (File.Exists(path)) File.Delete(path); }
+    }
+}
+
+public class SkippedVersionTests : IDisposable
+{
+    readonly string _dir = Path.Combine(Path.GetTempPath(), "ember-skip-" + Guid.NewGuid().ToString("N"));
+    public SkippedVersionTests() => Directory.CreateDirectory(_dir);
+    public void Dispose() => Directory.Delete(_dir, true);
+
+    [Fact]
+    public void A_skipped_version_is_remembered_and_junk_is_dropped()
+    {
+        var store = new PreferencesStore(Path.Combine(_dir, "a.json"));
+        Assert.True(store.TrySave(AppPreferences.Default with { SkippedVersion = "1.1.0-beta.7" }));
+        Assert.Equal("1.1.0-beta.7", store.Load().SkippedVersion);
+        File.WriteAllText(Path.Combine(_dir, "b.json"), "{\"SkippedVersion\":\"not a version at all\"}");
+        Assert.Equal("", new PreferencesStore(Path.Combine(_dir, "b.json")).Load().SkippedVersion);
+    }
+
+    [Fact]
+    public void Automatic_checks_are_on_for_a_new_install_and_stay_off_when_turned_off()
+    {
+        Assert.True(AppPreferences.Default.AutoCheckUpdates);
+        var store = new PreferencesStore(Path.Combine(_dir, "c.json"));
+        Assert.True(store.TrySave(AppPreferences.Default with { AutoCheckUpdates = false }));
+        Assert.False(store.Load().AutoCheckUpdates);
     }
 }

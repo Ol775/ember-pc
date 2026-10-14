@@ -16,7 +16,8 @@ namespace Ember.App;
 public sealed class DevicesPage : UserControl
 {
     readonly StackPanel _root = new() { Margin = new Thickness(24) };
-    readonly UniformGrid _cards = new() { Columns = 2, Margin = new Thickness(-6, 0, -6, 10) };
+    // Two columns, each row as tall as its tallest card (a UniformGrid would make every card as tall as the biggest one).
+    readonly Grid _cards = new() { Margin = new Thickness(-6, 0, -6, 10) };
     readonly StackPanel _rows = new();
     string? _key;
 
@@ -62,6 +63,8 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Source("Corsair", "Corsair keyboards, mice, fans and more, through iCUE on this PC", devices, status, lights));
         }
 
+        LayOutCards();
+
         _rows.Children.Clear();
         _rows.Children.Add(Row("Name", "Source", "Type", "Status", header: true, use: Text("Identify and use", muted: true, size: 12)));
         foreach (var d in devices.OrderBy(d => d.Source).ThenBy(d => d.Name))
@@ -80,6 +83,20 @@ public sealed class DevicesPage : UserControl
             _rows.Children.Add(Row(d.Name, d.Source, "Lighting", d.Disabled ? "Disabled" : problem ?? (d.Realtime ? "Online" : "Online, slow (cloud)"), warn: d.Disabled || problem is not null || !d.Realtime, use: useCell));
         }
         if (_rows.Children.Count == 1) _rows.Children.Add(Text("Nothing found yet", muted: true));
+    }
+
+    void LayOutCards()
+    {
+        _cards.ColumnDefinitions.Clear();
+        _cards.RowDefinitions.Clear();
+        _cards.ColumnDefinitions.Add(new ColumnDefinition());
+        _cards.ColumnDefinitions.Add(new ColumnDefinition());
+        for (var r = 0; r < (_cards.Children.Count + 1) / 2; r++) _cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        for (var i = 0; i < _cards.Children.Count; i++)
+        {
+            Grid.SetColumn(_cards.Children[i], i % 2);
+            Grid.SetRow(_cards.Children[i], i / 2);
+        }
     }
 
     FrameworkElement Source(string name, string blurb, IReadOnlyList<DeviceInfo> devices, IReadOnlyList<string> status, LightingManager lights)

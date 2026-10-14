@@ -5,7 +5,6 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 ## Being checked on real hardware
 
 - Philips Hue, Nanoleaf, Razer Chroma and Corsair iCUE: written and unit-tested, but not yet tried on real devices
-- AI assist: needs a few days of real use to see that its suggested curves are sensible
 - Game detection and GPU fan control: working on the test PC, to be tried on other graphics cards before they leave Experimental
 - Per-key keyboard layouts and Govee segments on more keyboards and lamps
 - A clean install on a PC that never had Ember
@@ -22,7 +21,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 - More fan sources, such as other fan controllers, if their makers publish a way to talk to them
 - A compact dashboard window for a second monitor
 - Stream Deck integration: buttons to switch lights on and off, pick a scene, change the fan mode (Super quiet to Extreme) and show the current temperature. Needs a way for the Stream Deck software to call Ember; to be designed
-- Code signing, so Windows SmartScreen and Smart App Control stop warning or blocking: free through SignPath Foundation (open source), about $10 a month through Azure Trusted Signing, or a certificate at roughly $220 to $620 a year. Until then Ember is released unsigned
+- Code signing, so Windows stops warning about an unknown publisher and Smart App Control stops blocking Ember
 
 ## Works through OpenRGB
 

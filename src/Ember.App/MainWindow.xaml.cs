@@ -111,7 +111,7 @@ public partial class MainWindow : Window
         BuildAbout();
         ApplyAppearance();
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, _) => { if (_vm.Prefs.Theme == ThemeMode.System) Dispatcher.InvokeAsync(ApplyAppearance); };
-        if (_vm.Prefs.AutoCheckUpdates) _ = Task.Delay(8000).ContinueWith(_ => Dispatcher.InvokeAsync(() => CheckForUpdatesAsync(announce: false)));
+        StartAutomaticUpdateChecks();
         if (_vm.Prefs.StartPage == StartPage.Fans) NavFans.IsChecked = true;
         Curve.Committed += OnCurveCommitted;
         Curve.CopyRequested += OnCurveCopy;
@@ -163,6 +163,88 @@ public partial class MainWindow : Window
     void OnAutoUpdateToggled(object sender, RoutedEventArgs e) =>
         Remember(_vm.Prefs with { AutoCheckUpdates = ((System.Windows.Controls.CheckBox)sender).IsChecked == true });
 
+
+    // ---- automatic update check and prompt ----
+
+    DispatcherTimer? _updateTimer;
+    string? _promptedVersion;
+    bool _prompting;
+
+    /// <summary>Looks for an update at start and then every few hours while Ember runs, when the person has not turned that off.</summary>
+    void StartAutomaticUpdateChecks()
+    {
+        _ = Task.Delay(8000).ContinueWith(_ => Dispatcher.InvokeAsync(() => AutomaticUpdateCheckAsync()));
+        _updateTimer = new DispatcherTimer(TimeSpan.FromHours(6), DispatcherPriority.Background, (_, _) => _ = AutomaticUpdateCheckAsync(), Dispatcher);
+        _updateTimer.Start();
+    }
+
+    async Task AutomaticUpdateCheckAsync()
+    {
+        if (!_vm.Prefs.AutoCheckUpdates || _quitting) return;
+        await CheckForUpdatesAsync(announce: false);
+        if (_found is { } release) await PromptForUpdateAsync(release);
+    }
+
+    /// <summary>Asks once per version per run (until "Remind me later" is chosen): in the window if it is open, else from the tray.</summary>
+    async Task PromptForUpdateAsync(ReleaseInfo release)
+    {
+        var version = release.Version.ToString();
+        if (_prompting || version == _promptedVersion || version == _vm.Prefs.SkippedVersion) return;
+        _promptedVersion = version;
+        if (!IsVisible || WindowState == WindowState.Minimized)
+        {
+            DiagLog.Info("Update", $"Ember {version} is available; told the person from the tray");
+            _tray.Notify("Ember update available", $"Ember {version} is ready. Click to update.", () => Dispatcher.InvokeAsync(async () => { ShowFromTray(); await ShowUpdatePromptAsync(release); }));
+            return;
+        }
+        await ShowUpdatePromptAsync(release);
+    }
+
+    async Task ShowUpdatePromptAsync(ReleaseInfo release)
+    {
+        if (_prompting) return;
+        _prompting = true;
+        try
+        {
+            var canInstall = release is { InstallerUrl: not null, HashUrl: not null };
+            DiagLog.Info("Update", $"Asking whether to update to {release.Version}");
+            var choice = UpdatePromptWindow.Ask(this, release, ReleaseHeadlines(release.Notes), canInstall);
+            DiagLog.Info("Update", "Choice: " + choice);
+            switch (choice)
+            {
+                case UpdateChoice.Skip:
+                    Remember(_vm.Prefs with { SkippedVersion = release.Version.ToString() });
+                    break;
+                case UpdateChoice.Later:
+                    _promptedVersion = null; // asked again at the next automatic check
+                    break;
+                case UpdateChoice.UpdateNow:
+                    ShowUpdatesSection();
+                    if (canInstall) OnUpdateNow(this, new RoutedEventArgs());
+                    else OnOpenRelease(this, new RoutedEventArgs());
+                    break;
+            }
+        }
+        finally { _prompting = false; }
+        await Task.CompletedTask;
+    }
+
+    /// <summary>Opens Settings on the Updates section, where the download and install progress is shown.</summary>
+    void ShowUpdatesSection()
+    {
+        NavSettings.IsChecked = true;
+        if (FindRadio(this, "updates") is { } radio) radio.IsChecked = true;
+    }
+
+    static System.Windows.Controls.RadioButton? FindRadio(DependencyObject parent, string tag)
+    {
+        foreach (var child in LogicalTreeHelper.GetChildren(parent).OfType<DependencyObject>())
+        {
+            if (child is System.Windows.Controls.RadioButton { Tag: string t } r && t == tag) return r;
+            if (FindRadio(child, tag) is { } found) return found;
+        }
+        return null;
+    }
     async void OnCheckUpdates(object sender, RoutedEventArgs e) => await CheckForUpdatesAsync(announce: true);
 
     async Task CheckForUpdatesAsync(bool announce)
@@ -193,6 +275,27 @@ public partial class MainWindow : Window
         if (announce) Announce(UpdateNote);
     }
 
+
+    /// <summary>One short line per change for the update prompt: the bold lead of each bullet ("Corsair: falls back to the older SDK"), at most four.</summary>
+    static string ReleaseHeadlines(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return "";
+        var lines = new List<string>();
+        foreach (var raw in notes.Replace("\r", "").Split('\n'))
+        {
+            var line = raw.Trim();
+            if (!line.StartsWith("- ") && !line.StartsWith("* ")) continue;
+            var m = System.Text.RegularExpressions.Regex.Match(line, @"^[-*]\s+\*\*(.+?)\*\*");
+            var text = m.Success ? m.Groups[1].Value : line[2..];
+            text = text.Replace("`", "").Trim().TrimEnd('.', ':');
+            var stop = text.IndexOf(". ", StringComparison.Ordinal);
+            if (stop > 20) text = text[..stop];
+            if (text.Length > 110) text = text[..107].TrimEnd() + "…";
+            if (text.Length > 0) lines.Add("• " + text);
+            if (lines.Count == 4) break;
+        }
+        return string.Join("\n", lines);
+    }
     /// <summary>The release notes as plain lines: headings and bold marks dropped, bullets kept.</summary>
     static string ReleaseNotesPreview(string? notes)
     {

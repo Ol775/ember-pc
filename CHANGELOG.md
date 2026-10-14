@@ -2,6 +2,25 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.1.0-beta.7 (2026-10-14)
+
+### Added
+
+- **Automatic update checks, with a prompt.** Ember looks for a newer version when it starts and every few hours, and asks whether to update now, later, or skip that version. When Ember is in the tray, a notification tells you instead. It is on by default; turn it off in Settings, Updates. Nothing is downloaded until you choose Update now.
+
+### Changed
+
+- **Tidier Lights page.** The list of integrations is one line each, with a green dot when it is working. Technical details (version numbers and the like) now go to the diagnostic log, and the status lines say plainly what to do.
+- **Devices page cards fit their content** instead of all being as tall as the biggest one, and OpenRGB says "Starting up, looking for devices" for its first 20 seconds.
+- **Empty text boxes now say what goes in them** (scene name, picture name, OpenRGB path, Hue bridge, Nanoleaf controller), and the Govee key box matches the rest of the look.
+- **Settings cards are all the same width**, and the "Restart as admin" button is no longer cut off.
+- Layers no longer read "Wave · Wave" when the name matches the effect.
+- If iCUE refuses Ember, the message now also suggests updating iCUE.
+
+### Fixed
+
+- **AI assist suggestions never show a fan slower than Ember will actually run it.** Ember keeps the CPU fan at 30% or more and system fans at 20% or more, but a suggestion could show 20 to 24% for the CPU fan.
+
 ## 1.1.0-beta.6 (2026-10-14)
 
 ### Added

@@ -345,6 +345,36 @@
                     <ControlTemplate TargetType="TextBox">
                         <Border x:Name="Box" Background="{TemplateBinding Background}" CornerRadius="10" BorderThickness="1" BorderBrush="Transparent"
                                 Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <ScrollViewer x:Name="PART_ContentHost" />
+                                <TextBlock x:Name="Hint" Text="{TemplateBinding Tag}" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False"
+                                           VerticalAlignment="Center" Visibility="Collapsed" TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Text" Value="">
+                                <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PasswordField" TargetType="PasswordBox">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource TrackBrush}" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="Box" Background="{TemplateBinding Background}" CornerRadius="10" BorderThickness="1" BorderBrush="Transparent"
+                                Padding="{TemplateBinding Padding}">
                             <ScrollViewer x:Name="PART_ContentHost" />
                         </Border>
                         <ControlTemplate.Triggers>

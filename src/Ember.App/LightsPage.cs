@@ -92,7 +92,7 @@ public sealed class LightsPage : UserControl
 
         var sceneBox = new StackPanel();
         sceneBox.Children.Add(_scenes);
-        _sceneName = new TextBox { Style = Sty("TextField"), Width = 200, MaxLength = 60, Margin = new Thickness(0, 0, 8, 6) };
+        _sceneName = new TextBox { Style = Sty("TextField"), Tag = "Name for a new scene", Width = 200, MaxLength = 60, Margin = new Thickness(0, 0, 8, 6) };
         AutomationProperties.SetName(_sceneName, "Name for a new scene");
         var save = new WrapPanel { Margin = new Thickness(0, 8, 0, 0) };
         save.Children.Add(_sceneName);
@@ -136,7 +136,7 @@ public sealed class LightsPage : UserControl
         canvasBox.Children.Add(Text("A gradient runs from the paint colour to the gradient end colour in the direction above (0° is left to right, 90° is top to bottom). Exported paint is a small JSON file you can share or keep; importing fits it to the LEDs of the selected device.", muted: true, size: 12));
         canvasBox.Children.Add(Text("Paint library", weight: FontWeights.SemiBold));
         var libRow = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
-        var libName = new TextBox { Text = _libraryName, Style = Sty("TextField"), Width = 200, MaxLength = PaintLibrary.MaxNameLength, Margin = new Thickness(0, 0, 8, 4) };
+        var libName = new TextBox { Text = _libraryName, Style = Sty("TextField"), Tag = "Name for this picture", Width = 200, MaxLength = PaintLibrary.MaxNameLength, Margin = new Thickness(0, 0, 8, 4) };
         AutomationProperties.SetName(libName, "Paint library name");
         libName.TextChanged += (_, _) => _libraryName = libName.Text;
         libRow.Children.Add(libName);
@@ -186,7 +186,7 @@ public sealed class LightsPage : UserControl
         box.Children.Add(Text(bundled
             ? "OpenRGB comes with Ember and starts by itself when it is not already running. Leave the box below empty to use it, or choose your own OpenRGB.exe. Close other lighting apps that hold your devices (such as SignalRGB or vendor suites) if a device does not show up."
             : "Ember talks to PC lighting through OpenRGB, a separate program that must be running with its SDK server on. Choose its OpenRGB.exe below to let Ember start it. Close other lighting apps that hold your devices (such as SignalRGB or vendor suites) if a device does not show up.", muted: true));
-        var path = new TextBox { Style = Sty("TextField"), Text = s.OpenRgbPath ?? "", Width = 380, Margin = new Thickness(0, 8, 8, 6) };
+        var path = new TextBox { Style = Sty("TextField"), Tag = "Path to OpenRGB.exe (optional)", Text = s.OpenRgbPath ?? "", Width = 380, Margin = new Thickness(0, 8, 8, 6) };
         AutomationProperties.SetName(path, "Path to OpenRGB.exe");
         path.LostFocus += (_, _) => { m.SetOpenRgb(path.Text, m.State.StartOpenRgb); _rendered = m.State; };
         var row = new WrapPanel();
@@ -755,7 +755,7 @@ public sealed class LightsPage : UserControl
             AutomationProperties.SetName(on, "Layer " + l.Name + " on");
             on.Margin = new Thickness(0, 0, 8, 0);
             var pick = new Button { Style = Sty("ActionButton"), HorizontalContentAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 8, 0) };
-            pick.Content = Text(l.Name + "  ·  " + l.Effect.Label, weight: selected ? FontWeights.SemiBold : FontWeights.Normal);
+            pick.Content = Text(l.Name.Equals(l.Effect.Label, StringComparison.OrdinalIgnoreCase) ? l.Name : l.Name + "  ·  " + l.Effect.Label, weight: selected ? FontWeights.SemiBold : FontWeights.Normal);
             AutomationProperties.SetName(pick, "Edit layer " + l.Name);
             pick.Click += (_, _) => { _selectedLayer = l.Id; RebuildLayers(_m!.State); };
             if (selected) pick.Background = Res("SegmentOnBrush");
@@ -1009,6 +1009,26 @@ public sealed class LightsPage : UserControl
         }
     }
 
+    /// <summary>"OpenRGB: Connected, 3 devices" as a tidy row: a dot (green when working), the name, and the status on one line (the full text is in the tooltip).</summary>
+    static FrameworkElement StatusLine(string line)
+    {
+        var colon = line.IndexOf(':');
+        var (name, status) = colon > 0 ? (line[..colon], line[(colon + 1)..].Trim()) : ("", line);
+        var good = status.StartsWith("Connected", StringComparison.OrdinalIgnoreCase) || status.Length > 0 && char.IsDigit(status[0]);
+        var row = new Grid { Margin = new Thickness(0, 2, 0, 2), ToolTip = line };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(18) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        var dot = new System.Windows.Shapes.Ellipse { Width = 8, Height = 8, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
+        if (good) dot.Fill = ThemeManager.Good; else dot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "MutedBrush");
+        var label = Text(name, size: 12, weight: FontWeights.SemiBold);
+        var text = Text(status, muted: true, size: 12);
+        text.TextTrimming = TextTrimming.CharacterEllipsis;
+        Grid.SetColumn(label, 1); Grid.SetColumn(text, 2);
+        row.Children.Add(dot); row.Children.Add(label); row.Children.Add(text);
+        return row;
+    }
+
     string _statusKey = "";
 
     void UpdateStatus()
@@ -1017,7 +1037,7 @@ public sealed class LightsPage : UserControl
         if (key == _statusKey) return;
         _statusKey = key;
         _status.Children.Clear();
-        foreach (var line in _m!.SourceStatus) _status.Children.Add(Text(line, muted: true, size: 12));
+        foreach (var line in _m!.SourceStatus) _status.Children.Add(StatusLine(line));
         if (_m.SaveFailed) _status.Children.Add(Text("Could not save your lighting settings; they apply until you close Ember.", size: 12));
         if (_note.Length > 0) _status.Children.Add(Text(_note, size: 12));
         _status.Margin = new Thickness(0, 8, 0, 0);

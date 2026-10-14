@@ -29,7 +29,7 @@
                            AutomationProperties.LiveSetting="Polite" />
             </StackPanel>
             <TextBlock DockPanel.Dock="Bottom" Text="{Binding BuildLabel}" Foreground="{DynamicResource MutedBrush}" Margin="20,0,20,12" />
-            <Button DockPanel.Dock="Bottom" Content="Restart as administrator" Click="OnRestartAsAdmin" Margin="20,0,20,12"
+            <Button DockPanel.Dock="Bottom" Content="Restart as admin" Click="OnRestartAsAdmin" Margin="20,0,20,12"
                     Style="{StaticResource ActionButton}" Visibility="{Binding NotElevatedVisibility}"
                     ToolTip="Needed to close fan-control programs that run as administrator." />
             <StackPanel VerticalAlignment="Top">
@@ -313,7 +313,7 @@
                 <RadioButton GroupName="SettingsNav" Content="Updates" Tag="updates" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="About" Tag="about" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
               </StackPanel>
-              <StackPanel x:Name="SettingsSections" Grid.Column="1" MaxWidth="720" HorizontalAlignment="Left">
+              <StackPanel x:Name="SettingsSections" Grid.Column="1" MaxWidth="720" HorizontalAlignment="Stretch">
                 <TextBlock Text="Settings" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"
                            AutomationProperties.HeadingLevel="Level2" />
 
@@ -394,7 +394,7 @@
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Lamps are found on your network when LAN control is switched on for them in the Govee app. An API key is only needed for lamps that cannot do that; they are reached through Govee's cloud and follow slow changes only." />
                         <WrapPanel Margin="0,10,0,0">
-                            <PasswordBox x:Name="GoveeKey" Width="320" Padding="10,6" Margin="0,0,8,6" MaxLength="200"
+                            <PasswordBox x:Name="GoveeKey" Style="{StaticResource PasswordField}" Width="320" Padding="10,6" Margin="0,0,8,6" MaxLength="200"
                                          AutomationProperties.Name="Govee API key" />
                             <Button Content="Save key" Click="OnSaveGoveeKey" Style="{StaticResource ActionButton}" Margin="0,0,8,6" />
                             <Button Content="Test key" Click="OnTestGoveeKey" Style="{StaticResource ActionButton}" Margin="0,0,8,6" />
@@ -409,7 +409,7 @@
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Ember talks to your Hue bridge directly on your home network: no Hue account and no cloud. Type the bridge address (or press Find bridge), press the round button on top of the bridge, then press Link bridge within 30 seconds. The key the bridge gives is kept in Windows Credential Manager. Hue lights follow the scene as one colour each, a few times a second." />
                         <WrapPanel Margin="0,10,0,0">
-                            <TextBox x:Name="HueHost" Width="220" Style="{StaticResource TextField}" Margin="0,0,8,6" MaxLength="100"
+                            <TextBox x:Name="HueHost" Width="220" Style="{StaticResource TextField}" Tag="Bridge address" Margin="0,0,8,6" MaxLength="100"
                                      AutomationProperties.Name="Hue bridge address" />
                             <Button Content="Find bridge" Click="OnHueFind" Style="{StaticResource ActionButton}" Margin="0,0,8,6" />
                             <Button Content="Link bridge" Click="OnHueLink" Style="{StaticResource ActionButton}" Margin="0,0,8,6" />
@@ -424,7 +424,7 @@
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Ember talks to your Nanoleaf controller directly on your home network: no account and no cloud. Type its address (or press Find controller), hold the power button on the controller for 5 to 7 seconds until it flashes, then press Link within 30 seconds. The token it gives is kept in Windows Credential Manager. Each panel is one light, ordered left to right, so effects run across the panels." />
                         <WrapPanel Margin="0,10,0,0">
-                            <TextBox x:Name="NanoleafHost" Width="220" Style="{StaticResource TextField}" Margin="0,0,8,6" MaxLength="100"
+                            <TextBox x:Name="NanoleafHost" Width="220" Style="{StaticResource TextField}" Tag="Controller address" Margin="0,0,8,6" MaxLength="100"
                                      AutomationProperties.Name="Nanoleaf controller address" />
                             <Button Content="Find controller" Click="OnNanoleafFind" Style="{StaticResource ActionButton}" Margin="0,0,8,6" />
                             <Button Content="Link" Click="OnNanoleafLink" Style="{StaticResource ActionButton}" Margin="0,0,8,6" />
@@ -473,7 +473,7 @@
                             </StackPanel>
                         </Border>
                         <Border Height="1" Background="{DynamicResource PanelBorderBrush}" Margin="0,18,0,14" />
-                        <CheckBox Content="Check for updates when Ember starts" Click="OnAutoUpdateToggled" IsChecked="{Binding AutoCheckUpdates, Mode=OneWay}"
+                        <CheckBox Content="Check for updates automatically (at start, then every few hours)" Click="OnAutoUpdateToggled" IsChecked="{Binding AutoCheckUpdates, Mode=OneWay}"
                                   Style="{StaticResource SwitchBox}" />
                         <TextBlock x:Name="ChannelLabel" Text="Release channel" Margin="0,16,0,6" />
                         <Border x:Name="ChannelTrack" Style="{StaticResource SegmentTrack}">

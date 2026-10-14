@@ -113,6 +113,8 @@ reach the tray): the menu, double-click to open, and Quit.
 
 - [ ] Corsair with an iCUE that refuses the newer SDK: Ember falls back to the older CUE SDK and lists the devices; the Devices page and the log say which SDK is in use.
 
+- [ ] Automatic updates: with an older Ember and a newer release available, the update prompt appears after about 8 seconds (or a tray notification when the window is hidden); Update now installs, Remind me later asks again at the next check, Skip this version stays quiet for that version, and the setting in Settings, Updates turns the checks off.
+
 ## Several devices and shared paint files
 
 Unit-tested (fills across the canvas, the library folder, name safety). The buttons on the Lights page were not reached by

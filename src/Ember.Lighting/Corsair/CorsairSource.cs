@@ -56,16 +56,17 @@ public sealed class CorsairSource(Func<ICorsairApi?> open) : IDeviceSource, IAsy
             {
                 case CorsairState.Connected:
                     var devices = _api.Devices();
-                    Status = devices.Count == 0 ? "Connected to iCUE, but it lists no devices (" + _api.Detail + ")" : $"Connected through iCUE, {devices.Count} device{(devices.Count == 1 ? "" : "s")}";
+                    Status = devices.Count == 0 ? "Connected to iCUE, but it lists no devices" : $"Connected through iCUE, {devices.Count} device{(devices.Count == 1 ? "" : "s")}";
                     return Task.FromResult<IReadOnlyList<IDeviceSink>>(devices.Select(d => (IDeviceSink)new CorsairSink(_api, d)).ToList());
                 case CorsairState.Refused:
-                    Status = "iCUE is running but would not let Ember in. In iCUE open Settings, Software and Games and switch on Enable SDK (restart iCUE after changing it). Note: an out-of-date iCUE is a common cause, so update iCUE to the latest version from corsair.com. " + _api.Detail;
+                    Status = "iCUE is running but would not let Ember in. In iCUE open Settings, Software and Games and switch on Enable SDK (restart iCUE after changing it). Note: an out-of-date iCUE is a common cause, so update iCUE to the latest version from corsair.com.";
                     break;
                 case CorsairState.Connecting:
-                    Status = "Connecting to iCUE… " + _api.Detail;
+                    Status = "Connecting to iCUE…";
                     break;
                 default:
-                    Status = "Start Corsair iCUE and switch on Enable SDK in its settings (Settings, Software and Games). " + _api.Detail;
+                    Status = "iCUE is not running or not answering. Start Corsair iCUE and switch on Enable SDK in its settings (Settings, Software and Games). If it is running, update it to the latest version.";
+                    Ember.Core.DiagLog.Changed("Corsair", "not connected", _api.Detail);
                     break;
             }
         }

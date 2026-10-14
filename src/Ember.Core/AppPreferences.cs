@@ -9,9 +9,10 @@ public enum StartPage { Dashboard, Fans }
 public enum UpdateChannel { Stable, Beta }
 
 public sealed record AppPreferences(TemperatureUnit Unit, StartPage StartPage, ThemeMode Theme = ThemeMode.Dark,
-    AccentChoice Accent = AccentChoice.Orange, UpdateChannel Channel = UpdateChannel.Stable, bool AutoCheckUpdates = false, int AcceptedTerms = 0,
+    AccentChoice Accent = AccentChoice.Orange, UpdateChannel Channel = UpdateChannel.Stable, bool AutoCheckUpdates = true, int AcceptedTerms = 0,
     bool KeepInTray = false, bool StartMinimised = false, bool AiLearning = false, double AiPreference = 0.35,
-    SurfaceTone Tone = SurfaceTone.Warm, HighlightStrength Highlight = HighlightStrength.Normal, string CustomAccent = ThemePalette.DefaultCustomAccent)
+    SurfaceTone Tone = SurfaceTone.Warm, HighlightStrength Highlight = HighlightStrength.Normal, string CustomAccent = ThemePalette.DefaultCustomAccent,
+    string SkippedVersion = "")
 {
     public static readonly AppPreferences Default = new(TemperatureUnit.Celsius, StartPage.Dashboard);
 }
@@ -51,13 +52,17 @@ public sealed class PreferencesStore(string path)
                 ClampUnit(Field(doc.RootElement, "AiPreference", AppPreferences.Default.AiPreference)),
                 Field(doc.RootElement, "Tone", AppPreferences.Default.Tone),
                 Field(doc.RootElement, "Highlight", AppPreferences.Default.Highlight),
-                CustomColour(Field(doc.RootElement, "CustomAccent", AppPreferences.Default.CustomAccent)));
+                CustomColour(Field(doc.RootElement, "CustomAccent", AppPreferences.Default.CustomAccent)),
+                VersionText(Field(doc.RootElement, "SkippedVersion", AppPreferences.Default.SkippedVersion)));
         }
         catch (Exception)
         {
             return AppPreferences.Default;
         }
     }
+
+    /// <summary>The version the person chose to skip: a short plain version text, or nothing.</summary>
+    static string VersionText(string v) => v is { Length: > 0 and <= 40 } && AppVersion.TryParse(v, out _) ? v : "";
 
     static string CustomColour(string v) => ThemePalette.IsHexColour(v) ? v.ToLowerInvariant() : AppPreferences.Default.CustomAccent;
 

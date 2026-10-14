@@ -71,7 +71,7 @@ public sealed class OpenRgbSource(Func<string?> openRgbPath, Func<bool> startIfN
                 _client = client;
             }
             var devices = await _client.GetDevicesAsync(ct).ConfigureAwait(false);
-            Status = devices.Count == 0 ? "Connected, but OpenRGB found no devices" : $"Connected, {devices.Count} device{(devices.Count == 1 ? "" : "s")}";
+            Status = devices.Count == 0 ? (DateTime.UtcNow - _lastStart < TimeSpan.FromSeconds(45) ? "Starting up, looking for devices (about 20 seconds)" : "Connected, but OpenRGB found no devices") : $"Connected, {devices.Count} device{(devices.Count == 1 ? "" : "s")}";
             return devices.Where(IsLight).Select(d => (IDeviceSink)new OpenRgbSink(_client, d)).ToList();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
