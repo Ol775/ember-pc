@@ -71,6 +71,11 @@ New-Item -ItemType Directory -Path (Join-Path $InstallDir 'Watchdog') -Force | O
 Copy-WithRetry (Join-Path $SourceDir 'watchdog\*') (Join-Path $InstallDir 'Watchdog')
 New-Item -ItemType Directory -Path (Join-Path $InstallDir 'App') -Force | Out-Null
 Copy-WithRetry (Join-Path $SourceDir 'app\*') (Join-Path $InstallDir 'App')
+# The Stream Deck plugin (beta) is kept here as a file; the app's Stream Deck card installs it into the Stream Deck app.
+if (Test-Path (Join-Path $SourceDir 'streamdeck\*')) {
+    New-Item -ItemType Directory -Path (Join-Path $InstallDir 'StreamDeck') -Force | Out-Null
+    Copy-WithRetry (Join-Path $SourceDir 'streamdeck\*') (Join-Path $InstallDir 'StreamDeck')
+}
 
 if (-not $SkipPawnIO) {
     try { & (Join-Path $PSScriptRoot 'install-pawnio.ps1') }

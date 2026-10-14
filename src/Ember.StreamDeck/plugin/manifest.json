@@ -1,0 +1,23 @@
+{
+  "SDKVersion": 2,
+  "Name": "Ember (beta)",
+  "Version": "1.2.0.1",
+  "Author": "Ember",
+  "Description": "Lights, fan modes and live temperatures from Ember on your Stream Deck. Beta.",
+  "Icon": "images/plugin",
+  "Category": "Ember (beta)",
+  "CategoryIcon": "images/category",
+  "CodePath": "EmberStreamDeck.exe",
+  "PropertyInspectorPath": "pi/inspector.html",
+  "Software": { "MinimumVersion": "6.4" },
+  "OS": [ { "Platform": "windows", "MinimumVersion": "10" } ],
+  "Actions": [
+    { "UUID": "dev.ember.pc.scene", "Name": "Lighting scene", "Icon": "images/scene", "Tooltip": "Switch Ember to a lighting scene.", "Controllers": ["Keypad"], "States": [ { "Image": "images/key" } ] },
+    { "UUID": "dev.ember.pc.power", "Name": "Lights on/off", "Icon": "images/power", "Tooltip": "Turn Ember's lighting on or off.", "Controllers": ["Keypad"], "States": [ { "Image": "images/key" } ] },
+    { "UUID": "dev.ember.pc.brightness", "Name": "Brightness", "Icon": "images/brightness", "Tooltip": "Make the lights brighter or dimmer.", "Controllers": ["Keypad"], "States": [ { "Image": "images/key" } ] },
+    { "UUID": "dev.ember.pc.fanmode", "Name": "Fan mode", "Icon": "images/fanmode", "Tooltip": "Set one fan mode.", "Controllers": ["Keypad"], "States": [ { "Image": "images/key" } ] },
+    { "UUID": "dev.ember.pc.cyclemode", "Name": "Cycle fan mode", "Icon": "images/cycle", "Tooltip": "Step to the next fan mode each press.", "Controllers": ["Keypad"], "States": [ { "Image": "images/key" } ] },
+    { "UUID": "dev.ember.pc.open", "Name": "Open Ember", "Icon": "images/open", "Tooltip": "Open Ember, or start it if it is closed.", "Controllers": ["Keypad"], "States": [ { "Image": "images/key" } ] },
+    { "UUID": "dev.ember.pc.readout", "Name": "Temperature or fan speed", "Icon": "images/readout", "Tooltip": "Live CPU or GPU temperature or fan speed.", "Controllers": ["Keypad"], "States": [ { "Image": "images/key" } ] }
+  ]
+}

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ember key settings</title>
+<style>
+  body { margin: 0; padding: 12px; background: #2d2d2d; color: #d8d8d8; font: 13px "Segoe UI", sans-serif; }
+  .row { display: none; margin-bottom: 12px; }
+  .row.on { display: block; }
+  label { display: block; margin-bottom: 4px; color: #a8a8a8; }
+  select { width: 100%; padding: 6px; background: #1c1c1e; color: #fff; border: 1px solid #555; border-radius: 6px; font: inherit; }
+  p { color: #8e8e93; margin: 0; }
+</style>
+</head>
+<body>
+<div class="row" id="row-scene"><label for="scene">Scene</label><select id="scene"></select></div>
+<div class="row" id="row-mode"><label for="mode">Fan mode</label><select id="mode"></select></div>
+<div class="row" id="row-step"><label for="step">Direction</label>
+  <select id="step"><option value="0.1">Brighter (+10%)</option><option value="-0.1">Dimmer (-10%)</option></select></div>
+<div class="row" id="row-value"><label for="value">Show</label>
+  <select id="value">
+    <option value="cpuTemp">CPU temperature</option><option value="cpuFan">CPU fan speed</option>
+    <option value="gpuTemp">GPU temperature</option><option value="gpuFan">GPU fan speed</option>
+  </select></div>
+<div class="row" id="row-none"><p>Nothing to set for this key.</p></div>
+<script>
+  let ws, uuid, action = "", settings = {};
+  const $ = id => document.getElementById(id);
+  const rows = { scene: ["scene"], fanmode: ["mode"], brightness: ["step"], readout: ["value"] };
+
+  function connectElgatoStreamDeckSocket(port, inUuid, registerEvent, info, actionInfo) {
+    uuid = inUuid;
+    const ai = JSON.parse(actionInfo);
+    action = ai.action.split(".").pop();
+    settings = (ai.payload && ai.payload.settings) || {};
+    ws = new WebSocket("ws://127.0.0.1:" + port);
+    ws.onopen = () => ws.send(JSON.stringify({ event: registerEvent, uuid: uuid }));
+    ws.onmessage = ev => {
+      const m = JSON.parse(ev.data);
+      if (m.event === "didReceiveSettings") { settings = m.payload.settings || {}; show(); }
+      if (m.event === "sendToPropertyInspector") fill(m.payload || {});
+    };
+    layout();
+    show();
+  }
+
+  function layout() {
+    const wanted = rows[action] || [];
+    for (const r of document.querySelectorAll(".row")) r.classList.remove("on");
+    if (wanted.length === 0) $("row-none").classList.add("on");
+    for (const key of wanted) $("row-" + key).classList.add("on");
+  }
+
+  function fill(p) {
+    if (p.scenes) {
+      const sel = $("scene");
+      sel.innerHTML = "";
+      for (const s of p.scenes) sel.add(new Option(s, s));
+    }
+    if (p.modes) {
+      const sel = $("mode");
+      sel.innerHTML = "";
+      for (const m of p.modes) sel.add(new Option(m.label, m.value));
+    }
+    show();
+  }
+
+  function show() {
+    for (const key of ["scene", "mode", "step", "value"]) {
+      const el = $(key);
+      if (settings[key] !== undefined && [...el.options].some(o => o.value === String(settings[key]))) el.value = String(settings[key]);
+    }
+    // A new key has nothing chosen yet: save what the box shows so the key works at once.
+    for (const key of rows[action] || []) {
+      const el = $(key);
+      if (settings[key] === undefined && el.options.length > 0) save(key, el.value);
+    }
+  }
+
+  function save(key, raw) {
+    settings[key] = key === "step" ? Number(raw) : raw;
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ event: "setSettings", context: uuid, payload: settings }));
+  }
+
+  for (const key of ["scene", "mode", "step", "value"]) $(key).addEventListener("change", e => save(key, e.target.value));
+</script>
+</body>
+</html>

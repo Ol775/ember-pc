@@ -25,6 +25,12 @@ try {
         & dotnet publish "src/$($p[0])" -c $Configuration -r win-x64 --self-contained false -o (Join-Path $out $p[1])
         if ($LASTEXITCODE -ne 0) { throw "dotnet publish $($p[0]) failed." }
     }
+    # Beta: the Stream Deck plugin, packed as a .streamDeckPlugin file that Ember installs into the Stream Deck app (dist\...\streamdeck).
+    $sdBuild = Join-Path $out '_streamdeck'
+    & dotnet publish src/Ember.StreamDeck -c $Configuration -r win-x64 --self-contained false -o $sdBuild
+    if ($LASTEXITCODE -ne 0) { throw 'dotnet publish Ember.StreamDeck failed.' }
+    & (Join-Path $PSScriptRoot 'pack-streamdeck.ps1') -PublishDir $sdBuild -Version $version -Out (Join-Path $out 'streamdeck\Ember.streamDeckPlugin')
+    Remove-Item $sdBuild -Recurse -Force
     $scripts = Join-Path $out 'scripts'
     New-Item -ItemType Directory -Path $scripts | Out-Null
     foreach ($s in 'install-ember.ps1', 'uninstall-ember.ps1', 'install-service.ps1', 'install-watchdog.ps1', 'uninstall-service.ps1', 'uninstall-watchdog.ps1', 'install-pawnio.ps1') {
