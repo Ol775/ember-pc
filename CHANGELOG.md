@@ -2,6 +2,13 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.1.0-beta.6 (2026-10-14)
+
+### Added
+
+- **Corsair: falls back to Corsair's older CUE SDK.** Some iCUE installs refuse the newer iCUE SDK even with Enable SDK switched on. Ember now tries the newer SDK first and, when iCUE refuses it or does not answer, uses the older one, which both ship in the `iCUE` folder. The Devices page and the diagnostic log say which one is in use and what each answered. Devices on Corsair's fan and LED controllers (Commander, Lighting Node) may not light through the older SDK.
+- **`scripts/test-icue.ps1`** asks iCUE directly whether it lets a program connect, for tracking down a refusal.
+
 ## 1.1.0-beta.5 (2026-10-14)
 
 ### Added
