@@ -6,7 +6,7 @@ namespace Ember.Lighting.Corsair;
 /// <summary>One Corsair device as iCUE lists it: its id, model and the ids of its LEDs in the order Ember paints them.</summary>
 public sealed record CorsairDevice(string Id, string Model, int Type, uint[] LedIds);
 
-public enum CorsairState { Closed, Connecting, Unavailable, Connected }
+public enum CorsairState { Closed, Connecting, Unavailable, Refused, Connected }
 
 /// <summary>The few calls of Corsair's iCUE SDK that Ember uses.</summary>
 public interface ICorsairApi : IDisposable
@@ -59,7 +59,8 @@ public sealed class NativeCorsairApi : ICorsairApi
     readonly object _gate = new();
     readonly Dictionary<string, byte[]> _idBytes = [];
     volatile int _state; // the SDK's session state: 1 closed, 2 connecting, 3 timeout, 4 refused, 5 lost, 6 connected
-    bool _started, _loggedWaiting;
+    bool _started;
+    int _lastLoggedState;
 
     public string Detail { get; private set; } = "";
 
@@ -81,10 +82,10 @@ public sealed class NativeCorsairApi : ICorsairApi
             var host = $"{Marshal.ReadInt32(e, 28)}.{Marshal.ReadInt32(e, 32)}.{Marshal.ReadInt32(e, 36)}";
             var server = $"{Marshal.ReadInt32(e, 16)}.{Marshal.ReadInt32(e, 20)}.{Marshal.ReadInt32(e, 24)}";
             Detail = $"session {StateName(_state)}, iCUE {host}, SDK server {server}";
-            // With iCUE not running the SDK cycles "connecting" and "timed out" every second: say that once, not forever.
-            var waiting = _state is 2 or 3;
-            if (!waiting || !_loggedWaiting) Ember.Core.DiagLog.Info("Corsair", "iCUE " + Detail);
-            _loggedWaiting = waiting;
+            // The SDK reports "connecting" then "refused" (or "timed out") every second while iCUE is not letting Ember in: say each
+            // outcome once, not forever.
+            if (_state != 2 && _state != _lastLoggedState) Ember.Core.DiagLog.Info("Corsair", "iCUE " + Detail);
+            if (_state != 2) _lastLoggedState = _state;
         };
     }
 
@@ -125,7 +126,7 @@ public sealed class NativeCorsairApi : ICorsairApi
                 Ember.Core.DiagLog.Info("Corsair", "CorsairConnect: " + ErrorName(rc));
                 if (rc != 0) { _state = 1; Detail = "CorsairConnect said " + ErrorName(rc); }
             }
-            return _state switch { 6 => CorsairState.Connected, 2 => CorsairState.Connecting, 3 or 4 or 5 => CorsairState.Unavailable, _ => CorsairState.Closed };
+            return _state switch { 6 => CorsairState.Connected, 2 => CorsairState.Connecting, 4 => CorsairState.Refused, 3 or 5 => CorsairState.Unavailable, _ => CorsairState.Closed };
         }
     }
 

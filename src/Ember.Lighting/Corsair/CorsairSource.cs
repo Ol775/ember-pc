@@ -58,6 +58,9 @@ public sealed class CorsairSource(Func<ICorsairApi?> open) : IDeviceSource, IAsy
                     var devices = _api.Devices();
                     Status = devices.Count == 0 ? "Connected to iCUE, but it lists no devices (" + _api.Detail + ")" : $"Connected through iCUE, {devices.Count} device{(devices.Count == 1 ? "" : "s")}";
                     return Task.FromResult<IReadOnlyList<IDeviceSink>>(devices.Select(d => (IDeviceSink)new CorsairSink(_api, d)).ToList());
+                case CorsairState.Refused:
+                    Status = "iCUE is running but would not let Ember in. In iCUE open Settings, Software and Games and switch on Enable SDK (restart iCUE after changing it). If it is already on, close Ember and start it again without Run as administrator. " + _api.Detail;
+                    break;
                 case CorsairState.Connecting:
                     Status = "Connecting to iCUE… " + _api.Detail;
                     break;

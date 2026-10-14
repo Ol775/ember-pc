@@ -83,3 +83,26 @@ public class CorsairTests
         finally { Directory.Delete(dir, true); }
     }
 }
+
+public class CorsairRefusedTests
+{
+    sealed class RefusedApi : ICorsairApi
+    {
+        public CorsairState Connect() => CorsairState.Refused;
+        public IReadOnlyList<CorsairDevice> Devices() => [];
+        public bool SetColors(string deviceId, uint[] ledIds, byte[] rgb) => false;
+        public string Detail => "session refused, iCUE 4.32.129";
+        public void Disconnect() { }
+        public void Dispose() { }
+    }
+
+    [Fact]
+    public async Task A_refusal_from_a_running_iCUE_says_to_switch_on_Enable_SDK()
+    {
+        var src = new CorsairSource(() => new RefusedApi());
+        Assert.Empty(await src.RefreshAsync(default));
+        Assert.Contains("running but would not let Ember in", src.Status);
+        Assert.Contains("Enable SDK", src.Status);
+        Assert.Contains("4.32.129", src.Status);
+    }
+}
