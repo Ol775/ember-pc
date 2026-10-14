@@ -136,8 +136,8 @@ Seen on the PC with seeded learning data: the panel shows, "Suggest a curve" giv
 Apply button was pressed (the mode and curves were put back to Super quiet and the Normal curve afterwards). Not yet seen:
 real learning over days, and that the applied curve keeps temperatures sensible.
 
-- [ ] After a few days of use, AI assist shows a suggested curve and explains it.
-- [ ] Nothing changes on the fans until Apply is pressed; Dismiss leaves the current curve alone.
+- [x] After a few days of use, AI assist shows a suggested curve and explains it. (Checked 2026-10-14 after 21 hours of readings: it explained the usual range and gave both curves.)
+- [ ] Nothing changes on the fans until Apply is pressed; Dismiss leaves the current curve alone. (Dismiss checked: the settings file was byte for byte the same. Apply not tried on the PC.)
 - [ ] The applied curve still obeys the safety rules (full speed at 90 °C, never below the stall floor).
-- [ ] The suggestion follows the noise or cooling slider (quieter to cooler).
+- [x] The suggestion follows the noise or cooling slider (quieter to cooler). (Checked: 0, 25, 50 and 100 on the slider give floors of 20, 24, 28 and 35 percent.)
 - [ ] The learning data stays on this PC (see PRIVACY.md) and can be cleared from Settings.

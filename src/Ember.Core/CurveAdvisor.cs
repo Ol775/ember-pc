@@ -33,8 +33,8 @@ public static class CurveAdvisor
             return new AdvisorResult(null, $"Still learning: {profile.Hours:0.#} hours so far. Keep Ember running for about {Math.Ceiling(left * 2) / 2:0.#} more hours, and a few days is better.");
         }
 
-        var cpu = Build(profile.Cpu, p, 0);
-        var kase = Build(profile.Case.Total > 0 ? profile.Case : profile.Cpu, p, -2);
+        var cpu = Build(profile.Cpu, p, 0, ReleaseRules.CpuFloor);
+        var kase = Build(profile.Case.Total > 0 ? profile.Case : profile.Cpu, p, -2, ReleaseRules.SystemFloor);
         var notes = new List<string>();
         if (profile.Cpu.Percentile(0.1) is { } lo && profile.Cpu.Percentile(0.9) is { } hi && profile.Cpu.Highest is { } top)
             notes.Add($"Your CPU usually runs between {lo:0} and {hi:0} °C, and the highest seen was {top:0} °C.");
@@ -47,9 +47,10 @@ public static class CurveAdvisor
         return new AdvisorResult(new CurveSuggestion(cpu, kase, notes), "Here is a curve based on your readings.");
     }
 
-    static IReadOnlyList<CurvePoint> Build(TemperatureHistogram hist, double p, double shiftC)
+    /// <param name="minFloor">The slowest the service lets this fan run: a suggestion below it would be shown as slower than it really is.</param>
+    static IReadOnlyList<CurvePoint> Build(TemperatureHistogram hist, double p, double shiftC, double minFloor)
     {
-        var floor = Math.Round(Lerp(20, 35, p));
+        var floor = Math.Max(minFloor, Math.Round(Lerp(20, 35, p)));
         var typical = hist.Percentile(0.75) ?? 45;
         var knee = Math.Clamp(Math.Round(typical + Lerp(6, 1, p) + shiftC), 40, 65);   // the floor holds up to here
         var at80 = Math.Round(Lerp(65, 85, p));

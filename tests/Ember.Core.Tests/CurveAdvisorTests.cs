@@ -187,6 +187,17 @@ public class CurveAdvisorTests
         Assert.True(Knee(60) > Knee(35));
     }
 
+    [Theory]
+    [InlineData(0)] [InlineData(0.25)] [InlineData(0.5)] [InlineData(1)]
+    public void A_suggestion_never_shows_a_speed_the_service_would_not_run(double preference)
+    {
+        var s = CurveAdvisor.Suggest(Watched(3, 40, 55), preference).Suggestion!;
+        Assert.True(s.Cpu.All(p => p.Percent >= ReleaseRules.CpuFloor), "CPU fan floor");
+        Assert.True(s.Case.All(p => p.Percent >= ReleaseRules.SystemFloor), "system fan floor");
+        Assert.Null(ManualCurveRules.Check(s.Cpu));
+        Assert.Null(ManualCurveRules.Check(s.Case));
+    }
+
     [Fact]
     public void The_fans_never_go_below_the_floor_of_the_built_in_modes()
     {
