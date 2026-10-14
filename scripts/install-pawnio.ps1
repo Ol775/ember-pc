@@ -36,6 +36,39 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     throw 'install-pawnio.ps1 must be run from an elevated (Administrator) PowerShell.'
 }
 
+# ---- already installed? ----
+# PawnIO may already be on this PC (installed earlier by Ember, by OpenRGB or by hand). Running its setup again over a loaded
+# driver fails, so when the installed version is the pinned one or newer there is nothing to do, and no network is needed.
+function Get-InstalledPawnIO {
+    foreach ($k in 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall') {
+        if (-not (Test-Path $k)) { continue }
+        foreach ($sub in Get-ChildItem $k -ErrorAction SilentlyContinue) {
+            $p = Get-ItemProperty $sub.PSPath -ErrorAction SilentlyContinue
+            if ($p.DisplayName -eq 'PawnIO') { return $p }
+        }
+    }
+    return $null
+}
+function Test-PawnIODriver { & sc.exe query PawnIO *> $null; return ($LASTEXITCODE -eq 0) }
+function ConvertTo-FourPartVersion([string]$text) { $v = [version]$text; if ($v.Revision -lt 0) { $v = [version]"$text.0" }; if ($v.Build -lt 0) { $v = [version]"$text.0.0" }; return $v }
+
+$installed = Get-InstalledPawnIO
+$haveDriver = Test-PawnIODriver
+if ($haveDriver -and $installed -and $installed.DisplayVersion) {
+    try {
+        if ((ConvertTo-FourPartVersion $installed.DisplayVersion) -ge (ConvertTo-FourPartVersion $Version)) {
+            Write-Host "PawnIO $($installed.DisplayVersion) is already installed; nothing to do."
+            return
+        }
+    } catch { Write-Host "Could not compare the installed PawnIO version ($($installed.DisplayVersion))." }
+}
+if ($haveDriver) {
+    Write-Host 'PawnIO is installed but older than the version Ember ships with; updating it.'
+    # A driver cannot be replaced while a program has it open, and OpenRGB keeps it open: close it for the moment.
+    $openrgb = Get-Process -Name 'OpenRGB' -ErrorAction SilentlyContinue
+    if ($openrgb) { Write-Host 'Closing OpenRGB so the driver can be updated. Ember starts its own copy again when it runs.'; $openrgb | Stop-Process -Force; Start-Sleep -Seconds 2 }
+}
+
 if ($Version -match '^\.+\z') { throw "Invalid -Version: $Version" }  # '.'/'..' would rewrite the URL path
 $url = "https://github.com/namazso/PawnIO.Setup/releases/download/$Version/PawnIO_setup.exe"
 if (-not $url.StartsWith('https://github.com/namazso/PawnIO.Setup/releases/download/', [StringComparison]::Ordinal)) {
@@ -104,7 +137,10 @@ try {
     # admin-level attacker (who has already won).
     $null = Assert-Verified $exe
     $proc = Start-Process -FilePath $exe -ArgumentList '-install', '-silent' -Wait -PassThru
-    if ($proc.ExitCode -ne 0) {
+    if ($proc.ExitCode -ne 0 -and (Test-PawnIODriver)) {
+        Write-Warning "The PawnIO installer returned $($proc.ExitCode), but the driver is present, so Ember carries on. If motherboard sensors are missing, restart the PC."
+    }
+    elseif ($proc.ExitCode -ne 0) {
         throw "PawnIO installer failed with exit code $($proc.ExitCode)."
     }
     Write-Host 'PawnIO installed. Restart EmberService (Restart-Service EmberService) so it picks up the driver.'
