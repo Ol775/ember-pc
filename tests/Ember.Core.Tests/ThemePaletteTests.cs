@@ -116,3 +116,95 @@ public class ThemePaletteTests
     [Fact]
     public void Contrast_of_black_on_white_is_21() => Assert.Equal(21, ThemePalette.Contrast("#000000", "#ffffff"), 3);
 }
+
+public class GpuColourTests
+{
+    static readonly string[] Customs = ["#ff7a2f", "#ffffff", "#000000", "#ffee00", "#101040", "#808080", "#00ffff", "#3b8ef0", "#14b8a6"];
+
+    static IEnumerable<(string Name, Look Look)> Looks()
+    {
+        foreach (var dark in new[] { true, false })
+            foreach (var oled in dark ? new[] { false, true } : new[] { false })
+                foreach (var tone in Enum.GetValues<SurfaceTone>())
+                {
+                    foreach (var a in Enum.GetValues<AccentChoice>().Where(a => a != AccentChoice.Custom))
+                        yield return ($"{(dark ? "dark" : "light")} {a} {tone}", new Look(dark, a, oled, tone));
+                    foreach (var c in Customs)
+                        yield return ($"{(dark ? "dark" : "light")} custom {c} {tone}", new Look(dark, AccentChoice.Custom, oled, tone, HighlightStrength.Normal, c));
+                }
+    }
+
+    static (int R, int G, int B) Rgb(string hex) => (Convert.ToInt32(hex[1..3], 16), Convert.ToInt32(hex[3..5], 16), Convert.ToInt32(hex[5..7], 16));
+
+    static double Hue(string hex)
+    {
+        var (r, g, b) = Rgb(hex);
+        double R = r / 255.0, G = g / 255.0, B = b / 255.0, max = Math.Max(R, Math.Max(G, B)), d = max - Math.Min(R, Math.Min(G, B));
+        if (d == 0) return 0;
+        var h = max == R ? ((G - B) / d) % 6 : max == G ? (B - R) / d + 2 : (R - G) / d + 4;
+        return (h * 60 + 360) % 360;
+    }
+
+    [Fact]
+    public void The_gpu_colour_is_never_the_fixed_brand_orange()
+    {
+        foreach (var (name, look) in Looks())
+            Assert.NotEqual("#ff7a2f", ThemePalette.For(look)["GpuBrush"]);
+    }
+
+    [Fact]
+    public void The_gpu_colour_stays_clearly_different_from_the_accent()
+    {
+        foreach (var (name, look) in Looks())
+        {
+            var p = ThemePalette.For(look);
+            var (a, g) = (Rgb(p["AccentBrush"]), Rgb(p["GpuBrush"]));
+            var distance = Math.Sqrt(Math.Pow(a.R - g.R, 2) + Math.Pow(a.G - g.G, 2) + Math.Pow(a.B - g.B, 2));
+            Assert.True(distance >= 90, $"{name}: accent {p["AccentBrush"]} and GPU {p["GpuBrush"]} are too alike ({distance:F0})");
+        }
+    }
+
+    [Fact]
+    public void The_gpu_line_is_readable_on_a_panel_in_every_theme()
+    {
+        foreach (var (name, look) in Looks())
+        {
+            var p = ThemePalette.For(look);
+            Assert.True(ThemePalette.Contrast(p["GpuBrush"], p["PanelBrush"]) >= 3, $"{name}: GPU {p["GpuBrush"]} on panel {p["PanelBrush"]}");
+        }
+    }
+
+    [Fact]
+    public void The_default_orange_theme_keeps_its_blue_gpu_line()
+    {
+        var hue = Hue(ThemePalette.For(new Look(true, AccentChoice.Orange))["GpuBrush"]);
+        Assert.InRange(hue, 190, 230);
+    }
+
+    [Fact]
+    public void The_gpu_colour_follows_the_accent()
+    {
+        var blue = ThemePalette.For(new Look(true, AccentChoice.Blue))["GpuBrush"];
+        var green = ThemePalette.For(new Look(true, AccentChoice.Green))["GpuBrush"];
+        var purple = ThemePalette.For(new Look(true, AccentChoice.Purple))["GpuBrush"];
+        Assert.Equal(3, new[] { blue, green, purple }.Distinct().Count());
+    }
+
+    [Fact]
+    public void The_gpu_colour_follows_light_and_dark()
+    {
+        foreach (var a in new[] { AccentChoice.Blue, AccentChoice.Purple, AccentChoice.Teal })
+            Assert.NotEqual(ThemePalette.For(new Look(true, a))["GpuBrush"], ThemePalette.For(new Look(false, a))["GpuBrush"]);
+    }
+
+    [Fact]
+    public void A_partner_colour_is_not_a_warm_orange_when_the_accent_is_cool()
+    {
+        foreach (var a in new[] { AccentChoice.Blue, AccentChoice.Purple, AccentChoice.Teal })
+            foreach (var dark in new[] { true, false })
+            {
+                var hue = Hue(ThemePalette.For(new Look(dark, a))["GpuBrush"]);
+                Assert.False(hue is >= 10 and <= 50, $"{a} {(dark ? "dark" : "light")} gives an orange GPU (hue {hue:F0})");
+            }
+    }
+}

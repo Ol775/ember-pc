@@ -87,8 +87,7 @@ public static class ThemePalette
         accentText = Nudge(accentText, soft, 4.5, dark ? "#ffffff" : "#000000");
         var banner = Mix(window, accentBrush, (dark ? 0.14 : 0.12) * strength);
 
-        // The GPU line is blue unless the accent is close to blue; then it is orange, or purple when that is close too.
-        var gpu = new[] { dark ? "#4ea8de" : "#2b7fb8", "#ff7a2f", "#8b6cf0" }.First(c => Distance(c, accentBrush) >= 110);
+        var gpu = Partner(accentBrush, dark, s.Panel);
 
         return new Dictionary<string, string>
         {
@@ -112,6 +111,49 @@ public static class ThemePalette
             ["ThumbBrush"] = s.Thumb,
             ["ThumbHoverBrush"] = s.ThumbHover,
         };
+    }
+
+    /// <summary>
+    /// The colour of the GPU line: a partner to the accent, taken from the opposite side of the colour wheel (so an orange accent
+    /// keeps its blue GPU line) with a saturation and lightness that suit the theme. When that lands on orange (a blue accent would
+    /// give Ember's own orange) the next hue around the wheel is used instead, and the result is moved until it reads on a panel.
+    /// </summary>
+    static string Partner(string accent, bool dark, string panel)
+    {
+        var (h, _, _) = ToHsl(accent);
+        var (saturation, lightness) = dark ? (0.70, 0.60) : (0.62, 0.42);
+        string best = FromHsl(h + 180, saturation, lightness);
+        foreach (var turn in new[] { 180.0, 120, 240, 150, 210 })
+        {
+            var hue = (h + turn) % 360;
+            if (hue is >= 10 and <= 50) continue; // that would read as orange, the brand colour
+            var candidate = FromHsl(hue, saturation, lightness);
+            if (Distance(candidate, accent) < 90) continue;
+            best = candidate;
+            break;
+        }
+        return Nudge(best, panel, 3, dark ? "#ffffff" : "#000000");
+    }
+
+    static (double H, double S, double L) ToHsl(string hex)
+    {
+        var (r, g, b) = Parse(hex);
+        double R = r / 255.0, G = g / 255.0, B = b / 255.0, max = Math.Max(R, Math.Max(G, B)), min = Math.Min(R, Math.Min(G, B)), d = max - min, l = (max + min) / 2;
+        if (d == 0) return (0, 0, l);
+        var s = d / (1 - Math.Abs(2 * l - 1));
+        var h = max == R ? ((G - B) / d) % 6 : max == G ? (B - R) / d + 2 : (R - G) / d + 4;
+        return ((h * 60 + 360) % 360, s, l);
+    }
+
+    static string FromHsl(double h, double s, double l)
+    {
+        h = (h % 360 + 360) % 360;
+        var c = (1 - Math.Abs(2 * l - 1)) * s;
+        var x = c * (1 - Math.Abs(h / 60 % 2 - 1));
+        var m = l - c / 2;
+        var (r, g, b) = (int)(h / 60) switch { 0 => (c, x, 0.0), 1 => (x, c, 0.0), 2 => (0.0, c, x), 3 => (0.0, x, c), 4 => (x, 0.0, c), _ => (c, 0.0, x) };
+        int V(double v) => (int)Math.Round((v + m) * 255);
+        return $"#{V(r):x2}{V(g):x2}{V(b):x2}";
     }
 
     /// <summary>Moves a colour towards another in small steps until it has the contrast against the background.</summary>
