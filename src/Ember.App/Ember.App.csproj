@@ -16,6 +16,10 @@
   <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\third-party\openrgb\OpenRGB.exe')">
     <Content Include="..\..\third-party\openrgb\**\*" Link="OpenRGB\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <!-- Corsair's iCUE SDK library, fetched by scripts/fetch-icue-sdk.ps1, ships in an "iCUE" folder next to the app. -->
+  <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\third-party\icue\iCUESDK.x64_2019.dll')">
+    <Content Include="..\..\third-party\icue\iCUESDK.x64_2019.dll" Link="iCUE\iCUESDK.x64_2019.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ember.Core\Ember.Core.csproj" />
     <ProjectReference Include="..\Ember.Lighting\Ember.Lighting.csproj" />

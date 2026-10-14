@@ -88,6 +88,18 @@ reach the tray): the menu, double-click to open, and Quit.
 - [ ] Lights keep working for longer than a minute (the heartbeat keeps the Synapse session alive), and after Synapse restarts.
 - [ ] Switching Razer Chroma off stops Ember talking to Synapse.
 
+## Corsair iCUE (written and unit-tested against a pretend iCUE only; the SDK library loads and connects)
+
+- [ ] With iCUE running and Enable SDK switched on (iCUE Settings, Software and Games), the Corsair devices appear on the Lights and Devices pages.
+- [ ] Effects reach a Corsair keyboard, mouse and fans/strips; iCUE keeps running and gets its own lighting back when Ember closes.
+- [ ] With iCUE closed the Devices page says to start it, and the devices appear once it is running.
+
+## Elgato Stream Deck and the second-copy fix
+
+- [x] The Stream Deck is no longer listed as a light (checked on the PC).
+- [x] A second Ember copy no longer holds G HUB: the Logitech keyboard appears once only one copy runs (checked on the PC).
+- [ ] Starting Ember again while it is open (or hidden in the tray) brings the open window forward and does not start a second copy.
+
 ## Several devices and shared paint files
 
 Unit-tested (fills across the canvas, the library folder, name safety). The buttons on the Lights page were not reached by

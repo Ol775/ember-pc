@@ -4,7 +4,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 
 ## Being checked on real hardware
 
-- Philips Hue, Nanoleaf and Razer Chroma: written and unit-tested, but not yet tried on real devices
+- Philips Hue, Nanoleaf, Razer Chroma and Corsair iCUE: written and unit-tested, but not yet tried on real devices
 - AI assist: needs a few days of real use to see that its suggested curves are sensible
 - Game detection and GPU fan control: working on the test PC, to be tried on other graphics cards before they leave Experimental
 - Per-key keyboard layouts and Govee segments on more keyboards and lamps
@@ -12,7 +12,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 
 ## Next
 
-- Bring game detection, GPU fan control, Hue, Nanoleaf and Razer into the production build once the hardware checks above are done
+- Bring game detection, GPU fan control, Hue, Nanoleaf, Razer and Corsair into the production build once the hardware checks above are done
 - Nanoleaf panels placed on the Lights canvas where they really are, not in one row
 - Razer devices: only show the ones that are plugged in, once Synapse offers a way to tell
 
@@ -24,7 +24,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 
 ## Works through OpenRGB
 
-Corsair, ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up in Ember when OpenRGB supports them and their own software (iCUE, Armoury Crate and so on) is closed. They need no extra code in Ember.
+ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up in Ember when OpenRGB supports them and their own software (iCUE, Armoury Crate and so on) is closed. They need no extra code in Ember.
 
 ## Not planned
 

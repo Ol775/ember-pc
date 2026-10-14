@@ -211,3 +211,19 @@ public class OpenRgbClientTests
         await Assert.ThrowsAnyAsync<Exception>(() => client.ConnectAsync(port: port));
     }
 }
+
+public class OpenRgbFilterTests
+{
+    static OpenRgbDevice Dev(string name, int leds = 15) => new(0, name, "Vendor", "Device", "HID", leds, [], []);
+
+    [Theory]
+    [InlineData("Elgato Stream Deck MK.2")]
+    [InlineData("Valve Steam Deck")]
+    public void Macro_pads_and_handhelds_are_not_lights(string name) => Assert.False(OpenRgbSource.IsLight(Dev(name)));
+
+    [Fact]
+    public void Real_lighting_is_kept() => Assert.True(OpenRgbSource.IsLight(Dev("Corsair K70")));
+
+    [Fact]
+    public void Devices_without_leds_are_not_lights() => Assert.False(OpenRgbSource.IsLight(Dev("Board", 0)));
+}

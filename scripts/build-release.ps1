@@ -13,6 +13,7 @@ $root = Split-Path $PSScriptRoot -Parent
 Push-Location $root
 try {
     if (-not $SkipOpenRgb) { & (Join-Path $PSScriptRoot 'fetch-openrgb.ps1') }
+    if (-not $SkipOpenRgb) { & (Join-Path $PSScriptRoot 'fetch-icue-sdk.ps1') }
     if (-not $SkipInstaller) { & (Join-Path $PSScriptRoot 'fetch-prereqs.ps1') }
 
     $version = ([xml](Get-Content (Join-Path $root 'Directory.Build.props'))).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1

@@ -25,12 +25,12 @@
 - **Safety first.** At 90 °C every controlled fan goes to 100%, a lost sensor sends fans to 100%, and a separate **watchdog** service restores safe speeds if Ember stops responding.
 - **Header testing.** Nothing is written to a fan header until you have tested and enabled it yourself. Headers with no fan attached are hidden.
 - **Conflict detection.** Warns by name if NZXT CAM, MSI Center, Fan Control, iCUE or similar is running, and can close them for you.
-- **Lighting.** Drives PC devices through **OpenRGB** (bundled with the app), **Govee** lamps over your LAN (or the Govee cloud with your own API key) and **Logitech** G keyboards through G HUB. The beta builds add **Philips Hue** lights through the bridge on your network (no Hue account), **Razer Chroma** devices through Razer Synapse, and **Nanoleaf** light panels through their controller (no account).
+- **Lighting.** Drives PC devices through **OpenRGB** (bundled with the app), **Govee** lamps over your LAN (or the Govee cloud with your own API key) and **Logitech** G keyboards through G HUB. The beta builds add **Philips Hue** lights through the bridge on your network (no Hue account), **Razer Chroma** devices through Razer Synapse, **Nanoleaf** light panels through their controller (no account) and **Corsair** devices through the iCUE SDK (iCUE running, Enable SDK on).
 - **Logitech G keyboards and mice.** Lit through G HUB's own lighting engine (Ember loads it from your G HUB install; nothing from Logitech is bundled). Needs G HUB running, with "Allow games and applications to control lighting" switched on for the device.
 - **Light profile per device.** Any device, such as your keyboard, can show a different saved scene from the rest.
 - **Music-reactive lights.** Pulse to the bass or spread the spectrum across your devices; Ember listens to what the PC is playing, only while the effect is on.
 - **Paint single LEDs** and give any device its own colours; keyboards and other grid devices are drawn and lit as grids.
-- **Corsair, ASUS, MSI and more.** Anything OpenRGB supports appears in Ember (close the maker's own software first).
+- **ASUS, MSI and more.** Anything OpenRGB supports appears in Ember (close the maker's own software first). Corsair works through iCUE in the beta builds instead, so iCUE can stay open.
 - **Layered effects.** Stack effects with blend modes and save them as scenes.
 - **Screen sync.** Lights follow the colours on your screen, read straight from the graphics card (DXGI) and including HDR desktops.
 - **Make it yours.** Dark, **OLED black** (pure black for OLED screens), light or match Windows; a warm, neutral or cool colour scheme; nine accent colours or your own `#rrggbb`; and how strongly the accent shows in highlights. All in Settings, Appearance.

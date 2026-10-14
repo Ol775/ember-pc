@@ -72,7 +72,7 @@ public sealed class OpenRgbSource(Func<string?> openRgbPath, Func<bool> startIfN
             }
             var devices = await _client.GetDevicesAsync(ct).ConfigureAwait(false);
             Status = devices.Count == 0 ? "Connected, but OpenRGB found no devices" : $"Connected, {devices.Count} device{(devices.Count == 1 ? "" : "s")}";
-            return devices.Where(d => d.LedCount > 0).Select(d => (IDeviceSink)new OpenRgbSink(_client, d)).ToList();
+            return devices.Where(IsLight).Select(d => (IDeviceSink)new OpenRgbSink(_client, d)).ToList();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -81,6 +81,12 @@ public sealed class OpenRgbSource(Func<string?> openRgbPath, Func<bool> startIfN
             return [];
         }
     }
+
+    /// <summary>OpenRGB also lists handheld and macro-pad hardware whose "LEDs" are keys or screens, not lighting: those are left out.</summary>
+    public static bool IsLight(OpenRgbDevice d) =>
+        d.LedCount > 0 && !NotLights.Any(n => d.Name.Contains(n, StringComparison.OrdinalIgnoreCase));
+
+    static readonly string[] NotLights = ["Stream Deck", "Steam Deck"];
 
     public void ReportFailure(string sinkId)
     {

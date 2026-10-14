@@ -2,6 +2,17 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.1.0-beta.2 (2026-10-14)
+
+### Added
+
+- **Corsair iCUE support (beta, not yet tried on real Corsair hardware).** Keyboards, mice, headsets, fans, coolers, memory and LED controllers show up through Corsair's iCUE SDK, which Ember ships in an `iCUE` folder. iCUE has to be running with Enable SDK switched on (Settings, Software and Games). Ember lights the devices alongside iCUE and hands them back when it closes.
+
+### Fixed
+
+- **Elgato Stream Deck and Steam Deck no longer appear as lights.** OpenRGB lists them with key "LEDs"; Ember now leaves them out.
+- **Logitech was not found when a second copy of Ember was running.** A leftover hidden copy (left behind by an update relaunch) kept G HUB's lighting session, so the visible Ember said "G HUB is installed but not answering". Ember now runs once per sign-in: starting it again brings the open window forward.
+
 ## 1.1.0-beta.1 (2026-10-13)
 
 ### Changed

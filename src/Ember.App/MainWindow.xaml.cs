@@ -50,7 +50,8 @@ public partial class MainWindow : Window
              new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad(), () => lights?.State.LogitechOneColour ?? false),
              .. BuildFeatures.Current.NewIntegrations ? new IDeviceSource[] { new Ember.Lighting.Hue.HueSource(HueConnection),
              new Ember.Lighting.Nanoleaf.NanoleafSource(NanoleafConnection),
-             new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp)) } : []]);
+             new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp)),
+             new Ember.Lighting.Corsair.CorsairSource(() => Ember.Lighting.Corsair.NativeCorsairApi.TryLoad()) } : []]);
         Lights.Attach(_lights);
         _lights.Start();
 
@@ -603,7 +604,7 @@ public partial class MainWindow : Window
     /// <summary>False when the window has to be shown at start: the terms have not been accepted yet.</summary>
     public bool CanStayHidden => Legal.IsAccepted(_vm.Prefs.AcceptedTerms, TermsAcceptance.ByInstaller());
 
-    void ShowFromTray()
+    internal void ShowFromTray()
     {
         Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;

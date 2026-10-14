@@ -160,7 +160,7 @@ public partial class MainWindow
             "LibreHardwareMonitor for sensors and fan control (MPL-2.0)",
             "PawnIO, the signed driver that lets Ember reach the motherboard chips",
             "OpenRGB for lighting hardware, run as a separate program (GPL-2.0)",
-            "Logitech G HUB, Govee, Philips Hue, Nanoleaf and Razer Synapse for their own devices");
+            "Logitech G HUB, Govee, Philips Hue, Nanoleaf, Razer Synapse and Corsair iCUE for their own devices");
         list.Margin = new Thickness(0, 6, 0, 0);
         built.Children.Add(list);
         var more = LightsUi.Text("Full notices and licences are under Legal. Ember is an independent project by Ol775, not affiliated with or endorsed by any of these companies.", muted: true, size: 12);

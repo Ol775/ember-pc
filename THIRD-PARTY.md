@@ -11,6 +11,15 @@ folder next to `Ember.App.exe`.
 - Source code and licence text: <https://codeberg.org/OpenRGB/OpenRGB> (release `release_1.0`).
 - If you already run your own OpenRGB, Ember uses that one when it is listening and never starts a second copy.
 
+## Corsair iCUE SDK (bundled with beta builds)
+
+To light Corsair devices Ember uses Corsair's iCUE SDK library, `iCUESDK.x64_2019.dll`, shipped unmodified in the `iCUE` folder next
+to `Ember.App.exe`. It is taken from the redistributable folder of Corsair's official SDK release.
+
+- Version: 4.0.84, downloaded by `scripts/fetch-icue-sdk.ps1` from <https://github.com/CorsairOfficial/cue-sdk> and checked against a pinned SHA-256.
+- The library only talks to the Corsair iCUE program on this PC, which must be running with the SDK switched on. Nothing leaves the PC.
+- The SDK is Corsair's software under Corsair's own terms (see the SDK documentation in the release above). It is not covered by Ember's MIT licence.
+
 ## Libraries used by the app and service
 
 - **LibreHardwareMonitorLib 0.9.6** (MPL-2.0): reads sensors and fan headers.
