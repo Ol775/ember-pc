@@ -1,5 +1,5 @@
 # Signing the installer
-> Not planned: Ember is released unsigned and Windows shows "Unknown publisher". The build can still sign if a certificate is ever supplied; nothing here needs doing.
+> On the back burner: Ember is released unsigned for now and Windows shows "Unknown publisher" (SmartScreen may warn and Smart App Control may block it). Options are listed in ROADMAP.md. The build can already sign when a certificate is supplied; nothing here needs doing until then.
 
 Windows shows "Unknown publisher" for programs that are not signed with a code-signing certificate. Ember's build can sign
 its three programs (`Ember.App.exe`, `Ember.Service.exe`, `Ember.Watchdog.exe`) and the installer, but the certificate has to

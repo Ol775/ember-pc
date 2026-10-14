@@ -21,6 +21,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 - Share and import fan curves and lighting scenes as files
 - More fan sources, such as other fan controllers, if their makers publish a way to talk to them
 - A compact dashboard window for a second monitor
+- Code signing, so Windows SmartScreen and Smart App Control stop warning or blocking: free through SignPath Foundation (open source), about $10 a month through Azure Trusted Signing, or a certificate at roughly $220 to $620 a year. Until then Ember is released unsigned
 
 ## Works through OpenRGB
 
@@ -30,7 +31,6 @@ ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up i
 
 - Overclocking or voltage control
 - Cloud accounts or telemetry
-- Code signing: Ember is released unsigned, so Windows shows "Unknown publisher"
 
 ## Done
 
