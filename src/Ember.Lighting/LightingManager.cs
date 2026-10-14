@@ -329,6 +329,7 @@ public sealed class LightingManager : IAsyncDisposable
             inputs = new LightingInputs(seconds, _cpu, _gpu, _screen, _audio, _pulses.Count == 0 ? null : _pulses.ToList());
         }
         var frame = await _engine.StepAsync(state.Current, state.On, inputs, sinks, ct, state.Scenes).ConfigureAwait(false);
+        foreach (var (id, why) in _engine.Failures) Ember.Core.DiagLog.Changed("Lighting device", id, "send failed: " + why.Message);
         foreach (var id in _engine.Failures.Keys)
             foreach (var source in _sources) source.ReportFailure(id);
 
@@ -348,18 +349,21 @@ public sealed class LightingManager : IAsyncDisposable
         {
             if (IsSourceDisabled(source.Name))
             {
+                Ember.Core.DiagLog.Changed("Lighting", source.Name, "switched off in Ember");
                 if (_stopped.Add(source.Name)) source.ReportFailure(""); // let go of its connection (G HUB, iCUE, OpenRGB) while it is off
                 continue;
             }
             _stopped.Remove(source.Name);
             try { sinks.AddRange(await source.RefreshAsync(ct).ConfigureAwait(false)); }
-            catch (Exception ex) when (ex is not OperationCanceledException) { /* the source reports its own status */ }
+            catch (Exception ex) when (ex is not OperationCanceledException) { Ember.Core.DiagLog.Warn("Lighting", source.Name + " refresh failed", ex); }
+            Ember.Core.DiagLog.Changed("Lighting", source.Name, source.Status);
         }
         _engine.Reset();
         lock (_gate)
         {
             var off = _state.DisabledDevices is { } list ? list.ToHashSet() : [];
             _devices = sinks.Select(s => new DeviceInfo(s.Id, s.Name, s.Kind, SourceOf(s), s.LedCount, s.Realtime, s.Columns, off.Contains(s.Id))).ToList();
+            Ember.Core.DiagLog.Changed("Lighting", "devices", string.Join(", ", _devices.Select(d => d.Id + (d.Disabled ? " (disabled)" : ""))));
             sinks = sinks.Where(s => !off.Contains(s.Id)).ToList();
             _sinks = sinks;
             var withPlacements = Placed(_state, sinks);

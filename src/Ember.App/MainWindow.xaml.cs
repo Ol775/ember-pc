@@ -58,7 +58,7 @@ public partial class MainWindow : Window
         // ServiceConnection raises events on its background loop thread: queue each one onto the UI thread.
         // InvokeAsync is the non-blocking BeginInvoke, so the loop never waits for the UI.
         var connection = new ServiceConnection(PipeStreamConnector.ConnectAsync, ServiceConnection.DefaultBackoff);
-        connection.StateChanged += s => Dispatcher.InvokeAsync(() => _vm.SetConnection(s));
+        connection.StateChanged += s => { DiagLog.Changed("Service", "connection", s.ToString()); Dispatcher.InvokeAsync(() => _vm.SetConnection(s)); };
         connection.SnapshotReceived += s => Dispatcher.InvokeAsync(() =>
         {
             _vm.Add(s);
@@ -213,11 +213,12 @@ public partial class MainWindow : Window
             var folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "EmberUpdate");
             var got = await _installer.DownloadAsync(release, folder, progress);
             UpdateNote.Text = got.Message;
+            DiagLog.Info("Update", $"Download of {release.Version}: {(got.Ok ? "ok" : "failed")}, {got.Message}");
             if (!got.Ok || got.Path is null) return;
             UpdateNote.Text = "Starting the installer. Windows will ask for permission, then Ember closes, updates and opens again.";
             var accepted = Math.Max(_vm.Prefs.AcceptedTerms, TermsAcceptance.ByInstaller());
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(got.Path, "/UPDATE /ACCEPTED=" + accepted) { UseShellExecute = true }); }
-            catch (System.ComponentModel.Win32Exception) { UpdateNote.Text = "The installer was not started (permission was refused). Press Update now to try again."; return; }
+            catch (System.ComponentModel.Win32Exception ex) { DiagLog.Warn("Update", "Installer not started", ex); UpdateNote.Text = "The installer was not started (permission was refused). Press Update now to try again."; return; }
             Quit();
         }
         finally { UpdateNowButton.IsEnabled = true; }

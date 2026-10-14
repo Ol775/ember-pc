@@ -150,6 +150,21 @@ public partial class MainWindow
             Announce(AboutNote);
         };
         links.Children.Add(copy);
+        var report = new Button { Content = "Copy diagnostic report", Style = LightsUi.Sty("ActionButton"), Margin = new Thickness(0, 0, 8, 8) };
+        report.Click += (_, _) =>
+        {
+            try { Clipboard.SetText(DiagLog.Scrub(DiagnosticReport())); AboutNote.Text = "Copied: versions, integration status, devices and the recent log. Keys and passwords are left out. Paste it into a problem report."; }
+            catch (Exception) { AboutNote.Text = "Windows would not let Ember use the clipboard."; }
+            Announce(AboutNote);
+        };
+        links.Children.Add(report);
+        var logs = new Button { Content = "Open log folder", Style = LightsUi.Sty("ActionButton"), Margin = new Thickness(0, 0, 8, 8) };
+        logs.Click += (_, _) =>
+        {
+            try { System.IO.Directory.CreateDirectory(DiagLog.Folder); System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", "\"" + DiagLog.Folder + "\"") { UseShellExecute = true }); }
+            catch (Exception) { AboutNote.Text = "Could not open " + DiagLog.Folder + "."; Announce(AboutNote); }
+        };
+        links.Children.Add(logs);
         AboutHost.Children.Add(links);
         AboutNote = LightsUi.Text("", muted: true, size: 12);
         AboutHost.Children.Add(AboutNote);
@@ -171,4 +186,22 @@ public partial class MainWindow
     }
 
     TextBlock AboutNote = null!;
+
+    /// <summary>Everything useful for a problem report in one block of text. The log lines are scrubbed again by the caller.</summary>
+    string DiagnosticReport()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Ember {AppInfo.Version} ({_vm.BuildLabel}, {_vm.Prefs.Channel} channel)");
+        sb.AppendLine($"Windows {Environment.OSVersion.Version}, .NET {Environment.Version}, {(_vm.IsElevated ? "administrator" : "standard user")}");
+        sb.AppendLine($"Service: {_vm.ConnectionText}");
+        sb.AppendLine($"Ember copies running: {System.Diagnostics.Process.GetProcessesByName("Ember.App").Length}");
+        sb.AppendLine().AppendLine("Integrations:");
+        foreach (var s in _lights.SourceStatus) sb.AppendLine("  " + s);
+        sb.AppendLine().AppendLine("Devices:");
+        foreach (var d in _lights.Devices) sb.AppendLine($"  {d.Source} | {d.Name} | {d.Kind} | {d.LedCount} LEDs{(d.Disabled ? " | disabled" : "")}");
+        if (_lights.Problems.Count > 0) { sb.AppendLine().AppendLine("Device problems:"); foreach (var p in _lights.Problems) sb.AppendLine($"  {p.Key}: {p.Value}"); }
+        sb.AppendLine().AppendLine("Recent log:");
+        foreach (var l in DiagLog.Tail(150)) sb.AppendLine(l);
+        return sb.ToString();
+    }
 }
