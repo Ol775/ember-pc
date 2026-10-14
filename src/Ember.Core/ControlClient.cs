@@ -1,14 +1,14 @@
 using System.IO;
 using System.IO.Pipes;
 using System.Text;
-using Ember.Core;
 
-namespace Ember.App;
+namespace Ember.Core;
 
 /// <summary>
 /// Sends one control message to the service and returns its reply. The server is verified as the Ember service
 /// first, like the read pipe. Failures become a plain-language reply, never an exception.
 /// </summary>
+[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 public static class ControlClient
 {
     public static async Task<ControlReply> SendAsync(ControlMessage message, CancellationToken ct = default)
