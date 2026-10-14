@@ -2,6 +2,14 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.1.0-beta.4 (2026-10-14)
+
+### Fixed
+
+- **Updating no longer fails with 403 on shared or VPN addresses.** GitHub allows only 60 anonymous API requests an hour per address, so an office, school, VPN or shared connection could be refused. When the API says 403 or 429, Ember now reads the public releases feed instead (same releases, no such limit), with the same download and checksum checks. If both fail, the message explains the limit.
+- **Update problems are logged.** The update check and the installer download write what GitHub answered to the diagnostic log.
+- **The iCUE log is quieter.** With iCUE not running, the SDK's "connecting" and "timed out" cycle is logged once instead of every second.
+
 ## 1.1.0-beta.3 (2026-10-14)
 
 ### Added
