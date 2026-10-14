@@ -59,7 +59,7 @@ public sealed class NativeCorsairApi : ICorsairApi
     readonly object _gate = new();
     readonly Dictionary<string, byte[]> _idBytes = [];
     volatile int _state; // the SDK's session state: 1 closed, 2 connecting, 3 timeout, 4 refused, 5 lost, 6 connected
-    bool _started;
+    bool _started, _loggedWaiting;
 
     public string Detail { get; private set; } = "";
 
@@ -81,7 +81,10 @@ public sealed class NativeCorsairApi : ICorsairApi
             var host = $"{Marshal.ReadInt32(e, 28)}.{Marshal.ReadInt32(e, 32)}.{Marshal.ReadInt32(e, 36)}";
             var server = $"{Marshal.ReadInt32(e, 16)}.{Marshal.ReadInt32(e, 20)}.{Marshal.ReadInt32(e, 24)}";
             Detail = $"session {StateName(_state)}, iCUE {host}, SDK server {server}";
-            Ember.Core.DiagLog.Info("Corsair", "iCUE " + Detail);
+            // With iCUE not running the SDK cycles "connecting" and "timed out" every second: say that once, not forever.
+            var waiting = _state is 2 or 3;
+            if (!waiting || !_loggedWaiting) Ember.Core.DiagLog.Info("Corsair", "iCUE " + Detail);
+            _loggedWaiting = waiting;
         };
     }
 
