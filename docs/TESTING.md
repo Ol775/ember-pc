@@ -109,6 +109,8 @@ reach the tray): the menu, double-click to open, and Quit.
 - [ ] Dashboard temperature history: gridlines every 20 degrees in the chosen unit, minute marks, and a dot with a label at the right end of each line; Fans page: the curve shows a dot at the current temperature with a label of temperature and speed.
 - [ ] Installer: with OpenRGB running from the Ember folder, and with PawnIO already installed, a quiet update completes and the summary lists what Ember needs.
 
+- [ ] OpenRGB starts without a window and without the Zone Initialization question (needs a PC with addressable RGB headers, such as the MSI board JRAINBOW1 and 2).
+
 ## Several devices and shared paint files
 
 Unit-tested (fills across the canvas, the library folder, name safety). The buttons on the Lights page were not reached by

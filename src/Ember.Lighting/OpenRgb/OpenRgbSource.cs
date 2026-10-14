@@ -116,7 +116,9 @@ public sealed class OpenRgbSource(Func<string?> openRgbPath, Func<bool> startIfN
         _lastStart = DateTime.UtcNow;
         try
         {
-            _started = Process.Start(new ProcessStartInfo(path, "--server --startminimized --server-host 127.0.0.1")
+            // Server only, no window: with a window (--startminimized) OpenRGB asks about addressable header sizes
+            // ("Zone Initialization") on a PC with such headers, and the question pops up over whatever the person is doing.
+            _started = Process.Start(new ProcessStartInfo(path, "--server --server-host 127.0.0.1")
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
