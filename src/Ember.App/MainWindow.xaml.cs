@@ -115,7 +115,14 @@ public partial class MainWindow : Window
         ApplyAppearance();
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, _) => { if (_vm.Prefs.Theme == ThemeMode.System) Dispatcher.InvokeAsync(ApplyAppearance); };
         StartAutomaticUpdateChecks();
-        if (_vm.Prefs.StartPage == StartPage.Fans) NavFans.IsChecked = true;
+        switch (_vm.Prefs.StartPage)
+        {
+            case StartPage.Fans: NavFans.IsChecked = true; break;
+            case StartPage.Lights: NavLights.IsChecked = true; break;
+            case StartPage.Devices: NavDevices.IsChecked = true; break;
+        }
+        RestoreWindowPlacement();
+        RememberWindowSwitch.IsChecked = _vm.Prefs.RememberWindow;
         Curve.Committed += OnCurveCommitted;
         Curve.CopyRequested += OnCurveCopy;
 
@@ -727,7 +734,7 @@ public partial class MainWindow : Window
 
     void Remember(AppPreferences prefs)
     {
-        var look = prefs.Theme != _vm.Prefs.Theme || prefs.Accent != _vm.Prefs.Accent || prefs.Tone != _vm.Prefs.Tone || prefs.Highlight != _vm.Prefs.Highlight || prefs.CustomAccent != _vm.Prefs.CustomAccent;
+        var look = prefs.Theme != _vm.Prefs.Theme || prefs.Accent != _vm.Prefs.Accent || prefs.Tone != _vm.Prefs.Tone || prefs.Highlight != _vm.Prefs.Highlight || prefs.CustomAccent != _vm.Prefs.CustomAccent || prefs.GpuColour != _vm.Prefs.GpuColour || prefs.Size != _vm.Prefs.Size;
         SettingsNote.Text = _vm.Update(prefs) ? "" : "Could not save this setting; it applies until you close Ember.";
         if (look) ApplyAppearance();
         Announce(SettingsNote);
@@ -773,8 +780,35 @@ public partial class MainWindow : Window
         Close();
     }
 
+    void OnRememberWindowToggled(object sender, RoutedEventArgs e)
+    {
+        var on = RememberWindowSwitch.IsChecked == true;
+        Remember(_vm.Prefs with { RememberWindow = on, Window = on ? _vm.Prefs.Window : "" });
+        if (on) SaveWindowPlacement();
+    }
+
+    /// <summary>Puts the window where it was when it was last closed (only with "Open the window where I left it"), moved onto the screen if that place is gone.</summary>
+    void RestoreWindowPlacement()
+    {
+        if (!_vm.Prefs.RememberWindow || !WindowPlacement.TryParse(_vm.Prefs.Window, out var saved) || saved is null) return;
+        var fit = saved.Fit(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop, SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight, MinWidth, MinHeight);
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        (Left, Top, Width, Height) = (fit.Left, fit.Top, fit.Width, fit.Height);
+        if (fit.Maximised) WindowState = WindowState.Maximized;
+    }
+
+    void SaveWindowPlacement()
+    {
+        if (!_vm.Prefs.RememberWindow || (WindowState == WindowState.Minimized && !IsVisible)) return;
+        var b = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
+        if (b.Width <= 0 || b.Height <= 0 || double.IsInfinity(b.Width) || double.IsNaN(b.Left)) return;
+        var text = new WindowPlacement(b.Left, b.Top, b.Width, b.Height, WindowState == WindowState.Maximized).Format();
+        if (text != _vm.Prefs.Window) _vm.Update(_vm.Prefs with { Window = text });
+    }
+
     void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
+        SaveWindowPlacement();
         // With "Keep running in the tray" on, the close button only hides the window. Quit in the tray menu really closes it.
         if (_quitting || !_vm.Prefs.KeepInTray) return;
         e.Cancel = true;

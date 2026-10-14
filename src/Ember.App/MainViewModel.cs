@@ -33,6 +33,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool UseCelsius => Unit == TemperatureUnit.Celsius;
     public bool StartOnFans => Prefs.StartPage == StartPage.Fans;
     public bool StartOnDashboard => Prefs.StartPage == StartPage.Dashboard;
+    public bool StartOnLights => Prefs.StartPage == StartPage.Lights;
+    public bool StartOnDevices => Prefs.StartPage == StartPage.Devices;
 
     /// <summary>Changes and remembers a preference. False if it could not be saved (it still applies until the app closes).</summary>
     public bool Update(AppPreferences prefs)

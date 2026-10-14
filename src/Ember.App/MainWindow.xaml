@@ -8,7 +8,7 @@
         Title="Ember" Icon="Assets/ember.ico" Width="1100" Height="720" MinWidth="820" MinHeight="560"
         Background="{DynamicResource WindowBrush}" Foreground="{DynamicResource TextBrush}"
         FontFamily="Segoe UI" FontSize="14">
-    <Grid>
+    <Grid x:Name="Root">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="208" />
             <ColumnDefinition Width="*" />
@@ -340,6 +340,10 @@
                                              IsChecked="{Binding StartOnDashboard, Mode=OneWay}" Style="{StaticResource Segment}" />
                                 <RadioButton GroupName="StartPage" Content="Fans" Tag="Fans" Click="OnStartPagePicked"
                                              IsChecked="{Binding StartOnFans, Mode=OneWay}" Style="{StaticResource Segment}" />
+                                <RadioButton GroupName="StartPage" Content="Lights" Tag="Lights" Click="OnStartPagePicked"
+                                             IsChecked="{Binding StartOnLights, Mode=OneWay}" Style="{StaticResource Segment}" />
+                                <RadioButton GroupName="StartPage" Content="Devices" Tag="Devices" Click="OnStartPagePicked"
+                                             IsChecked="{Binding StartOnDevices, Mode=OneWay}" Style="{StaticResource Segment}" />
                             </StackPanel>
                         </Border>
                         <CheckBox x:Name="StartupSwitch" Content="Start Ember when I sign in to Windows" Click="OnStartupToggled"
@@ -347,6 +351,8 @@
                         <CheckBox x:Name="TraySwitch" Content="Keep running in the tray when I close the window" Click="OnTrayToggled"
                                   Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
                         <CheckBox x:Name="MinimisedSwitch" Content="Start minimised, in the tray" Click="OnMinimisedToggled"
+                                  Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
+                        <CheckBox x:Name="RememberWindowSwitch" Content="Open the window where I left it (size and position)" Click="OnRememberWindowToggled"
                                   Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    Text="This only opens the window. Fan control runs in the Ember service, which starts with Windows whether or not the window is open." />
@@ -364,6 +370,12 @@
                 </GroupBox>
                 <GroupBox Tag="appearance" Header="Highlights" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Highlights">
                     <StackPanel x:Name="HighlightHost" />
+                </GroupBox>
+                <GroupBox Tag="appearance" Header="Interface size" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Interface size">
+                    <StackPanel x:Name="SizeHost" />
+                </GroupBox>
+                <GroupBox Tag="appearance" Header="GPU colour" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="GPU colour">
+                    <StackPanel x:Name="GpuHost" />
                 </GroupBox>
                 <GroupBox Tag="fan" Header="Fan control" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan control">
                     <StackPanel>

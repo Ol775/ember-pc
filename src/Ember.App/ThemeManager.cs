@@ -29,7 +29,7 @@ public static class ThemeManager
     public static void Apply(AppPreferences prefs)
     {
         IsDark = prefs.Theme switch { ThemeMode.Light => false, ThemeMode.System => !SystemIsLight(), _ => true };
-        _look = new Look(IsDark, prefs.Accent, prefs.Theme == ThemeMode.Oled, prefs.Tone, prefs.Highlight, prefs.CustomAccent);
+        _look = new Look(IsDark, prefs.Accent, prefs.Theme == ThemeMode.Oled, prefs.Tone, prefs.Highlight, prefs.CustomAccent, prefs.GpuAccent);
         var resources = Application.Current.Resources;
         foreach (var (key, hex) in ThemePalette.For(_look))
         {

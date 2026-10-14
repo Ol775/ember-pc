@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Ember.Core;
 
-public enum StartPage { Dashboard, Fans }
+public enum StartPage { Dashboard, Fans, Lights, Devices }
 
 /// <summary>What the app itself remembers for one Windows user (the service's own settings live elsewhere).</summary>
 public enum UpdateChannel { Stable, Beta }
@@ -12,9 +12,13 @@ public sealed record AppPreferences(TemperatureUnit Unit, StartPage StartPage, T
     AccentChoice Accent = AccentChoice.Orange, UpdateChannel Channel = UpdateChannel.Stable, bool AutoCheckUpdates = true, int AcceptedTerms = 0,
     bool KeepInTray = false, bool StartMinimised = false, bool AiLearning = false, double AiPreference = 0.35,
     SurfaceTone Tone = SurfaceTone.Warm, HighlightStrength Highlight = HighlightStrength.Normal, string CustomAccent = ThemePalette.DefaultCustomAccent,
-    string SkippedVersion = "")
+    string SkippedVersion = "", UiSize Size = UiSize.Normal, string GpuColour = "Auto", bool RememberWindow = false, string Window = "")
 {
     public static readonly AppPreferences Default = new(TemperatureUnit.Celsius, StartPage.Dashboard);
+
+    /// <summary>The accent colour chosen for the GPU line, or null for Auto (a partner to the accent).</summary>
+    [JsonIgnore]
+    public AccentChoice? GpuAccent => Enum.TryParse<AccentChoice>(GpuColour, out var a) && a != AccentChoice.Custom ? a : null;
 }
 
 /// <summary>JSON file of <see cref="AppPreferences"/>. A missing, oversized or damaged file loads as the defaults, field by field, and never throws.</summary>
@@ -53,7 +57,11 @@ public sealed class PreferencesStore(string path)
                 Field(doc.RootElement, "Tone", AppPreferences.Default.Tone),
                 Field(doc.RootElement, "Highlight", AppPreferences.Default.Highlight),
                 CustomColour(Field(doc.RootElement, "CustomAccent", AppPreferences.Default.CustomAccent)),
-                VersionText(Field(doc.RootElement, "SkippedVersion", AppPreferences.Default.SkippedVersion)));
+                VersionText(Field(doc.RootElement, "SkippedVersion", AppPreferences.Default.SkippedVersion)),
+                Field(doc.RootElement, "Size", AppPreferences.Default.Size),
+                GpuChoice(Field(doc.RootElement, "GpuColour", AppPreferences.Default.GpuColour)),
+                Field(doc.RootElement, "RememberWindow", AppPreferences.Default.RememberWindow),
+                WindowText(Field(doc.RootElement, "Window", AppPreferences.Default.Window)));
         }
         catch (Exception)
         {
@@ -63,6 +71,12 @@ public sealed class PreferencesStore(string path)
 
     /// <summary>The version the person chose to skip: a short plain version text, or nothing.</summary>
     static string VersionText(string v) => v is { Length: > 0 and <= 40 } && AppVersion.TryParse(v, out _) ? v : "";
+
+    /// <summary>"Auto" (a partner to the accent) or the name of one of the accent colours; anything else is Auto.</summary>
+    static string GpuChoice(string v) => v == "Auto" || (Enum.TryParse<AccentChoice>(v, out var a) && Enum.IsDefined(a) && a != AccentChoice.Custom && !int.TryParse(v, out _)) ? v : "Auto";
+
+    /// <summary>The saved window position, or nothing when the text is not a valid one.</summary>
+    static string WindowText(string v) => WindowPlacement.TryParse(v, out _) ? v : "";
 
     static string CustomColour(string v) => ThemePalette.IsHexColour(v) ? v.ToLowerInvariant() : AppPreferences.Default.CustomAccent;
 

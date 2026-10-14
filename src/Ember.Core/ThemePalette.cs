@@ -14,7 +14,7 @@ public enum HighlightStrength { Subtle, Normal, Vivid }
 
 /// <summary>Everything that decides the colours of the app. <c>Oled</c> only has an effect on a dark theme.</summary>
 public sealed record Look(bool Dark, AccentChoice Accent = AccentChoice.Orange, bool Oled = false, SurfaceTone Tone = SurfaceTone.Warm,
-    HighlightStrength Highlight = HighlightStrength.Normal, string? CustomAccent = null);
+    HighlightStrength Highlight = HighlightStrength.Normal, string? CustomAccent = null, AccentChoice? Gpu = null);
 
 /// <summary>The colours of one theme, by the resource key the app uses for each (WindowBrush, PanelBrush, ...).</summary>
 public static class ThemePalette
@@ -87,7 +87,10 @@ public static class ThemePalette
         accentText = Nudge(accentText, soft, 4.5, dark ? "#ffffff" : "#000000");
         var banner = Mix(window, accentBrush, (dark ? 0.14 : 0.12) * strength);
 
-        var gpu = Partner(accentBrush, dark, s.Panel);
+        // The GPU line: the colour the person picked, or (Auto) a partner to the accent.
+        var gpu = look.Gpu is { } chosen && chosen != AccentChoice.Custom
+            ? Nudge(dark ? Base(chosen, null) : Mix(Base(chosen, null), "#000000", 0.12), s.Panel, 3, dark ? "#ffffff" : "#000000")
+            : Partner(accentBrush, dark, s.Panel);
 
         return new Dictionary<string, string>
         {

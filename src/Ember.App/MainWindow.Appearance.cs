@@ -9,6 +9,10 @@ namespace Ember.App;
 public partial class MainWindow
 {
     readonly List<(AccentChoice Accent, RadioButton Swatch)> _swatches = [];
+    readonly List<(AccentChoice Accent, RadioButton Swatch)> _gpuSwatches = [];
+    Button? _gpuAuto;
+    double _scale = 1;
+    bool _scaleApplied;
     TextBox? _customHex;
     TextBlock? _customNote;
     bool _syncingCustom;
@@ -29,6 +33,19 @@ public partial class MainWindow
     {
         ThemeManager.Apply(_vm.Prefs);
         ThemeManager.ApplyChrome(this);
+        var scale = UiSizes.Factor(_vm.Prefs.Size);
+        Root.LayoutTransform = scale == 1.0 ? Transform.Identity : new ScaleTransform(scale, scale);
+        (MinWidth, MinHeight) = (820 * scale, 560 * scale);
+        // A larger interface needs a wider window, or the dashboard cards clip: widen it when the size is raised (not at start-up, where the saved size wins).
+        if (_scaleApplied && scale > _scale && WindowState == WindowState.Normal)
+            Width = Math.Max(Width, Math.Min(1000 * scale, SystemParameters.WorkArea.Width));
+        (_scale, _scaleApplied) = (scale, true);
+        foreach (var (accent, swatch) in _gpuSwatches)
+        {
+            swatch.IsChecked = _vm.Prefs.GpuAccent == accent;
+            swatch.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(ThemePalette.AccentColour(accent)));
+        }
+        if (_gpuAuto is not null) _gpuAuto.Content = _vm.Prefs.GpuAccent is null ? "Auto (in use)" : "Auto";
         foreach (var (accent, swatch) in _swatches)
         {
             swatch.IsChecked = accent == _vm.Prefs.Accent;
@@ -103,6 +120,28 @@ public partial class MainWindow
         HighlightHost.Children.Add(LightsUi.Segments(["Subtle", "Normal", "Vivid"], (int)_vm.Prefs.Highlight, i => Remember(_vm.Prefs with { Highlight = strengths[i] }), "Highlight"));
         HighlightHost.Children.Add(Caption("How strongly the accent colour tints the selected menu item and the banners."));
         HighlightHost.Children.Add(Preview());
+
+        // Interface size
+        var sizes = Enum.GetValues<UiSize>();
+        SizeHost.Children.Add(LightsUi.Segments(["Small", "Normal", "Large"], (int)_vm.Prefs.Size, i => Remember(_vm.Prefs with { Size = sizes[i] }), "Interface size"));
+        SizeHost.Children.Add(Caption("Makes everything in the window smaller or larger, text and spacing together."));
+
+        // GPU colour: Auto, or one of the accent colours
+        var gpuRow = new WrapPanel();
+        foreach (var accent in Enum.GetValues<AccentChoice>().Where(a => a != AccentChoice.Custom))
+        {
+            var swatch = new RadioButton { GroupName = "GpuColour", Tag = accent.ToString(), Style = (Style)FindResource("Swatch") };
+            System.Windows.Automation.AutomationProperties.SetName(swatch, accent + " for the GPU");
+            swatch.Click += (_, _) => Remember(_vm.Prefs with { GpuColour = accent.ToString() });
+            _gpuSwatches.Add((accent, swatch));
+            gpuRow.Children.Add(swatch);
+        }
+        GpuHost.Children.Add(gpuRow);
+        _gpuAuto = LightsUi.Pill("Auto", () => Remember(_vm.Prefs with { GpuColour = "Auto" }), "GPU colour: Auto");
+        _gpuAuto.Margin = new Thickness(0, 10, 0, 0);
+        _gpuAuto.HorizontalAlignment = HorizontalAlignment.Left;
+        GpuHost.Children.Add(_gpuAuto);
+        GpuHost.Children.Add(Caption("The colour of the GPU number and its line on the temperature chart. Auto picks a partner to your accent colour and the theme."));
     }
 
     static FrameworkElement Preview()

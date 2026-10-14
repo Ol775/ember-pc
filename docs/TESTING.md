@@ -146,6 +146,15 @@ real learning over days, and that the applied curve keeps temperatures sensible.
 - [x] The suggestion follows the noise or cooling slider (quieter to cooler). (Checked: 0, 25, 50 and 100 on the slider give floors of 20, 24, 28 and 35 percent.)
 - [ ] The learning data stays on this PC (see PRIVACY.md) and can be cleared from Settings.
 
+## Personalisation (beta.5; seen on the PC with a test settings file, 2026-10-15)
+
+- [x] Interface size Large drew the whole window larger and began on the Lights page when chosen as the start page (seen on screenshots).
+- [x] GPU colour Teal made the GPU number and chart line teal with a Blue accent (seen).
+- [ ] Clicking Small, Normal and Large in Settings, Appearance changes the size at once, and a narrow window widens when the size goes up.
+- [ ] Clicking a GPU colour swatch, then Auto, changes the GPU number and chart line at once in dark, OLED and light themes.
+- [ ] With "Open the window where I left it" on: move and resize the window, close and reopen Ember (from the tray too); it comes back in the same place and size. Unplug or change a monitor and check it still opens on screen.
+- [ ] The Lights and Devices start pages open on those pages.
+
 ## Stream Deck plugin (beta; the install and a hello plugin were seen on the PC, the real keys are not yet checked)
 
 An unsigned plugin was installed by Stream Deck 7.6 and its program registered with the app (2026-10-14). Fan keys follow the fan safety rule: keep a temperature monitor open and be ready to set Performance.

@@ -2,6 +2,12 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.2.0-beta.5 (2026-10-15)
+
+### Added
+
+- **More ways to make Ember your own.** Settings, Appearance has **Interface size** (Small, Normal or Large: the whole window, text and spacing together) and **GPU colour** (Auto, or any of the accent colours, for the GPU number and its line on the chart). Settings, General lets Ember **open on Lights or Devices** as well as Dashboard or Fans, and **open the window where you left it** (size and position, moved back onto the screen if that monitor is gone). The Fans page is unchanged.
+
 ## 1.2.0-beta.4 (2026-10-14)
 
 ### Fixed
