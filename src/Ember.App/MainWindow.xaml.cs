@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     readonly MainViewModel _vm = new();
     readonly CancellationTokenSource _cts = new();
     readonly LightingManager _lights;
+    AppControl? _appControl;
     readonly ISecretStore _secrets = new WindowsCredentialStore();
     readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(15) };
     const string GoveeKeyName = "govee-api-key";
@@ -55,6 +56,8 @@ public partial class MainWindow : Window
              new Ember.Lighting.Corsair.CorsairSource(Ember.Lighting.Corsair.CorsairApiChain.Open)]);
         Lights.Attach(_lights);
         _lights.Start();
+        // Beta: lets the Stream Deck plugin reach the lights and the window.
+        if (!BuildFeatures.IsProduction) { _appControl = new AppControl(_lights, () => Dispatcher.InvokeAsync(ShowFromTray)); _appControl.Start(); }
 
         // ServiceConnection raises events on its background loop thread: queue each one onto the UI thread.
         // InvokeAsync is the non-blocking BeginInvoke, so the loop never waits for the UI.
@@ -866,6 +869,7 @@ public partial class MainWindow : Window
         _keys.Dispose();
         _dxgi.Dispose();
         _cts.Cancel();
+        try { _appControl?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(2)); } catch (Exception) { /* closing anyway */ }
         try { _lights.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3)); } catch (Exception) { /* closing anyway */ }
         // RunAsync returns on cancellation and never needs the UI thread, so a short wait cannot deadlock.
         _run.Wait(TimeSpan.FromSeconds(2));
