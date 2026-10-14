@@ -150,3 +150,19 @@ public class EngineTests
         Assert.Empty(e.Failures);
     }
 }
+
+public class ScreenSyncMonitorTests
+{
+    [Fact]
+    public void A_scene_remembers_its_own_screen_and_old_files_mean_the_main_screen()
+    {
+        var scene = new Scene("Movies", [new Layer("l", "Screen sync", new ScreenSyncEffect(@"\.\DISPLAY2"))], []);
+        var json = System.Text.Json.JsonSerializer.Serialize(scene);
+        var back = System.Text.Json.JsonSerializer.Deserialize<Scene>(json)!;
+        Assert.Equal(@"\.\DISPLAY2", ((ScreenSyncEffect)back.Layers[0].Effect).Monitor);
+        // a scene saved before this existed has no Monitor
+        var old = System.Text.Json.JsonSerializer.Serialize(new Scene("Movies", [new Layer("l", "Screen sync", new ScreenSyncEffect())], [])).Replace(@",""Monitor"":null", "");
+        Assert.DoesNotContain("Monitor", old);
+        Assert.Null(((ScreenSyncEffect)System.Text.Json.JsonSerializer.Deserialize<Scene>(old)!.Layers[0].Effect).Monitor);
+    }
+}

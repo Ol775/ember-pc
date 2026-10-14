@@ -34,7 +34,7 @@ static class ScreenGrabber
     [DllImport("gdi32.dll")] static extern bool DeleteDC(IntPtr dc);
 
     /// <summary>The screen as zone colours, or null if Windows would not give a picture.</summary>
-    public static Ember.Lighting.Color[]? Capture(int zones = ScreenZones.DefaultZones)
+    public static Ember.Lighting.Color[]? Capture(int zones = ScreenZones.DefaultZones, string? monitor = null)
     {
         var screen = GetDC(IntPtr.Zero);
         if (screen == IntPtr.Zero) return null;
@@ -46,9 +46,10 @@ static class ScreenGrabber
             if (mem == IntPtr.Zero || bmp == IntPtr.Zero) return null;
             old = SelectObject(mem, bmp);
             SetStretchBltMode(mem, Halftone);
-            var sw = GetSystemMetrics(0);
-            var sh = GetSystemMetrics(1);
-            if (sw <= 0 || sh <= 0 || !StretchBlt(mem, 0, 0, Width, Height, screen, 0, 0, sw, sh, SrcCopy)) return null;
+            var (sx, sy, sw, sh) = (0, 0, GetSystemMetrics(0), GetSystemMetrics(1));
+            if (monitor is not null && ScreenInfo.All().FirstOrDefault(s => string.Equals(s.Name, monitor, StringComparison.OrdinalIgnoreCase)) is { } picked)
+                (sx, sy, sw, sh) = (picked.X, picked.Y, picked.Width, picked.Height);
+            if (sw <= 0 || sh <= 0 || !StretchBlt(mem, 0, 0, Width, Height, screen, sx, sy, sw, sh, SrcCopy)) return null;
 
             var info = new BitmapInfoHeader { Size = Marshal.SizeOf<BitmapInfoHeader>(), Width = Width, Height = -Height, Planes = 1, BitCount = 32 };
             var pixels = new byte[Width * Height * 4];

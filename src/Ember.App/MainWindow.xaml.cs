@@ -240,7 +240,8 @@ public partial class MainWindow : Window
             if (_lights.WantsKeys) _keys.Start(); else if (_keys.Running) _keys.Stop();
             if (!_lights.WantsScreen) { _screen = null; _lights.SetInputs(_cpuTemp, _gpuTemp, null); return; }
             // The graphics card hands over the frame when it can (fast); otherwise the older, slower copy through Windows.
-            var zones = _dxgi.Capture() ?? ScreenGrabber.Capture();
+            var monitor = _lights.ScreenMonitor;
+            var zones = _dxgi.Capture(monitor: monitor) ?? ScreenGrabber.Capture(monitor: monitor);
             var wanted = TimeSpan.FromMilliseconds(_dxgi.Active ? 40 : 100);
             if (_screenTimer.Interval != wanted) _screenTimer.Interval = wanted;
             _screen = zones is null ? null : ScreenZones.Smooth(_screen, zones, 0.6);

@@ -906,8 +906,18 @@ public sealed class LightsPage : UserControl
                 EffectFields(e.Inner, id + "i", change => apply(x => ((KeyGroupEffect)x) with { Inner = change(((KeyGroupEffect)x).Inner) }));
                 _editor.Children.Add(Text("Works on keyboards only; other devices ignore it. Add one layer per group to give each part of the keyboard its own look.", muted: true));
                 break;
-            case ScreenSyncEffect:
-                _editor.Children.Add(Text("Copies the colours of your main screen onto the canvas in four vertical strips, left to right. It looks at the screen only while this layer is on.", muted: true));
+            case ScreenSyncEffect e:
+                _editor.Children.Add(Text("Copies the colours of a screen onto the canvas in vertical strips, left to right. It looks at the screen only while this layer is on. Each scene keeps its own choice, so one scene can follow your main screen and another your second one.", muted: true));
+                var screens = ScreenInfo.All();
+                if (screens.Count > 1)
+                {
+                    _editor.Children.Add(Text("Screen to follow", muted: true));
+                    var labels = screens.Select(s => s.Label()).ToList();
+                    var chosen = e.Monitor is null ? 0 : Math.Max(0, screens.ToList().FindIndex(s => string.Equals(s.Name, e.Monitor, StringComparison.OrdinalIgnoreCase)));
+                    _editor.Children.Add(Segments(labels, chosen, i => apply(x => ((ScreenSyncEffect)x) with { Monitor = screens[i].Main ? null : screens[i].Name }), "Screen" + id));
+                    if (e.Monitor is not null && !screens.Any(s => string.Equals(s.Name, e.Monitor, StringComparison.OrdinalIgnoreCase)))
+                        _editor.Children.Add(Text("The screen this scene was set to (" + e.Monitor + ") is not connected, so the main screen is used.", muted: true));
+                }
                 break;
         }
     }

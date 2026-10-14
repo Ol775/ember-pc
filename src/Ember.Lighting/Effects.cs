@@ -75,8 +75,8 @@ public sealed record TemperatureGlowEffect(TempSensor Source, Color Cold, Color 
     public override string Label => "Temperature glow";
 }
 
-/// <summary>The colours of the screen, in zones from left to right. With no picture it covers nothing.</summary>
-public sealed record ScreenSyncEffect : Effect
+/// <summary>The colours of one screen (null: the main screen, otherwise the Windows name of the screen, such as \.DISPLAY2), in zones from left to right. With no picture it covers nothing.</summary>
+public sealed record ScreenSyncEffect(string? Monitor = null) : Effect
 {
     public override Color Sample(double x, double y, LightingInputs inputs)
     {

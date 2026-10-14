@@ -103,6 +103,9 @@ reach the tray): the menu, double-click to open, and Quit.
 - [x] A second Ember copy no longer holds G HUB: the Logitech keyboard appears once only one copy runs (checked on the PC).
 - [ ] Starting Ember again while it is open (or hidden in the tray) brings the open window forward and does not start a second copy.
 
+- [ ] Screen sync: with more than one screen the layer offers Main screen and the others; each scene keeps its own choice, the lights follow the chosen screen (DXGI and the fallback), and an unplugged screen falls back to the main one with a note.
+- [ ] Devices page: Identify flashes the right physical device three times, also while the lights are off or the device is switched off in Ember.
+
 ## Several devices and shared paint files
 
 Unit-tested (fills across the canvas, the library folder, name safety). The buttons on the Lights page were not reached by

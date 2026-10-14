@@ -23,6 +23,7 @@ public sealed class DxgiGrabber : IDisposable
     int _stagingW, _stagingH;
     Color[]? _last;
     DateTime _nextTry = DateTime.MinValue;
+    string? _monitor;
 
     public bool Active => _duplication is not null;
 
@@ -31,10 +32,11 @@ public sealed class DxgiGrabber : IDisposable
     public Format Format { get; private set; }
 
     /// <summary>The screen as zone colours (the previous picture when nothing on screen changed), or null if DXGI cannot be used right now.</summary>
-    public Color[]? Capture(int zones = ScreenZones.DefaultZones)
+    public Color[]? Capture(int zones = ScreenZones.DefaultZones, string? monitor = null)
     {
         try
         {
+            if (!string.Equals(monitor, _monitor, StringComparison.OrdinalIgnoreCase)) { Close(); _monitor = monitor; _nextTry = DateTime.MinValue; }
             if (_duplication is null)
             {
                 if (DateTime.UtcNow < _nextTry) return null;
@@ -146,7 +148,8 @@ public sealed class DxgiGrabber : IDisposable
                     using (output)
                     {
                         var bounds = output.Description.DesktopCoordinates;
-                        if (bounds.Left != 0 || bounds.Top != 0) continue; // the primary screen sits at the origin
+                        var wanted = _monitor is null ? bounds.Left == 0 && bounds.Top == 0 : string.Equals(output.Description.DeviceName, _monitor, StringComparison.OrdinalIgnoreCase); // the main screen sits at the origin
+                        if (!wanted) continue;
                         D3D11.D3D11CreateDevice(adapter, DriverType.Unknown, DeviceCreationFlags.BgraSupport, Array.Empty<FeatureLevel>(), out _device, out _context).CheckError();
                         using var output1 = output.QueryInterface<IDXGIOutput1>();
                         _duplication = output1.DuplicateOutput(_device);
@@ -181,4 +184,35 @@ public sealed class DxgiGrabber : IDisposable
     }
 
     public void Dispose() => Close();
+}
+
+/// <summary>One screen attached to the PC: its Windows name (for example \.\DISPLAY2), size and whether it is the main one.</summary>
+public sealed record ScreenInfo(string Name, int Width, int Height, bool Main)
+{
+    public string Label() => $"{(Main ? "Main screen" : "Screen " + new string(Name.Where(char.IsDigit).ToArray()))} ({Width} x {Height})";
+
+    /// <summary>Every screen DXGI can see, the main one first, then left to right.</summary>
+    public static IReadOnlyList<ScreenInfo> All()
+    {
+        var list = new List<ScreenInfo>();
+        try
+        {
+            using var factory = DXGI.CreateDXGIFactory1<IDXGIFactory1>();
+            for (uint a = 0; factory.EnumAdapters1(a, out var adapter).Success; a++)
+                using (adapter)
+                    for (uint o = 0; adapter.EnumOutputs(o, out var output).Success; o++)
+                        using (output)
+                        {
+                            var d = output.Description;
+                            var b = d.DesktopCoordinates;
+                            if (!d.AttachedToDesktop) continue;
+                            list.Add(new ScreenInfo(d.DeviceName, b.Right - b.Left, b.Bottom - b.Top, b.Left == 0 && b.Top == 0) { X = b.Left, Y = b.Top });
+                        }
+        }
+        catch (Exception) { /* no list: the picker only offers the main screen */ }
+        return list.OrderByDescending(s => s.Main).ThenBy(s => s.X).ToList();
+    }
+
+    public int X { get; init; }
+    public int Y { get; init; }
 }

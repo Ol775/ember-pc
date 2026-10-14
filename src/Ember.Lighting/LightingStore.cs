@@ -37,6 +37,7 @@ public sealed record LightingState(
         s is { Name: { Length: > 0 and <= 60 }, Layers: { Count: <= MaxLayers }, Placements: { Count: <= MaxPlacements } }
         && double.IsFinite(s.Brightness) && s.Brightness is >= 0 and <= 1
         && s.Layers.All(l => l is { Effect: not null, Id: not null, Name: not null } && double.IsFinite(l.Opacity) && l.Opacity is >= 0 and <= 1)
+        && s.Layers.All(l => l.Effect is not ScreenSyncEffect { Monitor.Length: > 64 })
         && s.Placements.All(p => p is { DeviceId: not null }
             && (p.Profile is null || p.Profile.Length <= 60)
             && (p.Paint is null || (p.Paint.Count <= 1024 && p.Paint.All(c => c is null || Color.TryParseHex(c) is not null)))

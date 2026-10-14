@@ -104,6 +104,16 @@ public sealed class LightingManager : IAsyncDisposable
         get { lock (_gate) return _state.On && _state.Current.Layers.Any(l => l.Enabled && l.Effect is ScreenSyncEffect); }
     }
 
+    /// <summary>Which screen the current scene's screen sync looks at: its Windows name, or null for the main screen.</summary>
+    public string? ScreenMonitor
+    {
+        get
+        {
+            lock (_gate)
+                return _state.Current.Layers.Where(l => l.Enabled).Select(l => l.Effect).OfType<ScreenSyncEffect>().FirstOrDefault()?.Monitor;
+        }
+    }
+
     public void RefreshDevices() { lock (_gate) _refreshNow = true; }
 
     // ---- commands ----
