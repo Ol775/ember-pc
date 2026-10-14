@@ -2,6 +2,14 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.2.0-beta.3 (2026-10-14)
+
+### Fixed
+
+- **The Stream Deck card no longer covers its own title.** The Install, Update and Remove buttons now sit under the text instead of over the heading, and the note after an install goes away once the card changes state.
+- **Letting go of a held Stream Deck key no longer flashes a false warning.** Holding Brightness, Cycle fan mode or a Scene key and releasing while the action was still being sent cancelled it half way.
+- **The Stream Deck keys keep updating after a hiccup.** One failed refresh used to freeze every key until Stream Deck was restarted, and two redraws could leave an older picture on a key.
+
 ## 1.2.0-beta.2 (2026-10-14)
 
 ### Added
