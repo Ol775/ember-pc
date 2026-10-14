@@ -84,8 +84,13 @@ sealed class Deck(StreamDeckClient sd, string pluginUuid)
             lock (_gate) any = _keys.Count > 0;
             if (any)
             {
-                if (n++ % 2 == 0) await RefreshLightsAsync(ct).ConfigureAwait(false);
-                await RenderAsync(ct).ConfigureAwait(false);
+                // One failed refresh must not end the loop: the keys would freeze until Stream Deck closes the socket.
+                try
+                {
+                    if (n++ % 2 == 0) await RefreshLightsAsync(ct).ConfigureAwait(false);
+                    await RenderAsync(ct).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException) { }
             }
             await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
         }
@@ -112,22 +117,30 @@ sealed class Deck(StreamDeckClient sd, string pluginUuid)
         return new EmberState(_appOnline, fresh ? Readouts.From(snap!, now) : Readouts.None, fresh ? snap!.Control?.Mode : null, _lights);
     }
 
+    readonly SemaphoreSlim _renderLock = new(1, 1);
+
+    /// <summary>Redraws the keys whose picture changed. One render at a time, so an older picture can never be sent after a newer one.</summary>
     async Task RenderAsync(CancellationToken ct)
     {
-        var state = State();
-        List<(string Context, string Svg)> changed = [];
-        lock (_gate)
+        await _renderLock.WaitAsync(ct).ConfigureAwait(false);
+        try
         {
-            foreach (var (context, key) in _keys)
+            var state = State();
+            List<(string Context, string Svg)> changed = [];
+            lock (_gate)
             {
-                var svg = StreamDeckFaces.Svg(StreamDeckFaces.For(key.Action, key.Settings, state));
-                if (svg == key.LastSvg) continue;
-                key.LastSvg = svg;
-                changed.Add((context, svg));
+                foreach (var (context, key) in _keys)
+                {
+                    var svg = StreamDeckFaces.Svg(StreamDeckFaces.For(key.Action, key.Settings, state));
+                    if (svg == key.LastSvg) continue;
+                    key.LastSvg = svg;
+                    changed.Add((context, svg));
+                }
             }
+            foreach (var (context, svg) in changed)
+                await sd.SendAsync(StreamDeckMessages.SetImage(context, svg), ct).ConfigureAwait(false);
         }
-        foreach (var (context, svg) in changed)
-            await sd.SendAsync(StreamDeckMessages.SetImage(context, svg), ct).ConfigureAwait(false);
+        finally { _renderLock.Release(); }
     }
 
     /// <summary>
@@ -151,7 +164,8 @@ sealed class Deck(StreamDeckClient sd, string pluginUuid)
                     await Task.Delay(StreamDeckLogic.HoldDelay, hold).ConfigureAwait(false);
                     while (!hold.IsCancellationRequested)
                     {
-                        await PressAsync(context, settings, false, hold).ConfigureAwait(false);
+                        // The request itself uses the plugin token: letting go of the key must not cancel it half way (that flashed a false warning).
+                        await PressAsync(context, settings, false, ct).ConfigureAwait(false);
                         await Task.Delay(StreamDeckLogic.RepeatInterval, hold).ConfigureAwait(false);
                     }
                 });
@@ -162,7 +176,7 @@ sealed class Deck(StreamDeckClient sd, string pluginUuid)
                 {
                     await Task.Delay(StreamDeckLogic.HoldDelay, hold).ConfigureAwait(false);
                     key.LongFired = true;
-                    await PressAsync(context, settings, true, hold).ConfigureAwait(false);
+                    await PressAsync(context, settings, true, ct).ConfigureAwait(false);
                 });
                 break;
             default:
@@ -250,7 +264,9 @@ sealed class Deck(StreamDeckClient sd, string pluginUuid)
     {
         try
         {
-            if (Process.GetProcessesByName("Ember.App").Length > 0) return false;
+            var running = Process.GetProcessesByName("Ember.App");
+            foreach (var p in running) p.Dispose();
+            if (running.Length > 0) return false;
             var file = Path.Combine(AppContext.BaseDirectory, "ember-path.txt");
             if (!File.Exists(file)) return false;
             var exe = File.ReadAllText(file).Trim();

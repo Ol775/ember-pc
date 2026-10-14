@@ -121,14 +121,16 @@ public sealed class DevicesPage : UserControl
     static readonly HashSet<string> BetaIntegrations = ["Nanoleaf", "Razer", "Stream Deck"];
 
     string _streamDeckNote = "";
+    StreamDeckState? _streamDeckNoteState; // the card state the note was written in; the note goes away when the state moves on
 
     /// <summary>Beta builds only: installs or removes the Stream Deck plugin (keys for lights, fan modes and live temperatures).</summary>
     FrameworkElement StreamDeckCard(StreamDeckInstaller.Detected d)
     {
+        if (_streamDeckNoteState is { } was && was != d.State) { _streamDeckNote = ""; _streamDeckNoteState = null; }
         var buttons = new StackPanel { Orientation = Orientation.Horizontal };
         void Act(string label, Func<string> action)
         {
-            buttons.Children.Add(Pill(label, () => { _streamDeckNote = action(); StreamDeckInstaller.Detect(true); _key = null; }, label + " the Stream Deck plugin"));
+            buttons.Children.Add(Pill(label, () => { _streamDeckNote = action(); _streamDeckNoteState = StreamDeckInstaller.Detect(true).State; _key = null; }, label + " the Stream Deck plugin"));
         }
         if (d.State == StreamDeckState.NotInstalled) Act("Install", StreamDeckInstaller.Install);
         if (d.State == StreamDeckState.NeedsUpdate) Act("Update", StreamDeckInstaller.Install);

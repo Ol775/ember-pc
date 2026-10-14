@@ -1,6 +1,7 @@
 using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Ember.Core;
 
 namespace Ember.StreamDeck;
 
@@ -26,7 +27,7 @@ sealed class StreamDeckClient : IDisposable
     public async IAsyncEnumerable<string> ReceiveAsync([EnumeratorCancellation] CancellationToken ct)
     {
         var buffer = new byte[8192];
-        using var message = new MemoryStream();
+        var message = new WebSocketMessageAssembler(MaxMessageBytes);
         while (_ws.State == WebSocketState.Open && !ct.IsCancellationRequested)
         {
             WebSocketReceiveResult result;
@@ -34,10 +35,7 @@ sealed class StreamDeckClient : IDisposable
             catch (WebSocketException) { yield break; }
             catch (OperationCanceledException) { yield break; }
             if (result.MessageType == WebSocketMessageType.Close) yield break;
-            if (message.Length + result.Count <= MaxMessageBytes) message.Write(buffer, 0, result.Count);
-            if (!result.EndOfMessage) continue;
-            var text = message.Length is > 0 and <= MaxMessageBytes ? Encoding.UTF8.GetString(message.GetBuffer(), 0, (int)message.Length) : null;
-            message.SetLength(0);
+            var text = message.Add(buffer.AsSpan(0, result.Count), result.EndOfMessage);
             if (text is not null) yield return text;
         }
     }
