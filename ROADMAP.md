@@ -21,6 +21,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 - Share and import fan curves and lighting scenes as files
 - More fan sources, such as other fan controllers, if their makers publish a way to talk to them
 - A compact dashboard window for a second monitor
+- Stream Deck integration: buttons to switch lights on and off, pick a scene, change the fan mode (Super quiet to Extreme) and show the current temperature. Needs a way for the Stream Deck software to call Ember; to be designed
 - Code signing, so Windows SmartScreen and Smart App Control stop warning or blocking: free through SignPath Foundation (open source), about $10 a month through Azure Trusted Signing, or a certificate at roughly $220 to $620 a year. Until then Ember is released unsigned
 
 ## Works through OpenRGB
