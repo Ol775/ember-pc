@@ -102,6 +102,7 @@ public class CorsairRefusedTests
         var src = new CorsairSource(() => new RefusedApi());
         Assert.Empty(await src.RefreshAsync(default));
         Assert.Contains("running but would not let Ember in", src.Status);
+        Assert.Contains("update iCUE", src.Status);
         Assert.Contains("Enable SDK", src.Status);
         Assert.Contains("4.32.129", src.Status);
     }
