@@ -82,6 +82,45 @@ public static class UpdateRules
         return list;
     }
 
+    /// <summary>
+    /// Releases from the repository's public Atom feed (github.com/.../releases.atom). It lists the same releases as the API without
+    /// the API's small per-address limit, so it is the fallback when the API says 403 or 429. The feed carries no asset list or
+    /// pre-release flag: the installer and checksum addresses follow the release naming, and a version label means pre-release.
+    /// </summary>
+    public static IReadOnlyList<ReleaseInfo> ParseAtom(string xml)
+    {
+        var list = new List<ReleaseInfo>();
+        try
+        {
+            var settings = new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Prohibit, XmlResolver = null, MaxCharactersInDocument = 2_000_000 };
+            using var reader = System.Xml.XmlReader.Create(new StringReader(xml), settings);
+            var doc = System.Xml.Linq.XDocument.Load(reader);
+            System.Xml.Linq.XNamespace ns = "http://www.w3.org/2005/Atom";
+            foreach (var entry in doc.Descendants(ns + "entry").Take(30))
+            {
+                var href = entry.Elements(ns + "link").FirstOrDefault(l => (string?)l.Attribute("rel") == "alternate")?.Attribute("href")?.Value;
+                if (href is null || !IsGitHubUrl(href)) continue;
+                var tag = Uri.UnescapeDataString(href[(href.LastIndexOf('/') + 1)..]);
+                if (!AppVersion.TryParse(tag, out var v)) continue;
+                var download = $"https://github.com/Ol775/ember-pc/releases/download/{Uri.EscapeDataString(tag)}/Ember-Setup-{v}.exe";
+                var notes = HtmlToText(entry.Element(ns + "content")?.Value);
+                list.Add(new ReleaseInfo(v, tag, v.Pre is not null, href, notes is { Length: > 600 } ? notes[..600] : notes,
+                    IsDownloadUrl(download) ? download : null, IsDownloadUrl(download) ? download + ".sha256" : null));
+            }
+        }
+        catch (Exception ex) when (ex is System.Xml.XmlException or InvalidOperationException) { /* an unreadable feed is "no releases" */ }
+        return list;
+    }
+
+    static string? HtmlToText(string? html)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return null;
+        var t = System.Text.RegularExpressions.Regex.Replace(html, @"<li[^>]*>", "- ");
+        t = System.Text.RegularExpressions.Regex.Replace(t, @"</(li|p|h\d|ul)>|<br\s*/?>", "\n");
+        t = System.Text.RegularExpressions.Regex.Replace(t, @"<[^>]+>", "");
+        return System.Net.WebUtility.HtmlDecode(t).Trim();
+    }
+
     /// <summary>The newest release newer than <paramref name="current"/> that the channel allows (Stable ignores pre-releases).</summary>
     public static ReleaseInfo? Newer(IEnumerable<ReleaseInfo> releases, AppVersion current, UpdateChannel channel) =>
         releases.Where(r => channel == UpdateChannel.Beta || !r.Prerelease)
@@ -124,6 +163,8 @@ public sealed class UpdateChecker(HttpClient http, string releasesUrl = UpdateCh
     public const string DefaultUrl = "https://api.github.com/repos/Ol775/ember-pc/releases?per_page=20";
     const int MaxBytes = 1_000_000;
 
+    public const string FeedUrl = "https://github.com/Ol775/ember-pc/releases.atom";
+
     public async Task<UpdateResult> CheckAsync(AppVersion current, UpdateChannel channel, CancellationToken ct = default)
     {
         try
@@ -134,23 +175,65 @@ public sealed class UpdateChecker(HttpClient http, string releasesUrl = UpdateCh
             using var res = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
             if (res.StatusCode == HttpStatusCode.NotFound)
                 return new UpdateResult(UpdateStatus.NoReleases, null, "No public releases found. If the repository is private, the check cannot see them.");
+            if (res.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
+            {
+                // GitHub allows only 60 anonymous API requests an hour per address, which a shared, VPN or office address uses up.
+                // The public releases feed lists the same releases without that limit.
+                DiagLog.Warn("Update", $"GitHub API answered {(int)res.StatusCode} (requests left: {Header(res, "x-ratelimit-remaining")}); trying the releases feed");
+                return await CheckFeedAsync(current, channel, (int)res.StatusCode, ct).ConfigureAwait(false);
+            }
             if (!res.IsSuccessStatusCode)
+            {
+                DiagLog.Warn("Update", $"GitHub API answered {(int)res.StatusCode}");
                 return new UpdateResult(UpdateStatus.Failed, null, $"GitHub answered {(int)res.StatusCode}. Try again later.");
+            }
             if (res.Content.Headers.ContentLength > MaxBytes)
                 return new UpdateResult(UpdateStatus.Failed, null, "The reply was too large to read.");
             var body = await ReadLimitedAsync(res, ct).ConfigureAwait(false);
-            var releases = UpdateRules.Parse(body);
-            if (releases.Count == 0) return new UpdateResult(UpdateStatus.NoReleases, null, "No public releases found. If the repository is private, the check cannot see them.");
-            return UpdateRules.Newer(releases, current, channel) is { } r
-                ? new UpdateResult(UpdateStatus.Available, r, $"Ember {r.Version} is available.")
-                : new UpdateResult(UpdateStatus.UpToDate, null, "You have the latest version.");
+            return Decide(UpdateRules.Parse(body), current, channel);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
-        catch (Exception)
+        catch (Exception ex)
         {
+            DiagLog.Warn("Update", "Update check could not reach GitHub", ex);
             return new UpdateResult(UpdateStatus.Failed, null, "Could not reach GitHub. Check your connection.");
         }
     }
+
+    async Task<UpdateResult> CheckFeedAsync(AppVersion current, UpdateChannel channel, int apiStatus, CancellationToken ct)
+    {
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, FeedUrl);
+            req.Headers.UserAgent.ParseAdd("Ember-update-check");
+            using var res = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+            if (!res.IsSuccessStatusCode)
+            {
+                DiagLog.Warn("Update", $"The releases feed answered {(int)res.StatusCode}");
+                return new UpdateResult(UpdateStatus.Failed, null, $"GitHub answered {apiStatus} and its releases feed {(int)res.StatusCode}. GitHub limits requests from shared, VPN and office addresses: try again later or from another network, or download the newest release from the project's releases page.");
+            }
+            if (res.Content.Headers.ContentLength > MaxBytes) return new UpdateResult(UpdateStatus.Failed, null, "The reply was too large to read.");
+            var result = Decide(UpdateRules.ParseAtom(await ReadLimitedAsync(res, ct).ConfigureAwait(false)), current, channel);
+            DiagLog.Info("Update", "Checked through the releases feed: " + result.Status);
+            return result;
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+        catch (Exception ex)
+        {
+            DiagLog.Warn("Update", "The releases feed could not be read", ex);
+            return new UpdateResult(UpdateStatus.Failed, null, $"GitHub answered {apiStatus}: it limits requests from shared, VPN and office addresses. Try again later or from another network.");
+        }
+    }
+
+    static UpdateResult Decide(IReadOnlyList<ReleaseInfo> releases, AppVersion current, UpdateChannel channel)
+    {
+        if (releases.Count == 0) return new UpdateResult(UpdateStatus.NoReleases, null, "No public releases found. If the repository is private, the check cannot see them.");
+        return UpdateRules.Newer(releases, current, channel) is { } r
+            ? new UpdateResult(UpdateStatus.Available, r, $"Ember {r.Version} is available.")
+            : new UpdateResult(UpdateStatus.UpToDate, null, "You have the latest version.");
+    }
+
+    static string Header(HttpResponseMessage res, string name) => res.Headers.TryGetValues(name, out var v) ? v.FirstOrDefault() ?? "?" : "?";
 
     static async Task<string> ReadLimitedAsync(HttpResponseMessage res, CancellationToken ct)
     {

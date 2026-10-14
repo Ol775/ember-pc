@@ -28,7 +28,7 @@ public sealed class UpdateInstaller(HttpClient http)
             var part = path + ".part";
             using (var res = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false))
             {
-                if (!res.IsSuccessStatusCode) return new(false, null, $"GitHub answered {(int)res.StatusCode}. Try again later.");
+                if (!res.IsSuccessStatusCode) { DiagLog.Warn("Update", $"Installer download answered {(int)res.StatusCode}: {url}"); return new(false, null, $"GitHub answered {(int)res.StatusCode} for the installer. Try again later, or download it from the release page."); }
                 var total = res.Content.Headers.ContentLength;
                 if (total > MaxInstallerBytes) return new(false, null, "The installer is larger than expected, so it was not downloaded.");
                 await using var src = await res.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
@@ -55,7 +55,7 @@ public sealed class UpdateInstaller(HttpClient http)
             return new(true, path, "Downloaded and checked.");
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
-        catch (Exception) { return new(false, null, "Could not download the update. Check your connection."); }
+        catch (Exception ex) { DiagLog.Warn("Update", "Installer download failed", ex); return new(false, null, "Could not download the update (" + ex.Message + "). Check your connection."); }
     }
 
     async Task<string> GetTextAsync(string url, CancellationToken ct)
