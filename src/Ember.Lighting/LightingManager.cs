@@ -51,7 +51,7 @@ public sealed class LightingManager : IAsyncDisposable
     public bool SaveFailed { get { lock (_gate) return _saveFailed; } }
 
     /// <summary>One line per source, for the page.</summary>
-    public IReadOnlyList<string> SourceStatus => _sources.Select(s => $"{s.Name}: {s.Status}").ToList();
+    public IReadOnlyList<string> SourceStatus => _sources.Select(s => IsSourceDisabled(s.Name) ? $"{s.Name}: Switched off in Ember" : $"{s.Name}: {s.Status}").ToList();
 
     public IReadOnlyDictionary<string, string> Problems =>
         _engine.Failures.ToDictionary(kv => kv.Key, kv => kv.Value.Message);
@@ -219,6 +219,25 @@ public sealed class LightingManager : IAsyncDisposable
         RefreshDevices();
     }
 
+    readonly HashSet<string> _stopped = [];
+
+    public bool IsSourceDisabled(string source) => State.DisabledSources?.Contains(source) == true;
+
+    /// <summary>
+    /// Switches a whole integration (OpenRGB, Govee, Logitech, Hue, Nanoleaf, Razer, Corsair) off or on. While it is off Ember does not
+    /// look for its devices, does not send to them and lets go of its connection to the maker's software.
+    /// </summary>
+    public void SetSourceDisabled(string source, bool disabled)
+    {
+        Mutate(s =>
+        {
+            var list = (s.DisabledSources ?? []).Where(d => d != source).ToList();
+            if (disabled) list.Add(source);
+            return s with { DisabledSources = list.Count == 0 ? null : list };
+        });
+        RefreshDevices();
+    }
+
     /// <summary>Logitech through G HUB can either light the keyboard key by key or colour every Logitech device as one: not both at once.</summary>
     public void SetLogitechOneColour(bool on)
     {
@@ -327,6 +346,12 @@ public sealed class LightingManager : IAsyncDisposable
         var sinks = new List<IDeviceSink>();
         foreach (var source in _sources)
         {
+            if (IsSourceDisabled(source.Name))
+            {
+                if (_stopped.Add(source.Name)) source.ReportFailure(""); // let go of its connection (G HUB, iCUE, OpenRGB) while it is off
+                continue;
+            }
+            _stopped.Remove(source.Name);
             try { sinks.AddRange(await source.RefreshAsync(ct).ConfigureAwait(false)); }
             catch (Exception ex) when (ex is not OperationCanceledException) { /* the source reports its own status */ }
         }
@@ -347,7 +372,7 @@ public sealed class LightingManager : IAsyncDisposable
         Changed?.Invoke();
     }
 
-    string SourceOf(IDeviceSink sink) => sink.Id.StartsWith("razer:", StringComparison.Ordinal) ? "Razer" : sink.Id.StartsWith("govee", StringComparison.Ordinal) ? "Govee" : sink.Id.StartsWith("logitech", StringComparison.Ordinal) ? "Logitech" : sink.Id.StartsWith("hue:", StringComparison.Ordinal) ? "Hue" : sink.Id.StartsWith("nanoleaf:", StringComparison.Ordinal) ? "Nanoleaf" : "OpenRGB";
+    string SourceOf(IDeviceSink sink) => sink.Id.StartsWith("razer:", StringComparison.Ordinal) ? "Razer" : sink.Id.StartsWith("govee", StringComparison.Ordinal) ? "Govee" : sink.Id.StartsWith("logitech", StringComparison.Ordinal) ? "Logitech" : sink.Id.StartsWith("corsair:", StringComparison.Ordinal) ? "Corsair" : sink.Id.StartsWith("hue:", StringComparison.Ordinal) ? "Hue" : sink.Id.StartsWith("nanoleaf:", StringComparison.Ordinal) ? "Nanoleaf" : "OpenRGB";
 
     /// <summary>Gives every new device a row on the canvas of the current scene, so it can be seen and moved.</summary>
     public static LightingState Placed(LightingState state, IReadOnlyList<IDeviceSink> sinks)

@@ -20,6 +20,9 @@ public sealed class DevicesPage : UserControl
     readonly StackPanel _rows = new();
     string? _key;
 
+    /// <summary>Integrations whose on/off lives somewhere else (Razer has its own setting): how to read and change it.</summary>
+    public Dictionary<string, (Func<bool> Get, Action<bool> Set)> Overrides { get; } = [];
+
     public DevicesPage()
     {
         Content = _root;
@@ -48,15 +51,15 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Card("Sensors and fans", vm.FansPage.ServiceAvailable ? "Connected" : "Service not running", vm.FansPage.ServiceAvailable,
             "LibreHardwareMonitor, runs in the Ember service",
             $"{headers.Count} fan headers shown, {controllable} controlled by Ember"));
-        _cards.Children.Add(Source("OpenRGB", "SDK server on localhost, started with Ember", devices, status));
-        _cards.Children.Add(Source("Govee", "LAN first; cloud only with your API key", devices, status));
-        _cards.Children.Add(Source("Logitech", "Keyboards and mice, through G HUB", devices, status));
+        _cards.Children.Add(Source("OpenRGB", "SDK server on localhost, started with Ember", devices, status, lights));
+        _cards.Children.Add(Source("Govee", "LAN first; cloud only with your API key", devices, status, lights));
+        _cards.Children.Add(Source("Logitech", "Keyboards and mice, through G HUB", devices, status, lights));
         if (BuildFeatures.Current.NewIntegrations)
         {
-        _cards.Children.Add(Source("Hue", "Philips Hue lights, through the bridge on your network", devices, status));
-        _cards.Children.Add(Source("Nanoleaf", "Nanoleaf light panels, through the controller on your network", devices, status));
-        _cards.Children.Add(Source("Razer", "Razer Chroma devices, through Razer Synapse on this PC", devices, status));
-        _cards.Children.Add(Source("Corsair", "Corsair keyboards, mice, fans and more, through iCUE on this PC", devices, status));
+        _cards.Children.Add(Source("Hue", "Philips Hue lights, through the bridge on your network", devices, status, lights));
+        _cards.Children.Add(Source("Nanoleaf", "Nanoleaf light panels, through the controller on your network", devices, status, lights));
+        _cards.Children.Add(Source("Razer", "Razer Chroma devices, through Razer Synapse on this PC", devices, status, lights));
+        _cards.Children.Add(Source("Corsair", "Corsair keyboards, mice, fans and more, through iCUE on this PC", devices, status, lights));
         }
 
         _rows.Children.Clear();
@@ -73,16 +76,25 @@ public sealed class DevicesPage : UserControl
         if (_rows.Children.Count == 1) _rows.Children.Add(Text("Nothing found yet", muted: true));
     }
 
-    static FrameworkElement Source(string name, string blurb, IReadOnlyList<DeviceInfo> devices, IReadOnlyList<string> status)
+    FrameworkElement Source(string name, string blurb, IReadOnlyList<DeviceInfo> devices, IReadOnlyList<string> status, LightingManager lights)
     {
         var mine = devices.Where(d => d.Source.Contains(name, StringComparison.OrdinalIgnoreCase)).ToList();
         var line = status.FirstOrDefault(s => s.StartsWith(name, StringComparison.OrdinalIgnoreCase));
         var detail = line is null ? "Not available" : line[(name.Length + 1)..].Trim(' ', ':');
-        return Card(name, mine.Count > 0 ? "Connected" : "No devices", mine.Count > 0, blurb,
-            mine.Count > 0 ? $"{mine.Count} {(mine.Count == 1 ? "device" : "devices")}: {string.Join(", ", mine.Take(4).Select(d => d.Name))}" : detail);
+        var off = lights.IsSourceDisabled(name) || (Overrides.TryGetValue(name, out var o) && !o.Get());
+        var toggle = Switch("", !off, on =>
+        {
+            if (Overrides.TryGetValue(name, out var ov)) ov.Set(on);
+            else lights.SetSourceDisabled(name, !on);
+            _key = null;
+        });
+        toggle.Margin = new Thickness(0, 0, 10, 0);
+        AutomationProperties.SetName(toggle, "Use " + name + " in Ember");
+        return Card(name, off ? "Off" : mine.Count > 0 ? "Connected" : "No devices", mine.Count > 0 && !off, blurb,
+            off ? "Switched off in Ember." : mine.Count > 0 ? $"{mine.Count} {(mine.Count == 1 ? "device" : "devices")}: {string.Join(", ", mine.Take(4).Select(d => d.Name))}" : detail, toggle);
     }
 
-    static FrameworkElement Card(string title, string pill, bool good, string blurb, string detail)
+    static FrameworkElement Card(string title, string pill, bool good, string blurb, string detail, FrameworkElement? toggle = null)
     {
         var head = new DockPanel();
         var chip = new Border
@@ -93,6 +105,7 @@ public sealed class DevicesPage : UserControl
         };
         DockPanel.SetDock(chip, Dock.Right);
         head.Children.Add(chip);
+        if (toggle is not null) { DockPanel.SetDock(toggle, Dock.Right); head.Children.Add(toggle); }
         head.Children.Add(Text(title, weight: FontWeights.SemiBold, size: 15));
         var body = new StackPanel();
         body.Children.Add(head);

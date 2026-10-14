@@ -88,6 +88,8 @@ reach the tray): the menu, double-click to open, and Quit.
 - [ ] Lights keep working for longer than a minute (the heartbeat keeps the Synapse session alive), and after Synapse restarts.
 - [ ] Switching Razer Chroma off stops Ember talking to Synapse.
 
+- [ ] Devices page: every integration card (OpenRGB, Govee, Logitech, Hue, Nanoleaf, Razer, Corsair) has a switch; off stops Ember looking for or sending to its devices (and lets go of G HUB, iCUE or OpenRGB), on brings them back, and the choice is remembered after a restart.
+
 ## Corsair iCUE (written and unit-tested against a pretend iCUE only; the SDK library loads and connects)
 
 - [ ] With iCUE running and Enable SDK switched on (iCUE Settings, Software and Games), the Corsair devices appear on the Lights and Devices pages.

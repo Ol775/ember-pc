@@ -154,6 +154,32 @@ public class ManagerTests : IDisposable
     }
 
     [Fact]
+    public async Task A_switched_off_integration_is_not_asked_for_devices_and_comes_back_when_switched_on()
+    {
+        var a = new Sink("a");
+        await using (var m = new LightingManager(new LightingStore(P), TimeProvider.System, [new Source(a)]))
+        {
+            m.Start();
+            await Until(() => m.Devices.Count == 1);
+            m.SetSourceDisabled("Fake", true);
+            await Until(() => m.Devices.Count == 0);
+            Assert.True(m.IsSourceDisabled("Fake"));
+            Assert.Contains("Fake: Switched off in Ember", m.SourceStatus);
+        }
+        // remembered after a restart
+        await using (var m2 = new LightingManager(new LightingStore(P), TimeProvider.System, [new Source(a)]))
+        {
+            m2.Start();
+            await Task.Delay(300);
+            Assert.True(m2.IsSourceDisabled("Fake"));
+            Assert.Empty(m2.Devices);
+            m2.SetSourceDisabled("Fake", false);
+            await Until(() => m2.Devices.Count == 1);
+            Assert.Null(m2.State.DisabledSources);
+        }
+    }
+
+    [Fact]
     public async Task Lights_start_off_and_nothing_is_sent_until_switched_on()
     {
         var sink = new Sink("a");

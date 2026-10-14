@@ -92,6 +92,11 @@ public partial class MainWindow : Window
         HueHost.Text = _hueStore.Load()?.Host ?? "";
         NanoleafHost.Text = _nanoStore.Load()?.Host ?? "";
         RazerSwitch.IsChecked = _razerStore.Enabled;
+        Devices.Overrides["Razer"] = (() => _razerStore.Enabled, on =>
+        {
+            RazerSwitch.IsChecked = on;
+            OnRazerToggled(RazerSwitch, new RoutedEventArgs());
+        });
         OnSettingsSection(SetGeneral, new RoutedEventArgs());
         _updates = new UpdateChecker(_http);
         _installer = new UpdateInstaller(_http);
