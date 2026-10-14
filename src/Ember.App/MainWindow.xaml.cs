@@ -49,10 +49,10 @@ public partial class MainWindow : Window
             [new OpenRgbSource(() => string.IsNullOrWhiteSpace(lights?.State.OpenRgbPath) ? BundledOpenRgb : lights!.State.OpenRgbPath, () => lights?.State.ShouldStartOpenRgb ?? true),
              new GoveeSource(new GoveeLanClient(), GoveeCloud, id => lights?.SegmentsOf(id) ?? 1),
              new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad(), () => lights?.State.LogitechOneColour ?? false),
-             .. BuildFeatures.Current.NewIntegrations ? new IDeviceSource[] { new Ember.Lighting.Hue.HueSource(HueConnection),
+             new Ember.Lighting.Hue.HueSource(HueConnection),
              new Ember.Lighting.Nanoleaf.NanoleafSource(NanoleafConnection),
              new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp)),
-             new Ember.Lighting.Corsair.CorsairSource(Ember.Lighting.Corsair.CorsairApiChain.Open) } : []]);
+             new Ember.Lighting.Corsair.CorsairSource(Ember.Lighting.Corsair.CorsairApiChain.Open)]);
         Lights.Attach(_lights);
         _lights.Start();
 
@@ -154,10 +154,50 @@ public partial class MainWindow : Window
     readonly UpdateInstaller _installer;
 
 
-    void OnChannelPicked(object sender, RoutedEventArgs e)
+    async void OnChannelPicked(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { Tag: string t } && Enum.TryParse<UpdateChannel>(t, out var c))
-            Remember(_vm.Prefs with { Channel = c });
+        if (sender is not FrameworkElement { Tag: string t } || !Enum.TryParse<UpdateChannel>(t, out var channel) || channel == _vm.Prefs.Channel) return;
+        Remember(_vm.Prefs with { Channel = channel });
+        await SwitchChannelAsync(channel);
+    }
+
+    /// <summary>
+    /// Choosing Stable on a beta build moves this installation to the newest stable release (even though its number is lower),
+    /// and choosing Beta on a stable build moves it to the newest beta that is newer than this build. Settings are kept.
+    /// Otherwise nothing is installed: the choice only decides which releases the update check offers.
+    /// </summary>
+    async Task SwitchChannelAsync(UpdateChannel channel)
+    {
+        var name = channel == UpdateChannel.Stable ? "Stable" : "Beta";
+        UpdateNote.Text = $"Looking for the newest {name} version...";
+        var result = await _updates.CheckAsync(AppInfo.Version, channel, anyVersion: true);
+        var onBetaBuild = !BuildFeatures.IsProduction;
+        var target = result.Release;
+        var needsSwitch = target is not null && (channel == UpdateChannel.Stable
+            ? onBetaBuild && target.Version.CompareTo(AppInfo.Version) != 0
+            : !onBetaBuild && target.Version.CompareTo(AppInfo.Version) > 0);
+        if (!needsSwitch)
+        {
+            DiagLog.Info("Update", $"Channel set to {name}; no switch of version needed");
+            await CheckForUpdatesAsync(announce: true);
+            UpdateNote.Text = channel == UpdateChannel.Beta && !onBetaBuild
+                ? "You will be offered beta versions as they come out. There is no beta newer than this version yet."
+                : UpdateNote.Text;
+            return;
+        }
+        var canInstall = target!.InstallerUrl is not null && target.HashUrl is not null;
+        DiagLog.Info("Update", $"Channel set to {name}; offering to switch to {target.Version}");
+        var choice = UpdatePromptWindow.Ask(this, target, ReleaseHeadlines(target.Notes), canInstall, name);
+        if (choice != UpdateChoice.UpdateNow)
+        {
+            UpdateNote.Text = $"The {name} channel is chosen, but this installation stays on Ember {AppInfo.Version} until you switch.";
+            return;
+        }
+        _found = target;
+        _releaseUrl = target.Url;
+        ShowUpdatesSection();
+        if (canInstall) OnUpdateNow(this, new RoutedEventArgs());
+        else OnOpenRelease(this, new RoutedEventArgs());
     }
 
     void OnAutoUpdateToggled(object sender, RoutedEventArgs e) =>

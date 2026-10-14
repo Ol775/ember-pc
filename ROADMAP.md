@@ -4,14 +4,14 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 
 ## Being checked on real hardware
 
-- Philips Hue, Nanoleaf, Razer Chroma and Corsair iCUE: written and unit-tested, but not yet tried on real devices
+- Nanoleaf and Razer Chroma (marked Beta in every build): written and unit-tested, but not yet tried on real devices
 - Game detection and GPU fan control: working on the test PC, to be tried on other graphics cards before they leave Experimental
 - Per-key keyboard layouts and Govee segments on more keyboards and lamps
 - A clean install on a PC that never had Ember
 
 ## Next
 
-- Bring game detection, GPU fan control, Hue, Nanoleaf, Razer and Corsair into the production build once the hardware checks above are done
+- Take Nanoleaf and Razer Chroma out of Beta, and bring game detection and GPU fan control into the production build, once the hardware checks above are done
 - Nanoleaf panels placed on the Lights canvas where they really are, not in one row
 - Razer devices: only show the ones that are plugged in, once Synapse offers a way to tell
 

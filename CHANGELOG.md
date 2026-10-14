@@ -2,6 +2,35 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.1.0 (2026-10-14)
+
+The production release. It adds the lighting that has now been checked on real PCs, and everything from the beta line that is ready.
+
+### Added
+
+- **Philips Hue and Corsair iCUE lighting are in the production build.** Both are confirmed working on real PCs. Corsair works through iCUE with Enable SDK switched on, and falls back to Corsair's older SDK when a newer one is refused.
+- **Nanoleaf and Razer Chroma are in the production build, marked Beta.** They are written and tested in software but not yet tried on real devices.
+- **Automatic update checks, with a prompt.** Ember looks for a newer version at start and every few hours, and asks whether to update now, later, or skip that version (a tray notification when Ember is hidden). Turn it off in Settings, Updates.
+- **The release channel switch moves you to that version.** Choosing Beta offers the newest beta, and choosing Stable on a beta build offers the newest stable release. Your settings are kept.
+- **A switch for every integration** on the Devices page, and an **Identify** button that flashes one device so you can tell which it is.
+- **Screen sync can follow a chosen screen**, kept per scene.
+- **A diagnostic log and report** in Settings, About, with keys and passwords left out, for problem reports.
+- **Temperature history and fan curve markers:** gridlines and a labelled dot for the temperature now.
+- **A "What Ember needs" check at the end of install.**
+
+### Changed
+
+- **Updating works from shared and VPN networks.** If GitHub limits the usual request, Ember reads the public releases feed instead.
+- **Install no longer fails** when the PawnIO driver is already installed or OpenRGB is running.
+- **OpenRGB starts without a window**, so its "Zone Initialization" question no longer pops up.
+- **A tidier Lights and Devices page,** friendlier status lines, hints in empty boxes, and consistent Settings cards.
+- **The Elgato Stream Deck is no longer treated as a light.**
+- **AI assist suggestions** never show a fan slower than Ember will run it.
+
+### Fixed
+
+- Logitech not being found when a second copy of Ember was running: Ember now runs once.
+
 ## 1.1.0-beta.7 (2026-10-14)
 
 ### Added

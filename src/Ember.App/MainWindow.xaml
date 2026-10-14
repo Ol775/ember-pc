@@ -419,7 +419,7 @@
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </GroupBox>
-                <GroupBox x:Name="NanoleafBox" Tag="lights" Header="Nanoleaf" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Nanoleaf">
+                <GroupBox x:Name="NanoleafBox" Tag="lights" Header="Nanoleaf (beta)" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Nanoleaf">
                     <StackPanel>
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Ember talks to your Nanoleaf controller directly on your home network: no account and no cloud. Type its address (or press Find controller), hold the power button on the controller for 5 to 7 seconds until it flashes, then press Link within 30 seconds. The token it gives is kept in Windows Credential Manager. Each panel is one light, ordered left to right, so effects run across the panels." />
@@ -434,7 +434,7 @@
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </GroupBox>
-                <GroupBox x:Name="RazerBox" Tag="lights" Header="Razer Chroma" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Razer Chroma">
+                <GroupBox x:Name="RazerBox" Tag="lights" Header="Razer Chroma (beta)" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Razer Chroma">
                     <StackPanel>
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Lights Razer keyboards, keypads, mousepads, headsets and Chroma Link strips through Razer Synapse on this PC (its local Chroma SDK; nothing leaves the PC). Razer Synapse must be running with Chroma Connect on. Ember cannot tell which Razer devices are plugged in, so switch off the ones you do not have on the Devices page. Razer mice are not used." />
@@ -483,7 +483,7 @@
                             </StackPanel>
                         </Border>
                         <TextBlock x:Name="ChannelNote" Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
-                                   Text="Beta also offers pre-releases: new features earlier, and more bugs." />
+                                   Text="Choosing a channel offers to switch this installation to that version of Ember (your settings are kept). Stable is the production build; Beta gets new features earlier, and more bugs." />
                         <TextBlock Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,14,0,0"
                                    Text="Ember contacts GitHub only when it checks and when you press Update now. The installer is verified against the checksum published with the release before it runs." />
                     </StackPanel>

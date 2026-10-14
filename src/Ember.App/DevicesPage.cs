@@ -55,13 +55,10 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Source("OpenRGB", "SDK server on localhost, started with Ember", devices, status, lights));
         _cards.Children.Add(Source("Govee", "LAN first; cloud only with your API key", devices, status, lights));
         _cards.Children.Add(Source("Logitech", "Keyboards and mice, through G HUB", devices, status, lights));
-        if (BuildFeatures.Current.NewIntegrations)
-        {
         _cards.Children.Add(Source("Hue", "Philips Hue lights, through the bridge on your network", devices, status, lights));
         _cards.Children.Add(Source("Nanoleaf", "Nanoleaf light panels, through the controller on your network", devices, status, lights));
         _cards.Children.Add(Source("Razer", "Razer Chroma devices, through Razer Synapse on this PC", devices, status, lights));
         _cards.Children.Add(Source("Corsair", "Corsair keyboards, mice, fans and more, through iCUE on this PC", devices, status, lights));
-        }
 
         LayOutCards();
 
@@ -117,6 +114,18 @@ public sealed class DevicesPage : UserControl
             off ? "Switched off in Ember." : mine.Count > 0 ? $"{mine.Count} {(mine.Count == 1 ? "device" : "devices")}: {string.Join(", ", mine.Take(4).Select(d => d.Name))}" : detail, toggle);
     }
 
+    /// <summary>Integrations written and unit-tested but not yet tried on real devices: every build marks them Beta.</summary>
+    static readonly HashSet<string> BetaIntegrations = ["Nanoleaf", "Razer"];
+
+    static FrameworkElement BetaTag()
+    {
+        var tag = new Border { CornerRadius = new CornerRadius(8), Padding = new Thickness(7, 1, 7, 2), Margin = new Thickness(8, 1, 0, 0), VerticalAlignment = VerticalAlignment.Center,
+            Child = new TextBlock { Text = "Beta", FontSize = 11, FontWeight = FontWeights.SemiBold, Foreground = (Brush)Application.Current.FindResource("AccentTextBrush") },
+            ToolTip = "Written and tested in software, but not yet tried on real devices." };
+        tag.Background = (Brush)Application.Current.FindResource("AccentSoftBrush");
+        return tag;
+    }
+
     static FrameworkElement Card(string title, string pill, bool good, string blurb, string detail, FrameworkElement? toggle = null)
     {
         var head = new DockPanel();
@@ -129,7 +138,10 @@ public sealed class DevicesPage : UserControl
         DockPanel.SetDock(chip, Dock.Right);
         head.Children.Add(chip);
         if (toggle is not null) { DockPanel.SetDock(toggle, Dock.Right); head.Children.Add(toggle); }
-        head.Children.Add(Text(title, weight: FontWeights.SemiBold, size: 15));
+        var titleRow = new StackPanel { Orientation = Orientation.Horizontal };
+        titleRow.Children.Add(Text(title, weight: FontWeights.SemiBold, size: 15));
+        if (BetaIntegrations.Contains(title)) titleRow.Children.Add(BetaTag());
+        head.Children.Add(titleRow);
         var body = new StackPanel();
         body.Children.Add(head);
         body.Children.Add(WithMargin(Text(blurb, muted: true, size: 13), 0, 8, 0, 0));

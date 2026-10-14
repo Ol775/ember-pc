@@ -19,7 +19,7 @@ public class BuildFeaturesTests
     [Fact]
     public void Production_has_none_of_the_beta_features_and_beta_has_all()
     {
-        Assert.False(BuildFeatures.Production.GameDetection || BuildFeatures.Production.GpuFan || BuildFeatures.Production.NewIntegrations);
-        Assert.True(BuildFeatures.All.GameDetection && BuildFeatures.All.GpuFan && BuildFeatures.All.NewIntegrations);
+        Assert.False(BuildFeatures.Production.GameDetection || BuildFeatures.Production.GpuFan);
+        Assert.True(BuildFeatures.All.GameDetection && BuildFeatures.All.GpuFan);
     }
 }

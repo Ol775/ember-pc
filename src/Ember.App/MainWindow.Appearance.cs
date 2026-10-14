@@ -13,16 +13,15 @@ public partial class MainWindow
     TextBlock? _customNote;
     bool _syncingCustom;
 
-    /// <summary>The production build shows only what has been checked on real hardware: no roadmap, no beta channel, no newer lighting.</summary>
+    /// <summary>The production build has no roadmap page, and no game detection or GPU fan control (still being proven). Every integration is there; Nanoleaf and Razer are marked Beta.</summary>
     void ApplyBuildChannel()
     {
         if (!BuildFeatures.IsProduction) return;
         NavRoadmap.Visibility = Visibility.Collapsed;
-        foreach (var box in new[] { RoadmapBox, HueBox, NanoleafBox, RazerBox }) box.Tag = "off";
-        ChannelLabel.Visibility = ChannelTrack.Visibility = ChannelNote.Visibility = Visibility.Collapsed;
+        RoadmapBox.Tag = "off";
     }
 
-    UpdateChannel UpdateChannelInUse => BuildFeatures.IsProduction ? UpdateChannel.Stable : _vm.Prefs.Channel;
+    UpdateChannel UpdateChannelInUse => _vm.Prefs.Channel;
 
     string? ChangelogText() => BuildFeatures.IsProduction ? ReleaseNotesFilter.ProductionOnly(DocView.ReadEmbedded("CHANGELOG.md")) : DocView.ReadEmbedded("CHANGELOG.md");
 

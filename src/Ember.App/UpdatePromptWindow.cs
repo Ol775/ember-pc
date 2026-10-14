@@ -16,9 +16,10 @@ public sealed class UpdatePromptWindow : Window
 {
     public UpdateChoice Choice { get; private set; } = UpdateChoice.Later;
 
-    public static UpdateChoice Ask(Window? owner, ReleaseInfo release, string notes, bool canInstall)
+    /// <param name="switching">Asking about changing channel (Stable or Beta) rather than about a newer version: different words, and no "skip".</param>
+    public static UpdateChoice Ask(Window? owner, ReleaseInfo release, string notes, bool canInstall, string? switching = null)
     {
-        var w = new UpdatePromptWindow(release, notes, canInstall)
+        var w = new UpdatePromptWindow(release, notes, canInstall, switching)
         {
             Owner = owner is { IsVisible: true } ? owner : null,
             WindowStartupLocation = owner is { IsVisible: true } ? WindowStartupLocation.CenterOwner : WindowStartupLocation.CenterScreen,
@@ -27,7 +28,7 @@ public sealed class UpdatePromptWindow : Window
         return w.Choice;
     }
 
-    UpdatePromptWindow(ReleaseInfo release, string notes, bool canInstall)
+    UpdatePromptWindow(ReleaseInfo release, string notes, bool canInstall, string? switching)
     {
         Title = "Ember update";
         Width = 520; SizeToContent = SizeToContent.Height; MinHeight = 240; MaxHeight = 640;
@@ -37,10 +38,12 @@ public sealed class UpdatePromptWindow : Window
         SetResourceReference(ForegroundProperty, "TextBrush");
 
         var root = new StackPanel { Margin = new Thickness(24) };
-        var head = Text("A new version of Ember is ready", size: 20, weight: FontWeights.SemiBold);
+        var head = Text(switching is null ? "A new version of Ember is ready" : $"Switch to the {switching} version?", size: 20, weight: FontWeights.SemiBold);
         AutomationProperties.SetHeadingLevel(head, AutomationHeadingLevel.Level1);
         root.Children.Add(head);
-        var version = Text($"Ember {release.Version}" + (release.Prerelease ? " (pre-release)" : "") + $", you have {AppInfo.Version}", muted: true);
+        var older = release.Version.CompareTo(AppInfo.Version) < 0;
+        var version = Text($"Ember {release.Version}" + (release.Prerelease ? " (pre-release)" : "") + $", you have {AppInfo.Version}" + (older && switching is not null ? ". This is an older version, but it is the newest one on this channel." : ""), muted: true);
+        version.TextWrapping = TextWrapping.Wrap;
         version.Margin = new Thickness(0, 4, 0, 12);
         root.Children.Add(version);
 
@@ -60,9 +63,9 @@ public sealed class UpdatePromptWindow : Window
         root.Children.Add(how);
 
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 18, 0, 0) };
-        var skip = new Button { Content = "Skip this version", Style = Sty("ActionButton"), Margin = new Thickness(0, 0, 8, 0) };
-        var later = new Button { Content = "Remind me later", Style = Sty("ActionButton"), IsCancel = true, Margin = new Thickness(0, 0, 8, 0) };
-        var update = new Button { Content = canInstall ? "Update now" : "Open release page", Style = Sty("ActionButton"), IsDefault = true };
+        var skip = new Button { Content = "Skip this version", Style = Sty("ActionButton"), Margin = new Thickness(0, 0, 8, 0), Visibility = switching is null ? Visibility.Visible : Visibility.Collapsed };
+        var later = new Button { Content = switching is null ? "Remind me later" : "Not now", Style = Sty("ActionButton"), IsCancel = true, Margin = new Thickness(0, 0, 8, 0) };
+        var update = new Button { Content = canInstall ? (switching is null ? "Update now" : "Switch now") : "Open release page", Style = Sty("ActionButton"), IsDefault = true };
         skip.Click += (_, _) => { Choice = UpdateChoice.Skip; Close(); };
         later.Click += (_, _) => { Choice = UpdateChoice.Later; Close(); };
         update.Click += (_, _) => { Choice = UpdateChoice.UpdateNow; Close(); };

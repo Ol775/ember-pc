@@ -121,6 +121,10 @@ public static class UpdateRules
         return System.Net.WebUtility.HtmlDecode(t).Trim();
     }
 
+    /// <summary>The newest release the channel allows, whatever this build is (Stable ignores pre-releases).</summary>
+    public static ReleaseInfo? Latest(IEnumerable<ReleaseInfo> releases, UpdateChannel channel) =>
+        releases.Where(r => channel == UpdateChannel.Beta || !r.Prerelease).OrderByDescending(r => r.Version).FirstOrDefault();
+
     /// <summary>The newest release newer than <paramref name="current"/> that the channel allows (Stable ignores pre-releases).</summary>
     public static ReleaseInfo? Newer(IEnumerable<ReleaseInfo> releases, AppVersion current, UpdateChannel channel) =>
         releases.Where(r => channel == UpdateChannel.Beta || !r.Prerelease)
@@ -165,7 +169,8 @@ public sealed class UpdateChecker(HttpClient http, string releasesUrl = UpdateCh
 
     public const string FeedUrl = "https://github.com/Ol775/ember-pc/releases.atom";
 
-    public async Task<UpdateResult> CheckAsync(AppVersion current, UpdateChannel channel, CancellationToken ct = default)
+    /// <param name="anyVersion">Offer the newest release of the channel even when it is older than <paramref name="current"/> (switching from beta back to stable).</param>
+    public async Task<UpdateResult> CheckAsync(AppVersion current, UpdateChannel channel, CancellationToken ct = default, bool anyVersion = false)
     {
         try
         {
@@ -180,7 +185,7 @@ public sealed class UpdateChecker(HttpClient http, string releasesUrl = UpdateCh
                 // GitHub allows only 60 anonymous API requests an hour per address, which a shared, VPN or office address uses up.
                 // The public releases feed lists the same releases without that limit.
                 DiagLog.Warn("Update", $"GitHub API answered {(int)res.StatusCode} (requests left: {Header(res, "x-ratelimit-remaining")}); trying the releases feed");
-                return await CheckFeedAsync(current, channel, (int)res.StatusCode, ct).ConfigureAwait(false);
+                return await CheckFeedAsync(current, channel, (int)res.StatusCode, ct, anyVersion).ConfigureAwait(false);
             }
             if (!res.IsSuccessStatusCode)
             {
@@ -190,7 +195,7 @@ public sealed class UpdateChecker(HttpClient http, string releasesUrl = UpdateCh
             if (res.Content.Headers.ContentLength > MaxBytes)
                 return new UpdateResult(UpdateStatus.Failed, null, "The reply was too large to read.");
             var body = await ReadLimitedAsync(res, ct).ConfigureAwait(false);
-            return Decide(UpdateRules.Parse(body), current, channel);
+            return Decide(UpdateRules.Parse(body), current, channel, anyVersion);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (Exception ex)
@@ -200,7 +205,7 @@ public sealed class UpdateChecker(HttpClient http, string releasesUrl = UpdateCh
         }
     }
 
-    async Task<UpdateResult> CheckFeedAsync(AppVersion current, UpdateChannel channel, int apiStatus, CancellationToken ct)
+    async Task<UpdateResult> CheckFeedAsync(AppVersion current, UpdateChannel channel, int apiStatus, CancellationToken ct, bool anyVersion)
     {
         try
         {
@@ -213,7 +218,7 @@ public sealed class UpdateChecker(HttpClient http, string releasesUrl = UpdateCh
                 return new UpdateResult(UpdateStatus.Failed, null, $"GitHub answered {apiStatus} and its releases feed {(int)res.StatusCode}. GitHub limits requests from shared, VPN and office addresses: try again later or from another network, or download the newest release from the project's releases page.");
             }
             if (res.Content.Headers.ContentLength > MaxBytes) return new UpdateResult(UpdateStatus.Failed, null, "The reply was too large to read.");
-            var result = Decide(UpdateRules.ParseAtom(await ReadLimitedAsync(res, ct).ConfigureAwait(false)), current, channel);
+            var result = Decide(UpdateRules.ParseAtom(await ReadLimitedAsync(res, ct).ConfigureAwait(false)), current, channel, anyVersion);
             DiagLog.Info("Update", "Checked through the releases feed: " + result.Status);
             return result;
         }
@@ -225,10 +230,10 @@ public sealed class UpdateChecker(HttpClient http, string releasesUrl = UpdateCh
         }
     }
 
-    static UpdateResult Decide(IReadOnlyList<ReleaseInfo> releases, AppVersion current, UpdateChannel channel)
+    static UpdateResult Decide(IReadOnlyList<ReleaseInfo> releases, AppVersion current, UpdateChannel channel, bool anyVersion)
     {
         if (releases.Count == 0) return new UpdateResult(UpdateStatus.NoReleases, null, "No public releases found. If the repository is private, the check cannot see them.");
-        return UpdateRules.Newer(releases, current, channel) is { } r
+        return (anyVersion ? UpdateRules.Latest(releases, channel) : UpdateRules.Newer(releases, current, channel)) is { } r
             ? new UpdateResult(UpdateStatus.Available, r, $"Ember {r.Version} is available.")
             : new UpdateResult(UpdateStatus.UpToDate, null, "You have the latest version.");
     }

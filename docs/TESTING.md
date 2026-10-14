@@ -38,7 +38,7 @@ reach the tray): the menu, double-click to open, and Quit.
 ## Appearance and the settings pages
 
 - [x] Settings, Appearance: Dark, OLED black, Light and Match Windows switch at once; OLED black is pure black behind everything (checked on the PC, with the Cool scheme and Vivid highlights).
-- [ ] Production build (1.0.0): no Roadmap page, no release channel choice (only production updates are offered), What's new lists only production releases, no Hue, Nanoleaf or Razer, no Experimental switch.
+- [ ] Production build (1.1.0): no Roadmap page, What's new lists only production releases, no Experimental switch; every integration is there, with Nanoleaf and Razer marked Beta; the release channel choice is there and Beta offers to switch to the newest beta.
 - [ ] Colour scheme Warm, Neutral and Cool, and each accent colour including Red, Teal and Gold, look right on Dark, OLED black and Light.
 - [ ] A custom colour typed as `#rrggbb` is applied as you type, a wrong one is refused with a note, and a very dark or very light colour stays readable.
 - [ ] Subtle, Normal and Vivid change the selected menu item and banner fill, and the preview under Highlights matches.
@@ -65,7 +65,9 @@ reach the tray): the menu, double-click to open, and Quit.
 - [ ] Key-group effects: a group colour only lights its own keys (function row, number row, letters, arrows, numpad).
 - [ ] None of the new effects flash fast enough to be uncomfortable at their default speed.
 
-## Philips Hue (written and unit-tested against a pretend bridge only)
+## Philips Hue (confirmed working on a real PC with a bridge and 6 lights, 2026-10-14)
+
+_The unticked lines below were written before the check; the owner confirmed the integration works._
 
 - [ ] Find bridge lists the bridge, or typing its address works.
 - [ ] Press the bridge button, then Link bridge: the note says linked, and the lights appear on the Lights page and the Devices page.
@@ -91,7 +93,7 @@ reach the tray): the menu, double-click to open, and Quit.
 - [ ] Settings, About: Copy diagnostic report puts versions, integration status, devices and the recent log on the clipboard (no keys or passwords), and Open log folder opens %AppData%mberogs, which holds one ember-yyyymmdd.log per day.
 - [ ] Devices page: every integration card (OpenRGB, Govee, Logitech, Hue, Nanoleaf, Razer, Corsair) has a switch; off stops Ember looking for or sending to its devices (and lets go of G HUB, iCUE or OpenRGB), on brings them back, and the choice is remembered after a restart.
 
-## Corsair iCUE (written and unit-tested against a pretend iCUE only; the SDK library loads and connects)
+## Corsair iCUE (confirmed working on a real PC once iCUE was updated, 2026-10-14; the older CUE SDK fallback is untested on hardware)
 
 - [ ] With iCUE running and Enable SDK switched on (iCUE Settings, Software and Games), the Corsair devices appear on the Lights and Devices pages.
 - [ ] Effects reach a Corsair keyboard, mouse and fans/strips; iCUE keeps running and gets its own lighting back when Ember closes.

@@ -86,3 +86,44 @@ public class UpdateFeedTests
         Assert.Contains("shared, VPN", r.Message);
     }
 }
+
+public class ChannelSwitchTests
+{
+    static AppVersion V(string s) { Assert.True(AppVersion.TryParse(s, out var v)); return v; }
+
+    static ReleaseInfo R(string v) => new(V(v), "v" + v, V(v).Pre is not null, "https://github.com/Ol775/ember-pc/releases/tag/v" + v, null);
+
+    static readonly ReleaseInfo[] Releases = [R("1.1.0"), R("1.2.0-beta.1"), R("1.1.0-beta.7"), R("1.0.0")];
+
+    [Fact]
+    public void Latest_of_stable_is_the_newest_production_release_even_if_this_build_is_a_newer_beta()
+    {
+        Assert.Equal("v1.1.0", UpdateRules.Latest(Releases, UpdateChannel.Stable)!.Tag);
+        Assert.Null(UpdateRules.Newer(Releases, V("1.2.0-beta.1"), UpdateChannel.Stable)); // the normal check would say nothing to do
+    }
+
+    [Fact]
+    public void Latest_of_beta_is_the_newest_release_of_any_kind()
+    {
+        Assert.Equal("v1.2.0-beta.1", UpdateRules.Latest(Releases, UpdateChannel.Beta)!.Tag);
+        Assert.Equal("v1.1.0", UpdateRules.Latest(Releases.Where(r => r.Tag != "v1.2.0-beta.1"), UpdateChannel.Beta)!.Tag);
+    }
+
+    [Fact]
+    public async Task Asking_for_any_version_offers_an_older_release()
+    {
+        var json = "[{\"tag_name\":\"v1.1.0\",\"html_url\":\"https://github.com/Ol775/ember-pc/releases/tag/v1.1.0\"},{\"tag_name\":\"v1.2.0-beta.1\",\"prerelease\":true,\"html_url\":\"https://github.com/Ol775/ember-pc/releases/tag/v1.2.0-beta.1\"}]";
+        var http = new HttpClient(new Fixed(json));
+        var checker = new UpdateChecker(http, "https://example.test/releases");
+        Assert.Equal(UpdateStatus.UpToDate, (await checker.CheckAsync(V("1.2.0-beta.1"), UpdateChannel.Stable)).Status);
+        var any = await checker.CheckAsync(V("1.2.0-beta.1"), UpdateChannel.Stable, anyVersion: true);
+        Assert.Equal(UpdateStatus.Available, any.Status);
+        Assert.Equal("v1.1.0", any.Release!.Tag);
+    }
+
+    sealed class Fixed(string body) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) =>
+            Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(body) });
+    }
+}
