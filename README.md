@@ -157,7 +157,7 @@ Motherboard sensors and fan headers sit behind port I/O that user mode cannot re
 
 ## Contributing
 
-Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
+Want to help test the beta builds? See the [beta testing guide](docs/BETA-TESTING.md). Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Licence and terms
 
