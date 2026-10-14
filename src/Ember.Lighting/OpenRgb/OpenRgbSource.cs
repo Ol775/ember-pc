@@ -70,9 +70,9 @@ public sealed class OpenRgbSource(Func<string?> openRgbPath, Func<bool> startIfN
                 catch { await client.DisposeAsync().ConfigureAwait(false); throw; }
                 _client = client;
             }
-            var devices = await _client.GetDevicesAsync(ct).ConfigureAwait(false);
+            var devices = (await _client.GetDevicesAsync(ct).ConfigureAwait(false)).Where(IsLight).ToList(); // count only what Ember will use
             Status = devices.Count == 0 ? (DateTime.UtcNow - _lastStart < TimeSpan.FromSeconds(45) ? "Starting up, looking for devices (about 20 seconds)" : "Connected, but OpenRGB found no devices") : $"Connected, {devices.Count} device{(devices.Count == 1 ? "" : "s")}";
-            return devices.Where(IsLight).Select(d => (IDeviceSink)new OpenRgbSink(_client, d)).ToList();
+            return devices.Select(d => (IDeviceSink)new OpenRgbSink(_client, d)).ToList();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
