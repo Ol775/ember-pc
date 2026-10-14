@@ -61,6 +61,10 @@ Live keys cover the CPU and the GPU: CPU temperature, CPU fan speed, GPU tempera
 - **Refused changes:** the fan mode keys offer only the modes the app already offers. If the service refuses a press, the key flashes Stream Deck's alert (the standard warning flash), nothing else.
 - Fixed per key vs chosen in the property inspector: the scene key lets the owner choose which scene in the inspector.
 
+## Spike result (2026-10-14)
+
+Verified on the owner's PC (Stream Deck 7.6.0.23012, Windows 11): an unsigned `.streamDeckPlugin` with `SDKVersion` 2, `CodePath` `hello.exe` (a .NET 8 framework-dependent apphost), `Software.MinimumVersion` 6.4 and `OS` windows 10 installs after one click on Stream Deck's own prompt; Stream Deck launches the exe with `-port <n> -pluginUUID <id> -registerEvent registerPlugin -info <json>`; the plugin registers over `ws://127.0.0.1:<port>` and receives `deviceDidConnect`. Key presses were not exercised in the spike. The plugin folder is `%APPDATA%\Elgato\StreamDeck\Plugins\<uuid>.sdPlugin`. Plugin ids are lower-case dotted.
+
 ## Left to the builder
 
 - Exact action list and key icons/artwork (clean, calm, matching Ember's macOS-like look), naming and the plugin UUID.
