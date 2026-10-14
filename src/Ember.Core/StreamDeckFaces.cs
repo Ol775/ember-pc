@@ -59,7 +59,7 @@ public static class StreamDeckFaces
                 return new KeyFace("Ember", "Open", false, FaceTint.Normal);
             case StreamDeckActions.Readout:
                 var r = s.Readouts;
-                return Setting("value") switch
+                return (Setting("value") is { Length: > 0 } which ? which : "cpuTemp") switch
                 {
                     "cpuTemp" => new KeyFace("CPU", StreamDeckLogic.FormatTemp(r.CpuTemp), false, TempTint(r.CpuTemp)),
                     "gpuTemp" => new KeyFace("GPU", StreamDeckLogic.FormatTemp(r.GpuTemp), false, TempTint(r.GpuTemp)),
@@ -76,12 +76,12 @@ public static class StreamDeckFaces
 
     static string Short(string s) => s.Length <= MaxValueChars ? s : s[..(MaxValueChars - 1)] + "…";
 
-    /// <summary>A 144 by 144 picture of the face: dark rounded square (accent blue when highlighted), small label above a large value.</summary>
+    /// <summary>A 144 by 144 picture of the face: dark rounded square (Ember orange when highlighted), small label above a large value.</summary>
     public static string Svg(KeyFace f)
     {
-        var bg = f.Highlight ? "#0a84ff" : "#1c1c1e";
-        var fg = f.Tint switch { FaceTint.Warm => "#ff9f0a", FaceTint.Hot => "#ff453a", FaceTint.Dim => "#8e8e93", _ => "#ffffff" };
-        var labelFg = f.Highlight ? "#d6e9ff" : "#8e8e93";
+        var bg = f.Highlight ? "#ff7a2f" : "#1c1c1e"; // Ember's accent orange when selected
+        var fg = f.Highlight ? "#1c1c1e" : f.Tint switch { FaceTint.Warm => "#ffb340", FaceTint.Hot => "#ff453a", FaceTint.Dim => "#8e8e93", _ => "#ffffff" };
+        var labelFg = f.Highlight ? "#5a2a0c" : "#8e8e93";
         var size = f.Value.Length <= 4 ? 44 : f.Value.Length <= 7 ? 32 : 24;
         var sb = new StringBuilder();
         sb.Append("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"144\" height=\"144\" viewBox=\"0 0 144 144\">");

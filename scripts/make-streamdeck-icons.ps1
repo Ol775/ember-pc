@@ -1,18 +1,53 @@
 #Requires -Version 5.1
-# Draws the Stream Deck plugin's icons (src\Ember.StreamDeck\plugin\images): an amber rounded square with a white letter, as
-# <name>.png and <name>@2x.png. Run it again after changing the list below; the PNG files are committed.
+# Draws the Stream Deck plugin's icons (src\Ember.StreamDeck\plugin\images) in Ember's colours (accent orange #ff7a2f, dark #1c1c1e):
+#   plugin, category, key: Ember's flame in orange on a dark rounded tile (same shape as scripts\make-icon.ps1)
+#   one per action: an orange rounded tile with a dark letter, which reads on Stream Deck's dark action list
+# Each is written as <name>.png and <name>@2x.png. Run it again after changing the list below; the PNG files are committed.
 param([string]$OutDir = (Join-Path (Split-Path $PSScriptRoot -Parent) 'src\Ember.StreamDeck\plugin\images'))
 Add-Type -AssemblyName System.Drawing
 New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 
-# name, base size in pixels, letter
+$orange = [System.Drawing.ColorTranslator]::FromHtml('#ff7a2f')
+$dark = [System.Drawing.ColorTranslator]::FromHtml('#1c1c1e')
+# Shapes live in a 256 x 256 box; only absolute M, C and Z are used.
+$flameOuter = 'M128 30 C152 66 198 90 198 148 C198 190 167 222 128 222 C89 222 58 190 58 148 C58 120 73 100 88 85 C92 106 102 119 115 123 C104 86 116 58 128 30 Z'
+$flameInner = 'M128 116 C141 138 166 149 166 178 C166 199 149 212 128 212 C107 212 90 199 90 178 C90 163 99 153 108 144 C112 155 118 160 125 160 C120 143 122 130 128 116 Z'
+
+function New-Shape([string]$d, [double]$scale) {
+    $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $pen = $null
+    foreach ($m in [regex]::Matches($d, '([MCZ])([^MCZ]*)')) {
+        $n = [regex]::Matches($m.Groups[2].Value, '-?\d+(\.\d+)?') | ForEach-Object { [double]$_.Value }
+        switch ($m.Groups[1].Value) {
+            'M' { $path.StartFigure(); $pen = New-Object System.Drawing.PointF([single]($n[0] * $scale), [single]($n[1] * $scale)) }
+            'C' {
+                $p1 = New-Object System.Drawing.PointF([single]($n[0] * $scale), [single]($n[1] * $scale))
+                $p2 = New-Object System.Drawing.PointF([single]($n[2] * $scale), [single]($n[3] * $scale))
+                $p3 = New-Object System.Drawing.PointF([single]($n[4] * $scale), [single]($n[5] * $scale))
+                $path.AddBezier($pen, $p1, $p2, $p3); $pen = $p3
+            }
+            'Z' { $path.CloseFigure() }
+        }
+    }
+    $path
+}
+
+function New-Tile([int]$px, [double]$radius) {
+    $d = $radius * 2
+    $p = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $p.AddArc(0, 0, $d, $d, 180, 90); $p.AddArc($px - $d - 1, 0, $d, $d, 270, 90)
+    $p.AddArc($px - $d - 1, $px - $d - 1, $d, $d, 0, 90); $p.AddArc(0, $px - $d - 1, $d, $d, 90, 90)
+    $p.CloseFigure(); $p
+}
+
+# name, base size in pixels, kind ('flame' or a letter)
 $icons = @(
-    @('plugin', 256, 'E'), @('category', 28, 'E'), @('key', 72, 'E'),
+    @('plugin', 256, 'flame'), @('category', 28, 'flame'), @('key', 72, 'flame'),
     @('scene', 20, 'S'), @('power', 20, 'L'), @('brightness', 20, 'B'), @('fanmode', 20, 'F'),
     @('cycle', 20, 'C'), @('open', 20, 'O'), @('readout', 20, 'T')
 )
 foreach ($i in $icons) {
-    $name = $i[0]; $size = [int]$i[1]; $letter = $i[2]
+    $name = $i[0]; $size = [int]$i[1]; $kind = $i[2]
     foreach ($scale in 1, 2) {
         $px = $size * $scale
         $bmp = New-Object System.Drawing.Bitmap $px, $px
@@ -20,17 +55,20 @@ foreach ($i in $icons) {
         $g.SmoothingMode = 'AntiAlias'
         $g.TextRenderingHint = 'AntiAliasGridFit'
         $g.Clear([System.Drawing.Color]::Transparent)
-        $r = [int]($px * 0.22)
-        $path = New-Object System.Drawing.Drawing2D.GraphicsPath
-        $d = $r * 2
-        $path.AddArc(0, 0, $d, $d, 180, 90); $path.AddArc($px - $d - 1, 0, $d, $d, 270, 90)
-        $path.AddArc($px - $d - 1, $px - $d - 1, $d, $d, 0, 90); $path.AddArc(0, $px - $d - 1, $d, $d, 90, 90)
-        $path.CloseFigure()
-        $g.FillPath((New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 255, 140, 20))), $path)
-        $font = New-Object System.Drawing.Font 'Segoe UI', ([single]($px * 0.5)), ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
-        $fmt = New-Object System.Drawing.StringFormat
-        $fmt.Alignment = 'Center'; $fmt.LineAlignment = 'Center'
-        $g.DrawString($letter, $font, [System.Drawing.Brushes]::White, (New-Object System.Drawing.RectangleF 0, 0, $px, $px), $fmt)
+        $tile = New-Tile $px ($px * 0.22)
+        if ($kind -eq 'flame') {
+            $g.FillPath((New-Object System.Drawing.SolidBrush $dark), $tile)
+            $k = $px / 256.0
+            $g.FillPath((New-Object System.Drawing.SolidBrush $orange), (New-Shape $flameOuter $k))
+            $g.FillPath((New-Object System.Drawing.SolidBrush $dark), (New-Shape $flameInner $k))
+        }
+        else {
+            $g.FillPath((New-Object System.Drawing.SolidBrush $orange), $tile)
+            $font = New-Object System.Drawing.Font 'Segoe UI', ([single]($px * 0.6)), ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
+            $fmt = New-Object System.Drawing.StringFormat
+            $fmt.Alignment = 'Center'; $fmt.LineAlignment = 'Center'
+            $g.DrawString($kind, $font, (New-Object System.Drawing.SolidBrush $dark), (New-Object System.Drawing.RectangleF 0, 0, $px, $px), $fmt)
+        }
         $file = Join-Path $OutDir ($(if ($scale -eq 1) { "$name.png" } else { "$name@2x.png" }))
         $bmp.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
         $g.Dispose(); $bmp.Dispose()

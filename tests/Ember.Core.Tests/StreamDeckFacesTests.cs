@@ -94,6 +94,14 @@ public class StreamDeckFacesTests
     }
 
     [Fact]
+    public void Readout_key_with_nothing_chosen_shows_the_cpu_temperature()
+    {
+        var f = StreamDeckFaces.For(StreamDeckActions.Readout, new Dictionary<string, string>(), Online());
+        Assert.Equal("CPU", f.Label);
+        Assert.Equal("63°", f.Value);
+    }
+
+    [Fact]
     public void Readout_with_no_reading_shows_a_dash_not_zero() =>
         Assert.Equal("-", StreamDeckFaces.For(StreamDeckActions.Readout, new Dictionary<string, string> { ["value"] = "gpuTemp" }, Online(new Readouts(63, 1240, null, null))).Value);
 

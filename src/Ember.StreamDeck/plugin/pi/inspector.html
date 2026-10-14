@@ -34,7 +34,7 @@
     action = ai.action.split(".").pop();
     settings = (ai.payload && ai.payload.settings) || {};
     ws = new WebSocket("ws://127.0.0.1:" + port);
-    ws.onopen = () => ws.send(JSON.stringify({ event: registerEvent, uuid: uuid }));
+    ws.onopen = () => { ws.send(JSON.stringify({ event: registerEvent, uuid: uuid })); applyDefaults(); };
     ws.onmessage = ev => {
       const m = JSON.parse(ev.data);
       if (m.event === "didReceiveSettings") { settings = m.payload.settings || {}; show(); }
@@ -63,6 +63,7 @@
       for (const m of p.modes) sel.add(new Option(m.label, m.value));
     }
     show();
+    applyDefaults();
   }
 
   function show() {
@@ -70,7 +71,11 @@
       const el = $(key);
       if (settings[key] !== undefined && [...el.options].some(o => o.value === String(settings[key]))) el.value = String(settings[key]);
     }
-    // A new key has nothing chosen yet: save what the box shows so the key works at once.
+  }
+
+  // A new key has nothing chosen yet: save what the box shows so the key works at once (only once the socket is open).
+  function applyDefaults() {
+    if (!ws || ws.readyState !== 1) return;
     for (const key of rows[action] || []) {
       const el = $(key);
       if (settings[key] === undefined && el.options.length > 0) save(key, el.value);
