@@ -106,6 +106,9 @@ reach the tray): the menu, double-click to open, and Quit.
 - [ ] Screen sync: with more than one screen the layer offers Main screen and the others; each scene keeps its own choice, the lights follow the chosen screen (DXGI and the fallback), and an unplugged screen falls back to the main one with a note.
 - [ ] Devices page: Identify flashes the right physical device three times, also while the lights are off or the device is switched off in Ember.
 
+- [ ] Dashboard temperature history: gridlines every 20 degrees in the chosen unit, minute marks, and a dot with a label at the right end of each line; Fans page: the curve shows a dot at the current temperature with a label of temperature and speed.
+- [ ] Installer: with OpenRGB running from the Ember folder, and with PawnIO already installed, a quiet update completes and the summary lists what Ember needs.
+
 ## Several devices and shared paint files
 
 Unit-tested (fills across the canvas, the library folder, name safety). The buttons on the Lights page were not reached by

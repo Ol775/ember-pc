@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     readonly AudioCapture _audio;
     readonly KeyWatcher _keys;
     readonly DxgiGrabber _dxgi = new();
+    HistoryChart _chart = null!;
     readonly TrayIcon _tray;
     readonly ThermalStore _thermalStore = new(ThermalStore.DefaultPath);
     readonly ThermalProfile _thermal = new ThermalStore(ThermalStore.DefaultPath).Load();
@@ -101,6 +102,8 @@ public partial class MainWindow : Window
         _updates = new UpdateChecker(_http);
         _installer = new UpdateInstaller(_http);
         BuildAppearance();
+        _chart = new HistoryChart(HistoryCanvas);
+        ThemeManager.Changed += () => _chart.Invalidate();
         DocView.FillFolding(ChangelogHost, ChangelogText());
         DocView.FillFolding(RoadmapHost, DocView.ReadEmbedded("ROADMAP.md"), (_, title) => title != "Done", DocView.CountItems);
         ApplyBuildChannel();
@@ -674,6 +677,7 @@ public partial class MainWindow : Window
     void Refresh()
     {
         _vm.Refresh(DateTimeOffset.UtcNow);
+        _chart.Update(_vm.ChartWidth, _vm.ChartHeight, _vm.Unit, _vm.CpuLine, _vm.GpuLine, _vm.CpuText, _vm.GpuText);
         if (DevicesPageView.Visibility == Visibility.Visible) Devices.Update(_vm, _lights);
         // WPF only announces a live region when the app raises LiveRegionChanged itself.
         Curve.SetState(_vm.FansPage.Mode, _vm.FansPage.Curves, _cpuTemp, _caseTemp);

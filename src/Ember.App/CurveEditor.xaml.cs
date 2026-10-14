@@ -39,7 +39,9 @@ public partial class CurveEditor : UserControl
     int _selected = -1;
     double _dragT, _dragP, _accX, _accY;
     Polyline? _line;
-    Line? _marker;
+    Line? _marker, _markerAcross;
+    Ellipse? _markerDot;
+    Border? _markerPill;
     TextBlock? _markerLabel;
 
     public CurveEditor()
@@ -129,10 +131,24 @@ public partial class CurveEditor : UserControl
         _line = new Polyline { Stroke = (Brush)FindResource("AccentBrush"), StrokeThickness = 2.5, StrokeLineJoin = PenLineJoin.Round };
         Plot.Children.Add(_line);
 
-        _marker = new Line { Y1 = Y(0), Y2 = Y(100), Stroke = (Brush)FindResource("GpuBrush"), StrokeThickness = 2, StrokeDashArray = [4, 3], Visibility = Visibility.Collapsed };
+        // The temperature right now: a faint guide down to the temperature axis and across to the speed axis, a dot where the
+        // curve is at that temperature, and a small label with the temperature and the speed it asks for.
+        var gpu = (Brush)FindResource("GpuBrush");
+        var faint = gpu.CloneCurrentValue() as Brush ?? gpu;
+        if (faint.CanFreeze) { faint = faint.Clone(); faint.Opacity = 0.55; }
+        _marker = new Line { Stroke = faint, StrokeThickness = 1.5, StrokeDashArray = [3, 3], Visibility = Visibility.Collapsed, IsHitTestVisible = false };
+        _markerAcross = new Line { Stroke = faint, StrokeThickness = 1.5, StrokeDashArray = [3, 3], Visibility = Visibility.Collapsed, IsHitTestVisible = false };
         Plot.Children.Add(_marker);
-        _markerLabel = Label("", 0, Top, (Brush)FindResource("GpuBrush"));
-        _markerLabel.Visibility = Visibility.Collapsed;
+        Plot.Children.Add(_markerAcross);
+        _markerDot = new Ellipse { Width = 13, Height = 13, Fill = (Brush)FindResource("PanelBrush"), Stroke = gpu, StrokeThickness = 3, Visibility = Visibility.Collapsed, IsHitTestVisible = false };
+        Plot.Children.Add(_markerDot);
+        _markerLabel = new TextBlock { Foreground = (Brush)FindResource("TextBrush"), FontSize = 12, FontWeight = FontWeights.SemiBold };
+        _markerPill = new Border
+        {
+            Child = _markerLabel, Background = (Brush)FindResource("PanelBrush"), BorderBrush = gpu, BorderThickness = new Thickness(1.5),
+            CornerRadius = new CornerRadius(9), Padding = new Thickness(8, 2, 8, 3), Visibility = Visibility.Collapsed, IsHitTestVisible = false,
+        };
+        Plot.Children.Add(_markerPill);
 
         if (_editable)
         {
@@ -180,16 +196,40 @@ public partial class CurveEditor : UserControl
 
     void UpdateMarker()
     {
-        if (_marker is null || _markerLabel is null) return;
+        if (_marker is null || _markerAcross is null || _markerDot is null || _markerPill is null || _markerLabel is null) return;
         if (CurrentTemp is not { } t || _shown.Count < 2 || t < MinT || t > MaxT)
         {
-            _marker.Visibility = _markerLabel.Visibility = Visibility.Collapsed;
+            _marker.Visibility = _markerAcross.Visibility = _markerDot.Visibility = _markerPill.Visibility = Visibility.Collapsed;
             return;
         }
-        _marker.X1 = _marker.X2 = X(t);
-        _marker.Visibility = _markerLabel.Visibility = Visibility.Visible;
-        _markerLabel.Text = $"now {t:0}°";
-        Canvas.SetLeft(_markerLabel, Math.Min(X(t) + 4, Plot.ActualWidth - 60));
+        var pct = SpeedAt(t);
+        var (x, y) = (X(t), Y(pct));
+        _marker.X1 = _marker.X2 = x; _marker.Y1 = y; _marker.Y2 = Y(0);
+        _markerAcross.Y1 = _markerAcross.Y2 = y; _markerAcross.X1 = X(MinT); _markerAcross.X2 = x;
+        Canvas.SetLeft(_markerDot, x - _markerDot.Width / 2);
+        Canvas.SetTop(_markerDot, y - _markerDot.Height / 2);
+        _markerLabel.Text = $"{t:0} °C  ·  {pct:0}%";
+        _markerPill.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var w = _markerPill.DesiredSize.Width;
+        var h = _markerPill.DesiredSize.Height;
+        // above the dot, or below it when the curve is near the top; shifted left near the right edge
+        var top = y - h - 12 < Top ? y + 12 : y - h - 12;
+        var left = Math.Clamp(x - w / 2, X(MinT) + 4, Math.Max(X(MinT) + 4, Plot.ActualWidth - w - 4));
+        Canvas.SetLeft(_markerPill, left);
+        Canvas.SetTop(_markerPill, top);
+        _marker.Visibility = _markerAcross.Visibility = _markerDot.Visibility = _markerPill.Visibility = Visibility.Visible;
+    }
+
+    /// <summary>The speed the curve on screen asks for at this temperature (flat before the first point and after the last).</summary>
+    double SpeedAt(double tempC)
+    {
+        if (tempC <= _shown[0].TempC) return _shown[0].Percent;
+        for (var i = 1; i < _shown.Count; i++)
+        {
+            var (a, b) = (_shown[i - 1], _shown[i]);
+            if (tempC <= b.TempC) return b.TempC <= a.TempC ? b.Percent : a.Percent + (b.Percent - a.Percent) * (tempC - a.TempC) / (b.TempC - a.TempC);
+        }
+        return _shown[^1].Percent;
     }
 
     void UpdateTexts()

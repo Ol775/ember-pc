@@ -106,7 +106,7 @@
                             <Rectangle Width="14" Height="3" Fill="{DynamicResource GpuBrush}" VerticalAlignment="Center" />
                             <TextBlock Text="GPU" Margin="6,0,0,0" />
                         </StackPanel>
-                        <Canvas Height="260" ClipToBounds="True" SizeChanged="OnChartSizeChanged">
+                        <Canvas x:Name="HistoryCanvas" Height="260" ClipToBounds="True" SizeChanged="OnChartSizeChanged">
                             <Polyline Points="{Binding CpuLine}" Stroke="{DynamicResource AccentBrush}" StrokeThickness="2"
                                       StrokeLineJoin="Round" />
                             <Polyline Points="{Binding GpuLine}" Stroke="{DynamicResource GpuBrush}" StrokeThickness="2"
