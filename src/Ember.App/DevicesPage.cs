@@ -125,7 +125,7 @@ public sealed class DevicesPage : UserControl
     /// <summary>Beta builds only: installs or removes the Stream Deck plugin (keys for lights, fan modes and live temperatures).</summary>
     FrameworkElement StreamDeckCard(StreamDeckInstaller.Detected d)
     {
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 10, 0) };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal };
         void Act(string label, Func<string> action)
         {
             buttons.Children.Add(Pill(label, () => { _streamDeckNote = action(); StreamDeckInstaller.Detect(true); _key = null; }, label + " the Stream Deck plugin"));
@@ -141,7 +141,7 @@ public sealed class DevicesPage : UserControl
             StreamDeckState.NotInstalled => "Not in Stream Deck yet.",
             _ => "Plugin version " + d.Installed,
         };
-        return Card("Stream Deck", pill, d.State == StreamDeckState.Installed, "Keys for lights, fan modes and live temperatures", detail, buttons.Children.Count > 0 ? buttons : null);
+        return Card("Stream Deck", pill, d.State == StreamDeckState.Installed, "Keys for lights, fan modes and live temperatures", detail, actions: buttons.Children.Count > 0 ? buttons : null);
     }
 
     static FrameworkElement BetaTag()
@@ -153,7 +153,7 @@ public sealed class DevicesPage : UserControl
         return tag;
     }
 
-    static FrameworkElement Card(string title, string pill, bool good, string blurb, string detail, FrameworkElement? toggle = null)
+    static FrameworkElement Card(string title, string pill, bool good, string blurb, string detail, FrameworkElement? toggle = null, FrameworkElement? actions = null)
     {
         var head = new DockPanel();
         var chip = new Border
@@ -173,6 +173,7 @@ public sealed class DevicesPage : UserControl
         body.Children.Add(head);
         body.Children.Add(WithMargin(Text(blurb, muted: true, size: 13), 0, 8, 0, 0));
         body.Children.Add(WithMargin(Text(detail, size: 13), 0, 6, 0, 0));
+        if (actions is not null) body.Children.Add(WithMargin(actions, 0, 10, 0, 0)); // buttons go under the text: in the header they cover the title on a narrow card
         var box = Panel(title, body, new Thickness(6));
         box.Header = null; // the card shows its own title
         return box;
