@@ -151,7 +151,7 @@ Write-Host 'What Ember needs on this PC:'
 function Show([string]$what, [bool]$ok, [string]$fix) { if ($ok) { Write-Host "  OK       $what" } else { Write-Warning "$what is missing. $fix"; } }
 Show 'Ember app and services' ((Test-Path $appExe) -and (Test-Path $svcExe) -and (Test-Path $wdExe)) 'Run setup again.'
 Show 'OpenRGB (shipped with Ember, lights motherboard, memory, fans and more)' (Test-Path (Join-Path $InstallDir 'App\OpenRGB\OpenRGB.exe')) 'Run setup again; lighting for OpenRGB devices will not work without it.'
-Show 'Corsair iCUE SDK library (shipped with Ember)' (Test-Path (Join-Path $InstallDir 'App\iCUE\iCUESDK.x64_2019.dll')) 'Run setup again; Corsair lighting will not work without it.'
+Show 'Corsair iCUE SDK libraries (newer and older, shipped with Ember)' ((Test-Path (Join-Path $InstallDir 'App\iCUE\iCUESDK.x64_2019.dll')) -and (Test-Path (Join-Path $InstallDir 'App\iCUE\CUESDK.x64_2019.dll'))) 'Run setup again; Corsair lighting will not work without them.'
 & sc.exe query PawnIO *> $null
 Show 'PawnIO driver (motherboard sensors and fan headers)' ($LASTEXITCODE -eq 0) 'Run scripts\install-pawnio.ps1 as administrator, or run setup again with internet access.'
 $vc = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64' -ErrorAction SilentlyContinue

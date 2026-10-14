@@ -52,7 +52,7 @@ public partial class MainWindow : Window
              .. BuildFeatures.Current.NewIntegrations ? new IDeviceSource[] { new Ember.Lighting.Hue.HueSource(HueConnection),
              new Ember.Lighting.Nanoleaf.NanoleafSource(NanoleafConnection),
              new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp)),
-             new Ember.Lighting.Corsair.CorsairSource(() => Ember.Lighting.Corsair.NativeCorsairApi.TryLoad()) } : []]);
+             new Ember.Lighting.Corsair.CorsairSource(Ember.Lighting.Corsair.CorsairApiChain.Open) } : []]);
         Lights.Attach(_lights);
         _lights.Start();
 

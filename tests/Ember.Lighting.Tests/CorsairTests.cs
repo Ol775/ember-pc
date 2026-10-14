@@ -106,3 +106,74 @@ public class CorsairRefusedTests
         Assert.Contains("4.32.129", src.Status);
     }
 }
+
+public class CorsairChainTests
+{
+    sealed class Api(CorsairState state, string detail, params CorsairDevice[] devices) : ICorsairApi
+    {
+        public CorsairState State = state;
+        public int Connects, Disconnects;
+        public string Detail { get; } = detail;
+        public CorsairState Connect() { Connects++; return State; }
+        public IReadOnlyList<CorsairDevice> Devices() => devices;
+        public bool SetColors(string deviceId, uint[] ledIds, byte[] rgb) => true;
+        public void Disconnect() => Disconnects++;
+        public void Dispose() { }
+    }
+
+    static readonly CorsairDevice Kb = new("kb", "K70", 1, [1, 2]);
+
+    [Fact]
+    public void The_newer_sdk_is_used_when_it_connects_and_the_older_is_left_alone()
+    {
+        var newer = new Api(CorsairState.Connected, "new", Kb);
+        var older = new Api(CorsairState.Connected, "old");
+        var chain = new CorsairApiChain(newer, older);
+        Assert.Equal(CorsairState.Connected, chain.Connect());
+        Assert.Single(chain.Devices());
+        Assert.Equal(0, older.Connects);
+    }
+
+    [Theory]
+    [InlineData(CorsairState.Refused)]
+    [InlineData(CorsairState.Unavailable)]
+    public void When_the_newer_sdk_is_refused_the_older_one_takes_over(CorsairState newerState)
+    {
+        var chain = new CorsairApiChain(new Api(newerState, "new: refused"), new Api(CorsairState.Connected, "old", Kb));
+        Assert.Equal(CorsairState.Connected, chain.Connect());
+        Assert.Equal("kb", chain.Devices().Single().Id);
+        Assert.True(chain.SetColors("kb", [1, 2], new byte[6]));
+    }
+
+    [Fact]
+    public void The_older_sdk_waits_while_the_newer_one_is_still_connecting()
+    {
+        var older = new Api(CorsairState.Connected, "old", Kb);
+        var chain = new CorsairApiChain(new Api(CorsairState.Connecting, "new: connecting"), older);
+        Assert.Equal(CorsairState.Connecting, chain.Connect());
+        Assert.Equal(0, older.Connects);
+    }
+
+    [Fact]
+    public void When_neither_connects_the_status_carries_both_answers()
+    {
+        var chain = new CorsairApiChain(new Api(CorsairState.Refused, "new: refused"), new Api(CorsairState.Unavailable, "old: not found"));
+        Assert.Equal(CorsairState.Refused, chain.Connect());
+        Assert.Contains("new: refused", chain.Detail);
+        Assert.Contains("old: not found", chain.Detail);
+        Assert.Empty(chain.Devices());
+    }
+
+    [Fact]
+    public void A_dropped_connection_starts_over_with_the_newer_sdk()
+    {
+        var newer = new Api(CorsairState.Refused, "new");
+        var older = new Api(CorsairState.Connected, "old", Kb);
+        var chain = new CorsairApiChain(newer, older);
+        chain.Connect();                         // the older one is active
+        older.State = CorsairState.Unavailable;  // iCUE went away
+        newer.State = CorsairState.Connected;    // and came back letting the newer SDK in
+        Assert.Equal(CorsairState.Connected, chain.Connect());
+        Assert.Equal("new", chain.Detail);
+    }
+}

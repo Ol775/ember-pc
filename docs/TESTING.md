@@ -111,6 +111,8 @@ reach the tray): the menu, double-click to open, and Quit.
 
 - [ ] OpenRGB starts without a window and without the Zone Initialization question (needs a PC with addressable RGB headers, such as the MSI board JRAINBOW1 and 2).
 
+- [ ] Corsair with an iCUE that refuses the newer SDK: Ember falls back to the older CUE SDK and lists the devices; the Devices page and the log say which SDK is in use.
+
 ## Several devices and shared paint files
 
 Unit-tested (fills across the canvas, the library folder, name safety). The buttons on the Lights page were not reached by

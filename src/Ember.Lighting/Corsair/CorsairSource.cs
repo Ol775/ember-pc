@@ -50,7 +50,7 @@ public sealed class CorsairSource(Func<ICorsairApi?> open) : IDeviceSource, IAsy
             if (_api is null)
             {
                 _api = open();
-                if (_api is null) { Status = "The iCUE SDK file is missing from this Ember install. Run the Ember installer again."; return Task.FromResult<IReadOnlyList<IDeviceSink>>([]); }
+                if (_api is null) { Status = "The Corsair SDK files are missing from this Ember install. Run the Ember installer again."; return Task.FromResult<IReadOnlyList<IDeviceSink>>([]); }
             }
             switch (_api.Connect())
             {

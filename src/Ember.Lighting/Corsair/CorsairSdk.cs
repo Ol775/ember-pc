@@ -25,12 +25,18 @@ public interface ICorsairApi : IDisposable
 /// <summary>Where the iCUE SDK file Ember ships sits: next to the app, in an "iCUE" folder.</summary>
 public static class CorsairLocator
 {
-    public const string FileName = "iCUESDK.x64_2019.dll";
+    public const string FileName = "iCUESDK.x64_2019.dll", LegacyFileName = "CUESDK.x64_2019.dll";
 
     public static string? Find(string? appFolder = null)
     {
         var folder = appFolder ?? AppContext.BaseDirectory;
         var path = Path.Combine(folder, "iCUE", FileName);
+        return File.Exists(path) ? path : null;
+    }
+
+    public static string? FindLegacy(string? appFolder = null)
+    {
+        var path = Path.Combine(appFolder ?? AppContext.BaseDirectory, "iCUE", LegacyFileName);
         return File.Exists(path) ? path : null;
     }
 }
