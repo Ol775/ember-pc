@@ -2,6 +2,21 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.1.0-beta.5 (2026-10-14)
+
+### Added
+
+- **A "What Ember needs" check at the end of install.** Setup lists whether the app and services, OpenRGB, the Corsair iCUE library, the PawnIO driver and the Visual C++ runtime are in place, and warns with a fix for anything that is not. Programs made by other companies (G HUB, iCUE, Razer Synapse, the Govee and Hue apps) are listed as optional.
+- **Temperature history chart.** Gridlines every 20 degrees in your unit, minute marks, and a dot with a label at the end of each line showing the temperature now.
+- **Fan curve marker.** A dot on the curve at the current temperature, with guides to both axes and a label such as "53 °C · 22%".
+
+### Fixed
+
+- **Install no longer fails when the PawnIO driver is already installed.** Setup skips it when the installed version is current, and closes OpenRGB for a moment to update an older one. A PawnIO setup that reports an error but leaves the driver in place no longer stops the install.
+- **Install no longer fails when OpenRGB is running.** Setup closes programs running from Ember's own folder (the OpenRGB that Ember starts) and retries locked files. An OpenRGB you run from somewhere else is left alone.
+- **OpenRGB's "Zone Initialization" window no longer pops up.** Ember starts OpenRGB as a server without a window.
+- **Corsair: a clear message when iCUE refuses Ember.** It says to switch on Enable SDK in iCUE (Settings, Software and Games), restart iCUE, and try Ember without Run as administrator. The log records each iCUE session outcome once.
+
 ## 1.1.0-beta.4 (2026-10-14)
 
 ### Fixed
