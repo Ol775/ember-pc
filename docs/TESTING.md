@@ -145,3 +145,18 @@ real learning over days, and that the applied curve keeps temperatures sensible.
 - [ ] The applied curve still obeys the safety rules (full speed at 90 °C, never below the stall floor).
 - [x] The suggestion follows the noise or cooling slider (quieter to cooler). (Checked: 0, 25, 50 and 100 on the slider give floors of 20, 24, 28 and 35 percent.)
 - [ ] The learning data stays on this PC (see PRIVACY.md) and can be cleared from Settings.
+
+## Stream Deck plugin (beta; the install and a hello plugin were seen on the PC, the real keys are not yet checked)
+
+An unsigned plugin was installed by Stream Deck 7.6 and its program registered with the app (2026-10-14). Fan keys follow the fan safety rule: keep a temperature monitor open and be ready to set Performance.
+
+- [ ] Devices page, Stream Deck card (beta builds only): Install opens the file in Stream Deck, it asks to confirm, and the card then says Installed with the plugin version.
+- [ ] The "Ember (beta)" group shows seven actions in Stream Deck; the settings panel for Scene lists Ember's scenes, Fan mode lists the five modes, Brightness offers Brighter or Dimmer, and Temperature or fan speed offers the four readouts.
+- [ ] Scene key: pressing it changes the lights and the key lights up while that scene is current.
+- [ ] Lights on/off and Brightness keys change the lights; brightness stops at 0 and 100 percent.
+- [ ] Fan mode keys and the Cycle key change the mode (watch the tray or the Fans page); the Cycle key goes Super quiet, Quiet, Normal, Performance, Extreme, then round again, and never selects Manual or AI.
+- [ ] The four readout keys match the dashboard (CPU and GPU temperature, CPU fan and GPU fan speed) and show a dash when a reading is missing; temperatures turn amber from 70 C and red from 85 C.
+- [ ] Open Ember brings the window to the front when Ember is running, and starts Ember (only one copy) when it is closed.
+- [ ] With Ember closed every key except Open says "offline", presses do nothing, and they recover within a few seconds of Ember starting.
+- [ ] Restarting Stream Deck, and restarting the Ember service, leave the keys working.
+- [ ] Update (after installing a newer Ember) replaces the plugin after Stream Deck confirms; Remove deletes it (if Stream Deck holds the files, quit Stream Deck and try again).

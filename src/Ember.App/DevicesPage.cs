@@ -44,6 +44,8 @@ public sealed class DevicesPage : UserControl
         var key = vm.FansPage.ServiceAvailable + "|" + string.Join(";", headers.Select(h => h.Id + h.Name + h.StateText)) + "#"
             + string.Join(";", devices.Select(d => d.Id + d.Name + d.Source + d.Disabled)) + "#" + string.Join(";", status)
             + "#" + string.Join(";", lights.Problems.Select(p => p.Key + p.Value));
+        var streamDeck = BuildFeatures.IsProduction ? null : StreamDeckInstaller.Detect();
+        key += "#" + streamDeck?.State + streamDeck?.Installed + streamDeck?.Bundled + _streamDeckNote;
         if (key == _key) return;
         _key = key;
 
@@ -59,6 +61,7 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Source("Nanoleaf", "Nanoleaf light panels, through the controller on your network", devices, status, lights));
         _cards.Children.Add(Source("Razer", "Razer Chroma devices, through Razer Synapse on this PC", devices, status, lights));
         _cards.Children.Add(Source("Corsair", "Corsair keyboards, mice, fans and more, through iCUE on this PC", devices, status, lights));
+        if (streamDeck is not null) _cards.Children.Add(StreamDeckCard(streamDeck));
 
         LayOutCards();
 
@@ -115,7 +118,31 @@ public sealed class DevicesPage : UserControl
     }
 
     /// <summary>Integrations written and unit-tested but not yet tried on real devices: every build marks them Beta.</summary>
-    static readonly HashSet<string> BetaIntegrations = ["Nanoleaf", "Razer"];
+    static readonly HashSet<string> BetaIntegrations = ["Nanoleaf", "Razer", "Stream Deck"];
+
+    string _streamDeckNote = "";
+
+    /// <summary>Beta builds only: installs or removes the Stream Deck plugin (keys for lights, fan modes and live temperatures).</summary>
+    FrameworkElement StreamDeckCard(StreamDeckInstaller.Detected d)
+    {
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 10, 0) };
+        void Act(string label, Func<string> action)
+        {
+            buttons.Children.Add(Pill(label, () => { _streamDeckNote = action(); StreamDeckInstaller.Detect(true); _key = null; }, label + " the Stream Deck plugin"));
+        }
+        if (d.State == StreamDeckState.NotInstalled) Act("Install", StreamDeckInstaller.Install);
+        if (d.State == StreamDeckState.NeedsUpdate) Act("Update", StreamDeckInstaller.Install);
+        if (d.State is StreamDeckState.Installed or StreamDeckState.NeedsUpdate) Act("Remove", StreamDeckInstaller.Remove);
+        var pill = d.State switch { StreamDeckState.Installed => "Installed", StreamDeckState.NeedsUpdate => "Update available", StreamDeckState.NotInstalled => "Not installed", _ => "Not found" };
+        var detail = _streamDeckNote.Length > 0 ? _streamDeckNote : d.State switch
+        {
+            StreamDeckState.NotFound when d.Bundled is null => "The plugin file is not part of this installation.",
+            StreamDeckState.NotFound => "The Stream Deck app from Elgato was not found on this PC.",
+            StreamDeckState.NotInstalled => "Not in Stream Deck yet.",
+            _ => "Plugin version " + d.Installed,
+        };
+        return Card("Stream Deck", pill, d.State == StreamDeckState.Installed, "Keys for lights, fan modes and live temperatures", detail, buttons.Children.Count > 0 ? buttons : null);
+    }
 
     static FrameworkElement BetaTag()
     {
