@@ -2,6 +2,19 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.1.0-beta.3 (2026-10-14)
+
+### Added
+
+- **A switch for every integration.** On the Devices page each card (OpenRGB, Govee, Logitech, Hue, Nanoleaf, Razer, Corsair) can be switched off and on. While off, Ember does not look for its devices or send to them, and lets go of G HUB, iCUE or OpenRGB.
+- **Identify button.** Each device row on the Devices page has an Identify button that flashes that device white three times, so you can tell which physical device it is.
+- **Choose the screen for screen sync, per scene.** With more than one screen, the Screen sync layer offers which screen to follow. Each scene keeps its own choice.
+- **Diagnostic log and report.** A plain log of what Ember did and why something failed is kept in `%AppData%\Ember\logs` for a week and never leaves the PC. In Settings, About, **Copy diagnostic report** puts versions, integration status, devices and the recent log on the clipboard (keys and passwords are blanked), and **Open log folder** opens the folder.
+
+### Changed
+
+- **Corsair iCUE is more patient and more talkative.** A refused or lost iCUE connection is retried after 15 seconds instead of on every look, and the Corsair card and the log now say what iCUE answered.
+
 ## 1.1.0-beta.2 (2026-10-14)
 
 ### Added
