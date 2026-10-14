@@ -157,6 +157,8 @@ An unsigned plugin was installed by Stream Deck 7.6 and its program registered w
 - [ ] Fan mode keys and the Cycle key change the mode (watch the tray or the Fans page); the Cycle key goes Super quiet, Quiet, Normal, Performance, Extreme, then round again, and never selects Manual or AI.
 - [ ] The four readout keys match the dashboard (CPU and GPU temperature, CPU fan and GPU fan speed) and show a dash when a reading is missing; temperatures turn amber from 70 C and red from 85 C.
 - [ ] Open Ember brings the window to the front when Ember is running, and starts Ember (only one copy) when it is closed.
-- [ ] With Ember closed every key except Open says "offline", presses do nothing, and they recover within a few seconds of Ember starting.
+- [ ] With the Ember app closed the Scene, Lights and Brightness keys say "offline" (a press flashes the warning), Open still works, and they recover within a few seconds of Ember starting. The fan and readout keys follow the service, so they keep working while only the app is closed.
+- [ ] Hold the Brightness key: it keeps stepping until released. Hold the Cycle key for about half a second: it goes back one mode instead of forward. Hold a Scene key: it steps to the next scene; a short tap picks the key's own scene.
+- [ ] Stop the Ember service (or let it hang): within about five seconds the readout keys show a dash rather than the last numbers.
 - [ ] Restarting Stream Deck, and restarting the Ember service, leave the keys working.
 - [ ] Update (after installing a newer Ember) replaces the plugin after Stream Deck confirms; Remove deletes it (if Stream Deck holds the files, quit Stream Deck and try again).

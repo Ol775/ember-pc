@@ -1,11 +1,13 @@
 #Requires -Version 5.1
 # Draws the Stream Deck plugin's icons (src\Ember.StreamDeck\plugin\images) in Ember's colours (accent orange #ff7a2f, dark #1c1c1e):
 #   plugin, category, key: Ember's flame in orange on a dark rounded tile (same shape as scripts\make-icon.ps1)
-#   one per action: an orange rounded tile with a dark letter, which reads on Stream Deck's dark action list
+#   one per action: an orange rounded tile with a dark picture (bulb, sun, fan, ...), which reads on Stream Deck's dark action list.
+#     The pictures are the paths in src\Ember.Core\StreamDeckGlyphs.json, the same ones the key faces draw.
 # Each is written as <name>.png and <name>@2x.png. Run it again after changing the list below; the PNG files are committed.
 param([string]$OutDir = (Join-Path (Split-Path $PSScriptRoot -Parent) 'src\Ember.StreamDeck\plugin\images'))
-Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Drawing, PresentationCore, PresentationFramework, WindowsBase
 New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
+$root = Split-Path $PSScriptRoot -Parent
 
 $orange = [System.Drawing.ColorTranslator]::FromHtml('#ff7a2f')
 $dark = [System.Drawing.ColorTranslator]::FromHtml('#1c1c1e')
@@ -40,38 +42,54 @@ function New-Tile([int]$px, [double]$radius) {
     $p.CloseFigure(); $p
 }
 
-# name, base size in pixels, kind ('flame' or a letter)
+function Save-Flame([string]$file, [int]$px) {
+    $bmp = New-Object System.Drawing.Bitmap $px, $px
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    $g.SmoothingMode = 'AntiAlias'
+    $g.Clear([System.Drawing.Color]::Transparent)
+    $g.FillPath((New-Object System.Drawing.SolidBrush $dark), (New-Tile $px ($px * 0.22)))
+    $k = $px / 256.0
+    $g.FillPath((New-Object System.Drawing.SolidBrush $orange), (New-Shape $flameOuter $k))
+    $g.FillPath((New-Object System.Drawing.SolidBrush $dark), (New-Shape $flameInner $k))
+    $bmp.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
+    $g.Dispose(); $bmp.Dispose()
+}
+
+$glyphs = Get-Content (Join-Path $root 'src\Ember.Core\StreamDeckGlyphs.json') -Raw | ConvertFrom-Json
+function Save-Glyph([string]$file, [int]$px, [string]$name) {
+    $brush = { param($hex) New-Object System.Windows.Media.SolidColorBrush ([System.Windows.Media.Color][System.Windows.Media.ColorConverter]::ConvertFromString($hex)) }
+    $dv = New-Object System.Windows.Media.DrawingVisual
+    $dc = $dv.RenderOpen()
+    $radius = $px * 0.22
+    $dc.DrawRoundedRectangle((& $brush '#ff7a2f'), $null, (New-Object System.Windows.Rect 0, 0, $px, $px), $radius, $radius)
+    $pen = New-Object System.Windows.Media.Pen (& $brush '#1c1c1e'), 2.2
+    $pen.StartLineCap = 'Round'; $pen.EndLineCap = 'Round'; $pen.LineJoin = 'Round'
+    $s = $px * 0.72 / 24.0
+    $offset = $px * 0.14
+    $dc.PushTransform((New-Object System.Windows.Media.MatrixTransform $s, 0, 0, $s, $offset, $offset))
+    foreach ($d in $glyphs.$name) { $dc.DrawGeometry($null, $pen, [System.Windows.Media.Geometry]::Parse($d)) }
+    $dc.Pop()
+    $dc.Close()
+    $rtb = New-Object System.Windows.Media.Imaging.RenderTargetBitmap $px, $px, 96, 96, ([System.Windows.Media.PixelFormats]::Pbgra32)
+    $rtb.Render($dv)
+    $enc = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
+    $enc.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($rtb))
+    $fs = [System.IO.File]::Create($file)
+    try { $enc.Save($fs) } finally { $fs.Dispose() }
+}
+
+# name, base size in pixels, 'flame' or the glyph's name
 $icons = @(
     @('plugin', 256, 'flame'), @('category', 28, 'flame'), @('key', 72, 'flame'),
-    @('scene', 20, 'S'), @('power', 20, 'L'), @('brightness', 20, 'B'), @('fanmode', 20, 'F'),
-    @('cycle', 20, 'C'), @('open', 20, 'O'), @('readout', 20, 'T')
+    @('scene', 20, 'scene'), @('power', 20, 'bulb'), @('brightness', 20, 'sun'), @('fanmode', 20, 'fan'),
+    @('cycle', 20, 'cycle'), @('open', 20, 'open'), @('readout', 20, 'thermometer')
 )
 foreach ($i in $icons) {
     $name = $i[0]; $size = [int]$i[1]; $kind = $i[2]
     foreach ($scale in 1, 2) {
         $px = $size * $scale
-        $bmp = New-Object System.Drawing.Bitmap $px, $px
-        $g = [System.Drawing.Graphics]::FromImage($bmp)
-        $g.SmoothingMode = 'AntiAlias'
-        $g.TextRenderingHint = 'AntiAliasGridFit'
-        $g.Clear([System.Drawing.Color]::Transparent)
-        $tile = New-Tile $px ($px * 0.22)
-        if ($kind -eq 'flame') {
-            $g.FillPath((New-Object System.Drawing.SolidBrush $dark), $tile)
-            $k = $px / 256.0
-            $g.FillPath((New-Object System.Drawing.SolidBrush $orange), (New-Shape $flameOuter $k))
-            $g.FillPath((New-Object System.Drawing.SolidBrush $dark), (New-Shape $flameInner $k))
-        }
-        else {
-            $g.FillPath((New-Object System.Drawing.SolidBrush $orange), $tile)
-            $font = New-Object System.Drawing.Font 'Segoe UI', ([single]($px * 0.6)), ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
-            $fmt = New-Object System.Drawing.StringFormat
-            $fmt.Alignment = 'Center'; $fmt.LineAlignment = 'Center'
-            $g.DrawString($kind, $font, (New-Object System.Drawing.SolidBrush $dark), (New-Object System.Drawing.RectangleF 0, 0, $px, $px), $fmt)
-        }
         $file = Join-Path $OutDir ($(if ($scale -eq 1) { "$name.png" } else { "$name@2x.png" }))
-        $bmp.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
-        $g.Dispose(); $bmp.Dispose()
+        if ($kind -eq 'flame') { Save-Flame $file $px } else { Save-Glyph $file $px $kind }
     }
 }
 Write-Host "Wrote $($icons.Count * 2) icons to $OutDir"

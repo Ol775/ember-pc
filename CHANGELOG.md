@@ -6,7 +6,7 @@ All notable changes to Ember. Newest first. Ember follows [semantic versioning](
 
 ### Added
 
-- **Stream Deck plugin (beta).** Settings, Devices has a new Stream Deck card with an Install button that adds an "Ember (beta)" group of keys to the Stream Deck app: switch lighting scene, lights on or off, brighter and dimmer, set a fan mode, one key that steps to the next fan mode, open Ember (or start it when it is closed), and live CPU and GPU temperature and fan speed on the key faces. The keys say "offline" while Ember is not running. The card also updates and removes the plugin. Beta builds only.
+- **Stream Deck plugin (beta).** Settings, Devices has a new Stream Deck card with an Install button that adds an "Ember (beta)" group of keys to the Stream Deck app: switch lighting scene (hold to step to the next scene), lights on or off, brighter and dimmer (hold to keep going), set a fan mode, one key that steps to the next fan mode (hold to go back), open Ember (or start it when it is closed), and live CPU and GPU temperature and fan speed on the key faces, each with its own picture in Ember's orange. The scene, lights and brightness keys say "offline" while the Ember app is not running, and the readouts show a dash when the service stops reporting. The card also updates and removes the plugin. Beta builds only.
 
 ## 1.2.0-beta.1 (2026-10-14)
 

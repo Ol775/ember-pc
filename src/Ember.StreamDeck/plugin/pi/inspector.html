@@ -23,6 +23,7 @@
     <option value="gpuTemp">GPU temperature</option><option value="gpuFan">GPU fan speed</option>
   </select></div>
 <div class="row" id="row-none"><p>Nothing to set for this key.</p></div>
+<p id="hint"></p>
 <script>
   let ws, uuid, action = "", settings = {};
   const $ = id => document.getElementById(id);
@@ -44,7 +45,14 @@
     show();
   }
 
+  const hints = {
+    scene: "Tap switches to this scene. Hold steps to the next scene.",
+    brightness: "Tap makes one step. Hold keeps going.",
+    cyclemode: "Tap goes to the next fan mode. Hold goes back to the previous one."
+  };
+
   function layout() {
+    $("hint").textContent = hints[action] || "";
     const wanted = rows[action] || [];
     for (const r of document.querySelectorAll(".row")) r.classList.remove("on");
     if (wanted.length === 0) $("row-none").classList.add("on");

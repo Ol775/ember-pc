@@ -12,6 +12,9 @@ public sealed record Readouts(double? CpuTemp, double? CpuFanRpm, double? GpuTem
     /// (the CPU header), the GPU fan is the graphics card's own fan. A stale snapshot gives no readings at all.
     /// A fan that has stopped reads 0, which is a real value and not the same as no reading.
     /// </summary>
+    /// <summary>Like <see cref="From(Snapshot)"/>, but a snapshot older than <see cref="DashboardState.StaleAfter"/> (the service stopped sending) gives no readings.</summary>
+    public static Readouts From(Snapshot s, DateTimeOffset now) => StreamDeckLogic.IsFresh(s, now) ? From(s) : None;
+
     public static Readouts From(Snapshot s)
     {
         if (s.Stale) return None;
@@ -37,6 +40,32 @@ public static class StreamDeckLogic
         var i = current is { } m ? Array.IndexOf(CycleOrder, m) : -1;
         return i < 0 ? FanMode.Normal : CycleOrder[(i + 1) % CycleOrder.Length];
     }
+
+    /// <summary>The mode before <paramref name="current"/>, wrapping round. From a mode that is not on the list it goes to Normal, like <see cref="Next"/>.</summary>
+    public static FanMode Previous(FanMode? current)
+    {
+        var i = current is { } m ? Array.IndexOf(CycleOrder, m) : -1;
+        return i < 0 ? FanMode.Normal : CycleOrder[(i + CycleOrder.Length - 1) % CycleOrder.Length];
+    }
+
+    /// <summary>The scene after <paramref name="current"/>, wrapping round; the first scene when the current one is not in the list; null when there are none.</summary>
+    public static string? NextScene(string current, IReadOnlyList<string> scenes)
+    {
+        if (scenes.Count == 0) return null;
+        var i = scenes.ToList().IndexOf(current);
+        return i < 0 ? scenes[0] : scenes[(i + 1) % scenes.Count];
+    }
+
+    /// <summary>How long a key must be held before it counts as a long press (and before Brightness starts repeating).</summary>
+    public static readonly TimeSpan HoldDelay = TimeSpan.FromMilliseconds(500);
+
+    /// <summary>How often a held Brightness key repeats once the hold delay has passed.</summary>
+    public static readonly TimeSpan RepeatInterval = TimeSpan.FromMilliseconds(200);
+
+    public static bool IsLongPress(TimeSpan held) => held >= HoldDelay;
+
+    /// <summary>False for no snapshot, or one older than <see cref="DashboardState.StaleAfter"/> (a hung service keeps the pipe open but stops sending).</summary>
+    public static bool IsFresh(Snapshot? s, DateTimeOffset now) => s is not null && now - s.Timestamp <= DashboardState.StaleAfter;
 
     public static string ModeLabel(FanMode m) => FansViewState.Label(m);
 

@@ -100,3 +100,87 @@ public class StreamDeckLogicTests
         Assert.Equal("0", StreamDeckLogic.FormatRpm(0));
     }
 }
+
+public class StreamDeckPressTests
+{
+    [Theory]
+    [InlineData(FanMode.Quiet, FanMode.SuperQuiet)]
+    [InlineData(FanMode.Normal, FanMode.Quiet)]
+    [InlineData(FanMode.Extreme, FanMode.Performance)]
+    [InlineData(FanMode.SuperQuiet, FanMode.Extreme)]
+    public void Previous_steps_back_through_the_tray_order_and_wraps(FanMode from, FanMode to) =>
+        Assert.Equal(to, StreamDeckLogic.Previous(from));
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(FanMode.Manual)]
+    [InlineData(FanMode.Ai)]
+    public void Previous_from_an_unlisted_mode_goes_to_Normal(FanMode? from) =>
+        Assert.Equal(FanMode.Normal, StreamDeckLogic.Previous(from));
+
+    [Fact]
+    public void Next_then_previous_returns_to_the_start()
+    {
+        foreach (var m in StreamDeckLogic.CycleOrder) Assert.Equal(m, StreamDeckLogic.Previous(StreamDeckLogic.Next(m)));
+    }
+
+    [Theory]
+    [InlineData("A", "B")]
+    [InlineData("B", "C")]
+    [InlineData("C", "A")]
+    public void Next_scene_steps_through_the_list_and_wraps(string current, string expected) =>
+        Assert.Equal(expected, StreamDeckLogic.NextScene(current, ["A", "B", "C"]));
+
+    [Fact]
+    public void Next_scene_from_an_unknown_scene_goes_to_the_first() =>
+        Assert.Equal("A", StreamDeckLogic.NextScene("Gone", ["A", "B"]));
+
+    [Fact]
+    public void Next_scene_with_one_scene_stays_on_it() =>
+        Assert.Equal("A", StreamDeckLogic.NextScene("A", ["A"]));
+
+    [Fact]
+    public void Next_scene_with_no_scenes_is_null() =>
+        Assert.Null(StreamDeckLogic.NextScene("A", []));
+
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(499, false)]
+    [InlineData(500, true)]
+    [InlineData(2000, true)]
+    public void A_press_held_for_half_a_second_is_a_long_press(int ms, bool expected) =>
+        Assert.Equal(expected, StreamDeckLogic.IsLongPress(TimeSpan.FromMilliseconds(ms)));
+
+    [Fact]
+    public void Brightness_repeats_after_the_hold_delay_at_a_steady_rate()
+    {
+        Assert.Equal(TimeSpan.FromMilliseconds(500), StreamDeckLogic.HoldDelay);
+        Assert.Equal(TimeSpan.FromMilliseconds(200), StreamDeckLogic.RepeatInterval);
+    }
+}
+
+public class StreamDeckFreshnessTests
+{
+    static Snapshot At(DateTimeOffset t) => new(t, [new SensorReading("a", "Core (Tctl/Tdie)", HardwareKind.Cpu, SensorKind.Temperature, 60)], false);
+    static readonly DateTimeOffset Now = new(2026, 10, 14, 12, 0, 0, TimeSpan.Zero);
+
+    [Fact]
+    public void A_snapshot_from_a_moment_ago_is_used() =>
+        Assert.Equal(60, Readouts.From(At(Now.AddSeconds(-2)), Now).CpuTemp);
+
+    [Fact]
+    public void A_snapshot_older_than_the_stale_limit_gives_no_readings() =>
+        Assert.Null(Readouts.From(At(Now - DashboardState.StaleAfter - TimeSpan.FromSeconds(1)), Now).CpuTemp);
+
+    [Fact]
+    public void A_snapshot_exactly_at_the_limit_is_still_used() =>
+        Assert.Equal(60, Readouts.From(At(Now - DashboardState.StaleAfter), Now).CpuTemp);
+
+    [Fact]
+    public void Freshness_check_matches_for_the_mode()
+    {
+        Assert.True(StreamDeckLogic.IsFresh(At(Now.AddSeconds(-1)), Now));
+        Assert.False(StreamDeckLogic.IsFresh(At(Now.AddSeconds(-30)), Now));
+        Assert.False(StreamDeckLogic.IsFresh(null, Now));
+    }
+}

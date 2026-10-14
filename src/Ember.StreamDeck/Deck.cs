@@ -15,6 +15,9 @@ sealed class Deck(StreamDeckClient sd, string pluginUuid)
         public string Action { get; } = action;
         public Dictionary<string, string> Settings { get; set; } = settings;
         public string? LastSvg { get; set; }
+        /// <summary>The running hold timer (long press, or Brightness repeat) while the key is down.</summary>
+        public CancellationTokenSource? Hold { get; set; }
+        public volatile bool LongFired;
     }
 
     readonly Dictionary<string, Key> _keys = [];
@@ -54,14 +57,17 @@ sealed class Deck(StreamDeckClient sd, string pluginUuid)
                 await RenderAsync(ct).ConfigureAwait(false);
                 break;
             case "willDisappear" when e.Context is not null:
-                lock (_gate) _keys.Remove(e.Context);
+                lock (_gate) { if (_keys.Remove(e.Context, out var gone)) gone.Hold?.Cancel(); }
                 break;
             case "didReceiveSettings" when e.Context is not null:
                 lock (_gate) if (_keys.TryGetValue(e.Context, out var k)) { k.Settings = e.SettingsAsText(); k.LastSvg = null; }
                 await RenderAsync(ct).ConfigureAwait(false);
                 break;
             case "keyDown" when e.Context is not null:
-                await PressAsync(e.Context, e.SettingsAsText(), ct).ConfigureAwait(false);
+                await KeyDownAsync(e.Context, e.SettingsAsText(), ct).ConfigureAwait(false);
+                break;
+            case "keyUp" when e.Context is not null:
+                await KeyUpAsync(e.Context, e.SettingsAsText(), ct).ConfigureAwait(false);
                 break;
             case "propertyInspectorDidAppear" when e.Context is not null && e.Action is not null:
                 await SendChoicesAsync(e.Action, e.Context, ct).ConfigureAwait(false);
@@ -99,8 +105,11 @@ sealed class Deck(StreamDeckClient sd, string pluginUuid)
 
     EmberState State()
     {
+        // A service that hangs keeps its pipe open but stops sending: old numbers and an old mode are shown as nothing.
+        var now = DateTimeOffset.UtcNow;
         var snap = _snapshot;
-        return new EmberState(_appOnline, snap is null ? Readouts.None : Readouts.From(snap), snap?.Control?.Mode, _lights);
+        var fresh = StreamDeckLogic.IsFresh(snap, now);
+        return new EmberState(_appOnline, fresh ? Readouts.From(snap!, now) : Readouts.None, fresh ? snap!.Control?.Mode : null, _lights);
     }
 
     async Task RenderAsync(CancellationToken ct)
@@ -121,7 +130,71 @@ sealed class Deck(StreamDeckClient sd, string pluginUuid)
             await sd.SendAsync(StreamDeckMessages.SetImage(context, svg), ct).ConfigureAwait(false);
     }
 
-    async Task PressAsync(string context, Dictionary<string, string> settings, CancellationToken ct)
+    /// <summary>
+    /// Press and release. Brightness acts at once and repeats while held. Cycle fan mode and Lighting scene act on release
+    /// (tap: next mode, or the chosen scene) unless held for half a second, which acts straight away (hold: previous mode, or the next scene).
+    /// Every other key acts when pressed.
+    /// </summary>
+    async Task KeyDownAsync(string context, Dictionary<string, string> settings, CancellationToken ct)
+    {
+        Key? key;
+        lock (_gate) _keys.TryGetValue(context, out key);
+        if (key is null) return;
+        key.Hold?.Cancel();
+        key.LongFired = false;
+        switch (key.Action)
+        {
+            case StreamDeckActions.Brightness:
+                await PressAsync(context, settings, false, ct).ConfigureAwait(false);
+                key.Hold = Spawn(ct, async hold =>
+                {
+                    await Task.Delay(StreamDeckLogic.HoldDelay, hold).ConfigureAwait(false);
+                    while (!hold.IsCancellationRequested)
+                    {
+                        await PressAsync(context, settings, false, hold).ConfigureAwait(false);
+                        await Task.Delay(StreamDeckLogic.RepeatInterval, hold).ConfigureAwait(false);
+                    }
+                });
+                break;
+            case StreamDeckActions.CycleMode:
+            case StreamDeckActions.Scene:
+                key.Hold = Spawn(ct, async hold =>
+                {
+                    await Task.Delay(StreamDeckLogic.HoldDelay, hold).ConfigureAwait(false);
+                    key.LongFired = true;
+                    await PressAsync(context, settings, true, hold).ConfigureAwait(false);
+                });
+                break;
+            default:
+                await PressAsync(context, settings, false, ct).ConfigureAwait(false);
+                break;
+        }
+    }
+
+    async Task KeyUpAsync(string context, Dictionary<string, string> settings, CancellationToken ct)
+    {
+        Key? key;
+        lock (_gate) _keys.TryGetValue(context, out key);
+        if (key is null) return;
+        key.Hold?.Cancel();
+        key.Hold = null;
+        if (key.Action is StreamDeckActions.CycleMode or StreamDeckActions.Scene && !key.LongFired)
+            await PressAsync(context, settings, false, ct).ConfigureAwait(false);
+    }
+
+    static CancellationTokenSource Spawn(CancellationToken ct, Func<CancellationToken, Task> body)
+    {
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        _ = Task.Run(async () =>
+        {
+            try { await body(cts.Token).ConfigureAwait(false); }
+            catch (OperationCanceledException) { /* released */ }
+            catch (Exception) { /* a failed repeat must not take the plugin down */ }
+        });
+        return cts;
+    }
+
+    async Task PressAsync(string context, Dictionary<string, string> settings, bool longPress, CancellationToken ct)
     {
         string? action;
         lock (_gate) action = _keys.TryGetValue(context, out var k) ? k.Action : null;
@@ -132,8 +205,11 @@ sealed class Deck(StreamDeckClient sd, string pluginUuid)
         switch (action)
         {
             case StreamDeckActions.Scene:
-                if (Setting("scene").Length == 0) { await AlertAsync(context, ct).ConfigureAwait(false); return; }
-                reply = await AppClient.SendAsync(new SelectSceneRequest(Setting("scene")), ct: ct).ConfigureAwait(false);
+                var scene = longPress
+                    ? _lights is { } l ? StreamDeckLogic.NextScene(l.CurrentScene, l.Scenes) : null
+                    : Setting("scene");
+                if (string.IsNullOrEmpty(scene)) { await AlertAsync(context, ct).ConfigureAwait(false); return; }
+                reply = await AppClient.SendAsync(new SelectSceneRequest(scene), ct: ct).ConfigureAwait(false);
                 break;
             case StreamDeckActions.Power:
                 reply = await AppClient.SendAsync(new ToggleOnRequest(), ct: ct).ConfigureAwait(false);
@@ -148,8 +224,9 @@ sealed class Deck(StreamDeckClient sd, string pluginUuid)
                     : new AppReply(false, "No mode chosen.", null);
                 break;
             case StreamDeckActions.CycleMode:
-                reply = _snapshot?.Control?.Mode is { } current
-                    ? Plain(await ControlClient.SendAsync(new SetMode(StreamDeckLogic.Next(current)), ct).ConfigureAwait(false))
+                var fresh = StreamDeckLogic.IsFresh(_snapshot, DateTimeOffset.UtcNow);
+                reply = fresh && _snapshot?.Control?.Mode is { } current
+                    ? Plain(await ControlClient.SendAsync(new SetMode(longPress ? StreamDeckLogic.Previous(current) : StreamDeckLogic.Next(current)), ct).ConfigureAwait(false))
                     : new AppReply(false, "Ember service is not running.", null);
                 break;
             case StreamDeckActions.Open:
