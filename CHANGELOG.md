@@ -2,6 +2,12 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.2.0-beta.4 (2026-10-14)
+
+### Fixed
+
+- **The GPU colour now matches your accent and theme.** With a Blue, Purple or Teal accent (and Green in the light theme) the GPU temperature and chart line fell back to a fixed bright orange. It is now a partner colour worked out from your accent and adjusted for the light or dark theme, so a Blue accent gets a pink GPU line. The default orange accent keeps its blue GPU line.
+
 ## 1.2.0-beta.3 (2026-10-14)
 
 ### Fixed
