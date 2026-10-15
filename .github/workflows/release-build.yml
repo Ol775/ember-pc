@@ -28,7 +28,7 @@ jobs:
           EMBER_SIGN_PFX: ${{ secrets.EMBER_SIGN_PFX }}
           EMBER_SIGN_PASSWORD: ${{ secrets.EMBER_SIGN_PASSWORD }}
         run: ./scripts/build-release.ps1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ember-release
           path: |
