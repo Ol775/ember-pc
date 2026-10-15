@@ -23,6 +23,8 @@ public partial class MainWindow
         if (!BuildFeatures.IsProduction) return;
         NavRoadmap.Visibility = Visibility.Collapsed;
         RoadmapBox.Tag = "off";
+        MerossBox.Tag = "off";
+        MerossBox.Visibility = Visibility.Collapsed;
     }
 
     UpdateChannel UpdateChannelInUse => _vm.Prefs.Channel;

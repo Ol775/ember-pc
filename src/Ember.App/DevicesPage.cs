@@ -61,6 +61,7 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Source("Nanoleaf", "Nanoleaf light panels, through the controller on your network", devices, status, lights));
         _cards.Children.Add(Source("Razer", "Razer Chroma devices, through Razer Synapse on this PC", devices, status, lights));
         _cards.Children.Add(Source("Corsair", "Corsair keyboards, mice, fans and more, through iCUE on this PC", devices, status, lights));
+        if (!BuildFeatures.IsProduction) _cards.Children.Add(Source("Meross", "Meross bulbs and plugs, found on your network", devices, status, lights));
         if (streamDeck is not null) _cards.Children.Add(StreamDeckCard(streamDeck));
 
         LayOutCards();
@@ -118,7 +119,7 @@ public sealed class DevicesPage : UserControl
     }
 
     /// <summary>Integrations written and unit-tested but not yet tried on real devices: every build marks them Beta.</summary>
-    static readonly HashSet<string> BetaIntegrations = ["Nanoleaf", "Razer", "Stream Deck"];
+    static readonly HashSet<string> BetaIntegrations = ["Nanoleaf", "Razer", "Stream Deck", "Meross"];
 
     string _streamDeckNote = "";
     StreamDeckState? _streamDeckNoteState; // the card state the note was written in; the note goes away when the state moves on

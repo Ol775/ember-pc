@@ -278,7 +278,7 @@ public sealed class LightingManager : IAsyncDisposable
     public bool IsSourceDisabled(string source) => State.DisabledSources?.Contains(source) == true;
 
     /// <summary>
-    /// Switches a whole integration (OpenRGB, Govee, Logitech, Hue, Nanoleaf, Razer, Corsair) off or on. While it is off Ember does not
+    /// Switches a whole integration (OpenRGB, Govee, Logitech, Hue, Nanoleaf, Razer, Corsair, Meross) off or on. While it is off Ember does not
     /// look for its devices, does not send to them and lets go of its connection to the maker's software.
     /// </summary>
     public void SetSourceDisabled(string source, bool disabled)
@@ -431,7 +431,7 @@ public sealed class LightingManager : IAsyncDisposable
         Changed?.Invoke();
     }
 
-    string SourceOf(IDeviceSink sink) => sink.Id.StartsWith("razer:", StringComparison.Ordinal) ? "Razer" : sink.Id.StartsWith("govee", StringComparison.Ordinal) ? "Govee" : sink.Id.StartsWith("logitech", StringComparison.Ordinal) ? "Logitech" : sink.Id.StartsWith("corsair:", StringComparison.Ordinal) ? "Corsair" : sink.Id.StartsWith("hue:", StringComparison.Ordinal) ? "Hue" : sink.Id.StartsWith("nanoleaf:", StringComparison.Ordinal) ? "Nanoleaf" : "OpenRGB";
+    string SourceOf(IDeviceSink sink) => sink.Id.StartsWith("razer:", StringComparison.Ordinal) ? "Razer" : sink.Id.StartsWith("govee", StringComparison.Ordinal) ? "Govee" : sink.Id.StartsWith("logitech", StringComparison.Ordinal) ? "Logitech" : sink.Id.StartsWith("corsair:", StringComparison.Ordinal) ? "Corsair" : sink.Id.StartsWith("hue:", StringComparison.Ordinal) ? "Hue" : sink.Id.StartsWith("nanoleaf:", StringComparison.Ordinal) ? "Nanoleaf" : sink.Id.StartsWith("meross:", StringComparison.Ordinal) ? "Meross" : "OpenRGB";
 
     /// <summary>Gives every new device a row on the canvas of the current scene, so it can be seen and moved.</summary>
     public static LightingState Placed(LightingState state, IReadOnlyList<IDeviceSink> sinks)

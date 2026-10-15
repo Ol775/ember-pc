@@ -2,6 +2,12 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.2.0-beta.6 (2026-10-15)
+
+### Added
+
+- **Meross bulbs and plugs (beta builds only).** Settings, Meross: sign in with your Meross account once (two-step codes are supported, and your password is never saved) and Ember finds your bulbs and plugs on your network and controls them directly. Bulbs follow the scene as one colour; a plug switches on while its lights show a colour and off when they go dark. Not yet tried on real devices.
+
 ## 1.2.0-beta.5 (2026-10-15)
 
 ### Added

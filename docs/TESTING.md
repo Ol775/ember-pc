@@ -75,6 +75,14 @@ _The unticked lines below were written before the check; the owner confirmed the
 - [ ] Black or the lights switched off turns the Hue lights off, and switching on brings them back.
 - [ ] Unlink forgets the bridge and its key; linking again works. A bridge whose address changes shows "could not reach" and recovers when its address is updated.
 
+## Meross (beta only; written from the community-documented protocol and unit-tested, never tried on a device)
+
+- [ ] Settings, Meross: sign in with the Meross account; the note says how many bulbs and plugs the account lists. A wrong password says so plainly. With two-step verification on the account, signing in without a code asks for one, and the code box then works.
+- [ ] Within about a minute the devices appear on the Devices page (same Wi-Fi as the PC). If they do not, note the Meross status line.
+- [ ] Place a bulb on the Lights page: it follows the scene colour about once a second, and goes off when the lights go off.
+- [ ] A plug clicks on when its lights show a colour and off when dark; Identify works on both.
+- [ ] Sign out forgets the account and the devices disappear. Production builds show no Meross card or settings.
+
 ## Nanoleaf (written and unit-tested against a pretend controller only)
 
 - [ ] Find controller lists the controller, or typing its address works.

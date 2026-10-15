@@ -53,7 +53,8 @@ public partial class MainWindow : Window
              new Ember.Lighting.Hue.HueSource(HueConnection),
              new Ember.Lighting.Nanoleaf.NanoleafSource(NanoleafConnection),
              new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp)),
-             new Ember.Lighting.Corsair.CorsairSource(Ember.Lighting.Corsair.CorsairApiChain.Open)]);
+             new Ember.Lighting.Corsair.CorsairSource(Ember.Lighting.Corsair.CorsairApiChain.Open),
+             .. BuildFeatures.IsProduction ? Array.Empty<IDeviceSource>() : [new Ember.Lighting.Meross.MerossSource(MerossSession,new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http))]]);
         Lights.Attach(_lights);
         _lights.Start();
         // Beta: lets the Stream Deck plugin reach the lights and the window.
@@ -465,6 +466,48 @@ public partial class MainWindow : Window
         GoveeNote.Text = _secrets.Set(GoveeKeyName, null) ? "Key removed." : "Windows would not remove the key.";
         _lights.RefreshDevices();
         Announce(GoveeNote);
+    }
+
+    // ---- Meross (beta builds only) ----
+
+    const string MerossSessionName = "meross-session";
+
+    Ember.Lighting.Meross.MerossAccount? MerossSession() => Ember.Lighting.Meross.MerossAccount.Restore(_secrets.Get(MerossSessionName));
+
+    async void OnMerossSignIn(object sender, RoutedEventArgs e)
+    {
+        var email = MerossEmail.Text.Trim();
+        var password = MerossPassword.Password;
+        if (email.Length == 0 || password.Length == 0) { MerossNote.Text = "Type your Meross email and password first."; Announce(MerossNote); return; }
+        MerossNote.Text = "Signing in to Meross…";
+        Announce(MerossNote);
+        try
+        {
+            var cloud = new Ember.Lighting.Meross.MerossCloudClient(_http);
+            var account = await cloud.SignInAsync(email, password, MerossCode.Text);
+            var devices = await cloud.GetDevicesAsync(account);
+            var usable = devices.Count(d => d.IsLight || d.Type.StartsWith("mss", StringComparison.OrdinalIgnoreCase));
+            if (!_secrets.Set(MerossSessionName, account.Serialise()))
+                MerossNote.Text = "Signed in, but Windows would not store the sign-in, so it was not kept.";
+            else
+            {
+                MerossNote.Text = $"Signed in. Meross lists {usable} bulb{(usable == 1 ? "" : "s")} and plug{(usable == 1 ? "" : "s")}; Ember looks for them on this network and they appear on the Lights page in a few seconds. Your password was not saved.";
+                MerossPassword.Clear();
+                MerossCode.Clear();
+                _lights.RefreshDevices();
+            }
+        }
+        catch (Exception ex) { MerossNote.Text = "Could not sign in: " + (ex is HttpRequestException or TaskCanceledException ? "no answer from Meross" : ex.Message); }
+        Announce(MerossNote);
+    }
+
+    void OnMerossSignOut(object sender, RoutedEventArgs e)
+    {
+        var ok = _secrets.Set(MerossSessionName, null);
+        MerossNote.Text = ok ? "Signed out. Ember forgot your Meross sign-in." : "Could not remove the sign-in.";
+        MerossCode.Clear();
+        _lights.RefreshDevices();
+        Announce(MerossNote);
     }
 
     // ---- Philips Hue ----
