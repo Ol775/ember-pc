@@ -15,10 +15,6 @@
 
 **Ember is a free, open source Windows app that shows your PC's temperatures and power draw, runs your fans on quiet-to-extreme curves, and lights your RGB gear, all from one calm, macOS-style window.** A small background service reads the sensors and writes fan speeds; the app only displays and asks. Nothing leaves your PC.
 
-<p align="center">
-  <a href="docs/images/dashboard.png"><img src="docs/images/dashboard.png" alt="Ember dashboard with live temperatures and fan speeds" width="80%"></a>
-</p>
-
 ## Features
 
 - **Live dashboard.** CPU, GPU, motherboard and fan sensors with a 10-minute temperature history, in Celsius or Fahrenheit.
@@ -36,21 +32,22 @@
 
 ## Screenshots
 
-<p align="center">
-  <a href="docs/images/power.png"><img src="docs/images/power.png" alt="Power page: whole PC draw measured at the wall, split into CPU, GPU and the rest, with a graph and a card for each part" width="80%"></a>
-</p>
-<p align="center">
-  <a href="docs/images/fans.png"><img src="docs/images/fans.png" alt="Fans page with modes and curve graph" width="48%"></a>
-  <a href="docs/images/lights.png"><img src="docs/images/lights.png" alt="Lights page with the device canvas, per-LED painting and gradient tools" width="48%"></a>
-</p>
-<p align="center">
-  <a href="docs/images/fan-headers.png"><img src="docs/images/fan-headers.png" alt="Devices page with every integration and device" width="48%"></a>
-  <a href="docs/images/settings.png"><img src="docs/images/settings.png" alt="Settings, Appearance: theme, colour scheme, accent colour and highlights" width="48%"></a>
-</p>
-<p align="center">
-  <a href="docs/images/updates.png"><img src="docs/images/updates.png" alt="Settings, Updates: check for updates and Update now" width="48%"></a>
-  <a href="docs/images/installer.png"><img src="docs/images/installer.png" alt="The Ember installer" width="48%"></a>
-</p>
+<table>
+  <tr>
+    <td width="50%"><a href="docs/screenshots/1-dashboard.png"><img src="docs/screenshots/1-dashboard.png" alt="Dashboard: live CPU, GPU, motherboard and fan sensors with a ten-minute temperature history"></a></td>
+    <td width="50%"><a href="docs/screenshots/2-fans.png"><img src="docs/screenshots/2-fans.png" alt="Fans: five fan modes, a curve you can customise, and the safety rules"></a></td>
+  </tr>
+  <tr>
+    <td width="50%"><a href="docs/screenshots/3-power.png"><img src="docs/screenshots/3-power.png" alt="Power: whole PC draw measured at the wall, split into CPU, GPU and the rest, with a graph and a card for each part"></a></td>
+    <td width="50%"><a href="docs/screenshots/4-lights.png"><img src="docs/screenshots/4-lights.png" alt="Lights: effect layers stacked with blend modes, across all your devices"></a></td>
+  </tr>
+  <tr>
+    <td width="50%"><a href="docs/screenshots/5-games.png"><img src="docs/screenshots/5-games.png" alt="Games: the Steam, Epic, GOG, Ubisoft Connect and EA app libraries, with a fan mode for each game"></a></td>
+    <td width="50%"><a href="docs/screenshots/6-personalise.png"><img src="docs/screenshots/6-personalise.png" alt="Settings, Appearance: theme, colour scheme, accent colour, highlights and interface size"></a></td>
+  </tr>
+</table>
+
+The Games screenshot uses a made-up library of well-known games, so it does not show what is installed on any real PC.
 
 ## Requirements
 
