@@ -33,33 +33,7 @@ public sealed class MerossLightSink(MerossLocalClient local, MerossDevice device
 }
 
 /// <summary>
-/// A Meross plug or switch: on while the lights it is placed under show any colour, off when they go dark. Relays click, so it
-/// changes at most every few seconds, and only when the picture goes from dark to lit or back.
-/// </summary>
-public sealed class MerossSwitchSink(MerossLocalClient local, MerossDevice device, string address, string key) : IDeviceSink
-{
-    bool? _on;
-
-    public string Id => "meross:" + device.Uuid;
-    public string Name => device.Name;
-    public string Kind => "Switch";
-    public int LedCount => 1;
-    public TimeSpan MinInterval => TimeSpan.FromSeconds(5);
-    public bool Keepalive => false;
-    public bool Realtime => false;
-
-    public async Task SendAsync(IReadOnlyList<Color> leds, CancellationToken ct)
-    {
-        var (r, g, b) = Compositor.Average(leds).ToBytes();
-        var on = Math.Max(r, Math.Max(g, b)) >= 16;
-        if (_on == on) return;
-        await local.SetPowerAsync(address, key, on, ct).ConfigureAwait(false);
-        _on = on;
-    }
-}
-
-/// <summary>
-/// Meross bulbs and plugs. Ember signs in to the Meross account once, only to list the devices and learn the key they check
+/// Meross bulbs and light strips only: plugs, hubs and thermostats are never touched. Ember signs in to the Meross account once, only to list the devices and learn the key they check
 /// commands against, then finds each device on the local network and talks to it directly. Does nothing until an account has
 /// been saved in Settings.
 /// </summary>
@@ -98,13 +72,13 @@ public sealed class MerossSource(Func<MerossAccount?> session, MerossCloudClient
             return [];
         }
 
-        var usable = _devices.Where(d => d.IsLight || d.Type.StartsWith("mss", StringComparison.OrdinalIgnoreCase)).ToList();
-        if (usable.Count == 0) { Status = "Signed in, but the account has no Meross bulbs or plugs."; _sinks.Clear(); return []; }
+        var usable = _devices.Where(d => d.IsLight).ToList();
+        if (usable.Count == 0) { Status = "Signed in, but the account has no Meross bulbs or light strips."; _sinks.Clear(); return []; }
 
         if (usable.Any(d => !_addresses.ContainsKey(d.Uuid)) && now - _scannedAt > ScanEvery)
         {
             _scannedAt = now;
-            foreach (var (uuid, address) in await ScanAsync(_account!.Key, usable.Select(d => d.Uuid).Where(u => !_addresses.ContainsKey(u)).ToHashSet(), ct).ConfigureAwait(false))
+            foreach (var (uuid, address) in await ScanAsync(local, _account!.Key, usable.Select(d => d.Uuid).Where(u => !_addresses.ContainsKey(u)).ToHashSet(), ct).ConfigureAwait(false))
             {
                 _addresses[uuid] = address;
                 _sinks.Remove("meross:" + uuid);
@@ -116,13 +90,13 @@ public sealed class MerossSource(Func<MerossAccount?> session, MerossCloudClient
         {
             if (!_addresses.TryGetValue(d.Uuid, out var address)) continue;
             if (!_sinks.TryGetValue("meross:" + d.Uuid, out var sink))
-                _sinks["meross:" + d.Uuid] = sink = d.IsLight ? new MerossLightSink(local, d, address, _account!.Key) : new MerossSwitchSink(local, d, address, _account!.Key);
+                _sinks["meross:" + d.Uuid] = sink = new MerossLightSink(local, d, address, _account!.Key);
             result.Add(sink);
         }
-        var missing = usable.Count - result.Count;
+        var missing = usable.Where(d => !_addresses.ContainsKey(d.Uuid)).Select(d => $"{d.Name} ({d.Type})").ToList();
         Status = result.Count == 0
-            ? $"Signed in, but none of the {usable.Count} devices answered on this network yet. They must be on the same Wi-Fi as this PC."
-            : $"{result.Count} on the network" + (missing > 0 ? $", {missing} not found yet" : "");
+            ? $"Signed in, but none of the {usable.Count} lights answered on this network yet. They must be on the same Wi-Fi as this PC. Not found: {string.Join(", ", missing)}."
+            : $"{result.Count} on the network" + (missing.Count > 0 ? $", not found yet: {string.Join(", ", missing)}" : "");
         return result;
     }
 
@@ -141,7 +115,7 @@ public sealed class MerossSource(Func<MerossAccount?> session, MerossCloudClient
     }
 
     /// <summary>Asks every address on this PC's own networks (each as a /24) whether a Meross device lives there; keeps the ones wanted.</summary>
-    async Task<List<(string Uuid, string Address)>> ScanAsync(string key, HashSet<string> wanted, CancellationToken ct)
+    internal static async Task<List<(string Uuid, string Address)>> ScanAsync(MerossLocalClient local, string key, HashSet<string> wanted, CancellationToken ct)
     {
         var found = new List<(string, string)>();
         using var gate = new SemaphoreSlim(48);

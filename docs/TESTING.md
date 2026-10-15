@@ -77,10 +77,12 @@ _The unticked lines below were written before the check; the owner confirmed the
 
 ## Meross (beta only; written from the community-documented protocol and unit-tested, never tried on a device)
 
-- [ ] Settings, Meross: sign in with the Meross account; the note says how many bulbs and plugs the account lists. A wrong password says so plainly. With two-step verification on the account, signing in without a code asks for one, and the code box then works.
+- [ ] Settings, Meross: sign in with the Meross account; the note says how many bulbs and light strips the account lists (plugs, hubs and thermostats are ignored). A wrong password says so plainly. With two-step verification on the account, signing in without a code asks for one, and the code box then works.
 - [ ] Within about a minute the devices appear on the Devices page (same Wi-Fi as the PC). If they do not, note the Meross status line.
 - [ ] Place a bulb on the Lights page: it follows the scene colour about once a second, and goes off when the lights go off.
-- [ ] A plug clicks on when its lights show a colour and off when dark; Identify works on both.
+- [ ] Plugs, hubs and thermostats on the account never appear on the Devices page and are never switched.
+- [ ] Tapo (beta only, written from the community-documented KLAP protocol and unit-tested against a simulated device, never tried on a real one): Settings, Tapo: save the account. Within a minute bulbs appear on the Devices page and follow the scene; Tapo plugs appear on the Power page. A wrong password says no device accepted it. Remove forgets the account.
+- [ ] Power page (beta only): CPU and GPU show plausible watts that rise under load; Motherboard and the rest says it needs the wall plug until one is linked. Link a plug with energy monitoring and mark it as the PC's plug: Overall switches to the wall draw and Everything else shows the difference. Another linked plug shows its own watts. No plug is ever switched on or off by Ember. Unlinking clears the figures.
 - [ ] Sign out forgets the account and the devices disappear. Production builds show no Meross card or settings.
 
 ## Nanoleaf (written and unit-tested against a pretend controller only)

@@ -45,7 +45,7 @@ public sealed class DevicesPage : UserControl
             + string.Join(";", devices.Select(d => d.Id + d.Name + d.Source + d.Disabled)) + "#" + string.Join(";", status)
             + "#" + string.Join(";", lights.Problems.Select(p => p.Key + p.Value));
         var streamDeck = BuildFeatures.IsProduction ? null : StreamDeckInstaller.Detect();
-        key += "#" + streamDeck?.State + streamDeck?.Installed + streamDeck?.Bundled + _streamDeckNote;
+        key += "#" + streamDeck?.State + streamDeck?.Installed + streamDeck?.Bundled + _streamDeckNote + _serviceBusy + _serviceNote;
         if (key == _key) return;
         _key = key;
 
@@ -53,7 +53,8 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Clear();
         _cards.Children.Add(Card("Sensors and fans", vm.FansPage.ServiceAvailable ? "Connected" : "Service not running", vm.FansPage.ServiceAvailable,
             "LibreHardwareMonitor, runs in the Ember service",
-            $"{headers.Count} fan headers shown, {controllable} controlled by Ember"));
+            $"{headers.Count} fan headers shown, {controllable} controlled by Ember" + (_serviceNote.Length > 0 ? "\n" + _serviceNote : ""),
+            actions: ServiceActions()));
         _cards.Children.Add(Source("OpenRGB", "SDK server on localhost, started with Ember", devices, status, lights));
         _cards.Children.Add(Source("Govee", "LAN first; cloud only with your API key", devices, status, lights));
         _cards.Children.Add(Source("Logitech", "Keyboards and mice, through G HUB", devices, status, lights));
@@ -61,7 +62,8 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Source("Nanoleaf", "Nanoleaf light panels, through the controller on your network", devices, status, lights));
         _cards.Children.Add(Source("Razer", "Razer Chroma devices, through Razer Synapse on this PC", devices, status, lights));
         _cards.Children.Add(Source("Corsair", "Corsair keyboards, mice, fans and more, through iCUE on this PC", devices, status, lights));
-        if (!BuildFeatures.IsProduction) _cards.Children.Add(Source("Meross", "Meross bulbs and plugs, found on your network", devices, status, lights));
+        if (!BuildFeatures.IsProduction) _cards.Children.Add(Source("Meross", "Meross bulbs and light strips, found on your network", devices, status, lights));
+        if (!BuildFeatures.IsProduction) _cards.Children.Add(Source("Tapo", "Tapo bulbs and light strips, found on your network", devices, status, lights));
         if (streamDeck is not null) _cards.Children.Add(StreamDeckCard(streamDeck));
 
         LayOutCards();
@@ -84,6 +86,30 @@ public sealed class DevicesPage : UserControl
             _rows.Children.Add(Row(d.Name, d.Source, "Lighting", d.Disabled ? "Disabled" : problem ?? (d.Realtime ? "Online" : "Online, slow (cloud)"), warn: d.Disabled || problem is not null || !d.Realtime, use: useCell));
         }
         if (_rows.Children.Count == 1) _rows.Children.Add(Text("Nothing found yet", muted: true));
+    }
+
+    string _serviceNote = "";
+    bool _serviceBusy;
+
+    /// <summary>A button that restarts the Ember services without closing the app (for after an update to the service or a stuck sensor).</summary>
+    FrameworkElement ServiceActions()
+    {
+        var restart = Pill(_serviceBusy ? "Restarting…" : "Restart services", () => _ = RestartServicesAsync(), "Restart the Ember services");
+        restart.IsEnabled = !_serviceBusy;
+        restart.ToolTip = "Restarts the Ember service and watchdog. The fans go back to the board for a moment, and this window reconnects by itself.";
+        var row = new StackPanel { Orientation = Orientation.Horizontal };
+        row.Children.Add(restart);
+        return row;
+    }
+
+    async Task RestartServicesAsync()
+    {
+        _serviceBusy = true;
+        _serviceNote = "Restarting the services…";
+        _key = null;
+        _serviceNote = await Task.Run(ServiceRestarter.Restart);
+        _serviceBusy = false;
+        _key = null;
     }
 
     void LayOutCards()
@@ -119,7 +145,7 @@ public sealed class DevicesPage : UserControl
     }
 
     /// <summary>Integrations written and unit-tested but not yet tried on real devices: every build marks them Beta.</summary>
-    static readonly HashSet<string> BetaIntegrations = ["Nanoleaf", "Razer", "Stream Deck", "Meross"];
+    static readonly HashSet<string> BetaIntegrations = ["Nanoleaf", "Razer", "Stream Deck", "Meross", "Tapo"];
 
     string _streamDeckNote = "";
     StreamDeckState? _streamDeckNoteState; // the card state the note was written in; the note goes away when the state moves on

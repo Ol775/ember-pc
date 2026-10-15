@@ -2,6 +2,22 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.2.0-beta.7 (2026-10-15)
+
+### Added
+
+- **Tapo / TP-Link lights and plugs (beta builds only, not yet tried on real devices).** Settings, Tapo: save the email and password of your Tapo account (kept in Windows Credential Manager, used only to sign in to your devices on this network, never sent to the cloud). Ember finds Tapo bulbs and light strips and lights them with the scene, one colour at a time. Tapo plugs appear on the Power page and are only read, never switched. If devices are not found, switch on Third-Party Compatibility for them in the Tapo app.
+- **A Power page (beta builds only).** Shows what your PC draws: the whole PC, the CPU, the graphics card, the motherboard and the rest, and any other plugs, each with the current watts, a small graph, the average, the peak and the energy used since Ember started, plus a large graph and a bar showing where the power goes. CPU and GPU come from their own sensors. No motherboard has a sensor for its own power, so the motherboard, memory, drives, fans and power supply losses are measured as the difference between the wall draw and the CPU and GPU: link a smart plug with energy monitoring (Meross MSS310 or MSS315, Tapo P110 or P115) and mark it as your PC's plug. Other linked plugs are listed with their own watts. Plugs are read only: Ember asks what they draw and never switches them. Figures are kept for the session only.
+- **Restart services.** A button on the Devices page, on the Sensors and fans card, restarts the Ember service and watchdog without closing the app, which reconnects by itself. Windows asks for permission unless Ember runs as administrator. The fans go back to the board for a moment while it restarts.
+
+### Changed
+
+- **Meross is for bulbs and light strips only.** Plugs, hubs and thermostats are never switched; Meross plugs are only read, on the Power page.
+
+### Fixed
+
+- **A second Meross light was not found.** Devices on Wi-Fi power-save can take a couple of seconds to answer, more than Ember waited, so they were missed. Ember now waits four seconds, and the status line names any light it could not find.
+
 ## 1.2.0-beta.6 (2026-10-15)
 
 ### Added

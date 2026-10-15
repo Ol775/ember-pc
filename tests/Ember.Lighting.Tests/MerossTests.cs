@@ -37,6 +37,50 @@ public class MerossTests
     }
 
     [Fact]
+    public void Plug_power_is_read_in_watts_from_milliwatts()
+    {
+        using var doc = JsonDocument.Parse("""{"electricity":{"channel":0,"current":1200,"voltage":2300,"power":275500}}""");
+        Assert.Equal(275.5, MerossLocalClient.WattsOf(doc.RootElement));
+    }
+
+    [Theory]
+    [InlineData("""{}""")]
+    [InlineData("""{"electricity":{"power":"x"}}""")]
+    [InlineData("""{"electricity":{"power":-5}}""")]
+    public void A_plug_without_a_power_figure_reads_as_null(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        Assert.Null(MerossLocalClient.WattsOf(doc.RootElement));
+    }
+
+    [Fact]
+    public void Plug_reads_only_ever_use_GET()
+    {
+        // The power page must never be able to switch a plug: reads go out as GET to the Electricity namespace.
+        using var doc = JsonDocument.Parse(MerossLocalClient.BuildMessage("Appliance.Control.Electricity", "GET", new { }, "K", "10.0.0.5", DateTimeOffset.UnixEpoch, "a"));
+        Assert.Equal("GET", doc.RootElement.GetProperty("header").GetProperty("method").GetString());
+    }
+
+    [Fact]
+    public void Plug_links_survive_a_save_and_a_broken_file_means_none()
+    {
+        var path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        try
+        {
+            var store = new PlugLinkStore(path);
+            Assert.True(store.TrySave(new PlugLinks(["a", "b"], "b")));
+            var back = store.Load();
+            Assert.Equal(["a", "b"], back.Linked);
+            Assert.Equal("b", back.PcPlug);
+            File.WriteAllText(path, "{not json");
+            Assert.Empty(store.Load().Linked);
+            File.WriteAllText(path, """{"Linked":["a"],"PcPlug":"zzz"}""");
+            Assert.Null(store.Load().PcPlug);
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
     public void Account_needs_token_and_key()
     {
         using var ok = JsonDocument.Parse("""{"token":"t","key":"k"}""");

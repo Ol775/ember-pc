@@ -23,7 +23,7 @@ public sealed record MerossAccount(string Token, string Key, string Domain)
 
 public sealed record MerossDevice(string Uuid, string Name, string Type, bool Online)
 {
-    /// <summary>Meross bulbs and light strips are the "msl" models; everything else Ember can use is a switch or plug.</summary>
+    /// <summary>Meross bulbs and light strips are the "msl" models. Ember uses nothing else (no plugs, hubs or thermostats).</summary>
     public bool IsLight => Type.StartsWith("msl", StringComparison.OrdinalIgnoreCase);
 }
 
@@ -209,7 +209,17 @@ public sealed class MerossLocalClient(HttpClient http)
     public Task<JsonElement> SetColourAsync(string address, string key, byte r, byte g, byte b, CancellationToken ct = default) =>
         SendAsync(address, key, "Appliance.Control.Light", "SET", new { light = new { channel = 0, capacity = 5, rgb = (r << 16) | (g << 8) | b, luminance = 100 } }, ct);
 
-    public static readonly TimeSpan ProbeTimeout = TimeSpan.FromMilliseconds(900);
+    // Meross devices on Wi-Fi power-save take 2 s or more to answer the first message after being idle.
+    /// <summary>Read only: asks a plug what it is drawing. Nothing is ever switched.</summary>
+    public Task<JsonElement> GetElectricityAsync(string address, string key, CancellationToken ct = default) =>
+        SendAsync(address, key, "Appliance.Control.Electricity", "GET", new { electricity = new { channel = 0 } }, ct);
+
+    /// <summary>The draw in watts from an Electricity answer (Meross sends milliwatts), or null when the plug does not report power.</summary>
+    public static double? WattsOf(JsonElement payload) =>
+        payload.ValueKind == JsonValueKind.Object && payload.TryGetProperty("electricity", out var e) && e.ValueKind == JsonValueKind.Object
+        && e.TryGetProperty("power", out var p) && p.ValueKind == JsonValueKind.Number && p.TryGetDouble(out var mw) && mw >= 0 ? mw / 1000 : null;
+
+    public static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(4);
 
     /// <summary>The uuid a device at this address reports, or null when nothing there answers like a Meross device.</summary>
     public async Task<string?> ProbeAsync(string address, string key, CancellationToken ct = default)

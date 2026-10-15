@@ -26,6 +26,8 @@ public partial class MainWindow : Window
     readonly Task _run;
     readonly GameDetection _detection = new([]);
     readonly DispatcherTimer _gameTimer, _screenTimer;
+    DispatcherTimer? _plugTimer;
+    readonly Ember.Lighting.Tapo.TapoDirectory _tapo;
     readonly AudioCapture _audio;
     readonly KeyWatcher _keys;
     readonly DxgiGrabber _dxgi = new();
@@ -46,6 +48,8 @@ public partial class MainWindow : Window
         DataContext = _vm;
 
         LightingManager? lights = null;
+        // Tapo devices keep their own session cookie per device, so they get a client that does not pool cookies.
+        _tapo = new Ember.Lighting.Tapo.TapoDirectory(TapoSession, new HttpClient(new HttpClientHandler { UseCookies = false }) { Timeout = TimeSpan.FromSeconds(8) });
         _lights = lights = new LightingManager(new LightingStore(LightingStore.DefaultPath), TimeProvider.System,
             [new OpenRgbSource(() => string.IsNullOrWhiteSpace(lights?.State.OpenRgbPath) ? BundledOpenRgb : lights!.State.OpenRgbPath, () => lights?.State.ShouldStartOpenRgb ?? true),
              new GoveeSource(new GoveeLanClient(), GoveeCloud, id => lights?.SegmentsOf(id) ?? 1),
@@ -54,9 +58,22 @@ public partial class MainWindow : Window
              new Ember.Lighting.Nanoleaf.NanoleafSource(NanoleafConnection),
              new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp)),
              new Ember.Lighting.Corsair.CorsairSource(Ember.Lighting.Corsair.CorsairApiChain.Open),
-             .. BuildFeatures.IsProduction ? Array.Empty<IDeviceSource>() : [new Ember.Lighting.Meross.MerossSource(MerossSession,new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http))]]);
+             .. BuildFeatures.IsProduction ? Array.Empty<IDeviceSource>() : [new Ember.Lighting.Meross.MerossSource(MerossSession,new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http)), new Ember.Lighting.Tapo.TapoSource(_tapo)]]);
         Lights.Attach(_lights);
         _lights.Start();
+        // Beta: power page. Linked Meross plugs are read (never switched) every few seconds.
+        if (!BuildFeatures.IsProduction)
+        {
+            var plugs = new Ember.Lighting.Meross.PlugMonitor(MerossSession, new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http), () => Power.Links);
+            var providers = new Ember.Lighting.Meross.IPlugProvider[] { plugs, new Ember.Lighting.Tapo.TapoPlugMonitor(_tapo, () => Power.Links) };
+            Power.Attach(providers, new Ember.Lighting.Meross.PlugLinkStore(Ember.Lighting.Meross.PlugLinkStore.DefaultPath));
+            _plugTimer = new DispatcherTimer(TimeSpan.FromSeconds(3), DispatcherPriority.Background, async (_, _) =>
+            {
+                try { await Task.WhenAll(providers.Select(p => p.PollAsync(_cts.Token))); }
+                catch (Exception ex) when (ex is OperationCanceledException or HttpRequestException) { }
+            }, Dispatcher);
+            _plugTimer.Start();
+        }
         // Beta: lets the Stream Deck plugin reach the lights and the window.
         if (!BuildFeatures.IsProduction) { _appControl = new AppControl(_lights, () => Dispatcher.InvokeAsync(ShowFromTray)); _appControl.Start(); }
 
@@ -72,6 +89,7 @@ public partial class MainWindow : Window
             var sum = DashboardSummary.From(s);
             _cpuTemp = s.Stale ? null : sum.CpuTemp;
             _gpuTemp = s.Stale ? null : sum.GpuTemp;
+            if (!s.Stale && !BuildFeatures.IsProduction) Power.Feed(DateTimeOffset.UtcNow, PowerSummary.From(s));
             _lights.SetInputs(s.Stale ? null : sum.CpuTemp, s.Stale ? null : sum.GpuTemp, _screen);
             _caseTemp = s.Stale ? null : new[] { sum.CpuTemp, sum.GpuTemp, sum.MotherboardTemp }.Where(v => v is not null).Max();
             if (_vm.Prefs.AiLearning && !s.Stale) _thermal.Add(DateTimeOffset.UtcNow, _cpuTemp, _caseTemp);
@@ -468,6 +486,34 @@ public partial class MainWindow : Window
         Announce(GoveeNote);
     }
 
+    // ---- Tapo (beta builds only) ----
+
+    const string TapoAccountName = "tapo-account";
+
+    Ember.Lighting.Tapo.TapoAccount? TapoSession() => Ember.Lighting.Tapo.TapoAccount.Restore(_secrets.Get(TapoAccountName));
+
+    void OnTapoSave(object sender, RoutedEventArgs e)
+    {
+        var email = TapoEmail.Text.Trim();
+        var password = TapoPassword.Password;
+        if (email.Length == 0 || password.Length == 0) { TapoNote.Text = "Type your Tapo email and password first."; Announce(TapoNote); return; }
+        if (_secrets.Set(TapoAccountName, new Ember.Lighting.Tapo.TapoAccount(email, password).Serialise()))
+        {
+            TapoNote.Text = "Saved. Ember looks for Tapo devices on this network now; they appear in a minute. The password stays in Windows Credential Manager.";
+            TapoPassword.Clear();
+            _lights.RefreshDevices();
+        }
+        else TapoNote.Text = "Windows would not store the account, so it was not kept.";
+        Announce(TapoNote);
+    }
+
+    void OnTapoRemove(object sender, RoutedEventArgs e)
+    {
+        TapoNote.Text = _secrets.Set(TapoAccountName, null) ? "Removed. Ember forgot your Tapo account." : "Could not remove the account.";
+        _lights.RefreshDevices();
+        Announce(TapoNote);
+    }
+
     // ---- Meross (beta builds only) ----
 
     const string MerossSessionName = "meross-session";
@@ -486,12 +532,13 @@ public partial class MainWindow : Window
             var cloud = new Ember.Lighting.Meross.MerossCloudClient(_http);
             var account = await cloud.SignInAsync(email, password, MerossCode.Text);
             var devices = await cloud.GetDevicesAsync(account);
-            var usable = devices.Count(d => d.IsLight || d.Type.StartsWith("mss", StringComparison.OrdinalIgnoreCase));
+            var usable = devices.Count(d => d.IsLight);
+            var plugCount = devices.Count(d => d.Type.StartsWith("mss", StringComparison.OrdinalIgnoreCase));
             if (!_secrets.Set(MerossSessionName, account.Serialise()))
                 MerossNote.Text = "Signed in, but Windows would not store the sign-in, so it was not kept.";
             else
             {
-                MerossNote.Text = $"Signed in. Meross lists {usable} bulb{(usable == 1 ? "" : "s")} and plug{(usable == 1 ? "" : "s")}; Ember looks for them on this network and they appear on the Lights page in a few seconds. Your password was not saved.";
+                MerossNote.Text = $"Signed in. Meross lists {usable} bulb{(usable == 1 ? "" : "s")} or light strip{(usable == 1 ? "" : "s")}; Ember looks for them on this network and they appear on the Lights page in a few seconds. {plugCount} smart plug{(plugCount == 1 ? "" : "s")} can be linked on the Power page to read what they draw. Your password was not saved.";
                 MerossPassword.Clear();
                 MerossCode.Clear();
                 _lights.RefreshDevices();
@@ -755,7 +802,8 @@ public partial class MainWindow : Window
 
     void OnNavChanged(object sender, RoutedEventArgs e)
     {
-        if (DashboardPage is null || FansPageView is null || SettingsPageView is null || LightsPageView is null || DevicesPageView is null) return;
+        if (DashboardPage is null || FansPageView is null || SettingsPageView is null || LightsPageView is null || DevicesPageView is null || PowerPageView is null) return;
+        PowerPageView.Visibility = NavPower.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         DevicesPageView.Visibility = NavDevices.IsChecked == true ? Visibility.Visible : Visibility.Collapsed; // fires once during InitializeComponent
         LightsPageView.Visibility = NavLights.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         DashboardPage.Visibility = NavDashboard.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
@@ -902,6 +950,7 @@ public partial class MainWindow : Window
         _vm.Refresh(DateTimeOffset.UtcNow);
         _chart.Update(_vm.ChartWidth, _vm.ChartHeight, _vm.Unit, _vm.CpuLine, _vm.GpuLine, _vm.CpuText, _vm.GpuText);
         if (DevicesPageView.Visibility == Visibility.Visible) Devices.Update(_vm, _lights);
+        if (PowerPageView.Visibility == Visibility.Visible) Power.Update();
         // WPF only announces a live region when the app raises LiveRegionChanged itself.
         Curve.SetState(_vm.FansPage.Mode, _vm.FansPage.Curves, _cpuTemp, _caseTemp);
         _ai.Refresh();

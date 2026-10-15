@@ -15,6 +15,7 @@ internal static class SensorMapper
             SensorType.Control => SensorKind.FanPercent,
             SensorType.Load => SensorKind.Load,
             SensorType.Clock => SensorKind.Clock,
+            SensorType.Power => SensorKind.Power,
             _ => null,
         };
         if (kind is null) return null;
