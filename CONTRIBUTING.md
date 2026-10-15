@@ -14,15 +14,19 @@ dotnet build Ember.sln
 dotnet test
 ```
 
+The WPF app and the service's hardware, pipe-security and install code can only be verified on Windows, by hand: see [docs/hardware-checks.md](docs/hardware-checks.md). How the projects fit together: [docs/architecture.md](docs/architecture.md). Installing a build you made: [docs/install.md](docs/install.md).
+
 ## Pull requests
 
 - Open an issue first for anything large.
 - Keep a change focused. Add or update tests; the suite must pass.
 - Anything that writes to a fan must keep the safety rules in the service (90 °C override, floors, CPU guard, blind-sensor rule). Do not weaken them.
-- Never call the library's `SetDefault` or `Close` on fan controllers (see the Safety section of the README).
-- Match the style around your change. Use British spelling in text, no emojis.
+- Never call the library's `SetDefault` or `Close` on fan controllers (see the Safety section of the [README](README.md#safety)).
+- Smart plugs are read only. Do not add a way to switch one.
+- Match the style around your change (see `.editorconfig`). Use British spelling in text, no emojis.
+- Add a user-facing entry to [CHANGELOG.md](CHANGELOG.md) with a bold lead, and update the docs if behaviour changed.
 - Say what you tested on real hardware, and what you could not.
 
 ## Reporting bugs
 
-Include your Windows version, motherboard, what you did and what happened. Security problems go through [SECURITY.md](SECURITY.md), not a public issue.
+Use the bug report form on the [issues page](https://github.com/Ol775/ember-pc/issues/new/choose): your Windows version, motherboard, what you did, what happened, and the diagnostic report from Settings, About. Security problems go through [SECURITY.md](SECURITY.md), not a public issue.

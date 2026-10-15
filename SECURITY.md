@@ -15,7 +15,9 @@ Please report security problems privately, not in a public issue. Use GitHub's "
 - **Driver.** Ember uses the signed PawnIO driver, not WinRing0 (CVE-2020-14979). The install script checks the SHA-256 and signature.
 - **Logitech.** Ember loads G HUB's lighting engine only from the file G HUB registers, and only if its name is `sdk_legacy_led_x64.dll` and it sits under Program Files (administrator-writable).
 - **OpenRGB** is bundled, pinned by SHA-256 and listens on localhost only.
-- **Secrets.** A Govee cloud API key is stored in Windows Credential Manager, never in a settings file or in the repository.
+- **Secrets.** Keys, tokens and account details (Govee API key, Hue key, Nanoleaf token, the Meross sign-in and the Tapo account) are stored in Windows Credential Manager, never in a settings file or in the repository.
+- **Smart plugs are read only.** Ember asks a Meross or Tapo plug what it is drawing and never sends a command that switches one. Meross is used to control bulbs and light strips only.
+- **The app pipe (beta builds).** The Stream Deck plugin reaches the app through a pipe that only the current user can open (`ember.app.v1`).
 - **No telemetry.** See [PRIVACY.md](PRIVACY.md).
 
 ## Out of scope

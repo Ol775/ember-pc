@@ -268,7 +268,7 @@ Game detection and GPU fan control (Experimental), Philips Hue, Nanoleaf and Raz
 - **Paint several devices at once.** A switch on the Lights page applies fills to every device on the canvas, and a gradient or rainbow then runs across the whole canvas so devices side by side share one picture.
 - **Paint library.** Save the painted LEDs of a device under a name, and use a saved picture on the selected device or on all of them. Rename and delete are there too. The pictures are plain files in your Ember folder that you can copy to another PC.
 - **Continuous integration.** The repository builds and tests itself on GitHub for every push, and a release workflow builds the zip and the installer.
-- **Signing.** The release build signs Ember's programs and the installer when a code-signing certificate is provided (see docs/SIGNING.md). Until one is, Windows still shows "Unknown publisher".
+- **Signing.** The release build signs Ember's programs and the installer when a code-signing certificate is provided (see docs/signing.md). Until one is, Windows still shows "Unknown publisher".
 
 - **Own lighting for one device.** "Give it its own lighting" (Lights page, device list) makes a copy of the layers just for that device, so a keyboard can show a different look from the Govee lamps and fans. The layer editor then works on that device alone until you press "Back to the whole scene".
 - **Switch off a device.** Each device on the Devices page has a "Use" switch. Off, Ember leaves it out of every scene and stops sending to it; the choice is remembered.

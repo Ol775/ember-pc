@@ -30,7 +30,7 @@ You need an Elgato Stream Deck with its software installed.
 4. Close Ember: the scene, lights and brightness keys should say "offline" and recover when Ember starts again.
 5. Press **Update** or **Remove** on the card when a newer plugin ships; both should work (if Stream Deck holds the files, quit it and try again).
 
-Tick what you checked in [TESTING.md](TESTING.md) if you are the project owner; otherwise just tell us in your report.
+Tick what you checked in [hardware-checks.md](hardware-checks.md) if you are the project owner; otherwise just tell us in your report.
 
 ## Reporting what you find
 

@@ -11,7 +11,7 @@ folder next to `Ember.App.exe`.
 - Source code and licence text: <https://codeberg.org/OpenRGB/OpenRGB> (release `release_1.0`).
 - If you already run your own OpenRGB, Ember uses that one when it is listening and never starts a second copy.
 
-## Corsair iCUE SDK and CUE SDK (bundled with beta builds)
+## Corsair iCUE SDK and CUE SDK (bundled with the app build)
 
 To light Corsair devices Ember uses Corsair's SDK libraries, shipped unmodified in the `iCUE` folder next to `Ember.App.exe`, both taken from the redistributable folders of Corsair's official SDK releases:
 
@@ -30,6 +30,7 @@ To light Corsair devices Ember uses Corsair's SDK libraries, shipped unmodified 
 - **Microsoft.Extensions.Hosting and related 8.x** (MIT): runs the services.
 - **Microsoft .NET 8 Desktop Runtime** (MIT, with Microsoft's installer terms): runs Ember. The installer includes Microsoft's own installer and only runs it when the runtime is missing.
 - **Microsoft Visual C++ Redistributable, x64** (Microsoft Software Licence Terms, shown by its installer): needed by OpenRGB. The installer includes Microsoft's own installer and only runs it when it is missing.
+
 ## PawnIO driver (downloaded, not bundled)
 
 The signed PawnIO driver lets Ember read motherboard sensors and fan headers. The Ember installer downloads PawnIO's official setup from <https://github.com/namazso/PawnIO.Setup> and checks its SHA-256 and signature before running it. It is not included in Ember's files because its setup program publishes no redistribution terms. PawnIO itself is published by its author under its own licence (<https://github.com/namazso/PawnIO>).

@@ -1,0 +1,37 @@
+name: Bug report
+description: Something in Ember does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Ember controls real fans, so please say what you tried on real hardware.
+        **Security problems:** do not post them here. Use the private route in [SECURITY.md](https://github.com/Ol775/ember-pc/blob/main/SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: Ember version
+      description: Settings, About. Say whether it is the Stable or the Beta channel.
+      placeholder: "1.2.0 (Stable)"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Include the steps, and a screenshot if it helps.
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Windows version and motherboard
+      placeholder: "Windows 11 24H2, MSI B550-A PRO"
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Diagnostic report
+      description: Settings, About, Copy diagnostic report, then paste it here. Read it first: it lists device names, never passwords or keys.
+      render: text

@@ -13,7 +13,7 @@ namespace Ember.Core;
 /// equals the PID the Service Control Manager reports for EmberService. A non-admin squatter cannot spoof that,
 /// because only admins can create or control that service. Querying the service status needs only
 /// SC_MANAGER_CONNECT and SERVICE_QUERY_STATUS, which the default service DACL grants to Interactive and Service logons; the app is interactive, so it works as a
-/// normal user (windows-checklist c1 is the real test).
+/// normal user (docs/windows-verification.md c1 is the real test).
 /// </summary>
 [SupportedOSPlatform("windows")]
 public static class PipeStreamConnector

@@ -71,4 +71,4 @@ Verified on the owner's PC (Stream Deck 7.6.0.23012, Windows 11): an unsigned `.
 - Property inspector (the settings panel in the Stream Deck app) details, e.g. choosing which scene a key activates.
 - Pipe message format for the new app channel, security (pipe ACL limited to the current user, as the existing pipes do), and reconnect behaviour when Ember is not running (keys show a quiet "Ember offline" state).
 - Where the plugin is built and how CI bundles it; tests (protocol and pipe tests in the existing test projects).
-- A testing checklist in `docs/TESTING.md`, CHANGELOG entry (user-facing bold lead), and a README line.
+- A testing checklist in `docs/hardware-checks.md`, CHANGELOG entry (user-facing bold lead), and a README line.

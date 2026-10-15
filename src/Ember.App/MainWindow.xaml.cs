@@ -480,7 +480,7 @@ public partial class MainWindow : Window
     {
         var client = GoveeCloud();
         if (client is null) { GoveeNote.Text = "Save a key first."; Announce(GoveeNote); return; }
-        GoveeNote.Text = "Asking Goveeâ€¦";
+        GoveeNote.Text = "Asking Govee…";
         try
         {
             var devices = await client.GetDevicesAsync();

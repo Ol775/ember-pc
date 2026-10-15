@@ -1,0 +1,9 @@
+# Let git normalise line endings; keep binaries untouched.
+* text=auto
+
+*.png  binary
+*.ico  binary
+*.exe  binary
+*.dll  binary
+*.zip  binary
+*.streamDeckPlugin binary

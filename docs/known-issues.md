@@ -1,6 +1,6 @@
-# Fix sheet
+# Known issues
 
-Problems found while testing on real hardware, to fix. Move an item to the changelog when it is fixed.
+What is still open, and tips for problems that are not Ember's fault. Fixed problems are in [CHANGELOG.md](../CHANGELOG.md); the engineering notes behind some of them are kept at the bottom.
 
 ## Open
 
@@ -10,7 +10,12 @@ Problems found while testing on real hardware, to fix. Move an item to the chang
       example by re-sending the colour on a slower keepalive, or by switching the sleep timer off through G HUB's SDK), and if
       not, say so in the app next to the Logitech status. Seen 2026-10-13 during the first lighting test.
 
-## Fixed
+## Troubleshooting
+
+- **The tray icon will not open.** Seen once when two Explorer sessions were running (the second belonged to a disconnected user). Restarting Explorer fixed it. Not an Ember fault.
+
+<details>
+<summary><strong>Fixed (engineering notes)</strong></summary>
 
 - [x] **Govee H6056 ignored every colour while Tailscale was running.** Tailscale's route for 192.168.1.0/24 took the unicast
       commands; the multicast scan still worked, so the lamp showed as Online. Commands are now sent from the PC's address on
@@ -26,10 +31,6 @@ Problems found while testing on real hardware, to fix. Move an item to the chang
       the Windows device path) and the saved list only accepted ids up to 80, so the change was silently rejected. The limit is now 400.
       Found 2026-10-13 and confirmed on the PC (NZXT shows Disabled and is left alone).
 
-## Notes from testing
-
-- The tray icon could not be opened on this PC until Explorer was restarted (two Explorer sessions were running, the second belonging to
-  a disconnected Plex user). Not an Ember fault, but worth a line in a troubleshooting page.
 - [x] **Update check thought Ember was 0.1.0-beta.1.** The version string a build reports ends in a long commit hash (`+4560d21…`), and the parser rejected anything over 40 characters, so the app fell back to beta.1 and would have offered beta-channel users the version they already had. Found 2026-10-13 while testing the update check against the public release.
 - [x] **Screen sync followed nothing on an HDR desktop.** DXGI desktop duplication also hands out frames with no picture update (pointer or metadata only, `AccumulatedFrames == 0`), whose texture is empty on an HDR desktop; Ember read them as a black screen. Found 2026-10-13 with the owner's HDR monitor; confirmed with two HDR videos.
 
@@ -45,3 +46,5 @@ Problems found while testing on real hardware, to fix. Move an item to the chang
       graphics cards it now commands 80%, checks the RPM rises, and hands the fan back.
       Checked on the PC: Super quiet leaves the fan at the card's silent 0%, Extreme holds it steady at the curve (86%, about 2,150 RPM), and
       switching control off returns it to the card.
+
+</details>

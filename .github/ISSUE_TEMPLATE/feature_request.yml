@@ -1,0 +1,19 @@
+name: Feature request
+description: An idea or a device you would like Ember to support
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like Ember to do?
+      description: Describe the problem you want solved, not only the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: device
+    attributes:
+      label: Hardware involved (if any)
+      description: Brand and model, and how it is controlled today (its own app, OpenRGB, a cloud account).
+  - type: markdown
+    attributes:
+      value: See the [roadmap](https://github.com/Ol775/ember-pc/blob/main/ROADMAP.md) first; your idea may already be planned.

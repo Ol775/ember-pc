@@ -49,92 +49,30 @@
 
 The Games screenshot uses a made-up library of well-known games, so it does not show what is installed on any real PC.
 
-## Requirements
-
-- Windows 10 or 11 (x64)
-- .NET 8 Desktop Runtime (the installer adds it if it is missing)
-- Administrator rights to install the services and the driver (the app itself runs as a normal user)
-- The **PawnIO** driver, for motherboard temperatures and fan headers. Without it, CPU and GPU temperatures still work and the app explains how to install it.
-
 ## Install
 
-Ember comes in two kinds of release. The **production build** (for example 1.2.0) holds what has been checked on real hardware: sensors and fans, the Power page, OpenRGB, Govee, Logitech, Philips Hue and Corsair. A few things in it are marked **Beta** because they are written and tested but not yet proven on enough real devices: Razer Chroma, Nanoleaf, Meross, Tapo and game detection. The **beta builds** (for example 1.3.0-beta.1, marked as pre-releases on the releases page) add what is not in production yet: GPU fan control, the Stream Deck plugin and the roadmap page. Download the one you want from the [releases page](https://github.com/Ol775/ember-pc/releases), or switch from inside Ember: Settings, Updates, Release channel moves the installation to the newest Stable or Beta version after you confirm.
+**Requirements:** Windows 10 or 11 (x64) and administrator rights to install the services and the driver. The installer adds the .NET 8 runtime if it is missing.
 
-**Option 1: installer (easiest).** Download `Ember-Setup-<version>.exe` from the [releases page](https://github.com/Ol775/ember-pc/releases), run it, read and accept the Terms of Use, and follow the pages. It installs the .NET 8 and Visual C++ runtimes if your PC lacks them, adds the services, and downloads the PawnIO driver (checked before it runs). Ember appears in the Start menu and under Installed apps in Windows Settings, where you can also remove it. Windows will show an "unknown publisher" warning because the installer is not code-signed yet. For a scripted install: `Ember-Setup-<version>.exe /S /ACCEPT` (add `/D=C:\Path\Ember` for another folder, `/NODESKTOP`, `/NOPAWNIO`; `/ACCEPT` says you have read TERMS.md).
+1. Download `Ember-Setup-<version>.exe` from the [releases page](https://github.com/Ol775/ember-pc/releases). The release marked **Latest** is the production build; releases marked **Pre-release** are betas with features still being proven.
+2. Run it, read and accept the Terms of Use, and follow the pages. It adds the services and downloads the signed PawnIO driver, which it checks before it runs.
+3. Windows will show an "unknown publisher" warning because the installer is not code-signed yet. You can check the file against the `.sha256` next to it: `Get-FileHash Ember-Setup-<version>.exe`.
 
-**Option 2: from source.** Build the release folder once, then install it with one script.
-
-**Quick install (recommended).** In PowerShell, from the repository folder:
-
-```powershell
-scripts\build-release.ps1          # fetches OpenRGB and the Microsoft runtimes, publishes everything, writes dist\Ember-<version>.zip and dist\Ember-Setup-<version>.exe
-```
-
-Then, in an **elevated** PowerShell, from the unzipped `dist\Ember-<version>` folder:
-
-```powershell
-scripts\install-ember.ps1          # installs to C:\Program Files\Ember, adds both services and a Start Menu shortcut
-```
-
-Run the same script again to upgrade; your settings are kept. An installed Ember can also update itself: Settings, Updates, Check now, then Update now. `scripts\uninstall-ember.ps1` removes it (add `-RemoveFiles` to delete the program files too).
-
-**Manual install** (the steps the script follows):
-1. Fetch the bundled OpenRGB (checks a pinned SHA-256) and publish:
-
-   ```powershell
-   scripts\fetch-openrgb.ps1
-   dotnet publish src/Ember.Service  -c Release -r win-x64 --self-contained false -o publish\service
-   dotnet publish src/Ember.Watchdog -c Release -r win-x64 --self-contained false -o publish\watchdog
-   dotnet publish src/Ember.App      -c Release -r win-x64 --self-contained false -o publish\app
-   ```
-
-2. In an elevated PowerShell, install PawnIO (downloads the official release and checks its SHA-256 and signature):
-
-   ```powershell
-   scripts\install-pawnio.ps1
-   ```
-
-3. Copy `publish\service\*` to a folder only administrators can write, such as `C:\Program Files\Ember\`, then, elevated:
-
-   ```powershell
-   scripts\install-service.ps1 -ExePath "C:\Program Files\Ember\Ember.Service.exe"
-   ```
-
-   The service runs as LocalSystem, so the script refuses folders that normal users can write.
-
-4. Copy `publish\watchdog\*` to `C:\Program Files\Ember\Watchdog\`, then, elevated:
-
-   ```powershell
-   scripts\install-watchdog.ps1 -ExePath "C:\Program Files\Ember\Watchdog\Ember.Watchdog.exe"
-   ```
-
-5. Run `publish\app\Ember.App.exe` as your normal user. Open the Fans page, test one System Fan header, then enable it. Close any other fan-control program first.
-
-If you install PawnIO after the service, run `Restart-Service EmberService`. To remove the service, run `scripts\uninstall-service.ps1` (elevated).
+Building from source, scripted installs and silent install options are in [docs/install.md](docs/install.md).
 
 ### First launch
 
-1. Windows asks for permission to install the services and the driver, and shows an "unknown publisher" warning, because the installer is not code-signed yet. Check the file against its `.sha256` on the releases page first if you like (see below).
-2. Open **Fans**, test one **System Fan** header, then enable it. Nothing is written to a fan header before you do. Close any other fan-control program first.
-3. Open **Power** and, if you have a Meross or Tapo smart plug that measures energy, link it in the Smart plugs panel and mark it as your PC's plug. First save the account in Settings, Meross or Tapo.
-4. Open **Games** to see the games Ember found, and switch on Experimental features (Settings, Fan control) if you want game detection to change the fan mode.
+1. Open **Fans**, test one **System Fan** header, then enable it. Nothing is written to a fan header before you do. Close any other fan-control program first.
+2. Open **Power** and, if you have a Meross or Tapo smart plug that measures energy, link it and mark it as your PC's plug. Save the account first in Settings, Meross or Tapo.
+3. Open **Games** to see the games Ember found. Switch on Experimental features (Settings, Fan control) if you want game detection to change the fan mode.
 
 ### Updating
 
-Ember checks for updates when it starts and every few hours, and asks before it does anything: **Update now**, **Remind me later** or **Skip this version**. Settings, Updates has **Check now** and the **Release channel** (Stable or Beta). If **Restart services** is ever needed after an update, it is a button on the Devices page, and Ember keeps running.
+Ember checks for updates when it starts and every few hours, and asks before it does anything: **Update now**, **Remind me later** or **Skip this version**. Settings, Updates has **Check now** and the **Release channel** (Stable or Beta). Updates are verified like this:
 
-### Reporting bugs
-
-Open an [issue](https://github.com/Ol775/ember-pc/issues) and attach the diagnostic report: Settings, About, **Copy diagnostic report**. It holds versions, what each integration found, device names and a scrubbed recent log; it does not hold passwords or keys. Read it before you post it, and remove any device name you would rather not share.
-
-## Build and test
-
-```powershell
-dotnet build Ember.sln
-dotnet test
-```
-
-The WPF app and the service's hardware, pipe-security and install code are only verified on Windows.
+1. Ember asks GitHub for the newest release of this repository, and for nothing else.
+2. **Update now** downloads the installer and the `.sha256` file published next to it.
+3. The installer is checked against the checksum before it runs. If they do not match it is thrown away and nothing is installed. A checksum proves the file is the one that was released, not who made it.
+4. Nothing is downloaded or installed until you press the button.
 
 ## Safety
 
@@ -145,17 +83,15 @@ Fan speeds are written only by the Ember service, through LibreHardwareMonitorLi
 - The pump is left entirely to the board.
 - When the service stops, each system fan is left at the speed it had before Ember first touched it and the CPU fan at 100%. Ember never calls the library's restore call, because it left a fan stuck low on the author's MSI B550-A PRO. Restarting the PC returns the board to automatic control.
 
-See [SECURITY.md](SECURITY.md) for how the service is locked down and how to report a problem.
-
-## Why PawnIO
-
-Motherboard sensors and fan headers sit behind port I/O that user mode cannot reach, so a kernel driver is needed. Many monitoring tools use WinRing0, which is vulnerable (CVE-2020-14979: any local user can read and write physical memory) and is flagged by Microsoft Defender. Ember uses the signed PawnIO driver instead. Details: [docs/driver-research.md](docs/driver-research.md).
+How the service is locked down, and how to report a problem privately: [SECURITY.md](SECURITY.md).
 
 ## FAQ
 
-**Is it safe to run?** Fan control has unit tests and has been checked on one real PC, and the safety rules above are enforced in the service. The production build holds what has been checked on real hardware, with Razer Chroma, Nanoleaf, Meross, Tapo and game detection marked Beta; the beta builds add features still being tested. Either way, test one header at a time and watch your temperatures.
+**Is it safe to run?** Fan control has unit tests and has been checked on one real PC, and the safety rules above are enforced in the service. The production build holds what has been checked on real hardware, with Razer Chroma, Nanoleaf, Meross, Tapo and game detection marked Beta. Either way, test one header at a time and watch your temperatures.
 
-**Why does the Power page say my motherboard has no sensor?** No motherboard reports how much power it uses itself, and software cannot read it from the chip. CPU and GPU report their own watts. For the rest (board, memory, drives, fans, power supply losses) Ember uses a smart plug on your PC: wall draw minus CPU and GPU. Without a plug it shows CPU and GPU only and says so, rather than inventing a number.
+**Does it work on my motherboard?** It is built and tested on an MSI B550-A PRO (NCT6687D). Other chips supported by LibreHardwareMonitor may work; [docs/windows-verification.md](docs/windows-verification.md) shows what has been verified. It needs the PawnIO driver for motherboard sensors and fan headers; see [why PawnIO](docs/architecture.md#why-pawnio).
+
+**Why does the Power page say my motherboard has no sensor?** No motherboard reports how much power it uses, and software cannot read it from the chip. CPU and GPU report their own watts. For the rest (board, memory, drives, fans, power supply losses) Ember uses a smart plug on your PC: wall draw minus CPU and GPU. Without a plug it shows CPU and GPU only and says so, rather than inventing a number.
 
 **Will Ember switch my smart plugs?** No. It only asks a plug what it is drawing. Meross is used for bulbs and light strips only, and plugs, hubs and thermostats are never controlled.
 
@@ -163,30 +99,23 @@ Motherboard sensors and fan headers sit behind port I/O that user mode cannot re
 
 **How does game detection decide?** A game from your Steam, Epic, GOG, Ubisoft Connect or EA app library counts after 4 seconds at 20% GPU load, windowed or full screen. Any other program counts when it runs full screen and keeps the GPU at 50% or more for 10 seconds. Mark a wrong guess as not a game. It is behind **Experimental features** and is marked Beta.
 
-**Does it work on my motherboard?** It is built and tested on an MSI B550-A PRO (NCT6687D). Other chips supported by LibreHardwareMonitor may work; [docs/windows-checklist.md](docs/windows-checklist.md) shows what has been verified.
-
 **Why are some of my fans at 0 RPM in Super quiet?** Some fans stop below about 20% speed. Pick Quiet, or use Manual to set a higher minimum.
-
-**Does it send data anywhere?** Not on its own: no accounts and no telemetry, and the only network use is what you switch on. See [PRIVACY.md](PRIVACY.md).
 
 **Can I use it with SignalRGB or NZXT CAM?** Not at the same time on the same devices (Logitech G HUB, SignalRGB and Ember all want to set the lighting; only one should be active at a time). Ember warns you about fan-control programs and can close them.
 
-**Where is the roadmap?** See [ROADMAP.md](ROADMAP.md), and [CHANGELOG.md](CHANGELOG.md) for what changed in each version. The changelog is also inside the app, in Settings; the roadmap page is in the beta builds.
+**Does it send data anywhere?** Not on its own: no accounts and no telemetry, and the only network use is what you switch on. See [PRIVACY.md](PRIVACY.md).
 
-## Security
+## Reporting bugs
 
-The service runs as LocalSystem and is locked down; see [SECURITY.md](SECURITY.md) to report a problem.
+Open an [issue](https://github.com/Ol775/ember-pc/issues) and attach the diagnostic report: Settings, About, **Copy diagnostic report**. It holds versions, what each integration found, device names and a scrubbed recent log; it does not hold passwords or keys. Read it before you post it. Security problems go through [SECURITY.md](SECURITY.md), not a public issue.
 
-### How updates are verified
+## Documentation
 
-1. Ember asks GitHub for the newest release of this repository, and for nothing else.
-2. **Update now** downloads the installer from that release and the `.sha256` file published next to it.
-3. The installer is checked against the checksum before it runs. If they do not match it is thrown away and nothing is installed. A checksum proves the file is the one that was released, not who made it; the installer is not code-signed yet.
-4. Nothing is downloaded or installed until you press the button. You can also download the installer yourself and compare the checksum by hand: `Get-FileHash Ember-Setup-<version>.exe`.
+[CHANGELOG](CHANGELOG.md) (also in the app, in Settings) · [ROADMAP](ROADMAP.md) · [install options](docs/install.md) · [how Ember is put together](docs/architecture.md) · [known issues](docs/known-issues.md) · [beta testing guide](docs/beta-testing.md) · [all docs](docs/README.md)
 
 ## Contributing
 
-Want to help test the beta builds? See the [beta testing guide](docs/BETA-TESTING.md). Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md). Want to help test the beta builds? See the [beta testing guide](docs/beta-testing.md).
 
 ## Licence and terms
 

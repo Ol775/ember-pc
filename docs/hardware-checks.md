@@ -1,6 +1,6 @@
-# Testing list
+# Hardware checks
 
-Things that pass their unit tests but still need a person with the real hardware to try them. Beta testers: see [BETA-TESTING.md](BETA-TESTING.md) for how to try a beta and report what you find. Tick an item when it has
+Things that pass their unit tests but still need a person with the real hardware to try them. Beta testers: see [beta-testing.md](beta-testing.md) for how to try a beta and report what you find. Tick an item when it has
 been checked on the PC, and write what was actually seen. Update this list whenever a feature is added.
 
 **Fan safety first:** while testing anything that touches fans, keep a temperature monitor open and be ready to set the
@@ -16,7 +16,7 @@ mode to Performance.
 - [ ] **Logitech lighting on more keyboards and mice**: per-device colour and effects work on each model tried. Seen: _
 - [x] **Game detection** (LEGO Batman: Legacy of the Dark Knight, 2026-10-13: detected about 10 s after the GPU passed 50%, fans to Performance, back to Super quiet within seconds of leaving, detected again on return; the browser-not-mistaken-for-a-game part is covered by the exclusion list, not yet tried with a full-screen browser at high GPU load): with Experimental on, a game starting raises the fans, and closing it releases them.
       A browser or video player is not mistaken for a game. Seen: _
-- [x] **GPU fan control** (RTX 3060, 2026-10-13, after the fixes in docs/FIXES.md: silent card idle in Super quiet, steady curve-following in Extreme, hand-back on switching off): with Experimental on and the GPU option ticked, the GPU fans follow the curve, and
+- [x] **GPU fan control** (RTX 3060, 2026-10-13, after the fixes in docs/known-issues.md: silent card idle in Super quiet, steady curve-following in Extreme, hand-back on switching off): with Experimental on and the GPU option ticked, the GPU fans follow the curve, and
       automatic control comes back when Ember stops. Seen: _
 
 ## Tray icon and start minimised
@@ -106,7 +106,7 @@ _The unticked lines below were written before the check; the owner confirmed the
 - [ ] Lights keep working for longer than a minute (the heartbeat keeps the Synapse session alive), and after Synapse restarts.
 - [ ] Switching Razer Chroma off stops Ember talking to Synapse.
 
-- [ ] Settings, About: Copy diagnostic report puts versions, integration status, devices and the recent log on the clipboard (no keys or passwords), and Open log folder opens %AppData%mberogs, which holds one ember-yyyymmdd.log per day.
+- [ ] Settings, About: Copy diagnostic report puts versions, integration status, devices and the recent log on the clipboard (no keys or passwords), and Open log folder opens %AppData%\Ember\logs, which holds one ember-yyyymmdd.log per day.
 - [ ] Devices page: every integration card (OpenRGB, Govee, Logitech, Hue, Nanoleaf, Razer, Corsair) has a switch; off stops Ember looking for or sending to its devices (and lets go of G HUB, iCUE or OpenRGB), on brings them back, and the choice is remembered after a restart.
 
 ## Corsair iCUE (confirmed working on a real PC once iCUE was updated, 2026-10-14; the older CUE SDK fallback is untested on hardware)

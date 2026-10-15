@@ -1,4 +1,4 @@
-# Windows verification checklist (phase 1)
+# Windows verification (core app, service and driver)
 
 Phase 1 was written and unit-tested on macOS. The app, the service's hardware code, the pipe ACL and the install
 scripts can only be verified on Windows. Run these checks on the Windows PC and fill in the **Result** column
@@ -31,10 +31,10 @@ Phase 1 is read-only. During every step, watch that no fan speed changes (check 
 | **b3.** `(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\EmberService).ImagePath` | Double-quoted path containing spaces: `"C:\Program Files\Ember\Ember.Service.exe"`. | | |
 | **b4.** Run `scripts\install-service.ps1` from a non-elevated PowerShell | Refused: must be run elevated. | | |
 | **c1.** Start `publish\app\Ember.App.exe` as a normal (non-admin) user, not elevated | Window titled "Ember"; the app connects and the sidebar shows "Service running" with a green dot. No UAC prompt. | | The connector trusts the pipe only if its server PID equals the PID the Service Control Manager reports for EmberService; a normal user must be able to do this. |
-| **c2.** Compare CPU, GPU, Motherboard and Fans (average) with HWiNFO or Task Manager | Values agree within a few degrees / a few percent of RPM. Missing sensors show "â€”", never 0. | | |
+| **c2.** Compare CPU, GPU, Motherboard and Fans (average) with HWiNFO or Task Manager | Values agree within a few degrees / a few percent of RPM. Missing sensors show "—", never 0. | | |
 | **c3.** On a machine with two GPUs (or an iGPU plus a dGPU) | The GPU card shows the hottest GPU. | | |
 | **c4.** Leave the app running 2 minutes | History chart draws CPU (orange) and GPU (blue) lines that move left over time; values stay within 20 to 100 Â°C. | | |
-| **d1.** Elevated: `Stop-Service EmberService` with the app open | Within 2 s the app shows "Service not running"; cards show "â€”", the fan list is empty; the app does not crash. | | |
+| **d1.** Elevated: `Stop-Service EmberService` with the app open | Within 2 s the app shows "Service not running"; cards show "—", the fan list is empty; the app does not crash. | | |
 | **d2.** `Start-Service EmberService` | The app reconnects by itself within 6 s and shows live values again. | | |
 | **e1.** Stop the service, close and restart the app, then start the service | The app shows "Service not running", then "Service running" once the service is up, without user action. | | |
 | **f1.** Elevated: `Stop-Process -Name Ember.Service -Force` | Windows restarts the service within about 5 s (service recovery); the app reconnects. | | |
@@ -94,5 +94,5 @@ runs. Have HWiNFO open to watch RPM. Install the watchdog first (`scripts\instal
 | **p25.** Settings > Experimental switch | Off by default. While off the service refuses game and GPU messages and the Fans page hides the Games panel and GPU option; turning it on shows them; turning it off ends a game and hands the GPU fan back. | pass | Checked on the PC through the pipe and the app. |
 | **p24.** Super quiet mode, dark window frame and wheel scrolling | Super quiet is listed first and sits on the 20% floor below 50 C; the title bar and scroll bars are dark; the mouse wheel scrolls the page smoothly, also over sliders. | pass | Checked on the PC: mode set and saved through the service; 5 wheel notches moved the Lights page 46%. |
 | **p23.** Lights page: with OpenRGB running turn Lights on, drag a device, add Wave and Screen sync layers, save a scene | OpenRGB devices and a Govee lamp show on the canvas and take the colours; closing Ember leaves the lights as they are; Lights off sends one dark frame. | pass | OpenRGB 1.0 (MSI board, NZXT Smart Device V2) and a Govee H6056 checked on the PC; colours were sent without errors, appearance on the hardware is the owner to confirm. |
-| **p22.** Settings page: change the unit and the start page, toggle "Start Ember when I sign in" | Choices persist in `%AppData%mberpp.json`; the switch adds and removes the HKCU Run value `Ember`. | pass | Checked on the PC (unit, start-up switch). |
+| **p22.** Settings page: change the unit and the start page, toggle "Start Ember when I sign in" | Choices persist in `%AppData%\Ember\app.json`; the switch adds and removes the HKCU Run value `Ember`. | pass | Checked on the PC (unit, start-up switch). |
 | **p21.** Fans page, Manual mode: pick Manual, drag a point, nudge one with the arrow keys, add and remove a point, switch between CPU fan and System fans, Reset to Normal | The curve redraws, the service has the new points (`ember.v1` status `mc`), the fans follow the curve, a curve that is slow when hot is not sent. Presets show read-only with a "Customise this curve" button. | pass | Drag, arrow keys, group switch and reset checked on the PC; the hot-end rule is covered by unit tests. |
