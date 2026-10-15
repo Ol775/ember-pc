@@ -107,7 +107,15 @@ public partial class MainWindow : Window
         _keys = new KeyWatcher(vk => _lights.KeyPressed(vk));
         _screenTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Background, (_, _) => GrabScreen(), Dispatcher);
         _screenTimer.Start();
-        if (BuildFeatures.Current.GameDetection) _gameTimer.Start(); // beta feature: off in the alpha build
+        if (BuildFeatures.Current.GameDetection)
+        {
+            _gameTimer.Start(); // beta feature: off in the alpha build
+            _library = _libraryStore.Load();                  // what the last scan found, known at once
+            _detection.SetKnownGames(_library.KnownExes);
+            _profiles = _profileStore.Load();
+            Games.Attach(ScanLibraryAsync, _profiles, p => { _profiles = p; _profileStore.TrySave(p); });
+            _ = ScanLibraryAsync();                           // and look again now
+        }
 
         StartupSwitch.IsChecked = StartupRegistration.IsEnabled();
         TraySwitch.IsChecked = _vm.Prefs.KeepInTray;
@@ -438,6 +446,9 @@ public partial class MainWindow : Window
                 _ => null,
             };
             if (message is not null) await ControlClient.SendAsync(message);
+            // A game with its own fan mode (off unless switched on on the Games page): picked as a game-time mode, so it ends with the game.
+            if (message is GameStarted started && _profiles.ModeFor(GameLookup.ByExe(_library, started.Exe)?.Name) is { } own)
+                await ControlClient.SendAsync(new SetMode(own));
         }
         catch (Exception) { /* detection must never take the window down */ }
     }
@@ -484,6 +495,30 @@ public partial class MainWindow : Window
         GoveeNote.Text = _secrets.Set(GoveeKeyName, null) ? "Key removed." : "Windows would not remove the key.";
         _lights.RefreshDevices();
         Announce(GoveeNote);
+    }
+
+    // ---- Game libraries ----
+
+    GameProfiles _profiles = GameProfiles.Default;
+    readonly GameProfileStore _profileStore = new(GameProfileStore.DefaultPath);
+    GameLibrary _library = GameLibrary.Empty;
+    readonly GameLibraryStore _libraryStore = new(GameLibraryStore.DefaultPath);
+    bool _libraryScanning;
+
+    /// <summary>Reads the launcher libraries in the background and tells game detection which programs are games.</summary>
+    async Task ScanLibraryAsync()
+    {
+        if (_libraryScanning) return;
+        _libraryScanning = true;
+        try
+        {
+            var found = await Task.Run(GameLibraryScan.ScanAll);
+            _library = found;
+            _libraryStore.TrySave(found);
+            _detection.SetKnownGames(found.KnownExes);
+        }
+        catch (Exception ex) { DiagLog.Changed("Games", "scan", "failed: " + ex.GetType().Name); }
+        finally { _libraryScanning = false; }
     }
 
     // ---- Tapo (beta builds only) ----
@@ -802,7 +837,10 @@ public partial class MainWindow : Window
 
     void OnNavChanged(object sender, RoutedEventArgs e)
     {
-        if (DashboardPage is null || FansPageView is null || SettingsPageView is null || LightsPageView is null || DevicesPageView is null || PowerPageView is null) return;
+        if (DashboardPage is null || FansPageView is null || SettingsPageView is null || LightsPageView is null || DevicesPageView is null || PowerPageView is null || GamesPageView is null) return;
+        GamesPageView.Visibility = NavGames.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        // Opening the page scans again when the last scan is more than five minutes old.
+        if (NavGames.IsChecked == true && DateTimeOffset.Now - _library.ScannedAt > TimeSpan.FromMinutes(5)) _ = ScanLibraryAsync();
         PowerPageView.Visibility = NavPower.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         DevicesPageView.Visibility = NavDevices.IsChecked == true ? Visibility.Visible : Visibility.Collapsed; // fires once during InitializeComponent
         LightsPageView.Visibility = NavLights.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
@@ -951,6 +989,7 @@ public partial class MainWindow : Window
         _chart.Update(_vm.ChartWidth, _vm.ChartHeight, _vm.Unit, _vm.CpuLine, _vm.GpuLine, _vm.CpuText, _vm.GpuText);
         if (DevicesPageView.Visibility == Visibility.Visible) Devices.Update(_vm, _lights);
         if (PowerPageView.Visibility == Visibility.Visible) Power.Update();
+        if (GamesPageView.Visibility == Visibility.Visible) Games.Update(_library, _libraryScanning, _detection.ActiveGame, _vm.FansPage.Experimental);
         // WPF only announces a live region when the app raises LiveRegionChanged itself.
         Curve.SetState(_vm.FansPage.Mode, _vm.FansPage.Curves, _cpuTemp, _caseTemp);
         _ai.Refresh();

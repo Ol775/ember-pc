@@ -2,6 +2,14 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.2.0-beta.8 (2026-10-15)
+
+### Added
+
+- **A Games page.** Ember reads your Steam, Epic Games, GOG, Ubisoft Connect and EA app libraries and lists the games it finds, grouped by launcher. It scans when Ember starts, when you open the page (if the last scan is more than five minutes old) and when you press **Scan now**. It only reads folders and files; nothing is changed or sent anywhere.
+- **Better game detection.** A game from your libraries switches the fans to game mode after 4 seconds instead of 10, needs only 20% GPU load instead of 50%, and is found even when it runs in a window. Programs that are not in a library are found the old way (full screen and a busy graphics card).
+- **A fan mode for each game (off unless you switch it on).** On the Games page, switch on "Use a fan mode for each game" and pick a mode on any game. A game with no pick keeps using the game mode from the Fans page. The safety rules (90 °C override, early CPU ramp, speed floors) still apply.
+
 ## 1.2.0-beta.7 (2026-10-15)
 
 ### Added

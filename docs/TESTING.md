@@ -75,6 +75,12 @@ _The unticked lines below were written before the check; the owner confirmed the
 - [ ] Black or the lights switched off turns the Hue lights off, and switching on brings them back.
 - [ ] Unlink forgets the bridge and its key; linking again works. A bridge whose address changes shows "could not reach" and recovers when its address is updated.
 
+## Games (beta only)
+
+- [ ] Games page: the games you have installed appear under Steam, Epic Games, GOG, Ubisoft Connect and the EA app, with a count. Scan now rescans; installing or removing a game and scanning again changes the list.
+- [ ] With Experimental features on, start a library game in a window (windowed or borderless): within about 5 seconds the Fans page shows game mode and the Games page shows "Playing: <game>". Closing the game returns to the normal mode.
+- [ ] "Use a fan mode for each game" is off by default. Switch it on, give one game Performance, start it: the Fans page shows that mode (marked as a game override) and it ends with the game. A game with no pick uses the game mode.
+
 ## Meross (beta only; written from the community-documented protocol and unit-tested, never tried on a device)
 
 - [ ] Settings, Meross: sign in with the Meross account; the note says how many bulbs and light strips the account lists (plugs, hubs and thermostats are ignored). A wrong password says so plainly. With two-step verification on the account, signing in without a code asks for one, and the code box then works.

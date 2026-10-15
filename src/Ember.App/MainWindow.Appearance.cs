@@ -20,6 +20,7 @@ public partial class MainWindow
     /// <summary>The production build has no roadmap page, and no game detection or GPU fan control (still being proven). Every integration is there; Nanoleaf and Razer are marked Beta.</summary>
     void ApplyBuildChannel()
     {
+        if (!BuildFeatures.Current.GameDetection) NavGames.Visibility = Visibility.Collapsed; // game detection is still being proven in production
         if (!BuildFeatures.IsProduction) return;
         NavRoadmap.Visibility = Visibility.Collapsed;
         NavPower.Visibility = Visibility.Collapsed;

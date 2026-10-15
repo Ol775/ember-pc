@@ -27,7 +27,12 @@ public sealed class GameDetection
         "wmplayer.exe", "explorer.exe", "ApplicationFrameHost.exe", "Teams.exe", "Zoom.exe",
     };
 
+    /// <summary>A game from a launcher library needs less proof: it counts when windowed too, with a lower GPU load, and sooner.</summary>
+    public const double KnownLoadThreshold = 20;
+    public static readonly TimeSpan KnownLoadFor = TimeSpan.FromSeconds(4);
+
     HashSet<string> _notGames;
+    HashSet<string> _known = new(StringComparer.OrdinalIgnoreCase);
     string? _active, _candidate;
     DateTimeOffset _candidateSince, _lastHeartbeat;
     DateTimeOffset? _awaySince;
@@ -38,6 +43,9 @@ public sealed class GameDetection
 
     public void SetNotGames(IEnumerable<string> exes) => _notGames = ToSet(exes);
 
+    /// <summary>The program names of games found in the launcher libraries.</summary>
+    public void SetKnownGames(IEnumerable<string> exes) => _known = ToSet(exes);
+
     static HashSet<string> ToSet(IEnumerable<string> exes) =>
         new(exes.Select(e => e.Trim()), StringComparer.OrdinalIgnoreCase);
 
@@ -45,8 +53,9 @@ public sealed class GameDetection
     {
         if (_active is not null && _notGames.Contains(_active)) return End();
 
-        var eligible = fg.Exe is { Length: > 0 } exe && fg.FullScreen && !Excluded.Contains(exe)
-            && !_notGames.Contains(exe) && gpuLoad is >= LoadThreshold;
+        var known = fg.Exe is { Length: > 0 } k && _known.Contains(k);
+        var eligible = fg.Exe is { Length: > 0 } exe && !Excluded.Contains(exe) && !_notGames.Contains(exe)
+            && (known ? gpuLoad is >= KnownLoadThreshold : fg.FullScreen && gpuLoad is >= LoadThreshold);
 
         if (eligible)
         {
@@ -63,13 +72,13 @@ public sealed class GameDetection
 
         if (_active is not null)
         {
-            var stillFront = fg.FullScreen && string.Equals(fg.Exe, _active, StringComparison.OrdinalIgnoreCase);
+            var stillFront = (fg.FullScreen || _known.Contains(_active)) && string.Equals(fg.Exe, _active, StringComparison.OrdinalIgnoreCase);
             if (stillFront) _awaySince = null;
             else _awaySince ??= now;
         }
 
         // A different program that stayed eligible long enough replaces the current game.
-        if (_candidate is not null && now - _candidateSince >= LoadFor
+        if (_candidate is not null && now - _candidateSince >= (_known.Contains(_candidate) ? KnownLoadFor : LoadFor)
             && !string.Equals(_candidate, _active, StringComparison.OrdinalIgnoreCase))
         {
             _active = _candidate;
