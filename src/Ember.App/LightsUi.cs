@@ -29,6 +29,16 @@ static class LightsUi
         return t;
     }
 
+    /// <summary>The small "Beta" tag shown on features that are written and tested but not yet proven on enough real hardware.</summary>
+    public static FrameworkElement BetaChip(string tooltip)
+    {
+        var tag = new Border { CornerRadius = new CornerRadius(8), Padding = new Thickness(7, 1, 7, 2), VerticalAlignment = VerticalAlignment.Center, ToolTip = tooltip,
+            Child = new TextBlock { Text = "Beta", FontSize = 11, FontWeight = FontWeights.SemiBold } };
+        ((TextBlock)tag.Child).SetResourceReference(TextBlock.ForegroundProperty, "AccentTextBrush");
+        tag.SetResourceReference(Border.BackgroundProperty, "AccentSoftBrush");
+        return tag;
+    }
+
     public static Button Pill(string label, Action onClick, string? name = null)
     {
         var b = new Button { Content = label, Style = Sty("ActionButton"), Margin = new Thickness(0, 0, 8, 6) };

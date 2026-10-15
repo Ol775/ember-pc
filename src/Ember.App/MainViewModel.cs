@@ -74,6 +74,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public Visibility NotElevatedVisibility => IsElevated ? Visibility.Collapsed : Visibility.Visible;
     public Visibility BetaGamesVisibility => BuildFeatures.Current.GameDetection && _fansPage.Experimental ? Visibility.Visible : Visibility.Collapsed;
     public Visibility ExperimentalAvailableVisibility => BuildFeatures.Current.GameDetection || BuildFeatures.Current.GpuFan ? Visibility.Visible : Visibility.Collapsed;
+    /// <summary>What the Experimental switch does in this build: the production build has game detection only (marked Beta).</summary>
+    public string ExperimentalText => BuildFeatures.Current.GpuFan
+        ? "Game detection switches the fan mode to your game mode while a game runs (games from your launcher libraries, or any full-screen program that keeps the GPU busy), and lets you mark programs as not a game. GPU fan control lets Ember drive the graphics card fan once you have tested it. Both are still being proven on real hardware, so they are off until you turn them on. Turning this off ends any game mode and hands the GPU fan back to the card."
+        : "Game detection (beta) switches the fan mode to your game mode while a game runs: games from your launcher libraries (see the Games page), or any full-screen program that keeps the GPU busy. You can mark programs as not a game. It is still being proven on real hardware, so it is off until you turn it on. Turning this off ends any game mode.";
     public Visibility BetaGpuVisibility => BuildFeatures.Current.GpuFan && _fansPage.Experimental ? Visibility.Visible : Visibility.Collapsed;
     public bool ChannelStable => Prefs.Channel == UpdateChannel.Stable;
     public bool ChannelBeta => Prefs.Channel == UpdateChannel.Beta;

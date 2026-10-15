@@ -4,14 +4,14 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 
 ## Being checked on real hardware
 
-- Nanoleaf and Razer Chroma (marked Beta in every build): written and unit-tested, but not yet tried on real devices
-- Game detection and GPU fan control: working on the test PC, to be tried on other graphics cards before they leave Experimental
+- Nanoleaf, Razer Chroma, Meross and Tapo (marked Beta in every build): written and unit-tested, but not yet tried on enough real devices
+- Game detection (Beta, in the production build behind Experimental features) and GPU fan control (beta builds only): working on the test PC, to be tried on other PCs and graphics cards before they leave Experimental
 - Per-key keyboard layouts and Govee segments on more keyboards and lamps
 - A clean install on a PC that never had Ember
 
 ## Next
 
-- Take Nanoleaf and Razer Chroma out of Beta, and bring game detection and GPU fan control into the production build, once the hardware checks above are done
+- Take Nanoleaf, Razer Chroma, Meross, Tapo and game detection out of Beta, and bring GPU fan control into the production build, once the hardware checks above are done
 - Nanoleaf panels placed on the Lights canvas where they really are, not in one row
 - Razer devices: only show the ones that are plugged in, once Synapse offers a way to tell
 
@@ -41,12 +41,14 @@ ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up i
 - Safety rules, header testing, conflict detection, watchdog service, stall recovery for fans that stop at low speed
 - AI assist: learns your temperatures and noise preference to suggest a curve you approve
 - Experimental game detection and GPU fan control, made to suit a graphics card
+- A Power page: CPU, GPU, motherboard and the rest, and other plugs, with a wall plug (Meross or Tapo, read only) for the whole PC
+- A Games page that scans Steam, Epic, GOG, Ubisoft Connect and the EA app, with a fan mode per game (off by default)
 
 ### Lighting
 
 - Lighting through OpenRGB and Govee (LAN and cloud), layered effects, scenes, screen sync, music-reactive effects
 - Logitech G keyboards and mice through G HUB, per key
-- Philips Hue lights through the bridge, Nanoleaf light panels through the controller, Razer Chroma through Synapse
+- Philips Hue lights through the bridge, Nanoleaf light panels through the controller, Razer Chroma through Synapse, Meross and Tapo bulbs on the local network
 - Per-LED painting, gradients, rainbow, import and export, a paint library, and paint for several devices at once
 - Effects: spectrum bars, ripples, reactive keys, key highlight, fire, rain, and an effect per key group
 - Own lighting for one device, switching a device off, and arranging devices on the canvas

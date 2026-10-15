@@ -211,11 +211,11 @@
                     <StackPanel x:Name="AiHost" />
                 </GroupBox>
 
-                <GroupBox Header="Games" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Games"
+                <GroupBox Header="Games (beta)" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Games"
                           Visibility="{Binding BetaGamesVisibility}">
                     <StackPanel>
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
-                                   Text="Ember switches to game mode when a full-screen program keeps your GPU busy. If it guesses wrong, mark the program as not a game." />
+                                   Text="Ember switches to game mode when a game from your launcher libraries runs (see the Games page) or a full-screen program keeps your GPU busy. If it guesses wrong, mark the program as not a game." />
                         <DockPanel Margin="0,8,0,0" Visibility="{Binding DetectedGameVisibility}">
                             <Button DockPanel.Dock="Right" Content="Not a game" Tag="{Binding FansPage.DetectedGame}" Click="OnNotAGame"
                                     Style="{StaticResource ActionButton}"
@@ -413,7 +413,7 @@
                         <CheckBox x:Name="ExperimentalSwitch" Content="Turn on experimental features" Click="OnExperimentalToggled"
                                   IsChecked="{Binding FansPage.Experimental, Mode=OneWay}" Style="{StaticResource SwitchBox}" />
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
-                                   Text="Game detection switches the fan mode to your game mode while a full-screen program keeps the GPU busy, and lets you mark programs as not a game. GPU fan control lets Ember drive the graphics card fan once you have tested it. Both are still being proven on real hardware, so they are off until you turn them on. Turning this off ends any game mode and hands the GPU fan back to the card." />
+                                   Text="{Binding ExperimentalText}" />
                     </StackPanel>
                 </GroupBox></StackPanel>
 

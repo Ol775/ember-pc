@@ -4,9 +4,9 @@ namespace Ember.Core;
 
 /// <summary>
 /// What this build includes. A release without a label (1.0.0) is the production build: it holds only what has been checked on
-/// real hardware, and hides the rest. A version with a label (1.1.0-beta.1) is the beta build: game detection and GPU fan control
-/// and the Hue, Nanoleaf and Razer lighting are switched on, and the roadmap is shown. The service refuses the messages of a
-/// feature the build does not have, and the app hides it.
+/// real hardware (plus a few features marked Beta, such as game detection and the Meross and Tapo integrations), and hides the
+/// rest. A version with a label (1.2.0-beta.1) is the beta build: GPU fan control and the Stream Deck plugin are switched on too,
+/// and the roadmap is shown. The service refuses the messages of a feature the build does not have, and the app hides it.
 /// </summary>
 public sealed record BuildFeatures(bool GameDetection, bool GpuFan)
 {
@@ -25,7 +25,8 @@ public sealed record BuildFeatures(bool GameDetection, bool GpuFan)
     public static bool IsProduction => Channel == "prod";
 
     public static readonly BuildFeatures All = new(true, true);
-    public static readonly BuildFeatures Production = new(false, false);
+    /// <summary>Game detection is in the production build, marked Beta and behind the Experimental switch. GPU fan control is not.</summary>
+    public static readonly BuildFeatures Production = new(true, false);
 
     public static BuildFeatures Current => IsProduction ? Production : All;
 }

@@ -58,11 +58,11 @@ public partial class MainWindow : Window
              new Ember.Lighting.Nanoleaf.NanoleafSource(NanoleafConnection),
              new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp)),
              new Ember.Lighting.Corsair.CorsairSource(Ember.Lighting.Corsair.CorsairApiChain.Open),
-             .. BuildFeatures.IsProduction ? Array.Empty<IDeviceSource>() : [new Ember.Lighting.Meross.MerossSource(MerossSession,new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http)), new Ember.Lighting.Tapo.TapoSource(_tapo)]]);
+             new Ember.Lighting.Meross.MerossSource(MerossSession, new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http)),
+             new Ember.Lighting.Tapo.TapoSource(_tapo)]);
         Lights.Attach(_lights);
         _lights.Start();
-        // Beta: power page. Linked Meross plugs are read (never switched) every few seconds.
-        if (!BuildFeatures.IsProduction)
+        // Power page: linked Meross and Tapo plugs are read (never switched) every few seconds.
         {
             var plugs = new Ember.Lighting.Meross.PlugMonitor(MerossSession, new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http), () => Power.Links);
             var providers = new Ember.Lighting.Meross.IPlugProvider[] { plugs, new Ember.Lighting.Tapo.TapoPlugMonitor(_tapo, () => Power.Links) };
@@ -89,7 +89,7 @@ public partial class MainWindow : Window
             var sum = DashboardSummary.From(s);
             _cpuTemp = s.Stale ? null : sum.CpuTemp;
             _gpuTemp = s.Stale ? null : sum.GpuTemp;
-            if (!s.Stale && !BuildFeatures.IsProduction) Power.Feed(DateTimeOffset.UtcNow, PowerSummary.From(s));
+            if (!s.Stale) Power.Feed(DateTimeOffset.UtcNow, PowerSummary.From(s));
             _lights.SetInputs(s.Stale ? null : sum.CpuTemp, s.Stale ? null : sum.GpuTemp, _screen);
             _caseTemp = s.Stale ? null : new[] { sum.CpuTemp, sum.GpuTemp, sum.MotherboardTemp }.Where(v => v is not null).Max();
             if (_vm.Prefs.AiLearning && !s.Stale) _thermal.Add(DateTimeOffset.UtcNow, _cpuTemp, _caseTemp);

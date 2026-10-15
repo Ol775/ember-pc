@@ -2,6 +2,23 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.2.0 (2026-10-15)
+
+The production release. It adds the Power page, a Games page with better game detection, and Meross and Tapo lights, with the personalisation and fixes from the beta line.
+
+### Added
+
+- **A Power page.** Shows what your PC draws: the whole PC, the CPU, the graphics card, the motherboard and the rest, and any other plugs, each with the live watts, a small graph, the average, the peak and the energy used since Ember started, plus a large graph and a bar showing where the power goes. CPU and GPU come from their own sensors. No motherboard reports its own power, so the motherboard, memory, drives, fans and power supply losses are measured as the difference between the wall draw and the CPU and GPU: link a smart plug that measures energy (Meross MSS310 or MSS315, Tapo P110 or P115) and mark it as your PC's plug. Other linked plugs are listed with their own watts. Plugs are read only: Ember asks what they draw and never switches them. Figures are kept for the session only.
+- **A Games page and better game detection (Beta).** Ember reads your Steam, Epic Games, GOG, Ubisoft Connect and EA app libraries and lists the games it finds. It scans when Ember starts, when you open the page and when you press **Scan now**, and only reads folders and files. A game from your libraries switches the fans to game mode after 4 seconds, needs only 20% GPU load, and is found even in a window; other programs are found the old way (full screen and a busy graphics card). Game detection is behind Settings, Fan control, Experimental features, and is off until you turn it on.
+- **A fan mode for each game (Beta, off unless you switch it on).** On the Games page, switch on "Use a fan mode for each game" and pick a mode on any game. A game with no pick keeps using the game mode from the Fans page. The safety rules (90 °C override, early CPU ramp, speed floors) still apply.
+- **Meross and Tapo / TP-Link lights (Beta).** Settings, Meross: sign in with your Meross account once (two-step codes are supported, and your password is never saved). Settings, Tapo: save your Tapo account email and password (kept in Windows Credential Manager, used only to sign in to your devices on this network). Ember finds your bulbs and light strips on the network and lights them with the scene, one colour at a time. Plugs, hubs and thermostats are never switched. Both are written and tested in software but not yet tried on enough real devices; for Tapo, switch on Third-Party Compatibility for the devices in the Tapo app if they are not found.
+- **Restart services.** A button on the Devices page, on the Sensors and fans card, restarts the Ember service and watchdog without closing the app, which reconnects by itself. Windows asks for permission unless Ember runs as administrator. The fans go back to the board for a moment while it restarts.
+- **More ways to make Ember your own.** Settings, Appearance has **Interface size** (Small, Normal or Large: the whole window, text and spacing together) and **GPU colour** (Auto, or any of the accent colours, for the GPU number and its line on the chart). Settings, General lets Ember **open on Lights or Devices** as well as Dashboard or Fans, and **open the window where you left it** (size and position, moved back onto the screen if that monitor is gone).
+
+### Fixed
+
+- **The GPU colour now matches your accent and theme.** With a Blue, Purple or Teal accent (and Green in the light theme) the GPU temperature and chart line fell back to a fixed bright orange. It is now a partner colour worked out from your accent and adjusted for the light or dark theme.
+
 ## 1.2.0-beta.8 (2026-10-15)
 
 ### Added

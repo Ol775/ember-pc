@@ -17,18 +17,13 @@ public partial class MainWindow
     TextBlock? _customNote;
     bool _syncingCustom;
 
-    /// <summary>The production build has no roadmap page, and no game detection or GPU fan control (still being proven). Every integration is there; Nanoleaf and Razer are marked Beta.</summary>
+    /// <summary>The production build has no roadmap page and no GPU fan control (still being proven). Every integration and the Power and Games pages are there; Nanoleaf, Razer, Meross, Tapo and game detection are marked Beta.</summary>
     void ApplyBuildChannel()
     {
         if (!BuildFeatures.Current.GameDetection) NavGames.Visibility = Visibility.Collapsed; // game detection is still being proven in production
         if (!BuildFeatures.IsProduction) return;
         NavRoadmap.Visibility = Visibility.Collapsed;
-        NavPower.Visibility = Visibility.Collapsed;
         RoadmapBox.Tag = "off";
-        MerossBox.Tag = "off";
-        MerossBox.Visibility = Visibility.Collapsed;
-        TapoBox.Tag = "off";
-        TapoBox.Visibility = Visibility.Collapsed;
     }
 
     UpdateChannel UpdateChannelInUse => _vm.Prefs.Channel;

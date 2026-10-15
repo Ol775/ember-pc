@@ -43,7 +43,12 @@ public sealed class GamesPage : UserControl
         head.Children.Add(_nowChip);
         var title = new TextBlock { Text = "Games", FontSize = 24, FontWeight = FontWeights.SemiBold };
         AutomationProperties.SetHeadingLevel(title, AutomationHeadingLevel.Level2);
-        head.Children.Add(title);
+        var titleRow = new StackPanel { Orientation = Orientation.Horizontal };
+        titleRow.Children.Add(title);
+        var beta = BetaChip("Game detection is still being proven on real hardware.");
+        beta.Margin = new Thickness(10, 6, 0, 0);
+        titleRow.Children.Add(beta);
+        head.Children.Add(titleRow);
         _root.Children.Add(head);
         _root.Children.Add(_status);
         _status.Margin = new Thickness(0, 0, 0, 4);

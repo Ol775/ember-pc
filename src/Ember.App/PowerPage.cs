@@ -67,7 +67,7 @@ public sealed class PowerPage : UserControl
         var plugBody = new StackPanel();
         plugBody.Children.Add(Text("Link a smart plug to see what your whole PC draws from the wall, and what other devices on plugs use. Ember only reads from a plug and never switches it. Only plugs that measure energy (Meross MSS310 and MSS315, Tapo P110 and P115) report power.", muted: true, size: 13));
         plugBody.Children.Add(_plugRows);
-        _plugPanel = Panel("Smart plugs (read only)", plugBody, new Thickness(0));
+        _plugPanel = Panel("Smart plugs (read only, beta)", plugBody, new Thickness(0));
         _root.Children.Add(_plugPanel);
         _root.Children.Add(WithMargin(_noPlugs, 4, 0, 0, 0));
         ThemeManager.Changed += () => _plugKey = null;

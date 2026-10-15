@@ -17,7 +17,20 @@ public sealed class FeatureGatingTests : IDisposable
         var store = new SettingsStore(Path.Combine(_dir, "settings.json"));
         store.Save(settings ?? EmberSettings.Default);
         return new FanControlLoop(new SnapshotHub(), _fans, store, () => [], TimeProvider.System,
+            NullLogger<FanControlLoop>.Instance, new FanControlIdentity("B", "1"), new BuildFeatures(false, false));
+    }
+
+    [Fact]
+    public void Production_has_game_detection_but_only_after_experimental_features_are_switched_on()
+    {
+        var store = new SettingsStore(Path.Combine(_dir, "prod.json"));
+        store.Save(EmberSettings.Default);
+        var loop = new FanControlLoop(new SnapshotHub(), _fans, store, () => [], TimeProvider.System,
             NullLogger<FanControlLoop>.Instance, new FanControlIdentity("B", "1"), BuildFeatures.Production);
+        var off = loop.Handle(new GameStarted("game.exe"));
+        Assert.False(off.Ok);
+        Assert.Contains("Experimental", off.Error);
+        Assert.False(loop.Handle(new SetGpuControl(true)).Ok);   // GPU fan control stays out of production
     }
 
     [Theory]

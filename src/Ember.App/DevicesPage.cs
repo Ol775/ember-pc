@@ -62,8 +62,8 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Source("Nanoleaf", "Nanoleaf light panels, through the controller on your network", devices, status, lights));
         _cards.Children.Add(Source("Razer", "Razer Chroma devices, through Razer Synapse on this PC", devices, status, lights));
         _cards.Children.Add(Source("Corsair", "Corsair keyboards, mice, fans and more, through iCUE on this PC", devices, status, lights));
-        if (!BuildFeatures.IsProduction) _cards.Children.Add(Source("Meross", "Meross bulbs and light strips, found on your network", devices, status, lights));
-        if (!BuildFeatures.IsProduction) _cards.Children.Add(Source("Tapo", "Tapo bulbs and light strips, found on your network", devices, status, lights));
+        _cards.Children.Add(Source("Meross", "Meross bulbs and light strips, found on your network", devices, status, lights));
+        _cards.Children.Add(Source("Tapo", "Tapo bulbs and light strips, found on your network", devices, status, lights));
         if (streamDeck is not null) _cards.Children.Add(StreamDeckCard(streamDeck));
 
         LayOutCards();

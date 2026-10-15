@@ -75,21 +75,21 @@ _The unticked lines below were written before the check; the owner confirmed the
 - [ ] Black or the lights switched off turns the Hue lights off, and switching on brings them back.
 - [ ] Unlink forgets the bridge and its key; linking again works. A bridge whose address changes shows "could not reach" and recovers when its address is updated.
 
-## Games (beta only)
+## Games (marked Beta in every build)
 
 - [ ] Games page: the games you have installed appear under Steam, Epic Games, GOG, Ubisoft Connect and the EA app, with a count. Scan now rescans; installing or removing a game and scanning again changes the list.
 - [ ] With Experimental features on, start a library game in a window (windowed or borderless): within about 5 seconds the Fans page shows game mode and the Games page shows "Playing: <game>". Closing the game returns to the normal mode.
 - [ ] "Use a fan mode for each game" is off by default. Switch it on, give one game Performance, start it: the Fans page shows that mode (marked as a game override) and it ends with the game. A game with no pick uses the game mode.
 
-## Meross (beta only; written from the community-documented protocol and unit-tested, never tried on a device)
+## Meross (marked Beta in every build; written from the community-documented protocol and unit-tested, never tried on a device)
 
 - [ ] Settings, Meross: sign in with the Meross account; the note says how many bulbs and light strips the account lists (plugs, hubs and thermostats are ignored). A wrong password says so plainly. With two-step verification on the account, signing in without a code asks for one, and the code box then works.
 - [ ] Within about a minute the devices appear on the Devices page (same Wi-Fi as the PC). If they do not, note the Meross status line.
 - [ ] Place a bulb on the Lights page: it follows the scene colour about once a second, and goes off when the lights go off.
 - [ ] Plugs, hubs and thermostats on the account never appear on the Devices page and are never switched.
-- [ ] Tapo (beta only, written from the community-documented KLAP protocol and unit-tested against a simulated device, never tried on a real one): Settings, Tapo: save the account. Within a minute bulbs appear on the Devices page and follow the scene; Tapo plugs appear on the Power page. A wrong password says no device accepted it. Remove forgets the account.
-- [ ] Power page (beta only): CPU and GPU show plausible watts that rise under load; Motherboard and the rest says it needs the wall plug until one is linked. Link a plug with energy monitoring and mark it as the PC's plug: Overall switches to the wall draw and Everything else shows the difference. Another linked plug shows its own watts. No plug is ever switched on or off by Ember. Unlinking clears the figures.
-- [ ] Sign out forgets the account and the devices disappear. Production builds show no Meross card or settings.
+- [ ] Tapo (marked Beta in every build, written from the community-documented KLAP protocol and unit-tested against a simulated device, never tried on a real one): Settings, Tapo: save the account. Within a minute bulbs appear on the Devices page and follow the scene; Tapo plugs appear on the Power page. A wrong password says no device accepted it. Remove forgets the account.
+- [ ] Power page: CPU and GPU show plausible watts that rise under load; Motherboard and the rest says it needs the wall plug until one is linked. Link a plug with energy monitoring and mark it as the PC's plug: Overall switches to the wall draw and Everything else shows the difference. Another linked plug shows its own watts. No plug is ever switched on or off by Ember. Unlinking clears the figures.
+- [ ] Sign out forgets the account and the devices disappear. The Meross and Tapo cards and settings are marked Beta.
 
 ## Nanoleaf (written and unit-tested against a pretend controller only)
 
