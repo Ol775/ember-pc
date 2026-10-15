@@ -2,6 +2,12 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.3.0-beta.1 (2026-10-15)
+
+### Changed
+
+- **The beta line continues after 1.2.0.** This build has everything in 1.2.0 plus what is still being proven: GPU fan control (Experimental), the Stream Deck plugin and the roadmap page. Use Settings, Updates, Release channel to move between this beta and the Stable build.
+
 ## 1.2.0 (2026-10-15)
 
 The production release. It adds the Power page, a Games page with better game detection, and Meross and Tapo lights, with the personalisation and fixes from the beta line.
