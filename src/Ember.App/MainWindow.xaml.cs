@@ -90,6 +90,7 @@ public partial class MainWindow : Window
             _cpuTemp = s.Stale ? null : sum.CpuTemp;
             _gpuTemp = s.Stale ? null : sum.GpuTemp;
             if (!s.Stale) Power.Feed(DateTimeOffset.UtcNow, PowerSummary.From(s));
+            RunAlerts(sum, s.Stale);
             _lights.SetInputs(s.Stale ? null : sum.CpuTemp, s.Stale ? null : sum.GpuTemp, _screen);
             _caseTemp = s.Stale ? null : new[] { sum.CpuTemp, sum.GpuTemp, sum.MotherboardTemp }.Where(v => v is not null).Max();
             if (_vm.Prefs.AiLearning && !s.Stale) _thermal.Add(DateTimeOffset.UtcNow, _cpuTemp, _caseTemp);
@@ -159,6 +160,7 @@ public partial class MainWindow : Window
         _thermalSave = new DispatcherTimer(TimeSpan.FromMinutes(5), DispatcherPriority.Background, (_, _) => SaveThermal(), Dispatcher);
         _thermalSave.Start();
         _tray = new TrayIcon(ShowFromTray, Quit, mode => _ = SendAsync(new SetMode(mode)));
+        if (!BuildFeatures.IsProduction) BuildAutomation();
         Closing += OnClosing;
         Closed += OnClosed;
     }
@@ -1027,6 +1029,7 @@ public partial class MainWindow : Window
         _refresh.Stop();
         _gameTimer.Stop();
         _screenTimer.Stop();
+        _scheduleTimer?.Stop();
         _thermalSave.Stop();
         SaveThermal();
         _tray.Dispose();

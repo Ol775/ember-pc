@@ -6,6 +6,8 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 
 - Nanoleaf, Razer Chroma, Meross and Tapo (marked Beta in every build): written and unit-tested, but not yet tried on enough real devices
 - Game detection (Beta, in the production build behind Experimental features) and GPU fan control (beta builds only): working on the test PC, to be tried on other PCs and graphics cards before they leave Experimental
+- Scheduled fan modes and scenes, and Windows alerts for a hot part or a stopped fan (beta builds only)
+- Stream Deck plugin (beta builds only): hold actions, the readout keys, and Update and Remove from the Devices page
 - Per-key keyboard layouts and Govee segments on more keyboards and lamps
 - A clean install on a PC that never had Ember
 
@@ -14,13 +16,20 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 - Take Nanoleaf, Razer Chroma, Meross, Tapo and game detection out of Beta, and bring GPU fan control into the production build, once the hardware checks above are done
 - Nanoleaf panels placed on the Lights canvas where they really are, not in one row
 - Razer devices: only show the ones that are plugged in, once Synapse offers a way to tell
+- A lighting scene per game, next to the fan mode per game
+- Global hotkeys for scenes, lights on and off, and fan mode
+- Power cost: kilowatt hours and an estimated cost from your own tariff on the Power page
+- Export sensor history to a file
+- Windows Dynamic Lighting (the built-in Windows lighting standard) as another source of devices
+- A tray tooltip with the current temperatures and power draw
+- Stream Deck: show the GPU fan percentage when the card reports 0 RPM at idle
+- Corsair: say "update iCUE" when iCUE refuses the connection
 
 ## Later (ideas, no promise)
 
 - Share and import fan curves and lighting scenes as files
 - More fan sources, such as other fan controllers, if their makers publish a way to talk to them
 - A compact dashboard window for a second monitor
-- Stream Deck integration: buttons to switch lights on and off, pick a scene, change the fan mode (Super quiet to Extreme) and show the current temperature. Needs a way for the Stream Deck software to call Ember; to be designed
 - Code signing, so Windows stops warning about an unknown publisher and Smart App Control stops blocking Ember
 
 ## Works through OpenRGB
@@ -43,11 +52,14 @@ ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up i
 - Experimental game detection and GPU fan control, made to suit a graphics card
 - A Power page: CPU, GPU, motherboard and the rest, and other plugs, with a wall plug (Meross or Tapo, read only) for the whole PC
 - A Games page that scans Steam, Epic, GOG, Ubisoft Connect and the EA app, with a fan mode per game (off by default)
+- A schedule for fan modes and lights (for example quiet fans and dim lights at night), and Windows notifications for a hot part or a stopped fan (beta)
 
 ### Lighting
 
 - Lighting through OpenRGB and Govee (LAN and cloud), layered effects, scenes, screen sync, music-reactive effects
-- Logitech G keyboards and mice through G HUB, per key
+- Logitech G keyboards and mice through G HUB, per key, with the programmable G keys as a device of their own
+- Corsair devices through iCUE (keep iCUE up to date)
+- A Stream Deck plugin (beta): keys for scenes, lights, brightness, fan mode and live temperature and fan readouts
 - Philips Hue lights through the bridge, Nanoleaf light panels through the controller, Razer Chroma through Synapse, Meross and Tapo bulbs on the local network
 - Per-LED painting, gradients, rainbow, import and export, a paint library, and paint for several devices at once
 - Effects: spectrum bars, ripples, reactive keys, key highlight, fire, rain, and an effect per key group

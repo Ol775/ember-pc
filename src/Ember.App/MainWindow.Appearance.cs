@@ -23,6 +23,7 @@ public partial class MainWindow
         if (!BuildFeatures.Current.GameDetection) NavGames.Visibility = Visibility.Collapsed; // game detection is still being proven in production
         if (!BuildFeatures.IsProduction) return;
         NavRoadmap.Visibility = Visibility.Collapsed;
+        HideAutomation();
         RoadmapBox.Tag = "off";
     }
 

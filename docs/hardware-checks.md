@@ -140,6 +140,7 @@ UI automation, so they still need a person to click them.
 
 
 - [ ] Lamps found later by Govee make room on the canvas without overlapping, and "Arrange devices" tidies a hand-made layout.
+- [ ] Logitech G keys: a keyboard with G keys (G915: G1 to G5 at the side, G6 to G9 on top) shows a "Logitech G keys" device with nine lights on the Lights page; painting or an effect on it lights each G key, and a keyboard with fewer G keys ignores the rest. (The G HUB call was tried by hand on the G915 and lit all nine keys; the in-app device is not yet seen.) Seen: _
 - [ ] Logitech: with the default (per-key) the keyboard shows individual keys for Rain, Fire and Key group, and the mouse keeps its G HUB colour; with "one colour for every Logitech device" on, both take the effect colour, and switching back restores per-key.
 - [x] Key groups on the G915: Function row, Number pad, Arrows and navigation and Space bar row checked against photos (2026-10-13). Still to check: Number row, Letter keys, Space bar row, and other keyboard models.
 - [x] Key highlight: W A S D light correctly on the G915 (seen 2026-10-13). Still to check: other letters and the number row, the bottom letter row (Z to M), and a different keyboard model.
@@ -187,3 +188,13 @@ An unsigned plugin was installed by Stream Deck 7.6 and its program registered w
 - [ ] Stop the Ember service (or let it hang): within about five seconds the readout keys show a dash rather than the last numbers.
 - [ ] Restarting Stream Deck, and restarting the Ember service, leave the keys working.
 - [ ] Update (after installing a newer Ember) replaces the plugin after Stream Deck confirms; Remove deletes it (if Stream Deck holds the files, quit Stream Deck and try again).
+
+## Schedule and alerts (beta)
+
+- [ ] Settings, Schedule and alerts: add a window that covers the current time with a different fan mode and the lights off; within about 15 seconds the mode changes and the lights go off, and the status line names the window. Seen: _
+- [ ] Switching the schedule off, or the window ending, puts the mode and lights back (but a mode picked by hand in between is kept). Seen: _
+- [ ] A window that runs past midnight (22:00 to 07:00) and a window limited to some days behave as set. Seen: _
+- [ ] While a game is running, the schedule waits and says so. Seen: _
+- [ ] "Send a test alert" shows a Windows notification, and clicking it opens Ember. Seen: _
+- [ ] With a low CPU limit (60 °C) under load, the hot alert appears once, not repeatedly. Seen: _
+- [ ] Unplugging or stopping a case fan while the PC is warm gives the "A fan has stopped" alert (only try this with a fan you can safely stop for a moment). Seen: _

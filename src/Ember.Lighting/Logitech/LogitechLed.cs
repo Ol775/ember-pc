@@ -11,6 +11,8 @@ public interface ILogitechLed : IDisposable
     bool SetLighting(int redPercent, int greenPercent, int bluePercent);
     /// <summary>One picture for a per-key keyboard: 21 x 6 pixels, 4 bytes each (blue, green, red, alpha).</summary>
     bool SetLightingFromBitmap(byte[] bgra);
+    /// <summary>One key by the SDK's key name (the G keys have names of their own and are not in the bitmap). False when G HUB does not take it.</summary>
+    bool SetLightingForKeyName(int keyName, int redPercent, int greenPercent, int bluePercent);
     /// <summary>Hands the lighting back to G HUB.</summary>
     void Shutdown();
 }
@@ -71,7 +73,9 @@ public sealed class NativeLogitechLed : ILogitechLed
     readonly LightFn _light;
     readonly BitmapFn _bitmap;
     readonly ShutdownFn _shutdown;
+    readonly KeyNameFn? _keyName;
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate bool KeyNameFn(int keyName, int r, int g, int b);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate bool InitFn();
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate bool TargetFn(int device);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate bool LightFn(int r, int g, int b);
@@ -86,6 +90,8 @@ public sealed class NativeLogitechLed : ILogitechLed
         _light = Get<LightFn>("LogiLedSetLighting");
         _bitmap = Get<BitmapFn>("LogiLedSetLightingFromBitmap");
         _shutdown = Get<ShutdownFn>("LogiLedShutdown");
+        // an older engine may lack this call: the keyboard grid still works without it
+        if (NativeLibrary.TryGetExport(lib, "LogiLedSetLightingForKeyWithKeyName", out var p)) _keyName = Marshal.GetDelegateForFunctionPointer<KeyNameFn>(p);
     }
 
     /// <summary>Null when G HUB's SDK file cannot be found or loaded.</summary>
@@ -112,6 +118,7 @@ public sealed class NativeLogitechLed : ILogitechLed
     public bool SetTargetDevice(LogitechTarget target) => _target((int)target);
     public bool SetLighting(int r, int g, int b) => _light(r, g, b);
     public bool SetLightingFromBitmap(byte[] bgra) => bgra.Length == LogitechKeyboardSink.Bytes && _bitmap(bgra);
+    public bool SetLightingForKeyName(int keyName, int r, int g, int b) => _keyName is { } f && f(keyName, r, g, b);
     public void Shutdown() => _shutdown();
     public void Dispose() { try { _shutdown(); } catch (Exception) { /* already gone */ } NativeLibrary.Free(_lib); }
 }

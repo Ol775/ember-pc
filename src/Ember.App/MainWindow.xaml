@@ -323,6 +323,7 @@
                 <RadioButton GroupName="SettingsNav" Content="Appearance" Tag="appearance" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Fan control" Tag="fan" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Lighting" Tag="lights" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton x:Name="NavAutomation" GroupName="SettingsNav" Content="Schedule and alerts" Tag="automation" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="What's new" Tag="changelog" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton x:Name="NavRoadmap" GroupName="SettingsNav" Content="Roadmap" Tag="roadmap" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
                 <RadioButton GroupName="SettingsNav" Content="Legal" Tag="legal" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
@@ -479,6 +480,12 @@
                         <TextBlock x:Name="MerossNote" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
+                </GroupBox>
+                <GroupBox x:Name="ScheduleBox" Tag="automation" Header="Schedule" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Schedule">
+                    <StackPanel x:Name="ScheduleHost" />
+                </GroupBox>
+                <GroupBox x:Name="AlertsBox" Tag="automation" Header="Alerts" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Alerts">
+                    <StackPanel x:Name="AlertsHost" />
                 </GroupBox>
                 <GroupBox x:Name="TapoBox" Tag="lights" Header="Tapo / TP-Link (beta)" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Tapo">
                     <StackPanel>

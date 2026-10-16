@@ -15,6 +15,8 @@ public class LogitechTests
         public bool SetTargetDevice(LogitechTarget t) { Calls.Add("target " + t); return accepts; }
         public bool SetLighting(int r, int g, int b) { Calls.Add("light"); Light = (r, g, b); return accepts; }
         public bool SetLightingFromBitmap(byte[] bgra) { Calls.Add("bitmap"); Bitmap = bgra; return accepts; }
+        public List<(int Key, int R, int G, int B)> Keys { get; } = [];
+        public bool SetLightingForKeyName(int keyName, int r, int g, int b) { Calls.Add("key"); Keys.Add((keyName, r, g, b)); return accepts; }
         public void Shutdown() => Calls.Add("shutdown");
         public void Dispose() => Calls.Add("dispose");
     }
@@ -48,6 +50,22 @@ public class LogitechTests
         await new LogitechKeyboardSink(ctx).SendAsync([new Color(1, 1, 1)], default);
         Assert.Equal([255, 255, 255, 255], api.Bitmap![..4]);
         Assert.Equal([0, 0, 0, 255], api.Bitmap[4..8]);
+    }
+
+    [Fact]
+    public async Task The_nine_G_keys_are_set_by_key_name_in_percent()
+    {
+        var api = new FakeLed();
+        var ctx = new LogitechContext(api);
+        ctx.Start();
+        var sink = new LogitechGKeysSink(ctx);
+        Assert.Equal(9, sink.LedCount);
+        await sink.SendAsync([new Color(1, 0.5, 0), new Color(0, 0, 1)], default); // G1, G2; G3 to G9 stay dark
+        Assert.Equal(9, api.Keys.Count);
+        Assert.Equal((0xFFF1, 100, 50, 0), api.Keys[0]);
+        Assert.Equal((0xFFF2, 0, 0, 100), api.Keys[1]);
+        Assert.Equal((0xFFF9, 0, 0, 0), api.Keys[8]);
+        Assert.Contains("target PerKeyRgb", api.Calls);
     }
 
     [Fact]
@@ -90,11 +108,11 @@ public class LogitechTests
     }
 
     [Fact]
-    public async Task By_default_only_the_per_key_keyboard_is_offered_and_it_is_kept()
+    public async Task By_default_the_per_key_keyboard_and_its_G_keys_are_offered_and_kept()
     {
         var source = new LogitechSource(() => new FakeLed());
         var first = await source.RefreshAsync(default);
-        Assert.Equal(["logitech:keyboard"], first.Select(s => s.Id));
+        Assert.Equal(["logitech:keyboard", "logitech:gkeys"], first.Select(s => s.Id));
         Assert.Same(first[0], (await source.RefreshAsync(default))[0]);
         Assert.Contains("Connected", source.Status);
     }
@@ -105,7 +123,7 @@ public class LogitechTests
         var one = false;
         var api = new FakeLed();
         var source = new LogitechSource(() => api, () => one);
-        Assert.Equal(["logitech:keyboard"], (await source.RefreshAsync(default)).Select(s => s.Id));
+        Assert.Equal(["logitech:keyboard", "logitech:gkeys"], (await source.RefreshAsync(default)).Select(s => s.Id));
         one = true;
         Assert.Equal(["logitech:mouse"], (await source.RefreshAsync(default)).Select(s => s.Id));
         Assert.Contains("one colour", source.Status);
@@ -113,7 +131,7 @@ public class LogitechTests
         Assert.Equal(2, api.Calls.Count(c => c == "init"));
         Assert.Contains("shutdown", api.Calls);
         one = false;
-        Assert.Equal(["logitech:keyboard"], (await source.RefreshAsync(default)).Select(s => s.Id));
+        Assert.Equal(["logitech:keyboard", "logitech:gkeys"], (await source.RefreshAsync(default)).Select(s => s.Id));
         Assert.Equal(3, api.Calls.Count(c => c == "init"));
     }
 

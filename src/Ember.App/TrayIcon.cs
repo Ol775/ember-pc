@@ -49,13 +49,13 @@ public sealed class TrayIcon : IDisposable
     }
 
     /// <summary>A notification from the tray icon (used when the window is hidden). Clicking it runs <paramref name="clicked"/>.</summary>
-    public void Notify(string title, string text, Action clicked)
+    public void Notify(string title, string text, Action clicked, ToolTipIcon icon = ToolTipIcon.Info)
     {
         void Once(object? s, EventArgs e) { _icon.BalloonTipClicked -= Once; clicked(); }
         _icon.BalloonTipClicked -= _lastClick;
         _lastClick = Once;
         _icon.BalloonTipClicked += _lastClick;
-        _icon.ShowBalloonTip(15000, title, text, ToolTipIcon.Info);
+        _icon.ShowBalloonTip(15000, title, text, icon);
     }
 
     EventHandler? _lastClick;

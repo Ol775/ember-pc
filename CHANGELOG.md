@@ -2,6 +2,19 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.3.0-beta.2 (2026-10-16)
+
+### Added
+
+- **A schedule for fan modes and lights (beta).** Settings, Schedule and alerts: add a time window, such as 22:00 to 07:00 on the days you choose, and pick a fan mode, a lighting scene or lights off for it. The mode and scene go back to what they were when the window ends, unless you changed them yourself in between. Nothing changes while a game is running.
+- **Alerts for a hot part or a stopped fan (beta).** Switch them on in Settings, Schedule and alerts. Ember sends a Windows notification when the CPU or the graphics card stays over your limit, or when a fan that was turning stops while the PC is warm. Each alert is sent once, with a reminder after ten minutes.
+- **Logitech G keys.** On a Logitech keyboard with G keys (G1 to G9) the Lights page now shows a "Logitech G keys" device, so you can paint and animate them like any other light.
+
+### Fixed
+
+- **Asking Govee** now shows a plain "Asking Govee…" instead of garbled characters.
+- **The privacy notice** now lists Meross, Tapo, smart plugs and game library scanning.
+
 ## 1.3.0-beta.1 (2026-10-15)
 
 ### Changed

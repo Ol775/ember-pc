@@ -18,6 +18,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     readonly DashboardState _state = new();
     bool _dirty = true;
     bool _connected;
+    public bool Connected => _connected;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

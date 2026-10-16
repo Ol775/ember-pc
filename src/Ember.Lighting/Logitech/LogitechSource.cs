@@ -31,6 +31,17 @@ public sealed class LogitechContext(ILogitechLed api)
         }
     }
 
+    /// <summary>The G keys, one SDK call each. A key the keyboard does not have is refused, which is not a reason to drop the connection.</summary>
+    public void GKeys(IReadOnlyList<(int R, int G, int B)> percents)
+    {
+        lock (_gate)
+        {
+            if (!_ready) throw new InvalidOperationException("G HUB is not ready");
+            if (!api.SetTargetDevice(LogitechTarget.PerKeyRgb)) { _ready = false; throw new IOException("G HUB did not accept the G key colours"); }
+            for (var i = 0; i < percents.Count; i++) api.SetLightingForKeyName(LogitechGKeysSink.FirstKeyName + i, percents[i].R, percents[i].G, percents[i].B);
+        }
+    }
+
     public void Devices(int r, int g, int b)
     {
         lock (_gate)
@@ -77,6 +88,34 @@ public sealed class LogitechKeyboardSink(LogitechContext context) : IDeviceSink
         return Task.CompletedTask;
     }
 }
+/// <summary>
+/// The programmable G keys (G1 to G9: the side column and the top row, depending on the model) as nine lights. The SDK cannot say
+/// how many a keyboard has, so a keyboard with fewer simply ignores the rest.
+/// </summary>
+public sealed class LogitechGKeysSink(LogitechContext context) : IDeviceSink
+{
+    public const int Keys = 9, FirstKeyName = 0xFFF1;
+
+    public string Id => "logitech:gkeys";
+    public string Name => "Logitech G keys";
+    public string Kind => "Keyboard";
+    public int LedCount => Keys;
+    public TimeSpan MinInterval => TimeSpan.FromMilliseconds(50);
+    public bool Keepalive => true;
+
+    public Task SendAsync(IReadOnlyList<Color> leds, CancellationToken ct)
+    {
+        var percents = new (int, int, int)[Keys];
+        for (var i = 0; i < Keys; i++)
+        {
+            var c = i < leds.Count ? leds[i] : Color.Black;
+            percents[i] = ((int)Math.Round(c.R * 100), (int)Math.Round(c.G * 100), (int)Math.Round(c.B * 100));
+        }
+        context.GKeys(percents);
+        return Task.CompletedTask;
+    }
+}
+
 /// <summary>The Logitech mice (and other non-per-key RGB devices) as one lamp that takes the average colour.</summary>
 public sealed class LogitechMouseSink(LogitechContext context) : IDeviceSink
 {
@@ -114,7 +153,7 @@ public sealed class LogitechSource(Func<ILogitechLed?> open, Func<bool>? oneColo
                 _api = open();
                 if (_api is null) { Status = "Logitech G HUB is not installed (Ember uses its lighting engine)"; return Task.FromResult<IReadOnlyList<IDeviceSink>>([]); }
                 _context = new LogitechContext(_api);
-                _perKey = [new LogitechKeyboardSink(_context)];
+                _perKey = [new LogitechKeyboardSink(_context), new LogitechGKeysSink(_context)];
                 _oneColour = [new LogitechMouseSink(_context)];
             }
             // G HUB's engine cannot light the keyboard key by key and colour the mouse at the same time: one whole-device colour
@@ -126,7 +165,7 @@ public sealed class LogitechSource(Func<ILogitechLed?> open, Func<bool>? oneColo
             {
                 Status = one
                     ? "Connected through G HUB, every Logitech device takes one colour."
-                    : "Connected through G HUB, keyboard lit key by key (the mouse stays with G HUB).";
+                    : "Connected through G HUB, keyboard and G keys lit key by key (the mouse stays with G HUB).";
                 return Task.FromResult<IReadOnlyList<IDeviceSink>>(one ? _oneColour : _perKey);
             }
             Status = "G HUB is installed but not answering. Start Logitech G HUB and switch on \"Allow games and applications to control lighting\" for your devices.";
