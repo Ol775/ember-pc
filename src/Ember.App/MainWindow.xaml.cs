@@ -1034,6 +1034,12 @@ public partial class MainWindow : Window
         _trimmed = false;
         _vm.Refresh(DateTimeOffset.UtcNow);
         _chart.Update(_vm.ChartWidth, _vm.ChartHeight, _vm.Unit, _vm.CpuLine, _vm.GpuLine, _vm.CpuText, _vm.GpuText);
+        if (BuildFeatures.NewLook)
+        {
+            // A ring fills over 0 to 100 degrees; with no reading it sits empty and shows a dash.
+            (CpuRing.Fraction, CpuRing.Label) = (_cpuTemp is { } c ? c / 100 : 0, _cpuTemp is { } c2 ? $"{c2:0}°" : "–");
+            (GpuRing.Fraction, GpuRing.Label) = (_gpuTemp is { } g ? g / 100 : 0, _gpuTemp is { } g2 ? $"{g2:0}°" : "–");
+        }
         if (DevicesPageView.Visibility == Visibility.Visible) Devices.Update(_vm, _lights);
         if (PowerPageView.Visibility == Visibility.Visible) Power.Update();
         if (GamesPageView.Visibility == Visibility.Visible) Games.Update(_library, _libraryScanning, _detection.ActiveGame, _vm.FansPage.Experimental);

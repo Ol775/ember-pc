@@ -14,6 +14,18 @@ public partial class App : Application
         base.OnExit(e);
     }
 
+    /// <summary>Swaps the redesigned styles in for the old ones before any window asks for them.</summary>
+    void UseNewLook()
+    {
+        try
+        {
+            var look = new ResourceDictionary { Source = new Uri("/Ember.App;component/NewLook.xaml", UriKind.Relative) };
+            foreach (var key in look.Keys.Cast<object>().Where(Resources.Contains).ToList()) Resources.Remove(key);
+            Resources.MergedDictionaries.Add(look);
+        }
+        catch (Exception ex) { DiagLog.Warn("App", "The new look could not be loaded; using the classic look", ex); }
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         // "Uninstall" in Windows Settings starts the program with this switch: no window, just the removal.
@@ -43,6 +55,7 @@ public partial class App : Application
             Shutdown();
             return;
         }
+        if (BuildFeatures.NewLook) UseNewLook();
         base.OnStartup(e);
         var window = new MainWindow();
         MainWindow = window;

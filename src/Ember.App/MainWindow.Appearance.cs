@@ -21,6 +21,13 @@ public partial class MainWindow
     void ApplyBuildChannel()
     {
         if (!BuildFeatures.Current.GameDetection) NavGames.Visibility = Visibility.Collapsed; // game detection is still being proven in production
+        if (BuildFeatures.NewLook)
+        {
+            // The redesign: ring gauges instead of big numbers, and a slightly wider sidebar.
+            (CpuRing.Visibility, GpuRing.Visibility) = (Visibility.Visible, Visibility.Visible);
+            (CpuValue.Visibility, GpuValue.Visibility) = (Visibility.Collapsed, Visibility.Collapsed);
+            Root.ColumnDefinitions[0].Width = new GridLength(224);
+        }
         if (!BuildFeatures.IsProduction) return;
         NavRoadmap.Visibility = Visibility.Collapsed;
         HideAutomation();

@@ -33,21 +33,21 @@
                     Style="{StaticResource ActionButton}" Visibility="{Binding NotElevatedVisibility}"
                     ToolTip="Needed to close fan-control programs that run as administrator." />
             <StackPanel VerticalAlignment="Top">
-                <RadioButton x:Name="NavDashboard" GroupName="Nav" Content="Dashboard" IsChecked="True"
+                <RadioButton x:Name="NavDashboard" GroupName="Nav" Content="Dashboard" local:Nav.Icon="M3 3h7v9H3z M14 3h7v5h-7z M14 12h7v9h-7z M3 16h7v5H3z" IsChecked="True"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
-                <RadioButton x:Name="NavFans" GroupName="Nav" Content="Fans"
+                <RadioButton x:Name="NavFans" GroupName="Nav" Content="Fans" local:Nav.Icon="M10 12a2 2 0 1 0 4 0 2 2 0 1 0-4 0 M12 10c0-4 1-7 4-7 2 0 3 2 1 4l-5 3 M14 12c4 0 7 1 7 4 0 2-2 3-4 1l-3-5 M12 14c0 4-1 7-4 7-2 0-3-2-1-4l5-3 M10 12c-4 0-7-1-7-4 0-2 2-3 4-1l3 5"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
-                <RadioButton x:Name="NavLights" GroupName="Nav" Content="Lights"
+                <RadioButton x:Name="NavLights" GroupName="Nav" Content="Lights" local:Nav.Icon="M9 18h6 M10 21h4 M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
-                <RadioButton x:Name="NavDevices" GroupName="Nav" Content="Devices"
+                <RadioButton x:Name="NavDevices" GroupName="Nav" Content="Devices" local:Nav.Icon="M9 3v5 M15 3v5 M6 8h12v4a6 6 0 0 1-12 0z M12 18v3"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
-                <RadioButton x:Name="NavGames" GroupName="Nav" Content="Games"
+                <RadioButton x:Name="NavGames" GroupName="Nav" Content="Games" local:Nav.Icon="M7 7h10a5.5 5.5 0 0 1 0 11H7A5.5 5.5 0 0 1 7 7z M7 10v5 M4.5 12.5h5 M16 11h.01 M18 14h.01"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
-                <RadioButton x:Name="NavPower" GroupName="Nav" Content="Power"
+                <RadioButton x:Name="NavPower" GroupName="Nav" Content="Power" local:Nav.Icon="M13 2 4 14h7l-1 8 9-12h-7z"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
-                <RadioButton x:Name="NavSpecs" GroupName="Nav" Content="Specs"
+                <RadioButton x:Name="NavSpecs" GroupName="Nav" Content="Specs" local:Nav.Icon="M8 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z M9 2v4 M15 2v4 M9 18v4 M15 18v4 M2 9h4 M2 15h4 M18 9h4 M18 15h4"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
-                <RadioButton x:Name="NavSettings" GroupName="Nav" Content="Settings"
+                <RadioButton x:Name="NavSettings" GroupName="Nav" Content="Settings" local:Nav.Icon="M15 12a3 3 0 1 0-6 0 3 3 0 0 0 6 0z M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2 M19 5l-2 2 M7 17l-2 2"
                              Style="{StaticResource NavItem}" Checked="OnNavChanged" />
             </StackPanel>
         </DockPanel>
@@ -77,11 +77,11 @@
                 <UniformGrid Columns="4" Margin="-6,0,-6,16">
                     <GroupBox Header="CPU" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding CpuText, StringFormat=CPU temperature {0}}">
-                        <StackPanel><TextBlock Text="{Binding CpuText}" Style="{StaticResource StatValue}" Foreground="{DynamicResource AccentBrush}" /><TextBlock Text="{Binding CpuSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
+                        <StackPanel><local:RingGauge x:Name="CpuRing" Width="128" Height="128" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="Collapsed" Stroke="{DynamicResource AccentBrush}" /><TextBlock x:Name="CpuValue" Text="{Binding CpuText}" Style="{StaticResource StatValue}" Foreground="{DynamicResource AccentBrush}" /><TextBlock Text="{Binding CpuSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                     <GroupBox Header="GPU" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding GpuText, StringFormat=GPU temperature {0}}">
-                        <StackPanel><TextBlock Text="{Binding GpuText}" Style="{StaticResource StatValue}" Foreground="{DynamicResource GpuBrush}" /><TextBlock Text="{Binding GpuSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
+                        <StackPanel><local:RingGauge x:Name="GpuRing" Width="128" Height="128" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="Collapsed" Stroke="{DynamicResource GpuBrush}" /><TextBlock x:Name="GpuValue" Text="{Binding GpuText}" Style="{StaticResource StatValue}" Foreground="{DynamicResource GpuBrush}" /><TextBlock Text="{Binding GpuSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                     <GroupBox Header="Motherboard" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding MotherboardText, StringFormat=Motherboard temperature {0}}">

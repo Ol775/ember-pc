@@ -2,6 +2,22 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.3.0-beta.4 (2026-10-16)
+
+### Changed
+
+- **A new look (beta).** Rounder cards with small capital headings, an icon beside every page in the sidebar, and ring gauges for the CPU and graphics card temperatures on the Dashboard. Only the beta build has it; the stable build looks as before.
+- **Lighter in the tray.** With the window hidden or minimised, Ember redraws and reads the smart plugs far less often and hands unused memory back to Windows, so it idles at a fraction of the CPU and RAM.
+
+### Added
+
+- **A Specs page.** Your processor, graphics card, memory, motherboard, drives, displays and Windows version in one place, with a button to copy them for a support request. It never includes the PC name or your user name.
+- **Drive health on the Specs page.** Each drive shows its S.M.A.R.T. status, temperature, hours powered on and, for SSDs, wear. Drives that are nearly full are flagged.
+
+### Fixed
+
+- **A failed click or timer no longer closes the window.** Errors are logged and Ember carries on; only running out of memory ends it.
+
 ## 1.3.0-beta.3 (2026-10-16)
 
 ### Fixed

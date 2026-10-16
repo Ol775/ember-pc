@@ -24,6 +24,9 @@ public sealed record BuildFeatures(bool GameDetection, bool GpuFan)
 
     public static bool IsProduction => Channel == "prod";
 
+    /// <summary>The redesigned look (rounder cards, icons in the sidebar, ring gauges). Beta builds only until it has been proven.</summary>
+    public static bool NewLook => !IsProduction;
+
     public static readonly BuildFeatures All = new(true, true);
     /// <summary>Game detection is in the production build, marked Beta and behind the Experimental switch. GPU fan control is not.</summary>
     public static readonly BuildFeatures Production = new(true, false);
