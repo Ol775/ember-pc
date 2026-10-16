@@ -34,6 +34,7 @@ public partial class MainWindow
     void BuildAutomation()
     {
         _schedule = _scheduleStore.Load();
+        if (BuildFeatures.NewLook) Lights.SetSchedule(_schedule);
         _alerts = _alertStore.Load();
         _automationNote = Caption("");
 
@@ -68,6 +69,7 @@ public partial class MainWindow
     void SetSchedule(ScheduleSet set)
     {
         _schedule = set;
+        if (BuildFeatures.NewLook) Lights.SetSchedule(set);
         _automationNote!.Text = _scheduleStore.TrySave(set) ? "" : "Could not save the schedule; it applies until you close Ember.";
         UpdateScheduleStatus();
     }

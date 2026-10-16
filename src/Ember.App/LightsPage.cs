@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using Ember.Core;
 using Ember.Lighting;
 using LColor = Ember.Lighting.Color;
 using WColor = System.Windows.Media.Color;
@@ -17,7 +18,7 @@ namespace Ember.App;
 /// The parts that follow the scene are rebuilt in code whenever the scene changes from somewhere else; edits made here
 /// update only what they touch, so a slider is never replaced while it is being dragged.
 /// </summary>
-public sealed class LightsPage : UserControl
+public sealed partial class LightsPage : UserControl
 {
     sealed class DeviceVisual
     {
@@ -53,8 +54,11 @@ public sealed class LightsPage : UserControl
     {
         Content = _root;
         Focusable = false;
-        _root.Children.Add(new TextBlock { Text = "Lights", FontSize = 22, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 16) });
-        AutomationProperties.SetHeadingLevel(_root.Children[0], AutomationHeadingLevel.Level2);
+        if (!BuildFeatures.NewLook)
+        {
+            _root.Children.Add(new TextBlock { Text = "Lights", FontSize = 22, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 16) });
+            AutomationProperties.SetHeadingLevel(_root.Children[0], AutomationHeadingLevel.Level2);
+        }
     }
 
     public void Attach(LightingManager manager)
@@ -69,6 +73,7 @@ public sealed class LightsPage : UserControl
 
     void BuildSkeleton()
     {
+        if (BuildFeatures.NewLook) { BuildNewSkeleton(); return; }
         var m = _m!;
         var s = m.State;
 
@@ -111,40 +116,7 @@ public sealed class LightsPage : UserControl
         arrange.Children.Add(Pill("Arrange devices", () => m.Arrange(), "Arrange devices on the canvas"));
         arrange.Children.Add(Text("Gives each device its own row. New lamps found later are placed in free space; use this to tidy up.", muted: true, size: 12));
         canvasBox.Children.Add(arrange);
-        var paintRow = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
-        paintRow.Children.Add(Switch("Paint single LEDs", _paintMode, on => { _paintMode = on; if (on && _selectedDevice is null) SetNote("Click a device on the canvas first, then click its LEDs."); }));
-        paintRow.Children.Add(new Border { Width = 12 });
-        paintRow.Children.Add(ColorField("Paint colour", _paintColour, c => _paintColour = c));
-        paintRow.Children.Add(Pill("Clear paint on this device", ClearPaint));
-        canvasBox.Children.Add(paintRow);
-        canvasBox.Children.Add(Text("With painting on, click or drag over LEDs to give them a fixed colour and right-click to let the layers colour them again. Painted LEDs ignore the effects.", muted: true, size: 12));
-        var fills = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
-        fills.Children.Add(ColorField("Gradient end", _paintEnd, c => _paintEnd = c));
-        fills.Children.Add(new Border { Width = 12 });
-        canvasBox.Children.Add(fills);
-        canvasBox.Children.Add(Labelled("Gradient direction", 0, 360, _paintAngle, v => $"{v:0}°", v => _paintAngle = v, 5));
-        canvasBox.Children.Add(Text("Fills and the library apply to", muted: true));
-        canvasBox.Children.Add(Segments(["The selected device", "Every device on the canvas"], _fillAll ? 1 : 0, i => _fillAll = i == 1, "FillTarget"));
-        var fillRow = new WrapPanel { Margin = new Thickness(0, 4, 0, 0) };
-        fillRow.Children.Add(Pill("Fill with colour", () => Fill((n, cols) => PaintTools.Fill(n, _paintColour), null)));
-        fillRow.Children.Add(Pill("Fill with gradient", () => Fill((n, cols) => PaintTools.Gradient(n, cols, _paintColour, _paintEnd, _paintAngle), (p, c) => CanvasPaint.Gradient(p, c.Counts, c.Columns, _paintColour, _paintEnd, _paintAngle))));
-        fillRow.Children.Add(Pill("Fill with rainbow", () => Fill((n, cols) => PaintTools.Rainbow(n, cols, _paintAngle), (p, c) => CanvasPaint.Rainbow(p, c.Counts, c.Columns, _paintAngle))));
-        fillRow.Children.Add(Pill("Flip left to right", MirrorSelected));
-        fillRow.Children.Add(Pill("Export paint…", ExportPaint));
-        fillRow.Children.Add(Pill("Import paint…", ImportPaint));
-        canvasBox.Children.Add(fillRow);
-        canvasBox.Children.Add(Text("A gradient runs from the paint colour to the gradient end colour in the direction above (0° is left to right, 90° is top to bottom). Exported paint is a small JSON file you can share or keep; importing fits it to the LEDs of the selected device.", muted: true, size: 12));
-        canvasBox.Children.Add(Text("Paint library", weight: FontWeights.SemiBold));
-        var libRow = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
-        var libName = new TextBox { Text = _libraryName, Style = Sty("TextField"), Tag = "Name for this picture", Width = 200, MaxLength = PaintLibrary.MaxNameLength, Margin = new Thickness(0, 0, 8, 4) };
-        AutomationProperties.SetName(libName, "Paint library name");
-        libName.TextChanged += (_, _) => _libraryName = libName.Text;
-        libRow.Children.Add(libName);
-        libRow.Children.Add(Pill("Save the selected device paint", () => LibrarySave()));
-        canvasBox.Children.Add(libRow);
-        canvasBox.Children.Add(_libraryList);
-        canvasBox.Children.Add(Text("Saved pictures stay on this PC in your Ember folder, and can be used on any device: they are fitted to its number of LEDs. Copy the files in that folder to share them.", muted: true, size: 12));
-        RebuildLibrary();
+        canvasBox.Children.Add(BuildPaintTools());
         _root.Children.Add(Panel("Canvas", canvasBox));
 
         var layerBox = new StackPanel();
@@ -172,6 +144,48 @@ public sealed class LightsPage : UserControl
         _root.Children.Add(Panel("Layers", layerBox));
 
         _root.Children.Add(Panel("Devices", BuildDevicesBox()));
+    }
+
+    /// <summary>Painting single LEDs, fills, gradients, import and export, and the paint library.</summary>
+    FrameworkElement BuildPaintTools()
+    {
+        var m = _m!;
+        var box = new StackPanel();
+        var paintRow = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
+        paintRow.Children.Add(Switch("Paint single LEDs", _paintMode, on => { _paintMode = on; if (on && _selectedDevice is null) SetNote("Click a device on the canvas first, then click its LEDs."); }));
+        paintRow.Children.Add(new Border { Width = 12 });
+        paintRow.Children.Add(ColorField("Paint colour", _paintColour, c => _paintColour = c));
+        paintRow.Children.Add(Pill("Clear paint on this device", ClearPaint));
+        box.Children.Add(paintRow);
+        box.Children.Add(Text("With painting on, click or drag over LEDs to give them a fixed colour and right-click to let the layers colour them again. Painted LEDs ignore the effects.", muted: true, size: 12));
+        var fills = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
+        fills.Children.Add(ColorField("Gradient end", _paintEnd, c => _paintEnd = c));
+        fills.Children.Add(new Border { Width = 12 });
+        box.Children.Add(fills);
+        box.Children.Add(Labelled("Gradient direction", 0, 360, _paintAngle, v => $"{v:0}°", v => _paintAngle = v, 5));
+        box.Children.Add(Text("Fills and the library apply to", muted: true));
+        box.Children.Add(Segments(["The selected device", "Every device on the canvas"], _fillAll ? 1 : 0, i => _fillAll = i == 1, "FillTarget"));
+        var fillRow = new WrapPanel { Margin = new Thickness(0, 4, 0, 0) };
+        fillRow.Children.Add(Pill("Fill with colour", () => Fill((n, cols) => PaintTools.Fill(n, _paintColour), null)));
+        fillRow.Children.Add(Pill("Fill with gradient", () => Fill((n, cols) => PaintTools.Gradient(n, cols, _paintColour, _paintEnd, _paintAngle), (p, c) => CanvasPaint.Gradient(p, c.Counts, c.Columns, _paintColour, _paintEnd, _paintAngle))));
+        fillRow.Children.Add(Pill("Fill with rainbow", () => Fill((n, cols) => PaintTools.Rainbow(n, cols, _paintAngle), (p, c) => CanvasPaint.Rainbow(p, c.Counts, c.Columns, _paintAngle))));
+        fillRow.Children.Add(Pill("Flip left to right", MirrorSelected));
+        fillRow.Children.Add(Pill("Export paint…", ExportPaint));
+        fillRow.Children.Add(Pill("Import paint…", ImportPaint));
+        box.Children.Add(fillRow);
+        box.Children.Add(Text("A gradient runs from the paint colour to the gradient end colour in the direction above (0° is left to right, 90° is top to bottom). Exported paint is a small JSON file you can share or keep; importing fits it to the LEDs of the selected device.", muted: true, size: 12));
+        box.Children.Add(Text("Paint library", weight: FontWeights.SemiBold));
+        var libRow = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
+        var libName = new TextBox { Text = _libraryName, Style = Sty("TextField"), Tag = "Name for this picture", Width = 200, MaxLength = PaintLibrary.MaxNameLength, Margin = new Thickness(0, 0, 8, 4) };
+        AutomationProperties.SetName(libName, "Paint library name");
+        libName.TextChanged += (_, _) => _libraryName = libName.Text;
+        libRow.Children.Add(libName);
+        libRow.Children.Add(Pill("Save the selected device paint", () => LibrarySave()));
+        box.Children.Add(libRow);
+        box.Children.Add(_libraryList);
+        box.Children.Add(Text("Saved pictures stay on this PC in your Ember folder, and can be used on any device: they are fitted to its number of LEDs. Copy the files in that folder to share them.", muted: true, size: 12));
+        RebuildLibrary();
+        return box;
     }
 
     FrameworkElement BuildDevicesBox()
@@ -245,6 +259,7 @@ public sealed class LightsPage : UserControl
     void RebuildScenes(LightingState state)
     {
         _scenes.Children.Clear();
+        if (BuildFeatures.NewLook) { RebuildSceneChips(state); return; }
         var names = state.Scenes.Select(s => s.Name).ToList();
         var wrap = new WrapPanel();
         var track = new Border { Style = Sty("SegmentTrack"), Margin = new Thickness(0, 0, 0, 0) };
@@ -747,6 +762,7 @@ public sealed class LightsPage : UserControl
         {
             var l = layer;
             var selected = l.Id == _selectedLayer;
+            if (BuildFeatures.NewLook) { _layers.Children.Add(NewLayerRow(l, selected)); continue; }
             var row = new Grid { Margin = new Thickness(0, 6, 0, 0) };
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -765,6 +781,16 @@ public sealed class LightsPage : UserControl
             actions.Children.Add(Pill("Remove", () => RemoveLayer(l.Id), "Remove layer " + l.Name));
             Grid.SetColumn(pick, 1);
             Grid.SetColumn(actions, 2);
+            if (BuildFeatures.NewLook)
+            {
+                // The narrow column of the redesign: the name takes the full width and the buttons sit on a line of their own.
+                row.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                row.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                Grid.SetRow(actions, 1);
+                Grid.SetColumn(actions, 1);
+                Grid.SetColumnSpan(actions, 2);
+                actions.Margin = new Thickness(0, 4, 0, 0);
+            }
             row.Children.Add(on);
             row.Children.Add(pick);
             row.Children.Add(actions);
@@ -779,8 +805,12 @@ public sealed class LightsPage : UserControl
         var layer = LayerScene(state).Layers.FirstOrDefault(l => l.Id == _selectedLayer);
         if (layer is null) return;
         var id = layer.Id;
-        _editor.Children.Add(new Border { Height = 1, Background = Res("PanelBorderBrush"), Margin = new Thickness(0, 12, 0, 12) });
-        _editor.Children.Add(Text("Edit layer", weight: FontWeights.SemiBold));
+        if (BuildFeatures.NewLook) _editor.Children.Add(NewEditorHeader(layer));
+        else
+        {
+            _editor.Children.Add(new Border { Height = 1, Background = Res("PanelBorderBrush"), Margin = new Thickness(0, 12, 0, 12) });
+            _editor.Children.Add(Text("Edit layer", weight: FontWeights.SemiBold));
+        }
 
         var name = new TextBox { Text = layer.Name, Style = Sty("TextField"), Width = 260, MaxLength = 40, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 6, 0, 6) };
         AutomationProperties.SetName(name, "Layer name");

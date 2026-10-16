@@ -3,7 +3,7 @@ namespace Ember.Core;
 public sealed record FanRow(string Name, double Rpm);
 
 public sealed record DashboardSummary(double? CpuTemp, double? GpuTemp, double? MotherboardTemp, double? AverageFanRpm, IReadOnlyList<FanRow> Fans,
-    double? CpuLoad = null, double? CpuClockMhz = null, double? GpuLoad = null, double? VrmTemp = null, double? ChipsetTemp = null)
+    double? CpuLoad = null, double? CpuClockMhz = null, double? GpuLoad = null, double? VrmTemp = null, double? ChipsetTemp = null, double? GpuClockMhz = null)
 {
     public static DashboardSummary From(Snapshot s)
     {
@@ -27,6 +27,7 @@ public sealed record DashboardSummary(double? CpuTemp, double? GpuTemp, double? 
             fans.Any(f => f.Rpm > 0) ? fans.Where(f => f.Rpm > 0).Average(f => f.Rpm) : null, // unplugged or stopped fans read 0 and would drag the average down
             fans,
             Load(HardwareKind.Cpu, "CPU Total"), Max(Of(HardwareKind.Cpu, SensorKind.Clock)), Load(HardwareKind.Gpu, "GPU Core"),
-            Named(HardwareKind.Motherboard, "VRM"), Named(HardwareKind.Motherboard, "Chipset"));
+            Named(HardwareKind.Motherboard, "VRM"), Named(HardwareKind.Motherboard, "Chipset"),
+            Max(Of(HardwareKind.Gpu, SensorKind.Clock)));
     }
 }

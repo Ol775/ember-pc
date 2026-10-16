@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using Ember.Core;
+using System.Windows.Media;
 using static Ember.App.LightsUi;
 
 namespace Ember.App;
@@ -11,7 +12,7 @@ namespace Ember.App;
 /// fan game mode sooner, even in a window. Scanned when Ember starts, when this page is opened (if the last scan is old) and
 /// on Scan now. It only reads; nothing here changes a game or a launcher.
 /// </summary>
-public sealed class GamesPage : UserControl
+public sealed partial class GamesPage : UserControl
 {
     readonly StackPanel _root = new() { Margin = new Thickness(24) };
     readonly StackPanel _list = new();
@@ -57,6 +58,7 @@ public sealed class GamesPage : UserControl
         _root.Children.Add(WithMargin(_detectionOff, 0, 8, 0, 0));
         _root.Children.Add(WithMargin(_profileBox, 0, 12, 0, 0));
         _root.Children.Add(WithMargin(_list, 0, 12, 0, 0));
+        if (BuildFeatures.NewLook) BuildNewRoot();
         ThemeManager.Changed += () => _key = null;
     }
 
@@ -99,6 +101,12 @@ public sealed class GamesPage : UserControl
             pop.Child = frame;
             pop.IsOpen = true;
         }, "Fan mode for " + game);
+        if (BuildFeatures.NewLook)
+        {
+            btn.Content = new StackPanel { Orientation = Orientation.Horizontal, Children = { new TextBlock { Text = current is { } mc ? FansViewState.Label(mc) : "Default", Width = 86 }, new TextBlock { Text = "▾", FontSize = 10, VerticalAlignment = VerticalAlignment.Center } } };
+            btn.Padding = new Thickness(14, 6, 12, 6);
+            if (current is not null) { btn.SetResourceReference(Control.ForegroundProperty, "AccentTextBrush"); btn.SetResourceReference(Control.BackgroundProperty, "AccentSoftBrush"); }
+        }
         btn.Margin = new Thickness(0, 0, 10, 0);
         btn.ToolTip = "The fan mode used while this game runs. Default uses the game mode from the Fans page.";
         return btn;
@@ -106,6 +114,15 @@ public sealed class GamesPage : UserControl
 
     public void Update(GameLibrary library, bool scanning, string? activeGame, bool detectionOn)
     {
+        if (BuildFeatures.NewLook)
+        {
+            _detectionOff.Visibility = detectionOn ? Visibility.Collapsed : Visibility.Visible;
+            _scan.IsEnabled = !scanning;
+            _scan.Content = scanning ? "Scanning…" : "Scan now";
+            _status.Text = scanning ? "Scanning your game libraries…" : library.ScannedAt == DateTimeOffset.MinValue ? "Not scanned yet." : $"{library.Games.Count} {(library.Games.Count == 1 ? "game" : "games")} found.";
+            UpdateNew(library, scanning, activeGame);
+            return;
+        }
         _detectionOff.Visibility = detectionOn ? Visibility.Collapsed : Visibility.Visible;
         _nowChip.Visibility = activeGame is null ? Visibility.Collapsed : Visibility.Visible;
         _now.Text = activeGame is null ? "" : "Playing: " + activeGame;

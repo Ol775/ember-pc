@@ -47,6 +47,7 @@ public partial class CurveEditor : UserControl
     public CurveEditor()
     {
         InitializeComponent();
+        if (BuildFeatures.NewLook) UseNewLook();
         _commit = new DispatcherTimer(CommitDelay, DispatcherPriority.Normal, (_, _) => Commit(), Dispatcher) { IsEnabled = false };
     }
 
@@ -107,6 +108,9 @@ public partial class CurveEditor : UserControl
         UpdateMarker();
     }
 
+    Polygon? _area;
+    readonly List<Ellipse> _ringPoints = [];
+
     // ---- drawing ----
 
     void Rebuild()
@@ -114,21 +118,28 @@ public partial class CurveEditor : UserControl
         if (Plot.ActualWidth < 60) return;
         Plot.Children.Clear();
         _thumbs.Clear();
+        _ringPoints.Clear();
+        _area = null;
         var muted = (Brush)FindResource("MutedBrush");
         var grid = (Brush)FindResource("PanelBorderBrush");
 
-        for (var t = (int)MinT; t <= MaxT; t += 10)
+        if (BuildFeatures.NewLook) DrawGridNew(muted, grid);
+        else
         {
-            Plot.Children.Add(new Line { X1 = X(t), X2 = X(t), Y1 = Y(0), Y2 = Y(100), Stroke = grid, StrokeThickness = 1 });
-            if ((t - (int)MinT) % 20 == 0) Label($"{t}°", X(t) - 10, Y(0) + 4, muted);
-        }
-        for (var p = 0; p <= 100; p += 25)
-        {
-            Plot.Children.Add(new Line { X1 = X(MinT), X2 = X(MaxT), Y1 = Y(p), Y2 = Y(p), Stroke = grid, StrokeThickness = 1 });
-            Label($"{p}%", 2, Y(p) - 9, muted);
+            for (var t = (int)MinT; t <= MaxT; t += 10)
+            {
+                Plot.Children.Add(new Line { X1 = X(t), X2 = X(t), Y1 = Y(0), Y2 = Y(100), Stroke = grid, StrokeThickness = 1 });
+                if ((t - (int)MinT) % 20 == 0) Label($"{t}°", X(t) - 10, Y(0) + 4, muted);
+            }
+            for (var p = 0; p <= 100; p += 25)
+            {
+                Plot.Children.Add(new Line { X1 = X(MinT), X2 = X(MaxT), Y1 = Y(p), Y2 = Y(p), Stroke = grid, StrokeThickness = 1 });
+                Label($"{p}%", 2, Y(p) - 9, muted);
+            }
         }
 
-        _line = new Polyline { Stroke = (Brush)FindResource("AccentBrush"), StrokeThickness = 2.5, StrokeLineJoin = PenLineJoin.Round };
+        if (BuildFeatures.NewLook) { _area = new Polygon { Fill = AreaBrush(), IsHitTestVisible = false }; Plot.Children.Add(_area); }
+        _line = new Polyline { Stroke = (Brush)FindResource("AccentBrush"), StrokeThickness = BuildFeatures.NewLook ? 3 : 2.5, StrokeLineJoin = PenLineJoin.Round };
         Plot.Children.Add(_line);
 
         // The temperature right now: a faint guide down to the temperature axis and across to the speed axis, a dot where the
@@ -149,6 +160,7 @@ public partial class CurveEditor : UserControl
             CornerRadius = new CornerRadius(9), Padding = new Thickness(8, 2, 8, 3), Visibility = Visibility.Collapsed, IsHitTestVisible = false,
         };
         Plot.Children.Add(_markerPill);
+        if (BuildFeatures.NewLook) StyleMarkerNew();
 
         if (_editable)
         {
@@ -183,12 +195,18 @@ public partial class CurveEditor : UserControl
         foreach (var p in _shown) pts.Add(new Point(X(p.TempC), Y(p.Percent)));
         pts.Add(new Point(X(MaxT), Y(_shown[^1].Percent)));
         _line.Points = pts;
+        if (_area is not null)
+        {
+            var fill = new PointCollection(pts) { new Point(X(MaxT), Y(0)), new Point(X(MinT), Y(0)) };
+            _area.Points = fill;
+        }
         for (var i = 0; i < _thumbs.Count && i < _shown.Count; i++)
         {
             Canvas.SetLeft(_thumbs[i], X(_shown[i].TempC) - 9);
             Canvas.SetTop(_thumbs[i], Y(_shown[i].Percent) - 9);
             AutomationProperties.SetName(_thumbs[i], $"Point {i + 1} of {_shown.Count}: {_shown[i].TempC:0} °C, {_shown[i].Percent:0} percent");
         }
+        if (BuildFeatures.NewLook && !_editable) PlaceRings();
         AutomationProperties.SetName(Plot, $"{GroupName} fan curve. " + string.Join(", ", _shown.Select(p => $"{p.TempC:0} °C {p.Percent:0}%")));
     }
 
@@ -196,6 +214,7 @@ public partial class CurveEditor : UserControl
 
     void UpdateMarker()
     {
+        if (BuildFeatures.NewLook) { UpdateMarkerNew(); return; }
         if (_marker is null || _markerAcross is null || _markerDot is null || _markerPill is null || _markerLabel is null) return;
         if (CurrentTemp is not { } t || _shown.Count < 2 || t < MinT || t > MaxT)
         {
@@ -218,6 +237,128 @@ public partial class CurveEditor : UserControl
         Canvas.SetLeft(_markerPill, left);
         Canvas.SetTop(_markerPill, top);
         _marker.Visibility = _markerAcross.Visibility = _markerDot.Visibility = _markerPill.Visibility = Visibility.Visible;
+    }
+
+
+    // ---- the redesign ----
+
+    void UseNewLook()
+    {
+        Plot.Height = 300;
+        // The tabs and the buttons share the top row: tabs on the left, the buttons on the right.
+        if (Content is StackPanel stack && stack.Children[0] is Border tabs && stack.Children[^1] is WrapPanel buttons)
+        {
+            stack.Children.Remove(tabs);
+            stack.Children.Remove(buttons);
+            tabs.Margin = new Thickness(0);
+            buttons.Margin = new Thickness(0);
+            buttons.VerticalAlignment = VerticalAlignment.Center;
+            foreach (var b in buttons.Children.OfType<Button>()) { b.Margin = new Thickness(8, 0, 0, 0); b.Padding = new Thickness(14, 6, 14, 6); }
+            var top = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
+            DockPanel.SetDock(buttons, Dock.Right);
+            top.Children.Add(buttons);
+            top.Children.Add(tabs);
+            stack.Children.Insert(0, top);
+        }
+        // A point is a ring: the window colour inside, the accent around it.
+        var style = (Style)System.Windows.Markup.XamlReader.Parse(
+            "<Style xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" TargetType=\"Thumb\">" +
+            "<Setter Property=\"Width\" Value=\"18\" /><Setter Property=\"Height\" Value=\"18\" /><Setter Property=\"Focusable\" Value=\"True\" />" +
+            "<Setter Property=\"Cursor\" Value=\"SizeAll\" /><Setter Property=\"FocusVisualStyle\" Value=\"{x:Null}\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" />" +
+            "<Setter Property=\"Template\"><Setter.Value><ControlTemplate TargetType=\"Thumb\">" +
+            "<Ellipse x:Name=\"Dot\" Margin=\"2\" Fill=\"{DynamicResource WindowBrush}\" Stroke=\"{DynamicResource AccentBrush}\" StrokeThickness=\"3\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" />" +
+            "<ControlTemplate.Triggers><Trigger Property=\"IsMouseOver\" Value=\"True\"><Setter TargetName=\"Dot\" Property=\"Fill\" Value=\"{DynamicResource AccentSoftBrush}\" /></Trigger>" +
+            "<Trigger Property=\"IsFocused\" Value=\"True\"><Setter TargetName=\"Dot\" Property=\"Fill\" Value=\"{DynamicResource AccentBrush}\" /></Trigger></ControlTemplate.Triggers>" +
+            "</ControlTemplate></Setter.Value></Setter></Style>");
+        Resources["PointThumb"] = style;
+    }
+
+    /// <summary>A preset curve is not editable, but its points are still shown as rings.</summary>
+    void PlaceRings()
+    {
+        while (_ringPoints.Count < _shown.Count)
+        {
+            var ring = new Ellipse { Width = 14, Height = 14, StrokeThickness = 3, Fill = (Brush)FindResource("WindowBrush"), Stroke = (Brush)FindResource("AccentBrush"), IsHitTestVisible = false };
+            _ringPoints.Add(ring);
+            Plot.Children.Add(ring);
+        }
+        for (var i = 0; i < _ringPoints.Count; i++)
+        {
+            _ringPoints[i].Visibility = i < _shown.Count ? Visibility.Visible : Visibility.Collapsed;
+            if (i >= _shown.Count) continue;
+            Canvas.SetLeft(_ringPoints[i], X(_shown[i].TempC) - 7);
+            Canvas.SetTop(_ringPoints[i], Y(_shown[i].Percent) - 7);
+        }
+    }
+
+    Brush AreaBrush()
+    {
+        var accent = ((SolidColorBrush)FindResource("AccentBrush")).Color;
+        return new LinearGradientBrush([new GradientStop(Color.FromArgb(0x4D, accent.R, accent.G, accent.B), 0), new GradientStop(Color.FromArgb(0, accent.R, accent.G, accent.B), 1)], 90);
+    }
+
+    /// <summary>Faint horizontal lines every 25 percent with their values, the temperatures along the bottom and a reddish zone past 90 degrees.</summary>
+    void DrawGridNew(Brush muted, Brush grid)
+    {
+        var danger = new Rectangle { Width = Math.Max(0, X(MaxT) - X(90)), Height = Y(0) - Y(100), Fill = new SolidColorBrush(Color.FromArgb(0x18, 0xFF, 0x3B, 0x30)), IsHitTestVisible = false };
+        Canvas.SetLeft(danger, X(90));
+        Canvas.SetTop(danger, Y(100));
+        Plot.Children.Add(danger);
+        for (var p = 0; p <= 100; p += 25)
+        {
+            Plot.Children.Add(new Line { X1 = X(MinT), X2 = X(MaxT), Y1 = Y(p), Y2 = Y(p), Stroke = grid, StrokeThickness = 1, IsHitTestVisible = false });
+            var label = Label($"{p}%", 0, Y(p) - 8, muted);
+            label.FontFamily = Fonts.Mono; label.FontSize = 10.5;
+        }
+        for (var t = 30; t <= MaxT; t += 20)
+        {
+            if (t < MinT) continue;
+            var label = Label($"{t}°", X(t) - 12, Y(0) + 8, muted);
+            label.FontFamily = Fonts.Mono; label.FontSize = 10.5;
+        }
+    }
+
+    void StyleMarkerNew()
+    {
+        if (_marker is null || _markerAcross is null || _markerDot is null || _markerPill is null || _markerLabel is null) return;
+        _marker.Stroke = (Brush)FindResource("TextBrush");
+        _marker.Opacity = 0.55;
+        _marker.StrokeDashArray = [3, 4];
+        _marker.StrokeThickness = 1;
+        _markerDot.Fill = (Brush)FindResource("TextBrush");
+        _markerDot.Stroke = Brushes.Transparent;
+        _markerDot.StrokeThickness = 0;
+        _markerDot.Width = _markerDot.Height = 12;
+        _markerPill.Background = (Brush)FindResource("TrackBrush");
+        _markerPill.BorderBrush = (Brush)FindResource("PanelBorderBrush");
+        _markerPill.BorderThickness = new Thickness(1);
+        _markerPill.CornerRadius = new CornerRadius(8);
+        _markerLabel.FontFamily = Fonts.Mono;
+        _markerLabel.FontSize = 12;
+        _markerLabel.FontWeight = FontWeights.Normal;
+    }
+
+    void UpdateMarkerNew()
+    {
+        if (_marker is null || _markerAcross is null || _markerDot is null || _markerPill is null || _markerLabel is null) return;
+        _markerAcross.Visibility = Visibility.Collapsed;
+        if (CurrentTemp is not { } t || _shown.Count < 2 || t < MinT || t > MaxT)
+        {
+            _marker.Visibility = _markerDot.Visibility = _markerPill.Visibility = Visibility.Collapsed;
+            return;
+        }
+        var pct = SpeedAt(t);
+        var (x, y) = (X(t), Y(pct));
+        _marker.X1 = _marker.X2 = x; _marker.Y1 = Y(100); _marker.Y2 = Y(0);
+        Canvas.SetLeft(_markerDot, x - 6);
+        Canvas.SetTop(_markerDot, y - 6);
+        _markerLabel.Text = $"{t:0}° → {pct:0}%";
+        _markerPill.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var w = _markerPill.DesiredSize.Width;
+        var left = x + 14 + w > Plot.ActualWidth ? x - 14 - w : x + 14;
+        Canvas.SetLeft(_markerPill, left);
+        Canvas.SetTop(_markerPill, Math.Clamp(y - 4, Y(100), Y(0) - _markerPill.DesiredSize.Height));
+        _marker.Visibility = _markerDot.Visibility = _markerPill.Visibility = Visibility.Visible;
     }
 
     /// <summary>The speed the curve on screen asks for at this temperature (flat before the first point and after the last).</summary>

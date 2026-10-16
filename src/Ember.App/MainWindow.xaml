@@ -8,6 +8,26 @@
         Title="Ember" Icon="Assets/ember.ico" Width="1100" Height="720" MinWidth="820" MinHeight="560"
         Background="{DynamicResource WindowBrush}" Foreground="{DynamicResource TextBrush}"
         FontFamily="Segoe UI" FontSize="14">
+    <Window.Resources>
+        <!-- A fan header in the narrow right-hand column of the redesigned Fans page. -->
+        <DataTemplate x:Key="FanHeaderCompact">
+            <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource PanelBorderBrush}" Padding="0,9">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding StateText}" FontSize="11.5" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,8,0" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="Test" Tag="{Binding Id}" Click="OnTestHeader" IsEnabled="{Binding CanTest}" Padding="16,7"
+                            Style="{StaticResource ActionButton}" ToolTip="{Binding DisabledReason}" Margin="0,0,12,0" VerticalAlignment="Center"
+                            AutomationProperties.Name="{Binding Name, StringFormat=Test {0}}" AutomationProperties.HelpText="{Binding DisabledReason}" />
+                    <CheckBox Grid.Column="2" Style="{StaticResource SwitchBox}" Tag="{Binding Id}" Click="OnHeaderSwitch" VerticalAlignment="Center"
+                              IsChecked="{Binding CanDisable, Mode=OneWay}" ToolTip="{Binding DisabledReason}"
+                              AutomationProperties.Name="{Binding Name, StringFormat=Let Ember control {0}}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
     <Grid x:Name="Root">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="208" />
@@ -15,21 +35,21 @@
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <DockPanel Grid.Column="0" Background="{DynamicResource SidebarBrush}">
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="20,24,20,24">
-                <Path Data="M12,3 C13,7 17,8 17,13 A5,5 0 0 1 7,13 C7,11 8,10 9,9 C9,11 10,12 11,12 C11,9 10,7 12,3 Z"
+        <DockPanel x:Name="SidebarDock" Grid.Column="0" Background="{DynamicResource SidebarBrush}">
+            <StackPanel x:Name="LogoRow" DockPanel.Dock="Top" Orientation="Horizontal" Margin="20,24,20,24">
+                <Path x:Name="LogoPath" Data="M12,3 C13,7 17,8 17,13 A5,5 0 0 1 7,13 C7,11 8,10 9,9 C9,11 10,12 11,12 C11,9 10,7 12,3 Z"
                       Stroke="{DynamicResource AccentBrush}" StrokeThickness="2" StrokeLineJoin="Round" Width="24" Height="24"
                       Stretch="None" VerticalAlignment="Center" Margin="0,0,10,0" />
                 <TextBlock Text="Ember" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBrush}"
                            VerticalAlignment="Center" AutomationProperties.HeadingLevel="Level1" />
             </StackPanel>
-            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="20,0,20,20">
+            <StackPanel x:Name="ConnectionRow" DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="20,0,20,20">
                 <Ellipse Width="10" Height="10" Fill="{Binding ConnectionBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <TextBlock x:Name="ConnectionLabel" Text="{Binding ConnectionText}" Foreground="{DynamicResource MutedBrush}"
                            AutomationProperties.LiveSetting="Polite" />
             </StackPanel>
-            <TextBlock DockPanel.Dock="Bottom" Text="{Binding BuildLabel}" Foreground="{DynamicResource MutedBrush}" Margin="20,0,20,12" />
-            <Button DockPanel.Dock="Bottom" Content="Restart as admin" Click="OnRestartAsAdmin" Margin="20,0,20,12"
+            <TextBlock x:Name="BuildLabelText" DockPanel.Dock="Bottom" Text="{Binding BuildLabel}" Foreground="{DynamicResource MutedBrush}" Margin="20,0,20,12" />
+            <Button x:Name="RestartAdminButton" DockPanel.Dock="Bottom" Content="Restart as admin" Click="OnRestartAsAdmin" Margin="20,0,20,12"
                     Style="{StaticResource ActionButton}" Visibility="{Binding NotElevatedVisibility}"
                     ToolTip="Needed to close fan-control programs that run as administrator." />
             <StackPanel VerticalAlignment="Top">
@@ -77,32 +97,20 @@
                 <UniformGrid Columns="4" Margin="-6,0,-6,16">
                     <GroupBox Header="CPU" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding CpuText, StringFormat=CPU temperature {0}}">
-                        <StackPanel><local:RingGauge x:Name="CpuRing" Width="128" Height="128" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="Collapsed" Stroke="{DynamicResource AccentBrush}" /><TextBlock x:Name="CpuValue" Text="{Binding CpuText}" Style="{StaticResource StatValue}" Foreground="{DynamicResource AccentBrush}" /><TextBlock Text="{Binding CpuSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
+                        <StackPanel><TextBlock Text="{Binding CpuText}" Style="{StaticResource StatValue}" Foreground="{DynamicResource AccentBrush}" /><TextBlock Text="{Binding CpuSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                     <GroupBox Header="GPU" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding GpuText, StringFormat=GPU temperature {0}}">
-                        <StackPanel><local:RingGauge x:Name="GpuRing" Width="128" Height="128" HorizontalAlignment="Left" Margin="0,0,0,6" Visibility="Collapsed" Stroke="{DynamicResource GpuBrush}" /><TextBlock x:Name="GpuValue" Text="{Binding GpuText}" Style="{StaticResource StatValue}" Foreground="{DynamicResource GpuBrush}" /><TextBlock Text="{Binding GpuSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
+                        <StackPanel><TextBlock Text="{Binding GpuText}" Style="{StaticResource StatValue}" Foreground="{DynamicResource GpuBrush}" /><TextBlock Text="{Binding GpuSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
                     <GroupBox Header="Motherboard" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding MotherboardText, StringFormat=Motherboard temperature {0}}">
                         <StackPanel><TextBlock Text="{Binding MotherboardText}" Style="{StaticResource StatValue}" /><TextBlock Text="{Binding MotherboardSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
-                    <Grid Margin="6">
-                    <GroupBox x:Name="FansAvgCard" Header="Fans (average)" Style="{StaticResource Panel}" Margin="0"
+                    <GroupBox Header="Fans (average)" Style="{StaticResource Panel}" Margin="6"
                               AutomationProperties.Name="{Binding FanAverageText, StringFormat=Fans average {0}}">
                         <StackPanel><TextBlock Text="{Binding FanAverageText}" Style="{StaticResource StatValue}" /><TextBlock Text="{Binding FansSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
-                    <GroupBox x:Name="ModeCard" Header="Fan mode" Style="{StaticResource Panel}" Margin="0" Visibility="Collapsed" AutomationProperties.Name="Fan mode">
-                        <ItemsControl ItemsSource="{Binding FansPage.Modes}" Focusable="False">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <RadioButton GroupName="DashboardMode" Content="{Binding Label}" IsChecked="{Binding Selected, Mode=OneWay}"
-                                                 IsEnabled="{Binding Enabled}" Tag="{Binding Mode}" Click="OnModePicked" Style="{StaticResource ModeRow}" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </GroupBox>
-                    </Grid>
                 </UniformGrid>
 
                 <Grid>
@@ -161,28 +169,19 @@
                     </StackPanel>
                 </GroupBox>
                 </Grid>
-                <UniformGrid x:Name="TilesRow" Columns="4" Margin="-6,10,-6,0" Visibility="Collapsed">
-                    <GroupBox Header="Wall power" Style="{StaticResource Panel}" Margin="6" AutomationProperties.Name="Wall power">
-                        <StackPanel><TextBlock x:Name="TilePower" Text="–" FontSize="20" FontWeight="SemiBold" /><TextBlock x:Name="TilePowerSub" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" /></StackPanel>
-                    </GroupBox>
-                    <GroupBox Header="Lights" Style="{StaticResource Panel}" Margin="6" AutomationProperties.Name="Lights">
-                        <StackPanel><TextBlock x:Name="TileScene" Text="–" FontSize="20" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" /><TextBlock x:Name="TileSceneSub" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" /></StackPanel>
-                    </GroupBox>
-                    <GroupBox Header="Game" Style="{StaticResource Panel}" Margin="6" AutomationProperties.Name="Game">
-                        <StackPanel><TextBlock x:Name="TileGame" Text="–" FontSize="20" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" /><TextBlock x:Name="TileGameSub" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" /></StackPanel>
-                    </GroupBox>
-                    <GroupBox Header="Drives" Style="{StaticResource Panel}" Margin="6" AutomationProperties.Name="Drives">
-                        <StackPanel><TextBlock x:Name="TileDrives" Text="Checking…" FontSize="20" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" /><TextBlock x:Name="TileDrivesSub" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" /></StackPanel>
-                    </GroupBox>
-                </UniformGrid>
             </StackPanel>
+        </ScrollViewer>
+
+        <!-- Dashboard of the redesign (beta builds): replaces the classic one -->
+        <ScrollViewer x:Name="NewDashboardPage" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False" Visibility="Collapsed">
+            <local:NewDashboard x:Name="NewDash" />
         </ScrollViewer>
 
         <!-- Fans -->
         <ScrollViewer x:Name="FansPageView" Grid.Column="1" VerticalScrollBarVisibility="Auto" Focusable="False"
                       Visibility="Collapsed">
             <StackPanel Margin="24">
-                <TextBlock Text="Fans" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"
+                <TextBlock x:Name="FansHeading" Text="Fans" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"
                            AutomationProperties.HeadingLevel="Level2" />
 
                 <TextBlock Text="{Binding FansPage.Message}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,12"
@@ -209,9 +208,9 @@
                     <TextBlock Text="{Binding FansPage.SafetyNote}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
                 </Border>
 
-                <GroupBox Header="Mode" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan mode">
-                    <StackPanel>
-                        <Border Style="{StaticResource SegmentTrack}">
+                <GroupBox x:Name="ModePanelBox" Header="Mode" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan mode">
+                    <StackPanel x:Name="ModePanelStack">
+                        <Border x:Name="ModeTrack" Style="{StaticResource SegmentTrack}">
                         <ItemsControl ItemsSource="{Binding FansPage.Modes}" Focusable="False">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -220,26 +219,36 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <RadioButton GroupName="FanMode" Content="{Binding Label}" IsChecked="{Binding Selected, Mode=OneWay}"
+                                    <RadioButton x:Name="ModeRadio" GroupName="FanMode" Content="{Binding Label}" IsChecked="{Binding Selected, Mode=OneWay}"
                                                  IsEnabled="{Binding Enabled}" Tag="{Binding Mode}" Click="OnModePicked"
                                                  Style="{StaticResource Segment}" />
+                                    <DataTemplate.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding Mode}" Value="Ai" />
+                                                <Condition Binding="{Binding Enabled}" Value="False" />
+                                                <Condition Binding="{Binding Selected}" Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter TargetName="ModeRadio" Property="Visibility" Value="Collapsed" />
+                                        </MultiDataTrigger>
+                                    </DataTemplate.Triggers>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         </Border>
-                        <TextBlock Text="{Binding FansPage.SourceText}" Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,0" />
+                        <TextBlock x:Name="ModeSourceText" Text="{Binding FansPage.SourceText}" Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,0" />
                     </StackPanel>
                 </GroupBox>
 
-                <GroupBox Header="Fan curve" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan curve">
+                <GroupBox x:Name="FanCurvePanel" Header="Fan curve" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan curve">
                     <local:CurveEditor x:Name="Curve" />
                 </GroupBox>
 
-                <GroupBox Header="AI assist" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="AI assist">
+                <GroupBox x:Name="AiPanelBox" Header="AI assist" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="AI assist">
                     <StackPanel x:Name="AiHost" />
                 </GroupBox>
 
-                <GroupBox Header="Games (beta)" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Games"
+                <GroupBox x:Name="GamesPanelBox" Header="Games (beta)" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Games"
                           Visibility="{Binding BetaGamesVisibility}">
                     <StackPanel>
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
@@ -300,14 +309,16 @@
                       Visibility="Collapsed">
             <StackPanel>
             <local:DevicesPage x:Name="Devices" />
-            <GroupBox Header="Fan headers" Style="{StaticResource Panel}" Margin="24,-8,24,24" AutomationProperties.Name="Fan headers">
+            <GroupBox x:Name="FanHeadersPanel" Header="Fan headers" Style="{StaticResource Panel}" Margin="24,-8,24,24" AutomationProperties.Name="Fan headers">
                     <StackPanel>
-                        <CheckBox Content="Allow Ember to control the GPU fan (optional, test it first)" IsChecked="{Binding FansPage.GpuControl, Mode=OneWay}"
+                        <CheckBox IsChecked="{Binding FansPage.GpuControl, Mode=OneWay}"
                                   Click="OnGpuControl" Style="{StaticResource SwitchBox}" Margin="0,0,0,8"
-                                  Visibility="{Binding BetaGpuVisibility}" />
+                                  Visibility="{Binding BetaGpuVisibility}">
+                            <TextBlock Text="Allow Ember to control the GPU fan (optional, test it first)" TextWrapping="Wrap" />
+                        </CheckBox>
                         <TextBlock Text="No fan headers reported" Foreground="{DynamicResource MutedBrush}"
                                    Visibility="{Binding NoHeadersVisibility}" />
-                        <ItemsControl ItemsSource="{Binding FansPage.Headers}" Focusable="False">
+                        <ItemsControl x:Name="FanHeadersList" ItemsSource="{Binding FansPage.Headers}" Focusable="False">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,6">
@@ -353,24 +364,25 @@
             <Grid Margin="24">
               <Grid.ColumnDefinitions><ColumnDefinition Width="170" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
               <StackPanel Grid.Column="0" Margin="0,48,16,0">
-                <RadioButton x:Name="SetGeneral" GroupName="SettingsNav" Content="General" Tag="general" IsChecked="True" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
-                <RadioButton GroupName="SettingsNav" Content="Appearance" Tag="appearance" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
-                <RadioButton GroupName="SettingsNav" Content="Fan control" Tag="fan" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
-                <RadioButton GroupName="SettingsNav" Content="Lighting" Tag="lights" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
-                <RadioButton x:Name="NavAutomation" GroupName="SettingsNav" Content="Schedule and alerts" Tag="automation" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
-                <RadioButton GroupName="SettingsNav" Content="What's new" Tag="changelog" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
-                <RadioButton x:Name="NavRoadmap" GroupName="SettingsNav" Content="Roadmap" Tag="roadmap" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
-                <RadioButton GroupName="SettingsNav" Content="Legal" Tag="legal" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
-                <RadioButton GroupName="SettingsNav" Content="Updates" Tag="updates" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
-                <RadioButton GroupName="SettingsNav" Content="About" Tag="about" Style="{StaticResource NavItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton x:Name="SetGeneral" GroupName="SettingsNav" Content="General" Tag="general" IsChecked="True" Style="{StaticResource SectionItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="Appearance" Tag="appearance" Style="{StaticResource SectionItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="Fan control" Tag="fan" Style="{StaticResource SectionItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="Lighting" Tag="lights" Style="{StaticResource SectionItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton x:Name="NavAutomation" GroupName="SettingsNav" Content="Schedule and alerts" Tag="automation" Style="{StaticResource SectionItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="What's new" Tag="changelog" Style="{StaticResource SectionItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton x:Name="NavRoadmap" GroupName="SettingsNav" Content="Roadmap" Tag="roadmap" Style="{StaticResource SectionItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="Legal" Tag="legal" Style="{StaticResource SectionItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="Updates" Tag="updates" Style="{StaticResource SectionItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
+                <RadioButton GroupName="SettingsNav" Content="About" Tag="about" Style="{StaticResource SectionItem}" Margin="0,0,0,4" Checked="OnSettingsSection" />
               </StackPanel>
               <StackPanel x:Name="SettingsSections" Grid.Column="1" MaxWidth="720" HorizontalAlignment="Stretch">
-                <TextBlock Text="Settings" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"
+                <TextBlock Text="Settings" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16" x:Name="SettingsHeading"
                            AutomationProperties.HeadingLevel="Level2" />
+                <TextBlock x:Name="SettingsSub" Text="Make Ember look and behave the way you like. Changes apply at once." Foreground="{DynamicResource MutedBrush}" Margin="0,-12,0,16" TextWrapping="Wrap" Visibility="Collapsed" />
 
                 <GroupBox Tag="general" Header="Temperature unit" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Temperature unit">
                     <StackPanel>
-                        <Border Style="{StaticResource SegmentTrack}">
+                        <Border x:Name="UnitTrack" Style="{StaticResource SegmentTrack}">
                             <StackPanel Orientation="Horizontal">
                                 <RadioButton GroupName="Unit" Content="Celsius (°C)" Tag="Celsius" Click="OnUnitPicked"
                                              IsChecked="{Binding UseCelsius, Mode=OneWay}" Style="{StaticResource Segment}" />
@@ -385,7 +397,7 @@
 
                 <GroupBox Tag="general" Header="When Ember opens" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="When Ember opens">
                     <StackPanel>
-                        <Border Style="{StaticResource SegmentTrack}">
+                        <Border x:Name="StartPageTrack" Style="{StaticResource SegmentTrack}">
                             <StackPanel Orientation="Horizontal">
                                 <RadioButton GroupName="StartPage" Content="Dashboard" Tag="Dashboard" Click="OnStartPagePicked"
                                              IsChecked="{Binding StartOnDashboard, Mode=OneWay}" Style="{StaticResource Segment}" />

@@ -72,6 +72,9 @@
             </Setter>
         </Style>
 
+        <!-- A section in the settings list. The classic look uses the same style as the sidebar; the redesign has its own. -->
+        <Style x:Key="SectionItem" TargetType="RadioButton" BasedOn="{StaticResource NavItem}" />
+
         <SolidColorBrush x:Key="TrackBrush" Color="#241f1c" />
         <SolidColorBrush x:Key="SegmentOnBrush" Color="#4b413a" />
         <SolidColorBrush x:Key="SegmentHoverBrush" Color="#322b27" />
@@ -420,7 +423,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="Row" Padding="12,7" CornerRadius="10" BorderThickness="1" BorderBrush="Transparent" Background="Transparent">
+                        <Border x:Name="Row" Padding="12,9" CornerRadius="10" BorderThickness="1" BorderBrush="Transparent" Background="Transparent">
                             <ContentPresenter x:Name="Label" TextElement.Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>

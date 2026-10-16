@@ -11,7 +11,7 @@ namespace Ember.App;
 /// <summary>The PC's specs, read once when the page is first opened (Refresh reads them again), with a button that copies them as text.</summary>
 public sealed class SpecsPage : UserControl
 {
-    static readonly FontFamily Mono = new("Cascadia Mono, Consolas");
+    static readonly FontFamily Mono = Fonts.Mono;
 
     readonly StackPanel _root = new() { Margin = new Thickness(24) };
     readonly StackPanel _content = new();
@@ -27,6 +27,7 @@ public sealed class SpecsPage : UserControl
     {
         Content = _root;
         Focusable = false;
+        if (BuildFeatures.NewLook) _root.Margin = new Thickness(32, 30, 32, 28);
         var head = new DockPanel { Margin = new Thickness(0, 0, 0, 6) };
         var buttons = new StackPanel { Orientation = Orientation.Horizontal };
         buttons.Children.Add(Pill("Refresh", () => _ = LoadAsync(force: true), "Read the specs again"));
@@ -34,16 +35,28 @@ public sealed class SpecsPage : UserControl
         copy.Style = Sty("PrimaryButton");
         copy.Margin = new Thickness(0, 0, 0, 6);
         buttons.Children.Add(copy);
-        DockPanel.SetDock(buttons, Dock.Right);
-        head.Children.Add(buttons);
-        var title = new TextBlock { Text = "Specs", FontSize = 24, FontWeight = FontWeights.SemiBold };
-        AutomationProperties.SetHeadingLevel(title, AutomationHeadingLevel.Level2);
-        head.Children.Add(title);
-        _root.Children.Add(head);
-        _root.Children.Add(Text("What this PC is made of. Copy it into a support request; it never includes the PC name or your user name.", muted: true, size: 13));
+        if (!BuildFeatures.NewLook)
+        {
+            DockPanel.SetDock(buttons, Dock.Right);
+            head.Children.Add(buttons);
+        }
+        if (BuildFeatures.NewLook)
+        {
+            buttons.VerticalAlignment = VerticalAlignment.Top;
+            _root.Children.Add(Ui.Heading("Specs", "What this PC is made of. Copy it into a support request; it never includes the PC name or your user name.", buttons));
+            head = null!;
+        }
+        else
+        {
+            var title = new TextBlock { Text = "Specs", FontSize = 24, FontWeight = FontWeights.SemiBold };
+            AutomationProperties.SetHeadingLevel(title, AutomationHeadingLevel.Level2);
+            head.Children.Add(title);
+            _root.Children.Add(head);
+            _root.Children.Add(Text("What this PC is made of. Copy it into a support request; it never includes the PC name or your user name.", muted: true, size: 13));
+        }
         _status.Margin = new Thickness(0, 6, 0, 0);
         _root.Children.Add(_status);
-        _root.Children.Add(WithMargin(_content, 0, 14, 0, 0));
+        _root.Children.Add(WithMargin(_content, 0, BuildFeatures.NewLook ? 0 : 14, 0, 0));
         ThemeManager.Changed += () => { if (_loaded) Show(); };
     }
 
@@ -86,7 +99,8 @@ public sealed class SpecsPage : UserControl
 
     static TextBlock Heading(string text)
     {
-        var h = Text(text.ToUpperInvariant(), muted: true, size: 11.5, weight: FontWeights.SemiBold);
+        var h = Text(text.ToUpperInvariant(), size: 11.5, weight: FontWeights.SemiBold);
+        h.SetResourceReference(TextBlock.ForegroundProperty, BuildFeatures.NewLook ? "AccentTextBrush" : "MutedBrush");
         h.Margin = new Thickness(0, 0, 0, 8);
         return h;
     }
@@ -145,10 +159,10 @@ public sealed class SpecsPage : UserControl
             .Where(s => !string.IsNullOrEmpty(s)));
 
         var left = new StackPanel();
-        left.Children.Add(Text(cpu, size: 20, weight: FontWeights.SemiBold));
+        left.Children.Add(Text(cpu, size: BuildFeatures.NewLook ? 22 : 20, weight: FontWeights.SemiBold));
         left.Children.Add(WithMargin(Text(line, muted: true, size: 13), 0, 3, 0, 0));
 
-        var icon = new Border { Width = 46, Height = 46, CornerRadius = new CornerRadius(13), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 16, 0) };
+        var icon = new Border { Width = BuildFeatures.NewLook ? 56 : 46, Height = BuildFeatures.NewLook ? 56 : 46, CornerRadius = new CornerRadius(BuildFeatures.NewLook ? 16 : 13), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 16, 0) };
         icon.SetResourceReference(Border.BackgroundProperty, "AccentSoftBrush");
         var chip = new Viewbox { Width = 24, Height = 24, Child = new Canvas { Width = 24, Height = 24, Children = { Outline("M8 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z M9 2v4 M15 2v4 M9 18v4 M15 18v4 M2 9h4 M2 15h4 M18 9h4 M18 15h4", "AccentTextBrush") } } };
         icon.Child = chip;
@@ -170,7 +184,7 @@ public sealed class SpecsPage : UserControl
     static FrameworkElement Count(string number, string label, Brush? colour)
     {
         var s = new StackPanel { Margin = new Thickness(24, 0, 0, 0) };
-        var n = new TextBlock { Text = number, FontFamily = Mono, FontSize = 20 };
+        var n = new TextBlock { Text = number, FontFamily = Mono, FontSize = BuildFeatures.NewLook ? 24 : 20 };
         if (colour is not null) n.Foreground = colour; else n.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
         s.Children.Add(n);
         s.Children.Add(Text(label, muted: true, size: 11.5));
@@ -215,6 +229,11 @@ public sealed class SpecsPage : UserControl
     static TextBox ReadOnlyValue(string text, string name)
     {
         var box = new TextBox { Text = text, IsReadOnly = true, BorderThickness = new Thickness(0), Background = Brushes.Transparent, FontSize = 12.5, TextWrapping = TextWrapping.Wrap, Padding = new Thickness(0, 3, 0, 3) };
+        if (BuildFeatures.NewLook)
+        {
+            box.FontWeight = FontWeights.Bold;
+            if (name is "Threads" or "Memory" or "Video memory" or "Driver" or "Displays" or "BIOS" or "Build") box.FontFamily = Fonts.Mono;
+        }
         box.SetResourceReference(TextBox.ForegroundProperty, "TextBrush");
         AutomationProperties.SetName(box, name);
         return box;

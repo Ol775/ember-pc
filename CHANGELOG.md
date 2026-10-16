@@ -6,13 +6,14 @@ All notable changes to Ember. Newest first. Ember follows [semantic versioning](
 
 ### Changed
 
-- **A new look (beta).** Rounder cards with small capital headings, an icon beside every page in the sidebar, and ring gauges for the CPU and graphics card temperatures on the Dashboard. Only the beta build has it; the stable build looks as before.
+- **A new look (beta).** Every page is redrawn: a sidebar with icons and a status card, Instrument Sans and JetBrains Mono type, rounded cards with small capital headings, and the Dashboard with ring gauges, a fan mode list, a smooth ten-minute chart and four summary tiles. Fans has the curve beside the fan headers and the AI assist; Lights has scene chips, a live preview, an effect gallery and a layer list; Devices shows each integration with its logo; Games shows a card for each launcher with a mode picker per game; Settings lists every option as a row. Only the beta build has it; the stable build looks as before.
 - **Lighter in the tray.** With the window hidden or minimised, Ember redraws and reads the smart plugs far less often and hands unused memory back to Windows, so it idles at a fraction of the CPU and RAM.
 
 ### Added
 
 - **A Specs page.** Your processor, graphics card, memory, motherboard, drives, displays and Windows version in one place, with a button to copy them for a support request. It never includes the PC name or your user name.
 - **Drive health on the Specs page.** Each drive shows its S.M.A.R.T. status, temperature, hours powered on and, for SSDs, wear. Drives that are nearly full are flagged.
+- **Power cost estimate and daily use.** The Power page shows what today, a month and a year of use cost at your own price per kWh, how the draw splits between the CPU, the graphics card and the rest of the PC, and the last seven days as bars. Ember keeps the daily energy figures on this PC (the file power-days.json in your Ember folder).
 
 ### Fixed
 

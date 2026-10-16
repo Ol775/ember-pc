@@ -28,6 +28,7 @@ public sealed class DevicesPage : UserControl
     {
         Content = _root;
         Focusable = false;
+        if (BuildFeatures.NewLook) _root.Margin = new Thickness(32, 30, 32, 28);
         _root.Children.Add(BuildHeading());
         _root.Children.Add(_cards);
         _root.Children.Add(Panel("All devices", _rows, new Thickness(0)));

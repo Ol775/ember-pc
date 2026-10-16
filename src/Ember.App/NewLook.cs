@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using Ember.Core;
 using System.Windows.Media;
 
 namespace Ember.App;
@@ -30,6 +31,10 @@ public sealed class RingGauge : FrameworkElement
     public static readonly DependencyProperty LabelProperty = DependencyProperty.Register(nameof(Label), typeof(string), typeof(RingGauge),
         new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty ThicknessProperty = DependencyProperty.Register(nameof(Thickness), typeof(double), typeof(RingGauge),
+        new FrameworkPropertyMetadata(12.0, FrameworkPropertyMetadataOptions.AffectsRender));
+    public double Thickness { get => (double)GetValue(ThicknessProperty); set => SetValue(ThicknessProperty, value); }
+
     public double Fraction { get => (double)GetValue(FractionProperty); set => SetValue(FractionProperty, value); }
     public Brush Stroke { get => (Brush)GetValue(StrokeProperty); set => SetValue(StrokeProperty, value); }
     public string Label { get => (string)GetValue(LabelProperty); set => SetValue(LabelProperty, value); }
@@ -46,7 +51,7 @@ public sealed class RingGauge : FrameworkElement
     {
         var size = Math.Min(ActualWidth, ActualHeight);
         if (size < 20) return;
-        const double thickness = 10;
+        var thickness = Thickness;
         var centre = new Point(ActualWidth / 2, ActualHeight / 2);
         var radius = size / 2 - thickness / 2 - 1;
         var track = Application.Current.TryFindResource("PanelBorderBrush") as Brush ?? Brushes.Gray;
@@ -71,8 +76,20 @@ public sealed class RingGauge : FrameworkElement
         }
 
         var formatted = new FormattedText(Label, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-            new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal),
-            size * 0.24, text, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            new Typeface(Fonts.MonoMedium, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
+            size * 0.215, text, VisualTreeHelper.GetDpi(this).PixelsPerDip);
         dc.DrawText(formatted, new Point(centre.X - formatted.Width / 2, centre.Y - formatted.Height / 2));
     }
+}
+
+/// <summary>The fonts of the redesign: Instrument Sans for text and JetBrains Mono for numbers, both bundled. The classic look keeps Segoe UI and Cascadia Mono.</summary>
+public static class Fonts
+{
+    public static readonly FontFamily Ui = BuildFeatures.NewLook ? Bundled("Instrument Sans", "Segoe UI") : new("Segoe UI");
+    public static readonly FontFamily Mono = BuildFeatures.NewLook ? Bundled("JetBrains Mono", "Cascadia Mono, Consolas") : new("Cascadia Mono, Consolas");
+    /// <summary>The medium weight of the mono font, for large figures.</summary>
+    public static readonly FontFamily MonoMedium = BuildFeatures.NewLook ? Bundled("JetBrains Mono Medium", "Cascadia Mono, Consolas") : new("Cascadia Mono, Consolas");
+
+    // A font that ships inside the app is found through the folder it lives in; the fallback is used if it cannot be loaded.
+    static FontFamily Bundled(string name, string fallback) => new(new Uri("pack://application:,,,/Assets/Fonts/"), "./#" + name + ", " + fallback);
 }

@@ -30,6 +30,7 @@
     <PackageReference Include="Vortice.Direct3D11" />
     <PackageReference Include="Vortice.DXGI" />
     <Resource Include="Assets\ember.ico" />
+    <Resource Include="Assets\Fonts\*.ttf" />
     <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="CHANGELOG.md" />
     <EmbeddedResource Include="..\..\ROADMAP.md" LogicalName="ROADMAP.md" />
     <EmbeddedResource Include="..\..\TERMS.md" LogicalName="TERMS.md" />

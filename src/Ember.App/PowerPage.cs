@@ -52,25 +52,35 @@ public sealed class PowerPage : UserControl
     {
         Content = _root;
         Focusable = false;
+        if (BuildFeatures.NewLook) _root.Margin = new Thickness(32, 30, 32, 28);
 
         var head = new DockPanel { Margin = new Thickness(0, 0, 0, 14) };
         _sourceChip.Child = _sourceChipText;
+        if (BuildFeatures.NewLook)
+        {
+            var range = Segments(["10 min", "1 hour"], 0, i => { _rangePoints = i == 0 ? 600 : 3600; DrawChartNew(); }, "PowerRange");
+            range.Margin = new Thickness(0);
+            _root.Children.Add(Ui.Heading("Power", "What your PC draws at the wall, where it goes, and roughly what it costs.", range));
+        }
         // The redesign shows the source chip inside the hero card; the classic page keeps it in the heading.
         if (!BuildFeatures.NewLook)
         {
             DockPanel.SetDock(_sourceChip, Dock.Right);
             head.Children.Add(_sourceChip);
         }
-        var title = new TextBlock { Text = "Power", FontSize = 24, FontWeight = FontWeights.SemiBold };
-        AutomationProperties.SetHeadingLevel(title, AutomationHeadingLevel.Level2);
-        head.Children.Add(title);
-        _root.Children.Add(head);
+        if (!BuildFeatures.NewLook)
+        {
+            var title = new TextBlock { Text = "Power", FontSize = 24, FontWeight = FontWeights.SemiBold };
+            AutomationProperties.SetHeadingLevel(title, AutomationHeadingLevel.Level2);
+            head.Children.Add(title);
+            _root.Children.Add(head);
+        }
 
         var cards = BuildCards();   // always built: Update fills them, even when the redesign leaves them out
         if (BuildFeatures.NewLook)
         {
             // Redesign: the live figure with its chart beside the cost estimate, then the breakdown beside the daily chart.
-            _root.Children.Add(TwoColumns(BuildNewHero(), BuildCostCard(), 1.45, 1));
+            _root.Children.Add(TwoColumns(BuildNewHero(), BuildCostCard(), 1.35, 1));
             _root.Children.Add(TwoColumns(BuildBreakdown(), BuildDailyCard(), 1.2, 1));
         }
         else
@@ -139,7 +149,7 @@ public sealed class PowerPage : UserControl
         {
             var (name, brushKey) = specs[i];
             var dot = new Ellipse { Width = 10, Height = 10, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
-            if (brushKey == "GoodBrush") dot.Fill = ThemeManager.Good; else dot.SetResourceReference(Shape.FillProperty, brushKey);
+            if (brushKey == "GoodBrush") dot.Fill = Rest; else dot.SetResourceReference(Shape.FillProperty, brushKey);
             var share = Text("", muted: true, size: 12);
             var titleRow = new DockPanel();
             DockPanel.SetDock(share, Dock.Right);
@@ -175,6 +185,9 @@ public sealed class PowerPage : UserControl
     }
 
     // ---- cost estimate, daily use and breakdown (redesign) ----
+
+    /// <summary>The colour of the part of the draw nobody measures: a quiet brown-grey in the redesign, green in the classic page.</summary>
+    static Brush Rest => BuildFeatures.NewLook ? (Brush)Application.Current.FindResource("ThumbHoverBrush") : ThemeManager.Good;
 
     PowerLedger _ledger = new();
     Func<double> _price = () => 0.28;
@@ -222,7 +235,7 @@ public sealed class PowerPage : UserControl
         label.SetResourceReference(TextBlock.ForegroundProperty, "AccentTextBrush");
         top.Children.Add(label);
 
-        _heroWatts.FontFamily = new FontFamily("Cascadia Mono, Consolas");
+        _heroWatts.FontFamily = Fonts.Mono;
         _heroWatts.FontSize = 54;
         _heroWatts.FontWeight = FontWeights.Medium;
         var figure = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
@@ -243,62 +256,102 @@ public sealed class PowerPage : UserControl
         body.Children.Add(_heroSource);
         body.Children.Add(WithMargin(_chart, 0, 10, 0, 0));
         var hero = new Border { CornerRadius = new CornerRadius(18), Padding = new Thickness(20, 16, 20, 14), BorderThickness = new Thickness(1), Child = body };
-        hero.SetResourceReference(Border.BackgroundProperty, "AccentSoftBrush");
-        hero.SetResourceReference(Border.BorderBrushProperty, "AccentBrush");
+        hero.SetResourceReference(Border.BackgroundProperty, "SoftCardBrush");
+        hero.SetResourceReference(Border.BorderBrushProperty, "SoftCardBorderBrush");
+        _sourceChip.CornerRadius = new CornerRadius(18);
+        _sourceChip.BorderThickness = new Thickness(1);
+        _sourceChip.Padding = new Thickness(14, 5, 14, 6);
+        _sourceChip.Background = Brushes.Transparent;
+        _sourceChip.SetResourceReference(Border.BorderBrushProperty, "PanelBorderBrush");
+        _sourceChipText.FontSize = 13;
         return hero;
     }
 
     FrameworkElement BuildCostCard()
     {
-        var symbol = new TextBlock { Text = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 4, 0) };
-        symbol.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
+        var symbol = new TextBlock { Text = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 2, 0), FontFamily = Fonts.Mono };
+        symbol.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
         AutomationProperties.SetName(_priceBox, "Price per kilowatt hour");
         _priceBox.LostKeyboardFocus += (_, _) => CommitPrice();
         _priceBox.KeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Enter) { CommitPrice(); System.Windows.Input.Keyboard.ClearFocus(); } };
-        var priceRow = new DockPanel { Margin = new Thickness(0, 12, 0, 0) };
+        // The price sits in the row of the mockup: its label on the left, the figure on the right, no box around the number.
+        _priceBox.Style = null;
+        _priceBox.BorderThickness = new Thickness(0);
+        _priceBox.Background = Brushes.Transparent;
+        _priceBox.FontFamily = Fonts.Mono;
+        _priceBox.FontWeight = FontWeights.Bold;
+        _priceBox.FontSize = 13;
+        _priceBox.Width = 52;
+        _priceBox.Padding = new Thickness(0);
+        _priceBox.SetResourceReference(TextBox.ForegroundProperty, "TextBrush");
+        _priceBox.SetResourceReference(TextBox.CaretBrushProperty, "TextBrush");
         var priceInput = new StackPanel { Orientation = Orientation.Horizontal };
         priceInput.Children.Add(symbol);
         priceInput.Children.Add(_priceBox);
+        var priceRow = new DockPanel();
         DockPanel.SetDock(priceInput, Dock.Right);
         priceRow.Children.Add(priceInput);
-        priceRow.Children.Add(Text("Price per kWh", muted: true, size: 13));
+        priceRow.Children.Add(Ui.Muted("Price per kWh", 13));
+        var priceBox = new Border { CornerRadius = new CornerRadius(12), BorderThickness = new Thickness(1), Padding = new Thickness(14, 9, 14, 9), Margin = new Thickness(0, 14, 0, 0), Child = priceRow };
+        priceBox.SetResourceReference(Border.BackgroundProperty, "WindowBrush");
+        priceBox.SetResourceReference(Border.BorderBrushProperty, "PanelBorderBrush");
 
-        var figures = new UniformGrid { Columns = 3 };
+        foreach (var t in new[] { _costToday, _costMonth, _costYear }) { t.FontFamily = Fonts.Mono; t.FontSize = 22; }
+        foreach (var t in new[] { _kwhToday, _kwhMonth, _kwhYear }) { t.FontFamily = Fonts.Mono; t.FontSize = 11.5; }
+        _costMonth.SetResourceReference(TextBlock.ForegroundProperty, "AccentTextBrush");
+        var figures = new UniformGrid { Columns = 3, Margin = new Thickness(0, 12, 0, 0) };
         figures.Children.Add(Figure("Today so far", _costToday, _kwhToday));
-        figures.Children.Add(Figure("A month", _costMonth, _kwhMonth));
-        figures.Children.Add(Figure("A year", _costYear, _kwhYear));
+        figures.Children.Add(Figure("This month", _costMonth, _kwhMonth));
+        figures.Children.Add(Figure("Per year", _costYear, _kwhYear));
         var body = new StackPanel();
+        body.Children.Add(CardHead("Cost estimate", Ui.Chip("Based on your average", false)));
         body.Children.Add(figures);
-        body.Children.Add(priceRow);
+        body.Children.Add(priceBox);
         body.Children.Add(WithMargin(_costNote, 0, 8, 0, 0));
-        return Panel("Cost estimate", body, new Thickness(0));
+        return Ui.Card(body, name: "Cost estimate");
+    }
+
+    /// <summary>The top line of a card: the small capital heading on the left and a control on the right.</summary>
+    static FrameworkElement CardHead(string title, FrameworkElement? right)
+    {
+        var head = new DockPanel();
+        if (right is not null)
+        {
+            right.VerticalAlignment = VerticalAlignment.Center;
+            DockPanel.SetDock(right, Dock.Right);
+            head.Children.Add(right);
+        }
+        head.Children.Add(Ui.Label(title));
+        return head;
     }
 
     FrameworkElement BuildDailyCard()
     {
-        var legend = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
-        foreach (var (name, key) in new[] { ("CPU", CpuKey), ("GPU", GpuKey), ("The rest", "GoodBrush") })
+        var legend = new StackPanel { Orientation = Orientation.Horizontal };
+        foreach (var (name, key) in new[] { ("CPU", CpuKey), ("GPU", GpuKey), ("Rest", "GoodBrush") })
         {
             var dot = new Ellipse { Width = 9, Height = 9, Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
-            if (key == "GoodBrush") dot.Fill = ThemeManager.Good; else dot.SetResourceReference(Shape.FillProperty, key);
+            if (key == "GoodBrush") dot.Fill = Rest; else dot.SetResourceReference(Shape.FillProperty, key);
             legend.Children.Add(dot);
-            legend.Children.Add(WithMargin(Text(name, muted: true, size: 12), 0, 0, 14, 0));
+            legend.Children.Add(WithMargin(Ui.Text(name, 12.5), 0, 0, 14, 0));
         }
-        var dailyBody = new StackPanel();
-        dailyBody.Children.Add(legend);
-        dailyBody.Children.Add(_daily);
+        var body = new StackPanel();
+        body.Children.Add(CardHead("Daily use", legend));
+        _daily.Margin = new Thickness(0, 12, 0, 0);
+        body.Children.Add(_daily);
         _daily.SizeChanged += (_, _) => { _dailyKey = null; DrawDaily(); };
-        return Panel("Daily use (kWh)", dailyBody, new Thickness(0));
+        return Ui.Card(body, name: "Daily use");
     }
 
     /// <summary>"Where the power goes": the split bar of the live draw, then the week's average per part.</summary>
     FrameworkElement BuildBreakdown()
     {
         var body = new StackPanel();
-        body.Children.Add(Text("Average over the last week", muted: true, size: 12));
+        body.Children.Add(CardHead("Where the power goes", Ui.Muted("Average over 7 days", 12)));
+        _split.Margin = new Thickness(0, 14, 0, 10);
         body.Children.Add(_split);
         body.Children.Add(_table);
-        return Panel("Where the power goes", body, new Thickness(0));
+        return Ui.Card(body, name: "Where the power goes");
     }
 
     static FrameworkElement Figure(string label, TextBlock value, TextBlock kwh)
@@ -366,14 +419,14 @@ public sealed class PowerPage : UserControl
                 var h = d.Wh <= 0 ? 0 : wh / 1000 / max * plotH;
                 if (h < 0.5) continue;
                 var seg = new Border { Width = barW, Height = h, CornerRadius = new CornerRadius(2), Opacity = isToday ? 0.6 : 1 };
-                if (brushKey == "GoodBrush") seg.Background = ThemeManager.Good; else seg.SetResourceReference(Border.BackgroundProperty, brushKey);
+                if (brushKey == "GoodBrush") seg.Background = Rest; else seg.SetResourceReference(Border.BackgroundProperty, brushKey);
                 Canvas.SetLeft(seg, x);
                 Canvas.SetTop(seg, y - h);
                 _daily.Children.Add(seg);
                 y -= h + 1;
             }
             var value = Text(d.Seconds > 0 ? d.Kwh.ToString("0.0") : "", size: 11);
-            value.FontFamily = new FontFamily("Cascadia Mono, Consolas");
+            value.FontFamily = Fonts.Mono;
             value.Width = slot; value.TextAlignment = TextAlignment.Center;
             Canvas.SetLeft(value, i * slot);
             Canvas.SetTop(value, Math.Max(0, y - valueH));
@@ -399,7 +452,7 @@ public sealed class PowerPage : UserControl
             _table.Children.Add(Text("This fills in once Ember has watched the PC for a few minutes.", muted: true, size: 13));
             return;
         }
-        var mono = new FontFamily("Cascadia Mono, Consolas");
+        var mono = Fonts.Mono;
         void Cell(string text, int row, int col, bool muted = false, bool bold = false, Brush? brush = null)
         {
             var t = Text(text, muted: muted, size: col == 0 ? 13 : 12.5, weight: bold ? FontWeights.SemiBold : null);
@@ -428,7 +481,7 @@ public sealed class PowerPage : UserControl
             if (i < 3)
             {
                 var dot = new Ellipse { Width = 9, Height = 9, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 0) };
-                if (i == 2) dot.Fill = ThemeManager.Good; else dot.SetResourceReference(Shape.FillProperty, i == 0 ? CpuKey : GpuKey);
+                if (i == 2) dot.Fill = Rest; else dot.SetResourceReference(Shape.FillProperty, i == 0 ? CpuKey : GpuKey);
                 Grid.SetRow(dot, i + 1);
                 _table.Children.Add(dot);
                 ((TextBlock)_table.Children[^2]).Margin = new Thickness(18, 6, 8, 6);
@@ -521,7 +574,8 @@ public sealed class PowerPage : UserControl
     {
         _heroWatts.Inlines.Clear();
         _heroWatts.Inlines.Add(new Run(watts is { } w ? w.ToString("0") : "–"));
-        if (watts is not null) _heroWatts.Inlines.Add(new Run("2009W") { FontSize = 20, FontWeight = FontWeights.Normal, Foreground = (Brush)Application.Current.FindResource("MutedBrush") });
+        if (watts is not null) _heroWatts.Inlines.Add(new Run(" ") { FontSize = 10 });
+        if (watts is not null) _heroWatts.Inlines.Add(new Run("W") { FontSize = 20, FontWeight = FontWeights.Normal, Foreground = (Brush)Application.Current.FindResource("MutedBrush") });
     }
 
     void UpdateHero()
@@ -531,14 +585,23 @@ public sealed class PowerPage : UserControl
         _heroSource.Text = _totalFromPlug ? "Measured at the wall by your smart plug" : _total.Now is null ? "Waiting for the sensors" : "CPU and GPU only. Link your PC's plug for the whole PC";
         _heroStats.Text = _total.Average is { } a ? (BuildFeatures.NewLook ? $"avg {a:0} W  ·  peak {_total.Peak:0} W" : $"average {a:0} W   ·   peak {_total.Peak:0} W   ·   {_total.Kwh:0.000} kWh used") : "";
         _sourceChipText.Text = _totalFromPlug ? "Wall plug" : "Sensors only";
-        _sourceChip.Background = _totalFromPlug ? ThemeManager.GoodSoft : (Brush)Application.Current.FindResource("AccentSoftBrush");
-        _sourceChipText.Foreground = _totalFromPlug ? ThemeManager.Good : (Brush)Application.Current.FindResource("AccentTextBrush");
+        if (BuildFeatures.NewLook)
+        {
+            var plugName = _providers.SelectMany(p => p.Plugs).FirstOrDefault(p => p.Uuid == _linkState.PcPlug)?.Name;
+            _sourceChipText.Text = _totalFromPlug && plugName is not null ? $"Measured by plug \"{plugName}\"" : _totalFromPlug ? "Measured at the wall" : "CPU and GPU sensors only";
+            _sourceChipText.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
+        }
+        else
+        {
+            _sourceChip.Background = _totalFromPlug ? ThemeManager.GoodSoft : (Brush)Application.Current.FindResource("AccentSoftBrush");
+            _sourceChipText.Foreground = _totalFromPlug ? ThemeManager.Good : (Brush)Application.Current.FindResource("AccentTextBrush");
+        }
 
         // The split bar and its legend: CPU, GPU and the rest of the wall draw (or nothing when only CPU and GPU are known).
         var parts = new (string Name, double? W, string? Key, Brush? Fixed)[]
         {
             ("CPU", _cpu.Now, CpuKey, null), ("GPU", _gpu.Now, GpuKey, null),
-            ("Motherboard and the rest", _totalFromPlug ? _rest.Now : null, null, ThemeManager.Good),
+            ("Motherboard and the rest", _totalFromPlug ? _rest.Now : null, null, Rest),
         };
         var sum = parts.Sum(p => p.W ?? 0);
         _split.ColumnDefinitions.Clear();
@@ -594,6 +657,7 @@ public sealed class PowerPage : UserControl
 
     void DrawChart()
     {
+        if (BuildFeatures.NewLook) { DrawChartNew(); return; }
         _chart.Children.Clear();
         _chart.Children.Add(_area);
         var pts = _total.Recent;
@@ -623,6 +687,30 @@ public sealed class PowerPage : UserControl
         var color = ((SolidColorBrush)Application.Current.FindResource(CpuKey)).Color;
         _area.Fill = new LinearGradientBrush(Color.FromArgb(110, color.R, color.G, color.B), Color.FromArgb(0, color.R, color.G, color.B), 90);
         _chart.Children.Add(_line);
+        _chartNote.Text = _totalFromPlug ? "Measured at the wall" : "CPU plus GPU";
+    }
+
+    int _rangePoints = 600;   // the chart shows the last ten minutes or the last hour
+
+    /// <summary>The live chart of the redesign: a smooth line with a soft area under it, no axis labels.</summary>
+    void DrawChartNew()
+    {
+        _chart.Children.Clear();
+        var all = _total.Recent;
+        var pts = all.Count > _rangePoints ? all.Skip(all.Count - _rangePoints).ToList() : all.ToList();
+        var w = _chart.ActualWidth;
+        var h = _chart.Height;
+        if (w < 10 || pts.Count < 2) { _chartNote.Text = "Waiting for readings…"; return; }
+        var top = Math.Max(20, Math.Ceiling(pts.Max() * 1.25 / 20) * 20);
+        var step = w / (Math.Max(pts.Count, 60) - 1);
+        var pc = new List<Point>(pts.Count);
+        for (var i = 0; i < pts.Count; i++) pc.Add(new Point(i * step, h - 3 - pts[i] / top * (h - 10)));
+        var color = ((SolidColorBrush)Application.Current.FindResource(CpuKey)).Color;
+        var area = new Path { Data = Ui.Smooth(pc, h), IsHitTestVisible = false, Fill = new LinearGradientBrush(Color.FromArgb(0x70, color.R, color.G, color.B), Color.FromArgb(0, color.R, color.G, color.B), 90) };
+        var line = new Path { Data = Ui.Smooth(pc), StrokeThickness = 2.5, StrokeLineJoin = PenLineJoin.Round, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, IsHitTestVisible = false };
+        line.SetResourceReference(Shape.StrokeProperty, CpuKey);
+        _chart.Children.Add(area);
+        _chart.Children.Add(line);
         _chartNote.Text = _totalFromPlug ? "Measured at the wall" : "CPU plus GPU";
     }
 

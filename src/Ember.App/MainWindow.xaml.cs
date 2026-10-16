@@ -38,6 +38,8 @@ public partial class MainWindow : Window
     readonly AiPanel _ai;
     readonly DispatcherTimer _thermalSave;
     bool _quitting;
+    DashboardSummary? _summary;
+    PowerSummary? _powerNow;
     Ember.Lighting.Color[]? _screen;
     double? _gpuLoad, _cpuTemp, _gpuTemp, _caseTemp;
     string? _announcedConnection, _announcedBanner, _announcedCompetitor, _announcedTest;
@@ -92,9 +94,12 @@ public partial class MainWindow : Window
             _gpuLoad = s.Readings.FirstOrDefault(r => r.Hardware == HardwareKind.Gpu && r.Kind == SensorKind.Load && r.Name == "GPU Core")?.Value;
             if (s.Control is { } c) _detection.SetNotGames(c.NotGames);
             var sum = DashboardSummary.From(s);
+            _summary = s.Stale ? null : sum;
             _cpuTemp = s.Stale ? null : sum.CpuTemp;
             _gpuTemp = s.Stale ? null : sum.GpuTemp;
-            if (!s.Stale) Power.Feed(DateTimeOffset.UtcNow, PowerSummary.From(s));
+            var power = PowerSummary.From(s);
+            _powerNow = s.Stale ? null : power;
+            if (!s.Stale) Power.Feed(DateTimeOffset.UtcNow, power);
             RunAlerts(sum, s.Stale);
             _lights.SetInputs(s.Stale ? null : sum.CpuTemp, s.Stale ? null : sum.GpuTemp, _screen);
             _caseTemp = s.Stale ? null : new[] { sum.CpuTemp, sum.GpuTemp, sum.MotherboardTemp }.Where(v => v is not null).Max();
@@ -860,7 +865,7 @@ public partial class MainWindow : Window
 
     void OnNavChanged(object sender, RoutedEventArgs e)
     {
-        if (DashboardPage is null || FansPageView is null || SettingsPageView is null || LightsPageView is null || DevicesPageView is null || PowerPageView is null || GamesPageView is null || SpecsPageView is null) return;
+        if (DashboardPage is null || FansPageView is null || SettingsPageView is null || LightsPageView is null || DevicesPageView is null || NewDashboardPage is null || PowerPageView is null || GamesPageView is null || SpecsPageView is null) return;
         SpecsPageView.Visibility = NavSpecs.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         if (NavSpecs.IsChecked == true) _ = Specs.LoadAsync();
         GamesPageView.Visibility = NavGames.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
@@ -869,7 +874,8 @@ public partial class MainWindow : Window
         PowerPageView.Visibility = NavPower.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         DevicesPageView.Visibility = NavDevices.IsChecked == true ? Visibility.Visible : Visibility.Collapsed; // fires once during InitializeComponent
         LightsPageView.Visibility = NavLights.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-        DashboardPage.Visibility = NavDashboard.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        DashboardPage.Visibility = NavDashboard.IsChecked == true && !BuildFeatures.NewLook ? Visibility.Visible : Visibility.Collapsed;
+        NewDashboardPage.Visibility = NavDashboard.IsChecked == true && BuildFeatures.NewLook ? Visibility.Visible : Visibility.Collapsed;
         FansPageView.Visibility = NavFans.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         SettingsPageView.Visibility = NavSettings.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -981,6 +987,15 @@ public partial class MainWindow : Window
         if (sender is FrameworkElement { Tag: FanMode mode }) await SendAsync(new SetMode(mode));
     }
 
+    /// <summary>The switch of a fan header (redesign): on lets Ember control that fan, off hands it back to the board.</summary>
+    async void OnHeaderSwitch(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string id, DataContext: HeaderRow row }) return;
+        if (row.CanDisable) await SendAsync(new ConfirmHeader(id, false));
+        else if (row.CanEnable) await SendAsync(new ConfirmHeader(id, true));
+        else if (sender is System.Windows.Controls.Primitives.ToggleButton t) t.IsChecked = row.CanDisable;   // nothing can change: show the real state again
+    }
+
     async void OnTestHeader(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string id }) await SendAsync(new RunHeaderTest(id));
@@ -1007,6 +1022,13 @@ public partial class MainWindow : Window
     {
         _vm.SetChartSize(e.NewSize.Width, e.NewSize.Height);
         Refresh();
+    }
+
+    DashboardInputs DashboardInputsNow()
+    {
+        var state = _lights.State;
+        return new DashboardInputs(_summary, _powerNow, Power.TotalWatts, Power.TotalFromPlug, state.Current.Name, state.On, _lights.Devices.Count(d => !d.Disabled),
+            _detection.ActiveGame, _vm.FansPage.Experimental, FansViewState.Label(_vm.FansPage.Mode));
     }
 
     bool Hidden => !IsVisible || WindowState == WindowState.Minimized;
@@ -1039,13 +1061,7 @@ public partial class MainWindow : Window
         _trimmed = false;
         _vm.Refresh(DateTimeOffset.UtcNow);
         _chart.Update(_vm.ChartWidth, _vm.ChartHeight, _vm.Unit, _vm.CpuLine, _vm.GpuLine, _vm.CpuText, _vm.GpuText);
-        if (BuildFeatures.NewLook)
-        {
-            // A ring fills over 0 to 100 degrees; with no reading it sits empty and shows a dash.
-            (CpuRing.Fraction, CpuRing.Label) = (_cpuTemp is { } c ? c / 100 : 0, _cpuTemp is { } c2 ? $"{c2:0}°" : "–");
-            (GpuRing.Fraction, GpuRing.Label) = (_gpuTemp is { } g ? g / 100 : 0, _gpuTemp is { } g2 ? $"{g2:0}°" : "–");
-            if (DashboardPage.Visibility == Visibility.Visible) UpdateTiles();
-        }
+        if (BuildFeatures.NewLook && NewDashboardPage.Visibility == Visibility.Visible) NewDash.Update(_vm, DashboardInputsNow());
         if (DevicesPageView.Visibility == Visibility.Visible) Devices.Update(_vm, _lights);
         if (PowerPageView.Visibility == Visibility.Visible) Power.Update();
         if (GamesPageView.Visibility == Visibility.Visible) Games.Update(_library, _libraryScanning, _detection.ActiveGame, _vm.FansPage.Experimental);

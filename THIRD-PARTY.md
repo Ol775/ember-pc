@@ -38,3 +38,5 @@ The signed PawnIO driver lets Ember read motherboard sensors and fan headers. Th
 - **Logitech G HUB** (not bundled): if it is installed, Ember loads its LED SDK engine (sdk_legacy_led_x64.dll, found through G HUB's own registry entry and only if it sits under Program Files) to light Logitech G keyboards and mice. Logitech and G HUB are trademarks of Logitech; Ember is not affiliated with Logitech.
 
 - **Brand marks from Simple Icons** (CC0, <https://simpleicons.org>): the Logitech, Corsair, Razer, Philips Hue, Elgato and TP-Link marks on the Devices page, drawn as single-colour shapes. The names and logos belong to their owners. Ember is not affiliated with them; the marks only say which integration a card is for.
+
+- **Instrument Sans and JetBrains Mono** (SIL Open Font License 1.1): the fonts of the redesigned beta look, bundled with the app. Instrument Sans is by Rodrigo Fuenzalida and Jordan Egstad (Instrument), JetBrains Mono by JetBrains.

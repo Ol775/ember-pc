@@ -29,7 +29,8 @@ public sealed record PowerSummary(double? CpuW, double? GpuW, double? BoardW)
 /// <summary>One power figure over time: the latest value, the peak, the average and the energy used since Ember started it, plus recent points for a chart.</summary>
 public sealed class PowerTrack
 {
-    public const int MaxPoints = 600;
+    /// <summary>Ten minutes of one-second readings; the redesign keeps an hour so the chart can show either.</summary>
+    public static int MaxPoints => BuildFeatures.NewLook ? 3600 : 600;
     const double LongestGapSeconds = 10; // a longer silence is a gap in the data, not a steady draw
 
     readonly List<double> _recent = [];
