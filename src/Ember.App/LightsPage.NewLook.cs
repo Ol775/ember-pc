@@ -96,8 +96,13 @@ public sealed partial class LightsPage
         _canvas.SizeChanged += (_, _) => LayoutVisuals();
         var arrange = Pill("Arrange devices", () => m.Arrange(), "Arrange devices on the canvas");
         arrange.Margin = new Thickness(0);
+        _solo = Pill("Solo layer", ToggleSolo, "Play only the chosen layer on the lights, to see what it does on its own");
+        _solo.Margin = new Thickness(0, 0, 8, 0);
+        var previewTools = new StackPanel { Orientation = Orientation.Horizontal };
+        previewTools.Children.Add(_solo);
+        previewTools.Children.Add(arrange);
         var preview = new StackPanel();
-        preview.Children.Add(CardHeader("Live preview", arrange));
+        preview.Children.Add(CardHeader("Live preview", previewTools));
         preview.Children.Add(frame);
         preview.Children.Add(WithMargin(Ui.Muted("Drag a device to where it sits in your room, or select it and use the arrow keys. Effects are painted across this canvas.", 12), 0, 8, 0, 0));
 
@@ -142,6 +147,8 @@ public sealed partial class LightsPage
         logi.ToolTip = "Off (recommended): the keyboard is lit key by key and the mouse is left to G HUB. On: the mouse and keyboard all take one colour, because G HUB cannot do both at once.";
         tools.Children.Add(logi);
         tools.Children.Add(BuildPaintTools());
+        tools.MaxWidth = 760;   // the sliders of the paint tools are not meant to stretch across the whole window
+        tools.HorizontalAlignment = HorizontalAlignment.Left;
         _root.Children.Add(Panel("Paint and Logitech", tools));
         _root.Children.Add(Panel("Devices", BuildDevicesBox()));
     }
@@ -196,7 +203,7 @@ public sealed partial class LightsPage
         if (selected) pick.SetResourceReference(Control.BorderBrushProperty, "AccentBrush");
         var texts = new StackPanel { Margin = new Thickness(18, 0, 56, 0) };
         texts.Children.Add(Ui.Text(l.Name, 14));
-        texts.Children.Add(Ui.Muted($"{l.Effect.Label} · {l.Blend}", 11.5));
+        texts.Children.Add(Ui.Muted($"{l.Effect.Label} · {(l.Blend == BlendMode.Screen ? "Tint" : l.Blend.ToString())}", 11.5));
         var handle = Ui.Text("⋮⋮", 14, "MutedBrush");
         handle.Opacity = 0.5;
         handle.HorizontalAlignment = HorizontalAlignment.Left;
@@ -217,12 +224,21 @@ public sealed partial class LightsPage
         return row;
     }
 
+    /// <summary>Puts the layer's effect back to the starting look of its kind from the gallery (its name, blend, opacity and devices stay).</summary>
+    void ResetLayer(Layer layer)
+    {
+        var fresh = Tiles().Select(t => t.Make()).FirstOrDefault(e => e.GetType() == layer.Effect.GetType());
+        if (fresh is null) { SetNote("There is no starting look for this effect."); return; }
+        EditLayer(layer.Id, x => x with { Effect = fresh }, rebuild: true);
+    }
+
     /// <summary>The first line of the settings card: the layer's name in the accent colour and the buttons that move or remove it.</summary>
     FrameworkElement NewEditorHeader(Layer layer)
     {
         var actions = new StackPanel { Orientation = Orientation.Horizontal };
         foreach (var (label, run, name) in new (string, Action, string)[]
         {
+            ("Reset", () => ResetLayer(layer), "Reset " + layer.Name + " to its starting look"),
             ("↑", () => MoveLayer(layer.Id, +1), "Move " + layer.Name + " up"),
             ("↓", () => MoveLayer(layer.Id, -1), "Move " + layer.Name + " down"),
             ("Remove", () => RemoveLayer(layer.Id), "Remove layer " + layer.Name),
@@ -238,6 +254,88 @@ public sealed partial class LightsPage
         head.Children.Add(actions);
         head.Children.Add(Ui.Label(layer.Name, "AccentTextBrush"));
         return head;
+    }
+
+
+    // ---- the layer editor of the redesign ----
+
+    Button? _solo;
+
+    /// <summary>The Solo button shows its state: lit while one layer is played alone on the lights and the preview.</summary>
+    void UpdateSolo()
+    {
+        if (_solo is null || _m is null) return;
+        var on = _m.SoloLayer is not null;
+        _solo.SetResourceReference(Control.BackgroundProperty, on ? "AccentSoftBrush" : "PanelBrush");
+        _solo.SetResourceReference(Control.ForegroundProperty, on ? "AccentTextBrush" : "TextBrush");
+    }
+
+    void ToggleSolo()
+    {
+        if (_m is null) return;
+        _m.SoloLayer = _m.SoloLayer is null ? _selectedLayer : null;
+        UpdateSolo();
+    }
+
+    void BuildNewEditor(Layer layer, LightingState state)
+    {
+        var id = layer.Id;
+        if (_m!.SoloLayer is not null) { _m.SoloLayer = id; UpdateSolo(); }
+        _editor.Children.Add(NewEditorHeader(layer));
+        Action<Func<Effect, Effect>> apply = change => EditLayer(id, x => x with { Effect = change(x.Effect) });
+        EffectFields(layer.Effect, id, apply);
+
+        _editor.Children.Add(Labelled("Opacity", 0, 100, layer.Opacity * 100, v => $"{v:0}%", v => EditLayer(id, x => x with { Opacity = v / 100 }), 1));
+        if (layer.Effect is GradientEffect g)
+        {
+            _editor.Children.Add(Text("Direction", muted: true));
+            var arrows = new[] { GradientDirection.Right, GradientDirection.Left, GradientDirection.Up, GradientDirection.Down, GradientDirection.Out };
+            _editor.Children.Add(Segments(["→", "←", "↑", "↓", "Out"], Array.IndexOf(arrows, g.Direction), i => apply(x => ((GradientEffect)x) with { Direction = arrows[i] }), "Direction" + id));
+        }
+        _editor.Children.Add(Text("Blend", muted: true));
+        _editor.Children.Add(Segments(["Normal", "Add", "Multiply", "Tint"], BlendIndex(layer.Blend), i => EditLayer(id, x => x with { Blend = BlendFrom(i) }), "Blend" + id));
+        _editor.Children.Add(AppliesTo(layer, state));
+
+        _editor.Children.Add(WithMargin(Text("Layer name", muted: true), 0, 10, 0, 0));
+        var name = new TextBox { Text = layer.Name, Style = Sty("TextField"), MaxLength = 40, Margin = new Thickness(0, 4, 0, 0) };
+        AutomationProperties.SetName(name, "Layer name");
+        name.LostFocus += (_, _) => { if (name.Text.Trim().Length > 0 && name.Text.Trim() != layer.Name) EditLayer(id, x => x with { Name = name.Text.Trim() }, rebuild: true); };
+        _editor.Children.Add(name);
+    }
+
+    // The mockup's blend row reads Normal, Add, Multiply, Tint; Tint is the engine's Screen blend, which lightens what is below with the layer's colour.
+    static int BlendIndex(BlendMode m) => m switch { BlendMode.Add => 1, BlendMode.Multiply => 2, BlendMode.Screen => 3, _ => 0 };
+    static BlendMode BlendFrom(int i) => i switch { 1 => BlendMode.Add, 2 => BlendMode.Multiply, 3 => BlendMode.Screen, _ => BlendMode.Normal };
+
+    /// <summary>One chip per device on the canvas: the layer is drawn on the lit ones. All lit means every device, now and later.</summary>
+    FrameworkElement AppliesTo(Layer layer, LightingState state)
+    {
+        var devices = state.Current.Placements.Where(p => p.Enabled).Select(p => (p.DeviceId, Name: _m!.Devices.FirstOrDefault(d => d.Id == p.DeviceId)?.Name ?? p.DeviceId)).ToList();
+        var box = new StackPanel { Margin = new Thickness(0, 8, 0, 0) };
+        box.Children.Add(Text("Applies to", muted: true));
+        if (devices.Count == 0) { box.Children.Add(Text("No devices are on the canvas yet.", muted: true, size: 12)); return box; }
+        var wrap = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
+        foreach (var (deviceId, deviceName) in devices)
+        {
+            var applied = layer.Covers(deviceId);
+            var chip = new Button { Content = deviceName, Style = Sty("ActionButton"), Margin = new Thickness(0, 0, 6, 6), Padding = new Thickness(12, 4, 12, 4), FontSize = 12.5 };
+            chip.SetResourceReference(Control.BackgroundProperty, applied ? "AccentSoftBrush" : "PanelBrush");
+            chip.SetResourceReference(Control.ForegroundProperty, applied ? "AccentTextBrush" : "MutedBrush");
+            AutomationProperties.SetName(chip, (applied ? "Stop drawing " : "Draw ") + layer.Name + (applied ? " on " : " on ") + deviceName);
+            var captured = deviceId;
+            chip.Click += (_, _) =>
+            {
+                var now = LayerScene(_m!.State).Layers.First(l => l.Id == layer.Id);
+                var set = (now.Targets ?? devices.Select(d => d.DeviceId).ToList()).ToList();
+                if (!set.Remove(captured)) set.Add(captured);
+                if (set.Count == 0) { SetNote("A layer needs at least one device to draw on."); return; }
+                var everyone = devices.All(d => set.Contains(d.DeviceId));
+                EditLayer(layer.Id, x => x with { Targets = everyone ? null : set }, rebuild: true);
+            };
+            wrap.Children.Add(chip);
+        }
+        box.Children.Add(wrap);
+        return box;
     }
 
     // ---- the effect gallery ----
@@ -274,7 +372,8 @@ public sealed partial class LightsPage
     [
         new("Static", 1, Solid("#ffb04d"), () => new StaticEffect(new LColor(1.0, 0.45, 0.1))),
         new("Breathing", 1, new RadialGradientBrush((WColor)ColorConverter.ConvertFromString("#ff9a5c"), (WColor)ColorConverter.ConvertFromString("#2b1208")), () => new BreathingEffect(new LColor(1.0, 0.45, 0.1))),
-        new("Wave", 1, Gradient("#ff7a2f", "#b14dff", "#4fd1c5"), () => new WaveEffect(new LColor(1.0, 0.45, 0.1), new LColor(0.2, 0.3, 1.0))),
+        new("Aurora wave", 1, Gradient("#ff7a2f", "#b14dff", "#4fd1c5"), () => GradientEffect.Default),
+        new("Wave", 1, Gradient("#ff7a2f", "#3b82f6"), () => new WaveEffect(new LColor(1.0, 0.45, 0.1), new LColor(0.2, 0.3, 1.0))),
         new("Fire", 1, Gradient("#7a1200", "#ff4a00", "#ffd24d"), () => new FireEffect(new LColor(1.0, 0.2, 0.0), new LColor(1.0, 0.9, 0.3))),
         new("Rain", 1, Gradient("#10243a", "#3b82f6", "#10243a"), () => new RainEffect(new LColor(0.2, 0.6, 1.0))),
         new("Temperature", 2, Gradient("#4fd1c5", "#ffb04d", "#ff3b30"), () => new TemperatureGlowEffect(TempSensor.Cpu, new LColor(0.1, 0.4, 1.0), new LColor(1.0, 0.1, 0.05))),

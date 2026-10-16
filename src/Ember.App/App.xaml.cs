@@ -28,6 +28,8 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // A simulation (the window tests) opens its own window; this start-up would find the running Ember and close the test.
+        if (AppData.Simulated) { base.OnStartup(e); return; }
         // "Uninstall" in Windows Settings starts the program with this switch: no window, just the removal.
         if (e.Args.Contains("--uninstall", StringComparer.OrdinalIgnoreCase))
         {

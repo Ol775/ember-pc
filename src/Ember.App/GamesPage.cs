@@ -26,6 +26,10 @@ public sealed partial class GamesPage : UserControl
     GameProfiles _profiles = GameProfiles.Default;
     Action<GameProfiles> _saveProfiles = _ => { };
     string? _key;
+    PlayHistory _history = new();
+
+    /// <summary>Hands the page what Ember has learned about when each game was played.</summary>
+    public void AttachHistory(PlayHistory history) => _history = history;
 
     public GamesPage()
     {

@@ -180,4 +180,12 @@ public class PricePreferenceTests
         Assert.Equal(0.28, RoundTrip("{\"PricePerKwh\":1000}").PricePerKwh);
         Assert.Equal(0.28, RoundTrip("{}").PricePerKwh);
     }
+
+    [Fact]
+    public void Standing_charge_is_kept_when_sensible_and_none_otherwise()
+    {
+        Assert.Equal(0.45, RoundTrip("{\"StandingCharge\":0.45}").StandingCharge);
+        Assert.Equal(0, RoundTrip("{\"StandingCharge\":-1}").StandingCharge);
+        Assert.Equal(0, RoundTrip("{}").StandingCharge);
+    }
 }

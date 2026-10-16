@@ -2,7 +2,11 @@ namespace Ember.Lighting;
 
 public enum BlendMode { Normal, Add, Screen, Multiply }
 
-public sealed record Layer(string Id, string Name, Effect Effect, double Opacity = 1, BlendMode Blend = BlendMode.Normal, bool Enabled = true);
+public sealed record Layer(string Id, string Name, Effect Effect, double Opacity = 1, BlendMode Blend = BlendMode.Normal, bool Enabled = true, IReadOnlyList<string>? Targets = null)
+{
+    /// <summary>True when this layer is drawn on the device: no list means every device.</summary>
+    public bool Covers(string? deviceId) => Targets is null || deviceId is null || Targets.Contains(deviceId);
+}
 
 /// <summary>
 /// Where a device sits on the canvas (the unit square). Its LEDs run along the longer side. <paramref name="Profile"/> is

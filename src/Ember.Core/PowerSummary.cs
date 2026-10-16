@@ -43,6 +43,14 @@ public sealed class PowerTrack
     public double Kwh => _wattSeconds / 3_600_000;
     public IReadOnlyList<double> Recent => _recent;
 
+    /// <summary>Half-minute averages for the last day (kept in memory only), for the chart's "Today" range.</summary>
+    public IReadOnlyList<double> Coarse => _coarse;
+
+    readonly List<double> _coarse = [];
+    double _bucketSum;
+    int _bucketCount;
+    const int BucketSize = 30, MaxCoarse = 2880;
+
     public void Add(DateTimeOffset at, double? watts)
     {
         Now = watts;
@@ -57,5 +65,12 @@ public sealed class PowerTrack
         Peak = Math.Max(Peak, w);
         _recent.Add(w);
         if (_recent.Count > MaxPoints) _recent.RemoveAt(0);
+        _bucketSum += w;
+        if (++_bucketCount >= BucketSize)
+        {
+            _coarse.Add(_bucketSum / _bucketCount);
+            (_bucketSum, _bucketCount) = (0, 0);
+            if (_coarse.Count > MaxCoarse) _coarse.RemoveAt(0);
+        }
     }
 }

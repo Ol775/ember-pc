@@ -118,7 +118,7 @@ public sealed class ThermalStore(string path)
 {
     const int MaxBytes = 65_536;
 
-    public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "thermal.json");
+    public static string DefaultPath => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "thermal.json");
 
     sealed class Dto
     {

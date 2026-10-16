@@ -84,7 +84,7 @@ public sealed class PowerLedger
 
     // ---- file ----
 
-    public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "power-days.json");
+    public static string DefaultPath => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "power-days.json");
 
     sealed record Row(string D, double Cpu, double Gpu, double Rest, double S);
 
@@ -125,6 +125,20 @@ public sealed class PowerLedger
             return true;
         }
         catch (Exception) { return false; }
+    }
+}
+
+/// <summary>One plain, true sentence about where to save: the part of the PC that draws the most, and what a tenth less of it is worth.</summary>
+public static class PowerTip
+{
+    public static string? For(PowerLedger.Averages a, double pricePerKwh, System.Globalization.CultureInfo? culture = null)
+    {
+        if (a.TotalKwh <= 0) return null;
+        var parts = new[] { ("CPU", a.CpuW, a.CpuKwh), ("graphics card", a.GpuW, a.GpuKwh), ("rest of the PC", a.RestW, a.RestKwh) };
+        var (name, watts, kwh) = parts.OrderByDescending(p => p.Item3).First();
+        var saved = PowerCost.Of(kwh * 0.1 * PowerCost.DaysPerMonth, pricePerKwh);
+        var share = kwh / a.TotalKwh * 100;
+        return $"The {name} takes the most, about {share:0} % ({watts:0} W on average). Using a tenth less of it would save roughly {PowerCost.Format(saved, culture)} a month.";
     }
 }
 

@@ -33,7 +33,7 @@ public static class GameLookup
 
 public sealed class GameProfileStore(string path)
 {
-    public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "game-profiles.json");
+    public static string DefaultPath => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "game-profiles.json");
 
     public GameProfiles Load()
     {

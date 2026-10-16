@@ -23,6 +23,7 @@
     <Content Include="..\..\third-party\icue\*.dll" Link="iCUE\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Ember.App.Tests" />
     <ProjectReference Include="..\Ember.Core\Ember.Core.csproj" />
     <ProjectReference Include="..\Ember.Lighting\Ember.Lighting.csproj" />
     <PackageReference Include="NAudio.Wasapi" />

@@ -88,7 +88,7 @@ public sealed class ScheduleRunner
 
 public sealed class ScheduleStore(string path)
 {
-    public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "schedule.json");
+    public static string DefaultPath => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "schedule.json");
 
     public ScheduleSet Load()
     {

@@ -52,7 +52,7 @@ public partial class MainWindow : Window
         LightingManager? lights = null;
         // Tapo devices keep their own session cookie per device, so they get a client that does not pool cookies.
         _tapo = new Ember.Lighting.Tapo.TapoDirectory(TapoSession, new HttpClient(new HttpClientHandler { UseCookies = false }) { Timeout = TimeSpan.FromSeconds(8) });
-        _lights = lights = new LightingManager(new LightingStore(LightingStore.DefaultPath), TimeProvider.System,
+        IReadOnlyList<IDeviceSource> sources = AppData.Simulated ? [] :
             [new OpenRgbSource(() => string.IsNullOrWhiteSpace(lights?.State.OpenRgbPath) ? BundledOpenRgb : lights!.State.OpenRgbPath, () => lights?.State.ShouldStartOpenRgb ?? true),
              new GoveeSource(new GoveeLanClient(), GoveeCloud, id => lights?.SegmentsOf(id) ?? 1),
              new Ember.Lighting.Logitech.LogitechSource(() => Ember.Lighting.Logitech.NativeLogitechLed.TryLoad(), () => lights?.State.LogitechOneColour ?? false),
@@ -61,15 +61,16 @@ public partial class MainWindow : Window
              new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp)),
              new Ember.Lighting.Corsair.CorsairSource(Ember.Lighting.Corsair.CorsairApiChain.Open),
              new Ember.Lighting.Meross.MerossSource(MerossSession, new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http)),
-             new Ember.Lighting.Tapo.TapoSource(_tapo)]);
+             new Ember.Lighting.Tapo.TapoSource(_tapo)];
+        _lights = lights = new LightingManager(new LightingStore(LightingStore.DefaultPath), TimeProvider.System, sources);
         Lights.Attach(_lights);
         _lights.Start();
         // Power page: linked Meross and Tapo plugs are read (never switched) every few seconds.
         {
             var plugs = new Ember.Lighting.Meross.PlugMonitor(MerossSession, new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http), () => Power.Links);
-            var providers = new Ember.Lighting.Meross.IPlugProvider[] { plugs, new Ember.Lighting.Tapo.TapoPlugMonitor(_tapo, () => Power.Links) };
+            var providers = AppData.Simulated ? [] : new Ember.Lighting.Meross.IPlugProvider[] { plugs, new Ember.Lighting.Tapo.TapoPlugMonitor(_tapo, () => Power.Links) };
             Power.Attach(providers, new Ember.Lighting.Meross.PlugLinkStore(Ember.Lighting.Meross.PlugLinkStore.DefaultPath));
-            Power.AttachCost(PowerLedger.Load(PowerLedger.DefaultPath), () => _vm.Prefs.PricePerKwh, price => Remember(_vm.Prefs with { PricePerKwh = price }));
+            Power.AttachCost(PowerLedger.Load(PowerLedger.DefaultPath), () => _vm.Prefs.PricePerKwh, price => Remember(_vm.Prefs with { PricePerKwh = price }), () => _vm.Prefs.StandingCharge, charge => Remember(_vm.Prefs with { StandingCharge = charge }));
             _plugTimer = new DispatcherTimer(TimeSpan.FromSeconds(3), DispatcherPriority.Background, async (_, _) =>
             {
                 // In the tray the plugs are read less often: nobody is watching the live figure.
@@ -82,13 +83,14 @@ public partial class MainWindow : Window
             _plugTimer.Start();
         }
         // Beta: lets the Stream Deck plugin reach the lights and the window.
-        if (!BuildFeatures.IsProduction) { _appControl = new AppControl(_lights, () => Dispatcher.InvokeAsync(ShowFromTray)); _appControl.Start(); }
+        if (!BuildFeatures.IsProduction && !AppData.Simulated) { _appControl = new AppControl(_lights, () => Dispatcher.InvokeAsync(ShowFromTray)); _appControl.Start(); }
 
         // ServiceConnection raises events on its background loop thread: queue each one onto the UI thread.
         // InvokeAsync is the non-blocking BeginInvoke, so the loop never waits for the UI.
         var connection = new ServiceConnection(PipeStreamConnector.ConnectAsync, ServiceConnection.DefaultBackoff);
         connection.StateChanged += s => { DiagLog.Changed("Service", "connection", s.ToString()); Dispatcher.InvokeAsync(() => _vm.SetConnection(s)); };
-        connection.SnapshotReceived += s => Dispatcher.InvokeAsync(() =>
+        connection.SnapshotReceived += s => Dispatcher.InvokeAsync(() => HandleSnapshot(s));
+        HandleSnapshot = s =>
         {
             _vm.Add(s);
             _gpuLoad = s.Readings.FirstOrDefault(r => r.Hardware == HardwareKind.Gpu && r.Kind == SensorKind.Load && r.Name == "GPU Core")?.Value;
@@ -104,7 +106,7 @@ public partial class MainWindow : Window
             _lights.SetInputs(s.Stale ? null : sum.CpuTemp, s.Stale ? null : sum.GpuTemp, _screen);
             _caseTemp = s.Stale ? null : new[] { sum.CpuTemp, sum.GpuTemp, sum.MotherboardTemp }.Where(v => v is not null).Max();
             if (_vm.Prefs.AiLearning && !s.Stale) _thermal.Add(DateTimeOffset.UtcNow, _cpuTemp, _caseTemp);
-        });
+        };
 
         // Throttle: redraw at most twice a second, whatever the snapshot rate.
         _refresh = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Background,
@@ -125,7 +127,11 @@ public partial class MainWindow : Window
             _detection.SetKnownGames(_library.KnownExes);
             _profiles = _profileStore.Load();
             Games.Attach(ScanLibraryAsync, _profiles, p => { _profiles = p; _profileStore.TrySave(p); });
-            _ = ScanLibraryAsync();                           // and look again now
+            _history = PlayHistory.Load(PlayHistory.DefaultPath);
+            Games.AttachHistory(_history);
+            _playTimer = new DispatcherTimer(TimeSpan.FromSeconds(30), DispatcherPriority.Background, (_, _) => TrackPlay(), Dispatcher);
+            _playTimer.Start();
+            if (!AppData.Simulated) _ = ScanLibraryAsync();   // and look again now
         }
 
         StartupSwitch.IsChecked = StartupRegistration.IsEnabled();
@@ -152,7 +158,7 @@ public partial class MainWindow : Window
         BuildAbout();
         ApplyAppearance();
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, _) => { if (_vm.Prefs.Theme == ThemeMode.System) Dispatcher.InvokeAsync(ApplyAppearance); };
-        StartAutomaticUpdateChecks();
+        if (!AppData.Simulated) StartAutomaticUpdateChecks();
         switch (_vm.Prefs.StartPage)
         {
             case StartPage.Fans: NavFans.IsChecked = true; break;
@@ -164,7 +170,7 @@ public partial class MainWindow : Window
         Curve.Committed += OnCurveCommitted;
         Curve.CopyRequested += OnCurveCopy;
 
-        _run = Task.Run(() => connection.RunAsync(_cts.Token));
+        _run = AppData.Simulated ? Task.CompletedTask : Task.Run(() => connection.RunAsync(_cts.Token));
         _ai = new AiPanel(_thermal, () => _vm.Prefs, p => Remember(p), ApplySuggestionAsync, ForgetThermal);
         AiHost.Children.Add(_ai);
         _thermalSave = new DispatcherTimer(TimeSpan.FromMinutes(5), DispatcherPriority.Background, (_, _) => SaveThermal(), Dispatcher);
@@ -174,6 +180,19 @@ public partial class MainWindow : Window
         Closing += OnClosing;
         Closed += OnClosed;
     }
+
+    /// <summary>Takes a reading as if the service had sent it. A simulation feeds it by hand.</summary>
+    internal Action<Snapshot> HandleSnapshot = _ => { };
+
+    /// <summary>Shows a made-up game library and play history, for the window tests.</summary>
+    internal void SimulateGames(GameLibrary library, PlayHistory history)
+    {
+        _library = library;
+        _history = history;
+        Games.AttachHistory(history);
+    }
+
+    internal void SimulateConnected() => _vm.SetConnection(ConnectionState.Connected);
 
     bool _termsChecked;
 
@@ -455,6 +474,21 @@ public partial class MainWindow : Window
             _lights.SetInputs(_cpuTemp, _gpuTemp, _screen);
         }
         catch (Exception) { _screen = null; /* a failed grab must never take the window down */ }
+    }
+
+    PlayHistory _history = new();
+    DispatcherTimer? _playTimer;
+    DateTimeOffset _lastHistorySave = DateTimeOffset.UtcNow;
+
+    /// <summary>Every half minute: if a game from the library is the program in front, it was played. Saved at most every few minutes and when Ember closes.</summary>
+    void TrackPlay()
+    {
+        try
+        {
+            if (GameLookup.ByExe(_library, GameDetectorWindows.Foreground().Exe) is { } game) _history.Played(game.Name, DateTimeOffset.Now, _playTimer!.Interval.TotalSeconds);
+            if (_history.Dirty && DateTimeOffset.UtcNow - _lastHistorySave > TimeSpan.FromMinutes(5)) { _history.TrySave(PlayHistory.DefaultPath); _lastHistorySave = DateTimeOffset.UtcNow; }
+        }
+        catch (Exception) { /* tracking must never take the window down */ }
     }
 
     async void DetectGame()
@@ -792,6 +826,7 @@ public partial class MainWindow : Window
 
     void SaveThermal()
     {
+        if (_history.Dirty) _history.TrySave(PlayHistory.DefaultPath);
         if (_thermal.LastSample is not null) _thermalStore.TrySave(_thermal);
         Power.SaveLedger();
     }
@@ -1047,7 +1082,7 @@ public partial class MainWindow : Window
         catch (Exception ex) { DiagLog.Warn("App", "Trimming memory failed", ex); }
     }
 
-    void Refresh()
+    internal void Refresh()
     {
         // In the tray nobody sees the pages: keep the tray tip current, redraw rarely, and draw everything the moment the window shows.
         var every = TimeSpan.FromMilliseconds(Hidden ? 2000 : 500);

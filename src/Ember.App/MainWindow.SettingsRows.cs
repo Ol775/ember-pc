@@ -151,6 +151,60 @@ public partial class MainWindow
             sections.Children.Insert(sections.Children.IndexOf(card) + 1, note);
         }
 
+        // Fan control: the service, the settings folder and administrator rights as rows.
+        if (FanControlBox.Parent is Panel fanParent)
+        {
+            var at = fanParent.Children.IndexOf(FanControlBox);
+            FanConnectionText.MaxWidth = 240;
+            FanConnectionText.TextAlignment = TextAlignment.Right;
+            var adminRow = SettingRow("Run as administrator", "Needed to close fan-control programs that run as administrator.", Detach(AdminButton));
+            adminRow.SetBinding(UIElement.VisibilityProperty, new System.Windows.Data.Binding("Visibility") { Source = AdminButton });
+            var card = SettingsCard("fan",
+                SettingRow("Ember service", "Fan modes, curves and headers are set on the Fans page and kept by the service. The safety rules (90 °C override, early CPU ramp, speed floors) cannot be switched off.", Detach(FanConnectionText), first: true),
+                SettingRow("Settings folder", "Where Ember keeps its files.", Detach(OpenFolderButton)),
+                adminRow);
+            fanParent.Children.Remove(FanControlBox);
+            fanParent.Children.Insert(Math.Min(at, fanParent.Children.Count), card);
+        }
+
+        // Experimental: one row with its switch; hidden when the build has nothing experimental.
+        if (ExperimentalBox.Parent is Panel expParent)
+        {
+            var card = SettingsCard("fan", SettingRow("Experimental features", _vm.ExperimentalText, Bare(ExperimentalSwitch), first: true));
+            card.SetBinding(UIElement.VisibilityProperty, new System.Windows.Data.Binding("ExperimentalAvailableVisibility"));
+            var at = expParent.Children.IndexOf(ExperimentalBox);
+            expParent.Children.Remove(ExperimentalBox);
+            expParent.Children.Insert(Math.Min(at, expParent.Children.Count), card);
+        }
+
+        // Updates: the version and its status with Check now, the banner when there is an update, then the options as rows.
+        if (UpdatesBox.Parent is Panel updParent)
+        {
+            var at = updParent.Children.IndexOf(UpdatesBox);
+            var status = new DockPanel { Margin = new Thickness(0, 14, 0, 14) };
+            var check = Detach(CheckNowButton);
+            check.Margin = new Thickness(16, 0, 0, 0);
+            DockPanel.SetDock(check, Dock.Right);
+            status.Children.Add(check);
+            var texts = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            texts.Children.Add(Detach(VersionBlock));
+            texts.Children.Add(Detach(UpdateStatusRow));
+            status.Children.Add(texts);
+            var banner = Detach(UpdateBanner);
+            banner.Margin = new Thickness(0, 0, 0, 14);
+            var channel = SettingRow("Release channel", ChannelNote.Text, Detach(ChannelTrack));
+            channel.SetBinding(UIElement.VisibilityProperty, new System.Windows.Data.Binding("Visibility") { Source = ChannelTrack });
+            var card = SettingsCard("updates", status, banner,
+                SettingRow("Check automatically", "At start, then every few hours.", Bare(AutoUpdateSwitch)),
+                channel);
+            updParent.Children.Remove(UpdatesBox);
+            updParent.Children.Insert(Math.Min(at, updParent.Children.Count), card);
+            var note = Detach(UpdatePrivacyNote);
+            note.Tag = "updates";
+            note.Margin = new Thickness(4, -4, 0, 16);
+            updParent.Children.Insert(updParent.Children.IndexOf(card) + 1, note);
+        }
+
         OnSettingsSection(SetGeneral, new RoutedEventArgs());
     }
 }

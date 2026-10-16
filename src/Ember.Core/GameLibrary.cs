@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace Ember.Core;
 
 /// <summary>A game found in a launcher's library: its name, which launcher owns it, where it is installed and the programs that run it.</summary>
-public sealed record LibraryGame(string Name, string Launcher, string InstallDir, IReadOnlyList<string> Exes);
+public sealed record LibraryGame(string Name, string Launcher, string InstallDir, IReadOnlyList<string> Exes, string? SteamAppId = null);
 
 /// <summary>What the last scan found. Only reads folders and files; nothing is changed or sent anywhere.</summary>
 public sealed record GameLibrary(DateTimeOffset ScannedAt, IReadOnlyList<LibraryGame> Games)
@@ -72,12 +72,20 @@ public static partial class GameScanner
                     }
                     if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(dir) || SteamTools.Contains(name) || name.StartsWith("Proton ", StringComparison.OrdinalIgnoreCase)) continue;
                     var game = FromFolder(name, "Steam", Path.Combine(lib, "steamapps", "common", dir));
-                    if (game is not null) games.Add(game);
+                    if (game is not null) games.Add(game with { SteamAppId = AppIdOf(file) });
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
             }
         }
         return games;
+    }
+
+    /// <summary>The number in "appmanifest_<id>.acf", or null when the name has no such number.</summary>
+    static string? AppIdOf(string manifest)
+    {
+        var n = Path.GetFileNameWithoutExtension(manifest);
+        var id = n.StartsWith("appmanifest_", StringComparison.OrdinalIgnoreCase) ? n[12..] : null;
+        return id is { Length: > 0 and <= 12 } && id.All(char.IsDigit) ? id : null;
     }
 
     /// <summary>Epic keeps one .item file per installed app in its manifests folder.</summary>
@@ -146,7 +154,7 @@ public static partial class GameScanner
 /// <summary>Remembers the last scan so game detection knows the library straight away when Ember starts.</summary>
 public sealed class GameLibraryStore(string path)
 {
-    public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "games.json");
+    public static string DefaultPath => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "games.json");
 
     public GameLibrary Load()
     {

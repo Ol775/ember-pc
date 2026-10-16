@@ -150,6 +150,96 @@ static class LightsUi
         return row;
     }
 
+
+    /// <summary>
+    /// The colours of a gradient as a bar with a handle for every stop: drag a handle to move it, click a handle to choose it and
+    /// change its colour below, click the bar to add a stop (up to six), and remove the chosen one while more than two remain.
+    /// </summary>
+    public static FrameworkElement StopBar(GradientEffect effect, Action<GradientEffect> changed)
+    {
+        const double Handle = 16, Height = 34;
+        var stops = effect.Stops.ToList();
+        var selected = 0;
+        var root = new StackPanel { Margin = new Thickness(0, 4, 0, 6) };
+        var bar = new Border { Height = 24, CornerRadius = new CornerRadius(12), Margin = new Thickness(Handle / 2, 5, Handle / 2, 5) };
+        var canvas = new Canvas { Height = Height, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Arrow };
+        var holder = new Grid { Height = Height };
+        holder.Children.Add(bar);
+        holder.Children.Add(canvas);
+        var detail = new StackPanel();
+        root.Children.Add(holder);
+        root.Children.Add(detail);
+        AutomationProperties.SetName(canvas, "Gradient colours: click to add a stop, drag a handle to move it");
+
+        void Paint()
+        {
+            var brush = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(1, 0) };
+            foreach (var s in stops.OrderBy(s => s.At)) brush.GradientStops.Add(new GradientStop(ToWpf(s.Colour), Math.Clamp(s.At, 0, 1)));
+            bar.Background = brush;
+        }
+
+        void Notify() => changed(effect with { Stops = stops.OrderBy(s => s.At).Select(s => s).ToList() });
+
+        void Layout()
+        {
+            canvas.Children.Clear();
+            var width = Math.Max(1, holder.ActualWidth - Handle);
+            for (var i = 0; i < stops.Count; i++)
+            {
+                var index = i;
+                var thumb = new Border
+                {
+                    Width = Handle, Height = Height, CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(2),
+                    Background = new SolidColorBrush(ToWpf(stops[i].Colour)), Cursor = System.Windows.Input.Cursors.SizeWE,
+                };
+                thumb.BorderBrush = index == selected ? Res("AccentBrush") : Brushes.White;
+                AutomationProperties.SetName(thumb, $"Colour stop {index + 1} of {stops.Count}");
+                Canvas.SetLeft(thumb, Math.Clamp(stops[i].At, 0, 1) * width);
+                thumb.MouseLeftButtonDown += (_, e) => { selected = index; thumb.CaptureMouse(); e.Handled = true; Layout(); Detail(); };
+                thumb.MouseMove += (_, e) =>
+                {
+                    if (!thumb.IsMouseCaptured) return;
+                    var at = Math.Clamp((e.GetPosition(canvas).X - Handle / 2) / width, 0, 1);
+                    stops[index] = stops[index] with { At = at };
+                    Canvas.SetLeft(thumb, at * width);
+                    Paint();
+                    Notify();
+                };
+                thumb.MouseLeftButtonUp += (_, _) => thumb.ReleaseMouseCapture();
+                canvas.Children.Add(thumb);
+            }
+        }
+
+        void Detail()
+        {
+            detail.Children.Clear();
+            var row = new DockPanel();
+            if (stops.Count > 2)
+            {
+                var remove = Pill("Remove stop", () => { stops.RemoveAt(selected); selected = Math.Min(selected, stops.Count - 1); Paint(); Layout(); Detail(); Notify(); }, "Remove the chosen colour stop");
+                remove.Margin = new Thickness(0);
+                DockPanel.SetDock(remove, Dock.Right);
+                row.Children.Add(remove);
+            }
+            row.Children.Add(ColorField("Stop " + (selected + 1), stops[selected].Colour, c => { stops[selected] = stops[selected] with { Colour = c }; Paint(); Layout(); Notify(); }));
+            detail.Children.Add(row);
+        }
+
+        canvas.MouseLeftButtonDown += (_, e) =>
+        {
+            if (stops.Count >= 6) return;
+            var width = Math.Max(1, holder.ActualWidth - Handle);
+            var at = Math.Clamp((e.GetPosition(canvas).X - Handle / 2) / width, 0, 1);
+            stops.Add(new ColorStop(at, effect with { Stops = stops.OrderBy(s => s.At).ToList() } is var g ? g.At(at) : stops[0].Colour));
+            selected = stops.Count - 1;
+            Paint(); Layout(); Detail(); Notify();
+        };
+        holder.SizeChanged += (_, _) => Layout();
+        Paint();
+        Detail();
+        return root;
+    }
+
     static ControlTemplate SwatchTemplate()
     {
         var border = new FrameworkElementFactory(typeof(Border));

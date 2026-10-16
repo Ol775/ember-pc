@@ -81,7 +81,7 @@ public partial class MainWindow
     {
         var t = LightsUi.Text(text, muted: true, size: 12);
         t.TextWrapping = TextWrapping.Wrap;
-        t.Margin = new Thickness(0, 2, 0, 0);
+        t.Margin = BuildFeatures.NewLook ? new Thickness(0, 4, 0, 10) : new Thickness(0, 2, 0, 0);
         return t;
     }
 

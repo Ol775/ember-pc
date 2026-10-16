@@ -18,7 +18,7 @@ public static class DiagLog
     static string _folder = DefaultFolder;
     static readonly Dictionary<string, string> LastByKey = [];
 
-    public static string DefaultFolder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "logs");
+    public static string DefaultFolder => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "logs");
     public static string Folder { get { lock (Gate) return _folder; } }
 
     /// <summary>Points the log somewhere else (tests) and forgets what was remembered.</summary>

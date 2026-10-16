@@ -17,7 +17,7 @@ public sealed record NanoleafSettings(string Host)
 
 public sealed class NanoleafSettingsStore(string path)
 {
-    public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "nanoleaf.json");
+    public static string DefaultPath => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "nanoleaf.json");
 
     public NanoleafSettings? Load()
     {

@@ -45,6 +45,11 @@ public sealed class LightingManager : IAsyncDisposable
 
     public event Action? Changed;
 
+    string? _solo;
+
+    /// <summary>The layer shown alone on the lights and the preview (not saved), or null to show them all. Cleared when that layer is gone.</summary>
+    public string? SoloLayer { get { lock (_gate) return _solo; } set { lock (_gate) _solo = value; } }
+
     public LightingState State { get { lock (_gate) return _state; } }
     public IReadOnlyList<DeviceInfo> Devices { get { lock (_gate) return _devices.ToList(); } }
     public IReadOnlyDictionary<string, Color[]> Preview { get { lock (_gate) return _preview; } }
@@ -382,7 +387,8 @@ public sealed class LightingManager : IAsyncDisposable
             _pulses.RemoveAll(p => seconds - p.Seconds > 4);
             inputs = new LightingInputs(seconds, _cpu, _gpu, _screen, _audio, _pulses.Count == 0 ? null : _pulses.ToList());
         }
-        var frame = await _engine.StepAsync(state.Current, state.On, inputs, sinks, ct, state.Scenes).ConfigureAwait(false);
+        var shown = SoloLayer is { } solo && state.Current.Layers.FirstOrDefault(l => l.Id == solo) is { } only ? state.Current with { Layers = [only with { Enabled = true }] } : state.Current;
+        var frame = await _engine.StepAsync(shown, state.On, inputs, sinks, ct, state.Scenes).ConfigureAwait(false);
         foreach (var (id, why) in _engine.Failures) Ember.Core.DiagLog.Changed("Lighting device", id, "send failed: " + why.Message);
         foreach (var id in _engine.Failures.Keys)
             foreach (var source in _sources) source.ReportFailure(id);

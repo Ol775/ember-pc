@@ -16,6 +16,7 @@ public sealed partial class GamesPage
     readonly StackPanel _left = new() { Margin = new Thickness(0, 0, 8, 0) }, _right = new() { Margin = new Thickness(8, 0, 0, 0) };
     readonly TextBlock _chipText = Ui.Muted("No game running", 13);
     Border? _liveChip;
+    DateTimeOffset _logoScan;
 
     void BuildNewRoot()
     {
@@ -79,7 +80,8 @@ public sealed partial class GamesPage
         _chipText.Text = activeGame is null ? "No game running" : "Playing: " + activeGame;
         if (_liveChip?.Child is StackPanel { Children: [System.Windows.Shapes.Ellipse e, ..] }) e.Fill = activeGame is null ? Ui.Res("MutedBrush") : ThemeManager.Good;
 
-        var key = scanning + "|" + library.ScannedAt.Ticks + "|" + library.Games.Count + "|" + _profiles.Enabled + string.Join(";", _profiles.Modes.Select(kv => kv.Key + kv.Value));
+        if (library.ScannedAt != _logoScan) { _logoScan = library.ScannedAt; GameLogos.Forget(); }
+        var key = scanning + "|" + library.ScannedAt.Ticks + "|" + library.Games.Count + "|" + _history.Version + "|" + _profiles.Enabled + string.Join(";", _profiles.Modes.Select(kv => kv.Key + kv.Value));
         if (key == _key) return;
         _key = key;
 
@@ -135,7 +137,17 @@ public sealed partial class GamesPage
     FrameworkElement LauncherCard(string title, IEnumerable<LibraryGame> games, bool showLauncher)
     {
         var body = new StackPanel();
-        body.Children.Add(Ui.Label(title));
+        games = games.ToList();
+        var heading = new StackPanel { Orientation = Orientation.Horizontal };
+        foreach (var launcher in games.Select(g => g.Launcher).Distinct())
+            if (BrandLogos.For(launcher) is { } mark)
+            {
+                var shape = new System.Windows.Shapes.Path { Data = Geometry.Parse(mark), Stretch = Stretch.Uniform, Width = 14, Height = 14, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+                shape.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "MutedBrush");
+                heading.Children.Add(shape);
+            }
+        heading.Children.Add(Ui.Label(title));
+        body.Children.Add(heading);
         var first = true;
         foreach (var g in games.OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase))
         {
@@ -151,14 +163,15 @@ public sealed partial class GamesPage
                 DockPanel.SetDock(picker, Dock.Right);
                 row.Children.Add(picker);
             }
-            var cover = new Border { Width = 38, Height = 38, CornerRadius = new CornerRadius(10), Background = Cover(g.Name), Margin = new Thickness(0, 0, 14, 0), VerticalAlignment = VerticalAlignment.Center };
+            var cover = CoverTile(g);
             DockPanel.SetDock(cover, Dock.Left);
             row.Children.Add(cover);
             var texts = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
             var name = Ui.Text(g.Name, 14, bold: true);
             name.TextWrapping = TextWrapping.NoWrap; name.TextTrimming = TextTrimming.CharacterEllipsis;
             texts.Children.Add(name);
-            var sub = Ui.Muted(showLauncher ? g.Launcher : g.Exes.Count == 1 ? g.Exes[0] : g.Exes[0] + " and " + (g.Exes.Count - 1) + " more", 12);
+            var played = _history.Describe(g.Name, DateTimeOffset.Now);
+            var sub = Ui.Muted(showLauncher ? g.Launcher + " · " + played.ToLowerInvariant().Replace("last played", "played") : played, 12);
             sub.TextWrapping = TextWrapping.NoWrap; sub.TextTrimming = TextTrimming.CharacterEllipsis;
             sub.ToolTip = string.Join("\n", g.Exes.Take(15)) + (g.Exes.Count > 15 ? "\n…" : "");
             texts.Children.Add(sub);
@@ -167,6 +180,20 @@ public sealed partial class GamesPage
             body.Children.Add(line);
         }
         return Ui.Card(body, new Thickness(20, 16, 20, 8), name: title);
+    }
+
+    /// <summary>The picture of a game: Steam's cover, or its program icon on a dark tile, or (with neither) a gradient from its name.</summary>
+    static Border CoverTile(LibraryGame g)
+    {
+        var tile = new Border { Width = 38, Height = 38, CornerRadius = new CornerRadius(10), Margin = new Thickness(0, 0, 14, 0), VerticalAlignment = VerticalAlignment.Center, ClipToBounds = true };
+        if (GameLogos.For(g) is not { } logo) { tile.Background = Cover(g.Name); return tile; }
+        if (logo.IsIcon)
+        {
+            tile.SetResourceReference(Border.BackgroundProperty, "WindowBrush");
+            tile.Child = new Image { Source = logo.Image, Margin = new Thickness(5) };
+        }
+        else tile.Background = new ImageBrush(logo.Image) { Stretch = Stretch.UniformToFill };
+        return tile;
     }
 
     /// <summary>A cover for a game that has no picture: a gradient whose colours come from its name, so the same game always looks the same.</summary>

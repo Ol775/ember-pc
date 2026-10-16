@@ -153,7 +153,7 @@ public sealed record RazerSettings(bool Enabled);
 
 public sealed class RazerSettingsStore(string path)
 {
-    public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "razer.json");
+    public static string DefaultPath => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "razer.json");
 
     public bool Enabled
     {

@@ -423,7 +423,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="Row" Padding="12,9" CornerRadius="10" BorderThickness="1" BorderBrush="Transparent" Background="Transparent">
+                        <Border x:Name="Row" Padding="12,8" CornerRadius="10" BorderThickness="1" BorderBrush="Transparent" Background="Transparent">
                             <ContentPresenter x:Name="Label" TextElement.Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>

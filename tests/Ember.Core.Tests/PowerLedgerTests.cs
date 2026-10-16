@@ -117,3 +117,30 @@ public class PowerLedgerTests
         Assert.Equal("£1,613", PowerCost.Format(1613, uk));
     }
 }
+
+public class PowerTipAndCoarseTests
+{
+    static readonly System.Globalization.CultureInfo Uk = new("en-GB");
+
+    [Fact]
+    public void The_tip_names_the_biggest_part_and_what_a_tenth_less_is_worth()
+    {
+        var a = new PowerLedger.Averages(1.0, 0.5, 2.0, 40, 20, 80);
+        var tip = PowerTip.For(a, 0.30, Uk)!;
+        Assert.Contains("rest of the PC", tip);
+        Assert.Contains("57 %", tip);        // 2.0 of 3.5 kWh
+        Assert.Contains("£1.80", tip);       // 0.2 kWh x 30 days x 0.30
+        Assert.Null(PowerTip.For(new PowerLedger.Averages(0, 0, 0, 0, 0, 0), 0.3, Uk));
+    }
+
+    [Fact]
+    public void The_track_keeps_half_minute_averages()
+    {
+        var t = new PowerTrack();
+        var start = DateTimeOffset.UnixEpoch;
+        for (var i = 0; i < 90; i++) t.Add(start.AddSeconds(i), i < 30 ? 100 : 200);
+        Assert.Equal(3, t.Coarse.Count);
+        Assert.Equal(100, t.Coarse[0]);
+        Assert.Equal(200, t.Coarse[1]);
+    }
+}

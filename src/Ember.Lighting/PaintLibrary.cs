@@ -17,7 +17,7 @@ public sealed class PaintLibrary(string folder)
 
     static readonly string[] Reserved = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"];
 
-    public static string DefaultFolder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "paints");
+    public static string DefaultFolder => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "paints");
 
     /// <summary>The name as it will be stored, or null if nothing usable is left (empty, only dots, or a reserved Windows name).</summary>
     public static string? Clean(string? name)

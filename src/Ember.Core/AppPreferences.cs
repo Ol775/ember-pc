@@ -12,7 +12,7 @@ public sealed record AppPreferences(TemperatureUnit Unit, StartPage StartPage, T
     AccentChoice Accent = AccentChoice.Orange, UpdateChannel Channel = UpdateChannel.Stable, bool AutoCheckUpdates = true, int AcceptedTerms = 0,
     bool KeepInTray = false, bool StartMinimised = false, bool AiLearning = false, double AiPreference = 0.35,
     SurfaceTone Tone = SurfaceTone.Warm, HighlightStrength Highlight = HighlightStrength.Normal, string CustomAccent = ThemePalette.DefaultCustomAccent,
-    string SkippedVersion = "", UiSize Size = UiSize.Normal, string GpuColour = "Auto", bool RememberWindow = false, string Window = "", double PricePerKwh = 0.28)
+    string SkippedVersion = "", UiSize Size = UiSize.Normal, string GpuColour = "Auto", bool RememberWindow = false, string Window = "", double PricePerKwh = 0.28, double StandingCharge = 0)
 {
     public static readonly AppPreferences Default = new(TemperatureUnit.Celsius, StartPage.Dashboard);
 
@@ -32,7 +32,7 @@ public sealed class PreferencesStore(string path)
     };
 
     public static string DefaultPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "app.json");
+        Ember.Core.AppData.Roaming, "Ember", "app.json");
 
     public AppPreferences Load()
     {
@@ -62,7 +62,8 @@ public sealed class PreferencesStore(string path)
                 GpuChoice(Field(doc.RootElement, "GpuColour", AppPreferences.Default.GpuColour)),
                 Field(doc.RootElement, "RememberWindow", AppPreferences.Default.RememberWindow),
                 WindowText(Field(doc.RootElement, "Window", AppPreferences.Default.Window)),
-                Price(Field(doc.RootElement, "PricePerKwh", AppPreferences.Default.PricePerKwh)));
+                Price(Field(doc.RootElement, "PricePerKwh", AppPreferences.Default.PricePerKwh)),
+                Standing(Field(doc.RootElement, "StandingCharge", AppPreferences.Default.StandingCharge)));
         }
         catch (Exception)
         {
@@ -83,6 +84,9 @@ public sealed class PreferencesStore(string path)
 
     /// <summary>The price of a kWh the person typed: a sensible positive number, else the default.</summary>
     static double Price(double v) => double.IsFinite(v) && v is >= 0 and <= 10 ? v : AppPreferences.Default.PricePerKwh;
+
+    /// <summary>The daily standing charge the person typed: zero or more, a sensible amount, else none.</summary>
+    static double Standing(double v) => double.IsFinite(v) && v is >= 0 and <= 10 ? v : 0;
 
     static double ClampUnit(double v) => double.IsFinite(v) ? Math.Clamp(v, 0, 1) : AppPreferences.Default.AiPreference;
 

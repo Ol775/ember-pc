@@ -18,7 +18,7 @@ public sealed record HueSettings(string Host, string? CertThumbprint)
 
 public sealed class HueSettingsStore(string path)
 {
-    public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "hue.json");
+    public static string DefaultPath => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "hue.json");
 
     public HueSettings? Load()
     {

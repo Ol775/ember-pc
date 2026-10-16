@@ -33,7 +33,7 @@ public static class GameLibraryScan
         return new GameLibrary(DateTimeOffset.Now, merged);
     }
 
-    static string? SteamRoot()
+    internal static string? SteamRoot()
     {
         using var user = Registry.CurrentUser.OpenSubKey(@"Software\Valve\Steam");
         using var machine = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Valve\Steam");

@@ -24,7 +24,7 @@ public sealed record PlugLinks(IReadOnlyList<string> Linked, string? PcPlug)
 /// <summary>Remembers <see cref="PlugLinks"/> in a small file. Best effort: a missing or broken file is no links.</summary>
 public sealed class PlugLinkStore(string path)
 {
-    public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "power-plugs.json");
+    public static string DefaultPath => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "power-plugs.json");
 
     public PlugLinks Load()
     {

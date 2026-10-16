@@ -66,7 +66,7 @@ public sealed class AlertEngine
 
 public sealed class AlertStore(string path)
 {
-    public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "alerts.json");
+    public static string DefaultPath => Path.Combine(Ember.Core.AppData.Roaming, "Ember", "alerts.json");
 
     public AlertSettings Load()
     {

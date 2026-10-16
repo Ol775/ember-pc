@@ -33,11 +33,17 @@ public sealed record LightingState(
         return scenes.All(Valid);
     }
 
+    static bool ValidGradient(GradientEffect g) =>
+        g.Stops is { Count: >= 1 and <= 8 } stops && stops.All(st => double.IsFinite(st.At) && st.At is >= 0 and <= 1 && new[] { st.Colour.R, st.Colour.G, st.Colour.B, st.Colour.A }.All(double.IsFinite))
+        && double.IsFinite(g.Speed) && Math.Abs(g.Speed) <= 10 && double.IsFinite(g.Softness) && g.Softness is >= 0 and <= 1;
+
     static bool Valid(Scene? s) =>
         s is { Name: { Length: > 0 and <= 60 }, Layers: { Count: <= MaxLayers }, Placements: { Count: <= MaxPlacements } }
         && double.IsFinite(s.Brightness) && s.Brightness is >= 0 and <= 1
         && s.Layers.All(l => l is { Effect: not null, Id: not null, Name: not null } && double.IsFinite(l.Opacity) && l.Opacity is >= 0 and <= 1)
         && s.Layers.All(l => l.Effect is not ScreenSyncEffect { Monitor.Length: > 64 })
+        && s.Layers.All(l => l.Effect is not GradientEffect g || ValidGradient(g))
+        && s.Layers.All(l => l.Targets is null || (l.Targets.Count <= MaxPlacements && l.Targets.All(t => t is { Length: > 0 and <= 400 })))
         && s.Placements.All(p => p is { DeviceId: not null }
             && (p.Profile is null || p.Profile.Length <= 60)
             && (p.Paint is null || (p.Paint.Count <= 1024 && p.Paint.All(c => c is null || Color.TryParseHex(c) is not null)))
@@ -55,7 +61,7 @@ public sealed class LightingStore(string path)
     };
 
     public static string DefaultPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ember", "lighting.json");
+        Ember.Core.AppData.Roaming, "Ember", "lighting.json");
 
     public LightingState Load()
     {

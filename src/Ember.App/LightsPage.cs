@@ -805,6 +805,7 @@ public sealed partial class LightsPage : UserControl
         var layer = LayerScene(state).Layers.FirstOrDefault(l => l.Id == _selectedLayer);
         if (layer is null) return;
         var id = layer.Id;
+        if (BuildFeatures.NewLook) { BuildNewEditor(layer, state); return; }
         if (BuildFeatures.NewLook) _editor.Children.Add(NewEditorHeader(layer));
         else
         {
@@ -831,6 +832,12 @@ public sealed partial class LightsPage : UserControl
         {
             case StaticEffect e:
                 _editor.Children.Add(ColorField("Colour", e.Color, c => apply(x => ((StaticEffect)x) with { Color = c })));
+                break;
+            case GradientEffect e:
+                _editor.Children.Add(Text("Colours", muted: true));
+                _editor.Children.Add(StopBar(e, g => apply(x => ((GradientEffect)x) with { Stops = g.Stops })));
+                _editor.Children.Add(Labelled("Speed", 0, 100, e.Speed * 100, v => $"{v:0}%", v => apply(x => ((GradientEffect)x) with { Speed = v / 100 }), 1));
+                _editor.Children.Add(Labelled("Softness", 0, 100, e.Softness * 100, v => $"{v:0}%", v => apply(x => ((GradientEffect)x) with { Softness = v / 100 }), 1));
                 break;
             case WaveEffect e:
                 _editor.Children.Add(ColorField("First colour", e.A, c => apply(x => ((WaveEffect)x) with { A = c })));

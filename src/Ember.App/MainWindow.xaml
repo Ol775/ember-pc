@@ -440,26 +440,26 @@
                 <GroupBox Tag="appearance" Header="GPU colour" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="GPU colour">
                     <StackPanel x:Name="GpuHost" />
                 </GroupBox>
-                <GroupBox Tag="fan" Header="Fan control" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan control">
+                <GroupBox x:Name="FanControlBox" Tag="fan" Header="Fan control" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Fan control">
                     <StackPanel>
-                        <TextBlock TextWrapping="Wrap" Text="{Binding ConnectionText}" />
+                        <TextBlock x:Name="FanConnectionText" TextWrapping="Wrap" Text="{Binding ConnectionText}" />
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    Text="Fan modes, curves and which headers Ember controls are kept by the service and are set on the Fans page. The safety rules (90 °C override, early CPU ramp, speed floors) cannot be switched off." />
                         <WrapPanel Margin="0,12,0,0">
-                            <Button Content="Open settings folder" Click="OnOpenSettingsFolder" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
-                            <Button Content="Restart as administrator" Click="OnRestartAsAdmin" Style="{StaticResource ActionButton}" Margin="0"
+                            <Button x:Name="OpenFolderButton" Content="Open settings folder" Click="OnOpenSettingsFolder" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
+                            <Button x:Name="AdminButton" Content="Restart as administrator" Click="OnRestartAsAdmin" Style="{StaticResource ActionButton}" Margin="0"
                                     Visibility="{Binding NotElevatedVisibility}"
                                     ToolTip="Needed to close fan-control programs that run as administrator." />
                         </WrapPanel>
                     </StackPanel>
                 </GroupBox>
 
-                <StackPanel Tag="fan"><GroupBox Header="Experimental" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Experimental features"
+                <StackPanel Tag="fan"><GroupBox x:Name="ExperimentalBox" Header="Experimental" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Experimental features"
                           Visibility="{Binding ExperimentalAvailableVisibility}">
                     <StackPanel>
                         <CheckBox x:Name="ExperimentalSwitch" Content="Turn on experimental features" Click="OnExperimentalToggled"
                                   IsChecked="{Binding FansPage.Experimental, Mode=OneWay}" Style="{StaticResource SwitchBox}" />
-                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
+                        <TextBlock x:Name="ExperimentalNote" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    Text="{Binding ExperimentalText}" />
                     </StackPanel>
                 </GroupBox></StackPanel>
@@ -558,7 +558,7 @@
                                    AutomationProperties.LiveSetting="Polite" />
                     </StackPanel>
                 </GroupBox>
-                <GroupBox Tag="updates" Header="Updates" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Updates">
+                <GroupBox x:Name="UpdatesBox" Tag="updates" Header="Updates" Style="{StaticResource Panel}" Margin="0,0,0,16" AutomationProperties.Name="Updates">
                     <StackPanel>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -566,14 +566,14 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="{Binding VersionText}" FontSize="20" FontWeight="SemiBold" />
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <TextBlock x:Name="VersionBlock" Text="{Binding VersionText}" FontSize="20" FontWeight="SemiBold" />
+                                <StackPanel x:Name="UpdateStatusRow" Orientation="Horizontal" Margin="0,6,0,0">
                                     <Ellipse x:Name="UpdateDot" Width="9" Height="9" Margin="0,2,8,0" VerticalAlignment="Center" Fill="{DynamicResource MutedBrush}" />
                                     <TextBlock x:Name="UpdateNote" Text="Not checked yet." TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
                                                AutomationProperties.LiveSetting="Polite" />
                                 </StackPanel>
                             </StackPanel>
-                            <Button Grid.Column="1" Content="Check now" Click="OnCheckUpdates" Style="{StaticResource ActionButton}" Margin="12,0,0,0" VerticalAlignment="Top" />
+                            <Button x:Name="CheckNowButton" Grid.Column="1" Content="Check now" Click="OnCheckUpdates" Style="{StaticResource ActionButton}" Margin="12,0,0,0" VerticalAlignment="Top" />
                         </Grid>
                         <Border x:Name="UpdateBanner" Visibility="Collapsed" Margin="0,16,0,0" Padding="16,14" CornerRadius="12" BorderThickness="1"
                                 Background="{DynamicResource BannerBrush}" BorderBrush="{DynamicResource AccentBrush}">
@@ -588,7 +588,7 @@
                             </StackPanel>
                         </Border>
                         <Border Height="1" Background="{DynamicResource PanelBorderBrush}" Margin="0,18,0,14" />
-                        <CheckBox Content="Check for updates automatically (at start, then every few hours)" Click="OnAutoUpdateToggled" IsChecked="{Binding AutoCheckUpdates, Mode=OneWay}"
+                        <CheckBox x:Name="AutoUpdateSwitch" Content="Check for updates automatically (at start, then every few hours)" Click="OnAutoUpdateToggled" IsChecked="{Binding AutoCheckUpdates, Mode=OneWay}"
                                   Style="{StaticResource SwitchBox}" />
                         <TextBlock x:Name="ChannelLabel" Text="Release channel" Margin="0,16,0,6" />
                         <Border x:Name="ChannelTrack" Style="{StaticResource SegmentTrack}">
@@ -599,7 +599,7 @@
                         </Border>
                         <TextBlock x:Name="ChannelNote" Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
                                    Text="Choosing a channel offers to switch this installation to that version of Ember (your settings are kept). Stable is the production build; Beta gets new features earlier, and more bugs." />
-                        <TextBlock Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,14,0,0"
+                        <TextBlock x:Name="UpdatePrivacyNote" Foreground="{DynamicResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,14,0,0"
                                    Text="Ember contacts GitHub only when it checks and when you press Update now. The installer is verified against the checksum published with the release before it runs." />
                     </StackPanel>
                 </GroupBox>

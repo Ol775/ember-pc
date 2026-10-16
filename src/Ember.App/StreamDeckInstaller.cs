@@ -16,7 +16,7 @@ static class StreamDeckInstaller
 
     public sealed record Detected(StreamDeckState State, string? Installed, string? Bundled);
 
-    static string StreamDeckFolder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Elgato", "StreamDeck");
+    static string StreamDeckFolder => Path.Combine(Ember.Core.AppData.Roaming, "Elgato", "StreamDeck");
     static string PluginFolder => Path.Combine(StreamDeckFolder, "Plugins", PluginFolderName);
 
     /// <summary>The plugin file next to the installed app (Ember\StreamDeck), or the path in EMBER_STREAMDECK_PLUGIN for a development run.</summary>

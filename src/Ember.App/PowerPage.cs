@@ -58,7 +58,7 @@ public sealed class PowerPage : UserControl
         _sourceChip.Child = _sourceChipText;
         if (BuildFeatures.NewLook)
         {
-            var range = Segments(["10 min", "1 hour"], 0, i => { _rangePoints = i == 0 ? 600 : 3600; DrawChartNew(); }, "PowerRange");
+            var range = Segments(["10 min", "1 hour", "Today", "7 days"], 0, i => { _range = i; _rangePoints = i == 0 ? 600 : 3600; DrawChartNew(); }, "PowerRange");
             range.Margin = new Thickness(0);
             _root.Children.Add(Ui.Heading("Power", "What your PC draws at the wall, where it goes, and roughly what it costs.", range));
         }
@@ -96,6 +96,19 @@ public sealed class PowerPage : UserControl
         _plugPanel = Panel("Smart plugs (read only, beta)", plugBody, new Thickness(0));
         _root.Children.Add(_plugPanel);
         _root.Children.Add(WithMargin(_noPlugs, 4, 0, 0, 0));
+        if (BuildFeatures.NewLook)
+        {
+            var tip = Text("Tip. ", weight: FontWeights.SemiBold, size: 13);
+            tip.SetResourceReference(TextBlock.ForegroundProperty, "AccentTextBrush");
+            _tip.TextWrapping = TextWrapping.Wrap;
+            _tip.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
+            var tipBody = new DockPanel();
+            DockPanel.SetDock(tip, Dock.Left);
+            tip.VerticalAlignment = VerticalAlignment.Top;
+            tipBody.Children.Add(tip);
+            tipBody.Children.Add(_tip);
+            _root.Children.Add(WithMargin(Ui.Card(tipBody, name: "Tip"), 0, 12, 0, 0));
+        }
         ThemeManager.Changed += () => _plugKey = null;
     }
 
@@ -192,18 +205,23 @@ public sealed class PowerPage : UserControl
     PowerLedger _ledger = new();
     Func<double> _price = () => 0.28;
     Action<double> _savePrice = _ => { };
+    Func<double> _standing = () => 0;
+    Action<double> _saveStanding = _ => { };
+    readonly TextBox _standingBox = new();
+    readonly TextBlock _tip = Text("", size: 13);
     readonly TextBlock _costToday = Text("–", size: 24, weight: FontWeights.SemiBold), _costMonth = Text("–", size: 24, weight: FontWeights.SemiBold), _costYear = Text("–", size: 24, weight: FontWeights.SemiBold);
     readonly TextBlock _kwhToday = Text("", muted: true, size: 12), _kwhMonth = Text("", muted: true, size: 12), _kwhYear = Text("", muted: true, size: 12);
     readonly TextBlock _costNote = Text("", muted: true, size: 12);
-    readonly TextBox _priceBox = new() { Style = Sty("TextField"), Width = 78, TextAlignment = TextAlignment.Right, Padding = new Thickness(6, 3, 6, 3), VerticalContentAlignment = VerticalAlignment.Center };
+    readonly TextBox _priceBox = new() { Style = Sty("TextField"), Width = 78, Padding = new Thickness(6, 3, 6, 3), VerticalContentAlignment = VerticalAlignment.Center };
     readonly Canvas _daily = new() { Height = 168, ClipToBounds = true };
     readonly Grid _table = new();
     string? _dailyKey, _tableKey;
 
     /// <summary>Gives the page the energy ledger and the person's price per kWh (and where to keep a change to it).</summary>
-    public void AttachCost(PowerLedger ledger, Func<double> price, Action<double> savePrice)
+    public void AttachCost(PowerLedger ledger, Func<double> price, Action<double> savePrice, Func<double> standing, Action<double> saveStanding)
     {
-        (_ledger, _price, _savePrice) = (ledger, price, savePrice);
+        (_ledger, _price, _savePrice, _standing, _saveStanding) = (ledger, price, savePrice, standing, saveStanding);
+        _standingBox.Text = standing().ToString("0.00##", System.Globalization.CultureInfo.CurrentCulture);
         _priceBox.Text = price().ToString("0.00##", System.Globalization.CultureInfo.CurrentCulture);
     }
 
@@ -271,30 +289,23 @@ public sealed class PowerPage : UserControl
     {
         var symbol = new TextBlock { Text = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 2, 0), FontFamily = Fonts.Mono };
         symbol.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
-        AutomationProperties.SetName(_priceBox, "Price per kilowatt hour");
-        _priceBox.LostKeyboardFocus += (_, _) => CommitPrice();
-        _priceBox.KeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Enter) { CommitPrice(); System.Windows.Input.Keyboard.ClearFocus(); } };
         // The price sits in the row of the mockup: its label on the left, the figure on the right, no box around the number.
-        _priceBox.Style = null;
-        _priceBox.BorderThickness = new Thickness(0);
-        _priceBox.Background = Brushes.Transparent;
-        _priceBox.FontFamily = Fonts.Mono;
-        _priceBox.FontWeight = FontWeights.Bold;
-        _priceBox.FontSize = 13;
-        _priceBox.Width = 52;
-        _priceBox.Padding = new Thickness(0);
-        _priceBox.SetResourceReference(TextBox.ForegroundProperty, "TextBrush");
-        _priceBox.SetResourceReference(TextBox.CaretBrushProperty, "TextBrush");
+        StyleMoneyBox(_priceBox, "Price per kilowatt hour", CommitPrice);
         var priceInput = new StackPanel { Orientation = Orientation.Horizontal };
         priceInput.Children.Add(symbol);
         priceInput.Children.Add(_priceBox);
-        var priceRow = new DockPanel();
-        DockPanel.SetDock(priceInput, Dock.Right);
-        priceRow.Children.Add(priceInput);
-        priceRow.Children.Add(Ui.Muted("Price per kWh", 13));
-        var priceBox = new Border { CornerRadius = new CornerRadius(12), BorderThickness = new Thickness(1), Padding = new Thickness(14, 9, 14, 9), Margin = new Thickness(0, 14, 0, 0), Child = priceRow };
-        priceBox.SetResourceReference(Border.BackgroundProperty, "WindowBrush");
-        priceBox.SetResourceReference(Border.BorderBrushProperty, "PanelBorderBrush");
+        var priceBox = MoneyRow("Price per kWh", priceInput, 14);
+        var standingSymbol = new TextBlock { Text = symbol.Text, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 2, 0), FontFamily = Fonts.Mono };
+        standingSymbol.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+        StyleMoneyBox(_standingBox, "Standing charge per day", CommitStanding);
+        var standingInput = new StackPanel { Orientation = Orientation.Horizontal };
+        standingInput.Children.Add(standingSymbol);
+        standingInput.Children.Add(_standingBox);
+        var standingNote = Text("(PC only)", muted: true, size: 11.5);
+        standingNote.FontFamily = Fonts.Mono;
+        standingNote.Margin = new Thickness(8, 0, 0, 0);
+        standingInput.Children.Add(standingNote);
+        var standingBox = MoneyRow("Standing charge per day", standingInput, 8);
 
         foreach (var t in new[] { _costToday, _costMonth, _costYear }) { t.FontFamily = Fonts.Mono; t.FontSize = 22; }
         foreach (var t in new[] { _kwhToday, _kwhMonth, _kwhYear }) { t.FontFamily = Fonts.Mono; t.FontSize = 11.5; }
@@ -307,8 +318,42 @@ public sealed class PowerPage : UserControl
         body.Children.Add(CardHead("Cost estimate", Ui.Chip("Based on your average", false)));
         body.Children.Add(figures);
         body.Children.Add(priceBox);
+        body.Children.Add(standingBox);
         body.Children.Add(WithMargin(_costNote, 0, 8, 0, 0));
         return Ui.Card(body, name: "Cost estimate");
+    }
+
+    /// <summary>A rounded row of the cost card: its label on the left and a figure on the right.</summary>
+    static FrameworkElement MoneyRow(string label, FrameworkElement input, double top)
+    {
+        var row = new DockPanel();
+        DockPanel.SetDock(input, Dock.Right);
+        row.Children.Add(input);
+        row.Children.Add(Ui.Muted(label, 13));
+        var box = new Border { CornerRadius = new CornerRadius(12), BorderThickness = new Thickness(1), Padding = new Thickness(14, 9, 14, 9), Margin = new Thickness(0, top, 0, 0), Child = row };
+        box.SetResourceReference(Border.BackgroundProperty, "WindowBrush");
+        box.SetResourceReference(Border.BorderBrushProperty, "PanelBorderBrush");
+        return box;
+    }
+
+    /// <summary>A figure typed straight into its row: no box, mono type, committed on Enter or when the focus leaves.</summary>
+    static void StyleMoneyBox(TextBox box, string name, Action commit)
+    {
+        AutomationProperties.SetName(box, name);
+        box.LostKeyboardFocus += (_, _) => commit();
+        box.KeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Enter) { commit(); System.Windows.Input.Keyboard.ClearFocus(); } };
+        box.Style = null;
+        box.BorderThickness = new Thickness(0);
+        box.Background = Brushes.Transparent;
+        box.FontFamily = Fonts.Mono;
+        box.FontWeight = FontWeights.Bold;
+        box.FontSize = 13;
+        box.Width = double.NaN;
+        box.MinWidth = 34;
+        box.TextAlignment = TextAlignment.Left;
+        box.Padding = new Thickness(0);
+        box.SetResourceReference(TextBox.ForegroundProperty, "TextBrush");
+        box.SetResourceReference(TextBox.CaretBrushProperty, "TextBrush");
     }
 
     /// <summary>The top line of a card: the small capital heading on the left and a control on the right.</summary>
@@ -363,6 +408,16 @@ public sealed class PowerPage : UserControl
         return s;
     }
 
+    void CommitStanding()
+    {
+        if (double.TryParse(_standingBox.Text.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out var v) && v is >= 0 and <= 10)
+        {
+            if (Math.Abs(v - _standing()) > 1e-9) _saveStanding(v);
+            _dailyKey = _tableKey = null;
+        }
+        _standingBox.Text = _standing().ToString("0.00##", System.Globalization.CultureInfo.CurrentCulture);
+    }
+
     void CommitPrice()
     {
         if (double.TryParse(_priceBox.Text.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out var v) && v is >= 0 and <= 10)
@@ -382,16 +437,20 @@ public sealed class PowerPage : UserControl
         _costToday.Text = t.Seconds > 0 ? PowerCost.Format(PowerCost.Of(t.Kwh, price)) : "–";
         _kwhToday.Text = t.Seconds > 0 ? $"{t.Kwh:0.00} kWh" : "No readings yet";
         var daily = typical.TotalKwh;
-        _costMonth.Text = daily > 0 ? PowerCost.Format(PowerCost.Of(daily * PowerCost.DaysPerMonth, price)) : "–";
+        var standing = _standing();
+        var dayShare = DateTime.Now.TimeOfDay.TotalHours / 24;
+        if (t.Seconds > 0) _costToday.Text = PowerCost.Format(PowerCost.Of(t.Kwh, price) + standing * dayShare);
+        _costMonth.Text = daily > 0 ? PowerCost.Format(PowerCost.Of(daily * PowerCost.DaysPerMonth, price) + standing * PowerCost.DaysPerMonth) : "–";
         _kwhMonth.Text = daily > 0 ? $"{daily * PowerCost.DaysPerMonth:0} kWh" : "";
-        _costYear.Text = daily > 0 ? PowerCost.Format(PowerCost.Of(daily * PowerCost.DaysPerYear, price)) : "–";
+        _costYear.Text = daily > 0 ? PowerCost.Format(PowerCost.Of(daily * PowerCost.DaysPerYear, price) + standing * PowerCost.DaysPerYear) : "–";
         _kwhYear.Text = daily > 0 ? $"{daily * PowerCost.DaysPerYear:#,0} kWh" : "";
         _costNote.Text = daily == 0 ? "The estimate appears once Ember has watched the PC for a few minutes."
             : _totalFromPlug ? "An estimate from your own use, measured at the wall. Not a bill."
             : "An estimate from the CPU and graphics card only. Link your PC's plug for the whole PC.";
 
+        _tip.Text = (PowerTip.For(typical, price) ?? "A saving tip appears once Ember has watched the PC for a while.") + " Plugs are read only.";
         DrawDaily();
-        var key = $"{today}|{price}|{typical}";
+        var key = $"{today}|{price}|{standing}|{typical}";
         if (key != _tableKey) { _tableKey = key; FillTable(typical, price); }
     }
 
@@ -675,7 +734,7 @@ public sealed class PowerPage : UserControl
         }
         if (pts.Count < 2) { _line.Points.Clear(); _area.Data = null; _chart.Children.Add(_line); _chartNote.Text = "Waiting for readings…"; return; }
 
-        var step = w / (Math.Max(pts.Count, 60) - 1); // fills from the left, then scrolls once a full window of points is held
+        var step = w / (Math.Max(pts.Count, _range == 3 ? 7 : 60) - 1); // fills from the left, then scrolls once a full window of points is held
         var pc = new PointCollection(pts.Count);
         for (var i = 0; i < pts.Count; i++) pc.Add(new Point(i * step, h - 1 - pts[i] / top * (h - 14)));
         _line.Points = pc;
@@ -690,14 +749,18 @@ public sealed class PowerPage : UserControl
         _chartNote.Text = _totalFromPlug ? "Measured at the wall" : "CPU plus GPU";
     }
 
-    int _rangePoints = 600;   // the chart shows the last ten minutes or the last hour
+    int _rangePoints = 600, _range;   // the chart shows the last ten minutes, an hour, the day so far since Ember started, or the last seven days
 
     /// <summary>The live chart of the redesign: a smooth line with a soft area under it, no axis labels.</summary>
     void DrawChartNew()
     {
         _chart.Children.Clear();
-        var all = _total.Recent;
-        var pts = all.Count > _rangePoints ? all.Skip(all.Count - _rangePoints).ToList() : all.ToList();
+        var pts = _range switch
+        {
+            2 => _total.Coarse.ToList(),
+            3 => _ledger.Last(7, DateOnly.FromDateTime(DateTime.Now)).Select(d => d.AverageW).ToList(),
+            _ => _total.Recent.Count > _rangePoints ? _total.Recent.Skip(_total.Recent.Count - _rangePoints).ToList() : _total.Recent.ToList(),
+        };
         var w = _chart.ActualWidth;
         var h = _chart.Height;
         if (w < 10 || pts.Count < 2) { _chartNote.Text = "Waiting for readings…"; return; }
@@ -711,7 +774,7 @@ public sealed class PowerPage : UserControl
         line.SetResourceReference(Shape.StrokeProperty, CpuKey);
         _chart.Children.Add(area);
         _chart.Children.Add(line);
-        _chartNote.Text = _totalFromPlug ? "Measured at the wall" : "CPU plus GPU";
+        _chartNote.Text = (_totalFromPlug ? "Measured at the wall" : "CPU plus GPU") + _range switch { 2 => ", since Ember started (up to a day)", 3 => ", average per day", _ => "" };
     }
 
     string PlugText(string id)

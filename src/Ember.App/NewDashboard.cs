@@ -325,7 +325,7 @@ public sealed class NewDashboard : UserControl
             Grid.SetColumn(hint, 1);
             row.Children.Add(hint);
             var mode = m.Mode;
-            var radio = new RadioButton { Content = row, GroupName = "DashboardMode", IsChecked = m.Selected, IsEnabled = m.Enabled, Style = (Style)Application.Current.FindResource("ModeRow"), Margin = new Thickness(0, 2.5, 0, 2.5) };
+            var radio = new RadioButton { Content = row, GroupName = "DashboardMode", IsChecked = m.Selected, IsEnabled = m.Enabled, Style = (Style)Application.Current.FindResource("ModeRow"), Margin = new Thickness(0, 2, 0, 2) };
             AutomationProperties.SetName(radio, m.Label);
             radio.Click += (_, _) => ModePicked?.Invoke(mode);
             _modes.Children.Add(radio);
