@@ -1,5 +1,7 @@
 # Hardware checks
 
+<sub>[← All docs](README.md)</sub>
+
 Things that pass their unit tests but still need a person with the real hardware to try them. Beta testers: see [beta-testing.md](beta-testing.md) for how to try a beta and report what you find. Tick an item when it has
 been checked on the PC, and write what was actually seen. Update this list whenever a feature is added.
 

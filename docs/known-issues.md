@@ -1,5 +1,7 @@
 # Known issues
 
+<sub>[← All docs](README.md)</sub>
+
 What is still open, and tips for problems that are not Ember's fault. Fixed problems are in [CHANGELOG.md](../CHANGELOG.md); the engineering notes behind some of them are kept at the bottom.
 
 ## Open

@@ -1,5 +1,7 @@
 # Installing Ember
 
+<sub>[← All docs](README.md)</sub>
+
 Most people only need **Option 1**. Options 2 and 3 are for building Ember yourself.
 
 ## Requirements

@@ -1,21 +1,23 @@
 # Documentation
 
-**Using Ember**
+<sub>[← Back to the project](../README.md)</sub>
 
-- [install.md](install.md): installer, scripted and from-source installs, silent install options
-- [known-issues.md](known-issues.md): what is still open, and troubleshooting tips
-- [beta-testing.md](beta-testing.md): how to try a beta build and report what you find
+| Using Ember | |
+|---|---|
+| [Install](install.md) | The installer, scripted and from-source installs, silent install options |
+| [Known issues](known-issues.md) | What is still open, and troubleshooting tips |
+| [Beta testing](beta-testing.md) | How to try a beta build and report what you find |
 
-**Understanding Ember**
+| Understanding Ember | |
+|---|---|
+| [Architecture](architecture.md) | The projects, the pipes, and how production and beta builds differ |
+| [Driver research](driver-research.md) | Why Ember uses the PawnIO driver |
+| [Stream Deck plugin design](design/streamdeck-plugin-design.md) | How the Stream Deck plugin is built |
+| [Signing](signing.md) | Code signing, and why Windows warns about an unknown publisher |
 
-- [architecture.md](architecture.md): the projects, the pipes, and how production and beta builds differ
-- [driver-research.md](driver-research.md): why Ember uses the PawnIO driver
-- [design/streamdeck-plugin-design.md](design/streamdeck-plugin-design.md): design of the Stream Deck plugin
-- [signing.md](signing.md): code signing and why Windows warns about an unknown publisher
+| Checking Ember on real hardware | |
+|---|---|
+| [Hardware checks](hardware-checks.md) | The checklist of what only a person with the real devices can verify |
+| [Windows verification](windows-verification.md) | The verification table for the core app, service and driver |
 
-**Checking Ember on real hardware**
-
-- [hardware-checks.md](hardware-checks.md): the checklist of what only a person with the real devices can verify
-- [windows-verification.md](windows-verification.md): the Windows verification table for the core app, service and driver
-
-Project files in the repository root: [README](../README.md), [CHANGELOG](../CHANGELOG.md), [ROADMAP](../ROADMAP.md), [CONTRIBUTING](../CONTRIBUTING.md), [SECURITY](../SECURITY.md), [PRIVACY](../PRIVACY.md), [TERMS](../TERMS.md), [THIRD-PARTY](../THIRD-PARTY.md).
+**In the repository root:** [README](../README.md) · [CHANGELOG](../CHANGELOG.md) · [ROADMAP](../ROADMAP.md) · [CONTRIBUTING](../CONTRIBUTING.md) · [SECURITY](../SECURITY.md) · [PRIVACY](../PRIVACY.md) · [TERMS](../TERMS.md) · [THIRD-PARTY](../THIRD-PARTY.md)

@@ -1,5 +1,7 @@
 # Windows verification (core app, service and driver)
 
+<sub>[← All docs](README.md)</sub>
+
 Phase 1 was written and unit-tested on macOS. The app, the service's hardware code, the pipe ACL and the install
 scripts can only be verified on Windows. Run these checks on the Windows PC and fill in the **Result** column
 (pass / fail) and **Notes**. Nothing in this table has been run yet.

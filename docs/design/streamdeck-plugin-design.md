@@ -1,5 +1,7 @@
 # Stream Deck plugin (beta) - design
 
+<sub>[← All docs](../README.md)</sub>
+
 ## Intent and why
 
 The owner uses a Stream Deck to quickly manage lights, launch apps and see live visuals. They want the same for Ember: control the lights and fan mode with one key press, open Ember, and watch live readouts (CPU temperature, fan speed) on the key faces. Everything about it is **beta**: it only appears on the Beta channel and is labelled "(beta)".

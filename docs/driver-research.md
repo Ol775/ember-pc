@@ -1,5 +1,7 @@
 # Driver research: PawnIO
 
+<sub>[← All docs](README.md)</sub>
+
 Researched 2026-10-12 for phase 1 (Task 10).
 
 ## Why a driver at all

@@ -1,5 +1,7 @@
 # How Ember is put together
 
+<sub>[← All docs](README.md)</sub>
+
 Ember controls real fans, so the part that touches hardware is small, separate and locked down.
 
 ```

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/banner.svg" alt="Ember: monitor, cool and light your Windows PC" width="100%">
+  <img src="docs/images/header.png" alt="Ember: temperatures, fans, power and lights for Windows. Free and open source, local only, no telemetry." width="100%">
 </p>
 
 <p align="center">
@@ -18,11 +18,12 @@
 
 </div>
 
-<p align="center"><a href="#features">Features</a> · <a href="#screenshots">Screenshots</a> · <a href="#install">Install</a> · <a href="#safety">Safety</a> · <a href="#faq">FAQ</a> · <a href="ROADMAP.md">Roadmap</a> · <a href="PRIVACY.md">Privacy</a></p>
+<p align="center"><a href="#features">Features</a> · <a href="#tour">Tour</a> · <a href="#install">Install</a> · <a href="#safety">Safety</a> · <a href="#faq">FAQ</a> · <a href="ROADMAP.md">Roadmap</a> · <a href="PRIVACY.md">Privacy</a></p>
 
-**Ember is a free, open source Windows app that shows your PC's temperatures and power draw, runs your fans on quiet-to-extreme curves, and lights your RGB gear, all from one calm, macOS-style window.** A small background service reads the sensors and writes fan speeds; the app only displays and asks. Nothing leaves your PC. It has dark, OLED black and light themes.
+**Ember is a free, open source Windows app that shows your PC's temperatures and power draw, runs your fans on quiet-to-extreme curves, and lights your RGB gear, all from one calm, macOS-style window.** A small background service reads the sensors and writes fan speeds; the app only displays and asks. Nothing leaves your PC.
 
-> **Install:** download `Ember-Setup-<version>.exe` from the [latest release](https://github.com/Ol775/ember-pc/releases/latest) · [more options](#install) · builds marked **Pre-release** are betas
+> [!TIP]
+> **Install:** download `Ember-Setup-<version>.exe` from the [latest release](https://github.com/Ol775/ember-pc/releases/latest) · [more options](docs/install.md) · builds marked **Pre-release** are betas
 
 ## Features
 
@@ -32,7 +33,7 @@
 - **RGB lighting** through OpenRGB, Govee, Logitech, Philips Hue and Corsair, with scenes, effects, music and screen sync
 - **Game detection** that switches the fans to your game mode (Beta)
 - **Dark, OLED black and light**, nine accent colours or your own
-- **Checked updates and no telemetry**: nothing is downloaded until you choose it
+- **No telemetry**: nothing is downloaded until you choose it
 
 > [!NOTE]
 > Fan speeds are written only for headers you have tested and enabled yourself, and Ember never switches a smart plug. Ember is independent and not affiliated with the hardware brands it works with.
@@ -55,24 +56,29 @@
 
 </details>
 
-## Screenshots
+## Tour
+
+### Your PC at a glance
+
+<p align="center"><img src="docs/images/tour-dashboard.gif" alt="The dashboard: live CPU, GPU, motherboard and fan sensors with a ten-minute temperature history" width="760"></p>
+
+### A fan mode in one click
+
+<p align="center"><img src="docs/images/tour-fans.gif" alt="The Fans page: switching between Super quiet, Quiet, Normal and Performance, with the curve each mode follows" width="760"></p>
+
+### Make it yours
+
+<p align="center"><img src="docs/images/tour-appearance.gif" alt="Settings, Appearance: switching between Dark, OLED black and light, and between a warm, neutral and cool tint" width="760"></p>
+
+### More pages
 
 <table>
   <tr>
-    <td width="50%"><a href="docs/screenshots/1-dashboard.png"><img src="docs/screenshots/1-dashboard.png" alt="Dashboard: live CPU, GPU, motherboard and fan sensors with a ten-minute temperature history"></a></td>
-    <td width="50%"><a href="docs/screenshots/2-fans.png"><img src="docs/screenshots/2-fans.png" alt="Fans: five fan modes, a curve you can customise, and the safety rules"></a></td>
-  </tr>
-  <tr>
-    <td width="50%"><a href="docs/screenshots/3-power.png"><img src="docs/screenshots/3-power.png" alt="Power: whole PC draw measured at the wall, split into CPU, GPU and the rest, with a graph and a card for each part"></a></td>
-    <td width="50%"><a href="docs/screenshots/4-lights.png"><img src="docs/screenshots/4-lights.png" alt="Lights: effect layers stacked with blend modes, across all your devices"></a></td>
-  </tr>
-  <tr>
-    <td width="50%"><a href="docs/screenshots/5-games.png"><img src="docs/screenshots/5-games.png" alt="Games: the Steam, Epic, GOG, Ubisoft Connect and EA app libraries, with a fan mode for each game"></a></td>
-    <td width="50%"><a href="docs/screenshots/6-personalise.png"><img src="docs/screenshots/6-personalise.png" alt="Settings, Appearance: theme, colour scheme, accent colour, highlights and interface size"></a></td>
+    <td width="33%"><a href="docs/screenshots/3-power.png"><img src="docs/screenshots/3-power.png" alt="Power: whole PC draw measured at the wall, split into CPU, GPU and the rest"></a><br><sub><b>Power.</b> Wall draw split into CPU, GPU and the rest.</sub></td>
+    <td width="33%"><a href="docs/screenshots/4-lights.png"><img src="docs/screenshots/4-lights.png" alt="Lights: effect layers stacked with blend modes, across all your devices"></a><br><sub><b>Lights.</b> Effect layers across all your devices.</sub></td>
+    <td width="33%"><a href="docs/screenshots/5-games.png"><img src="docs/screenshots/5-games.png" alt="Games: the Steam, Epic, GOG, Ubisoft Connect and EA app libraries, with a fan mode for each game"></a><br><sub><b>Games.</b> A fan mode for each game. The library shown is made up.</sub></td>
   </tr>
 </table>
-
-The Games screenshot uses a made-up library of well-known games, so it does not show what is installed on any real PC.
 
 ## Install
 
@@ -84,13 +90,17 @@ The Games screenshot uses a made-up library of well-known games, so it does not 
 
 Building from source, scripted installs and silent install options are in [docs/install.md](docs/install.md).
 
-### First launch
+<details>
+<summary><b>First launch</b></summary>
 
 1. Open **Fans**, test one **System Fan** header, then enable it. Nothing is written to a fan header before you do. Close any other fan-control program first.
 2. Open **Power** and, if you have a Meross or Tapo smart plug that measures energy, link it and mark it as your PC's plug. Save the account first in Settings, Meross or Tapo.
 3. Open **Games** to see the games Ember found. Switch on Experimental features (Settings, Fan control) if you want game detection to change the fan mode.
 
-### Updating
+</details>
+
+<details>
+<summary><b>Updating</b></summary>
 
 Ember checks for updates when it starts and every few hours, and asks before it does anything: **Update now**, **Remind me later** or **Skip this version**. Settings, Updates has **Check now** and the **Release channel** (Stable or Beta). Updates are verified like this:
 
@@ -98,6 +108,8 @@ Ember checks for updates when it starts and every few hours, and asks before it 
 2. **Update now** downloads the installer and the `.sha256` file published next to it.
 3. The installer is checked against the checksum before it runs. If they do not match it is thrown away and nothing is installed. A checksum proves the file is the one that was released, not who made it.
 4. Nothing is downloaded or installed until you press the button.
+
+</details>
 
 ## Safety
 
@@ -112,40 +124,76 @@ How the service is locked down, and how to report a problem privately: [SECURITY
 
 ## FAQ
 
-**Is it safe to run?** Fan control has unit tests and has been checked on one real PC, and the safety rules above are enforced in the service. The production build holds what has been checked on real hardware, with Razer Chroma, Nanoleaf, Meross, Tapo and game detection marked Beta. Either way, test one header at a time and watch your temperatures.
+<details>
+<summary><b>Is it safe to run?</b></summary>
 
-**Does it work on my motherboard?** It is built and tested on an MSI B550-A PRO (NCT6687D). Other chips supported by LibreHardwareMonitor may work; [docs/windows-verification.md](docs/windows-verification.md) shows what has been verified. It needs the PawnIO driver for motherboard sensors and fan headers; see [why PawnIO](docs/architecture.md#why-pawnio).
+Fan control has unit tests and has been checked on one real PC, and the safety rules above are enforced in the service. The production build holds what has been checked on real hardware, with Razer Chroma, Nanoleaf, Meross, Tapo and game detection marked Beta. Either way, test one header at a time and watch your temperatures.
 
-**Why does the Power page say my motherboard has no sensor?** No motherboard reports how much power it uses, and software cannot read it from the chip. CPU and GPU report their own watts. For the rest (board, memory, drives, fans, power supply losses) Ember uses a smart plug on your PC: wall draw minus CPU and GPU. Without a plug it shows CPU and GPU only and says so, rather than inventing a number.
+</details>
 
-**Will Ember switch my smart plugs?** No. It only asks a plug what it is drawing. Meross is used for bulbs and light strips only, and plugs, hubs and thermostats are never controlled.
+<details>
+<summary><b>Does it work on my motherboard?</b></summary>
 
-**What does it need to see my Meross or Tapo devices?** The same Wi-Fi as the PC. Meross signs in once to list your devices and learn their key, then talks to them directly. Tapo needs your Tapo account email and password, kept in Windows Credential Manager and sent only to your devices on the local network; switch on **Third-Party Compatibility** for them in the Tapo app if they are not found.
+It is built and tested on an MSI B550-A PRO (NCT6687D). Other chips supported by LibreHardwareMonitor may work; [docs/windows-verification.md](docs/windows-verification.md) shows what has been verified. It needs the PawnIO driver for motherboard sensors and fan headers; see [why PawnIO](docs/architecture.md#why-pawnio).
 
-**How does game detection decide?** A game from your Steam, Epic, GOG, Ubisoft Connect or EA app library counts after 4 seconds at 20% GPU load, windowed or full screen. Any other program counts when it runs full screen and keeps the GPU at 50% or more for 10 seconds. Mark a wrong guess as not a game. It is behind **Experimental features** and is marked Beta.
+</details>
 
-**Why are some of my fans at 0 RPM in Super quiet?** Some fans stop below about 20% speed. Pick Quiet, or use Manual to set a higher minimum.
+<details>
+<summary><b>Why does the Power page say my motherboard has no sensor?</b></summary>
 
-**Can I use it with SignalRGB or NZXT CAM?** Not at the same time on the same devices (Logitech G HUB, SignalRGB and Ember all want to set the lighting; only one should be active at a time). Ember warns you about fan-control programs and can close them.
+No motherboard reports how much power it uses, and software cannot read it from the chip. CPU and GPU report their own watts. For the rest (board, memory, drives, fans, power supply losses) Ember uses a smart plug on your PC: wall draw minus CPU and GPU. Without a plug it shows CPU and GPU only and says so, rather than inventing a number.
 
-**Does it send data anywhere?** Not on its own: no accounts and no telemetry, and the only network use is what you switch on. See [PRIVACY.md](PRIVACY.md).
+</details>
 
-## Reporting bugs
+<details>
+<summary><b>Will Ember switch my smart plugs?</b></summary>
 
-Open an [issue](https://github.com/Ol775/ember-pc/issues) and attach the diagnostic report: Settings, About, **Copy diagnostic report**. It holds versions, what each integration found, device names and a scrubbed recent log; it does not hold passwords or keys. Read it before you post it. Security problems go through [SECURITY.md](SECURITY.md), not a public issue.
+No. It only asks a plug what it is drawing. Meross is used for bulbs and light strips only, and plugs, hubs and thermostats are never controlled.
 
-## Documentation
+</details>
 
-[CHANGELOG](CHANGELOG.md) (also in the app, in Settings) · [ROADMAP](ROADMAP.md) · [install options](docs/install.md) · [how Ember is put together](docs/architecture.md) · [known issues](docs/known-issues.md) · [beta testing guide](docs/beta-testing.md) · [all docs](docs/README.md)
+<details>
+<summary><b>What does it need to see my Meross or Tapo devices?</b></summary>
 
-## Contributing
+The same Wi-Fi as the PC. Meross signs in once to list your devices and learn their key, then talks to them directly. Tapo needs your Tapo account email and password, kept in Windows Credential Manager and sent only to your devices on the local network; switch on **Third-Party Compatibility** for them in the Tapo app if they are not found.
 
-Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md). Want to help test the beta builds? See the [beta testing guide](docs/beta-testing.md).
+</details>
 
-## Licence and terms
+<details>
+<summary><b>How does game detection decide?</b></summary>
 
-MIT. See [LICENSE](LICENSE). Using Ember is also covered by the [Terms of Use](TERMS.md) and the [Privacy notice](PRIVACY.md). Third-party components are listed in [THIRD-PARTY.md](THIRD-PARTY.md): [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0, used unmodified), [OpenRGB](https://openrgb.org) (GPL-2.0, bundled as a separate program) and PawnIO by namazso (a separate driver, installed separately).
+A game from your Steam, Epic, GOG, Ubisoft Connect or EA app library counts after 4 seconds at 20% GPU load, windowed or full screen. Any other program counts when it runs full screen and keeps the GPU at 50% or more for 10 seconds. Mark a wrong guess as not a game. It is behind **Experimental features** and is marked Beta.
 
-## Disclaimer
+</details>
 
-Ember is an independent project by Ol775. It is not affiliated with, endorsed by or sponsored by NZXT, MSI, Govee, Logitech, Philips Hue (Signify), Nanoleaf, Razer, OpenRGB, SignalRGB, Noctua, AMD, Intel or NVIDIA. Product names are trademarks of their respective owners. Use at your own risk: you are responsible for your hardware.
+<details>
+<summary><b>Why are some of my fans at 0 RPM in Super quiet?</b></summary>
+
+Some fans stop below about 20% speed. Pick Quiet, or use Manual to set a higher minimum.
+
+</details>
+
+<details>
+<summary><b>Can I use it with SignalRGB or NZXT CAM?</b></summary>
+
+Not at the same time on the same devices (Logitech G HUB, SignalRGB and Ember all want to set the lighting; only one should be active at a time). Ember warns you about fan-control programs and can close them.
+
+</details>
+
+<details>
+<summary><b>Does it send data anywhere?</b></summary>
+
+Not on its own: no accounts and no telemetry, and the only network use is what you switch on. See [PRIVACY.md](PRIVACY.md).
+
+</details>
+
+## Help and project
+
+| | |
+|---|---|
+| **Found a bug?** | Open an [issue](https://github.com/Ol775/ember-pc/issues) and attach the diagnostic report (Settings, About, **Copy diagnostic report**). It holds versions, what each integration found, device names and a scrubbed recent log, and no passwords or keys; read it before you post it. Security problems go through [SECURITY.md](SECURITY.md), not a public issue. |
+| **Docs** | [CHANGELOG](CHANGELOG.md) · [ROADMAP](ROADMAP.md) · [install options](docs/install.md) · [how Ember is put together](docs/architecture.md) · [known issues](docs/known-issues.md) · [all docs](docs/README.md) |
+| **Contributing** | Issues and pull requests are welcome: [CONTRIBUTING.md](CONTRIBUTING.md), [code of conduct](CODE_OF_CONDUCT.md). Want to test betas? See the [beta testing guide](docs/beta-testing.md). |
+| **Licence** | MIT, see [LICENSE](LICENSE), plus the [Terms of Use](TERMS.md) and [Privacy notice](PRIVACY.md). Third-party parts are in [THIRD-PARTY.md](THIRD-PARTY.md): [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0, used unmodified), [OpenRGB](https://openrgb.org) (GPL-2.0, bundled as a separate program) and PawnIO by namazso (a separate driver, installed separately). |
+
+<sub>Ember is an independent project by Ol775. It is not affiliated with, endorsed by or sponsored by NZXT, MSI, Govee, Logitech, Philips Hue (Signify), Nanoleaf, Razer, OpenRGB, SignalRGB, Noctua, AMD, Intel or NVIDIA. Product names are trademarks of their respective owners. Use at your own risk: you are responsible for your hardware.</sub>

@@ -1,5 +1,7 @@
 # Beta testing guide
 
+<sub>[← All docs](README.md)</sub>
+
 Thank you for trying Ember's beta builds. Beta builds hold features that are written and tested in software but not yet proven on real hardware, so what you see and report is what moves them into the production build.
 
 ## Before you start
