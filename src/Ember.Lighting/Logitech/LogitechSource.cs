@@ -6,9 +6,13 @@ namespace Ember.Lighting.Logitech;
 /// Logitech G keyboards and mice through G HUB's LED SDK. The SDK keeps one global "current device type", so every call
 /// goes through this one object, one at a time.
 /// </summary>
-public sealed class LogitechContext(ILogitechLed api)
+public sealed class LogitechContext(ILogitechLed api, TimeProvider? clock = null)
 {
+    static readonly TimeSpan GKeysRefresh = TimeSpan.FromSeconds(2);
     readonly object _gate = new();
+    readonly TimeProvider timeProvider = clock ?? TimeProvider.System;
+    (int R, int G, int B)[]? _lastGKeys;
+    long _lastGKeysAt;
     bool _ready;
 
     public bool Start()
@@ -37,8 +41,13 @@ public sealed class LogitechContext(ILogitechLed api)
         lock (_gate)
         {
             if (!_ready) throw new InvalidOperationException("G HUB is not ready");
+            // The G keys keep their colour while the keyboard grid is refreshed, and nine calls every frame starve the grid:
+            // send them only when they change, and now and then in case G HUB let go of them.
+            var now = timeProvider.GetTimestamp();
+            if (_lastGKeys is { } last && last.SequenceEqual(percents) && timeProvider.GetElapsedTime(_lastGKeysAt, now) < GKeysRefresh) return;
             if (!api.SetTargetDevice(LogitechTarget.PerKeyRgb)) { _ready = false; throw new IOException("G HUB did not accept the G key colours"); }
-            for (var i = 0; i < percents.Count; i++) api.SetLightingForKeyName(LogitechGKeysSink.FirstKeyName + i, percents[i].R, percents[i].G, percents[i].B);
+            for (var i = 0; i < percents.Count; i++) api.SetLightingForKeyName(LogitechGKeysSink.KeyNames[i], percents[i].R, percents[i].G, percents[i].B);
+            (_lastGKeys, _lastGKeysAt) = (percents.ToArray(), now);
         }
     }
 
@@ -58,6 +67,7 @@ public sealed class LogitechContext(ILogitechLed api)
         {
             if (_ready) api.Shutdown();
             _ready = false;
+            _lastGKeys = null;
         }
     }
 }
@@ -89,15 +99,17 @@ public sealed class LogitechKeyboardSink(LogitechContext context) : IDeviceSink
     }
 }
 /// <summary>
-/// The programmable G keys (G1 to G9: the side column and the top row, depending on the model) as nine lights. The SDK cannot say
-/// how many a keyboard has, so a keyboard with fewer simply ignores the rest.
+/// The programmable G keys (G1 to G9: the side column and the top row, depending on the model) and the LIGHTSPEED badge as ten lights.
+/// The SDK cannot say what a keyboard has, so one with fewer simply ignores the rest.
 /// </summary>
 public sealed class LogitechGKeysSink(LogitechContext context) : IDeviceSink
 {
-    public const int Keys = 9, FirstKeyName = 0xFFF1;
+    /// <summary>G1 to G9, then the LIGHTSPEED badge (the SDK names it G_BADGE).</summary>
+    public static readonly int[] KeyNames = [0xFFF1, 0xFFF2, 0xFFF3, 0xFFF4, 0xFFF5, 0xFFF6, 0xFFF7, 0xFFF8, 0xFFF9, 0xFFFF2];
+    public static int Keys => KeyNames.Length;
 
     public string Id => "logitech:gkeys";
-    public string Name => "Logitech G keys";
+    public string Name => "Logitech G keys and badge";
     public string Kind => "Keyboard";
     public int LedCount => Keys;
     public TimeSpan MinInterval => TimeSpan.FromMilliseconds(50);

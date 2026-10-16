@@ -6,6 +6,14 @@ namespace Ember.Lighting.Tests;
 
 public class LogitechTests
 {
+    sealed class StepClock : TimeProvider
+    {
+        long _ticks;
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+        public override long GetTimestamp() => _ticks;
+        public void Advance(TimeSpan by) => _ticks += by.Ticks;
+    }
+
     sealed class FakeLed(bool initOk = true, bool accepts = true) : ILogitechLed
     {
         public List<string> Calls { get; } = [];
@@ -53,19 +61,43 @@ public class LogitechTests
     }
 
     [Fact]
-    public async Task The_nine_G_keys_are_set_by_key_name_in_percent()
+    public async Task The_G_keys_and_the_badge_are_set_by_key_name_in_percent()
     {
         var api = new FakeLed();
         var ctx = new LogitechContext(api);
         ctx.Start();
         var sink = new LogitechGKeysSink(ctx);
-        Assert.Equal(9, sink.LedCount);
-        await sink.SendAsync([new Color(1, 0.5, 0), new Color(0, 0, 1)], default); // G1, G2; G3 to G9 stay dark
-        Assert.Equal(9, api.Keys.Count);
+        Assert.Equal(10, sink.LedCount);
+        await sink.SendAsync([new Color(1, 0.5, 0), new Color(0, 0, 1)], default); // G1, G2; the rest stay dark
+        Assert.Equal(10, api.Keys.Count);
         Assert.Equal((0xFFF1, 100, 50, 0), api.Keys[0]);
         Assert.Equal((0xFFF2, 0, 0, 100), api.Keys[1]);
         Assert.Equal((0xFFF9, 0, 0, 0), api.Keys[8]);
+        Assert.Equal((0xFFFF2, 0, 0, 0), api.Keys[9]); // the LIGHTSPEED badge
         Assert.Contains("target PerKeyRgb", api.Calls);
+    }
+
+    [Fact]
+    public async Task The_G_keys_are_sent_only_when_they_change_or_now_and_then()
+    {
+        var api = new FakeLed();
+        var clock = new StepClock();
+        var ctx = new LogitechContext(api, clock);
+        ctx.Start();
+        var sink = new LogitechGKeysSink(ctx);
+        await sink.SendAsync([new Color(1, 0, 0)], default);
+        Assert.Equal(10, api.Keys.Count);
+
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        await sink.SendAsync([new Color(1, 0, 0)], default); // same colours a frame later: nothing to send
+        Assert.Equal(10, api.Keys.Count);
+
+        await sink.SendAsync([new Color(0, 1, 0)], default); // changed
+        Assert.Equal(20, api.Keys.Count);
+
+        clock.Advance(TimeSpan.FromSeconds(3));
+        await sink.SendAsync([new Color(0, 1, 0)], default); // unchanged for a while: refreshed
+        Assert.Equal(30, api.Keys.Count);
     }
 
     [Fact]

@@ -2,6 +2,16 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.3.0-beta.3 (2026-10-16)
+
+### Fixed
+
+- **The Logitech keyboard stays lit with the G keys.** In beta.2 the new G keys device sent its colours so often that the keyboard itself went dark. The G keys are now sent only when their colour changes, with a refresh every couple of seconds.
+
+### Added
+
+- **The LIGHTSPEED badge** on a Logitech G915 can be lit like the G keys: the device is now called "Logitech G keys and badge" and has ten lights (G1 to G9, then the badge).
+
 ## 1.3.0-beta.2 (2026-10-16)
 
 ### Added

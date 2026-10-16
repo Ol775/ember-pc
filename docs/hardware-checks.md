@@ -140,7 +140,7 @@ UI automation, so they still need a person to click them.
 
 
 - [ ] Lamps found later by Govee make room on the canvas without overlapping, and "Arrange devices" tidies a hand-made layout.
-- [ ] Logitech G keys: a keyboard with G keys (G915: G1 to G5 at the side, G6 to G9 on top) shows a "Logitech G keys" device with nine lights on the Lights page; painting or an effect on it lights each G key, and a keyboard with fewer G keys ignores the rest. (The G HUB call was tried by hand on the G915 and lit all nine keys; the in-app device is not yet seen.) Seen: _
+- [ ] Logitech G keys: a keyboard with G keys (G915: G1 to G5 at the side, G6 to G9 on top) shows a "Logitech G keys and badge" device with ten lights (G1 to G9, then the LIGHTSPEED badge) on the Lights page; painting or an effect on it lights each G key, and a keyboard with fewer G keys ignores the rest. (Seen on the G915 in the beta.3 build: the keyboard and G keys stay lit together.) Seen: _
 - [ ] Logitech: with the default (per-key) the keyboard shows individual keys for Rain, Fire and Key group, and the mouse keeps its G HUB colour; with "one colour for every Logitech device" on, both take the effect colour, and switching back restores per-key.
 - [x] Key groups on the G915: Function row, Number pad, Arrows and navigation and Space bar row checked against photos (2026-10-13). Still to check: Number row, Letter keys, Space bar row, and other keyboard models.
 - [x] Key highlight: W A S D light correctly on the G915 (seen 2026-10-13). Still to check: other letters and the number row, the bottom letter row (Z to M), and a different keyboard model.
