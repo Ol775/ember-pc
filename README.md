@@ -2,20 +2,43 @@
   <img src="docs/images/banner.svg" alt="Ember: monitor, cool and light your Windows PC" width="100%">
 </p>
 
-# Ember: temperatures, fans, power and lights for Windows
-
 <p align="center">
-  <img alt="Production 1.2" src="https://img.shields.io/badge/release-1.2-success">
-  <img alt="Beta builds available" src="https://img.shields.io/badge/beta-builds%20available-orange">
-  <img alt="Licence: MIT" src="https://img.shields.io/badge/licence-MIT-blue">
-  <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
-  <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8-512BD4">
-  <img alt="Local only" src="https://img.shields.io/badge/network-local%20only-success">
+  <img src="docs/images/hero.gif" alt="Ember tour: the dashboard, fan modes, power draw, lights, game library and appearance settings" width="900">
 </p>
 
-**Ember is a free, open source Windows app that shows your PC's temperatures and power draw, runs your fans on quiet-to-extreme curves, and lights your RGB gear, all from one calm, macOS-style window.** A small background service reads the sensors and writes fan speeds; the app only displays and asks. Nothing leaves your PC.
+<h1 align="center">Ember: temperatures, fans, power and lights for Windows</h1>
+
+<div align="center">
+
+[![Latest release](https://img.shields.io/github/v/release/Ol775/ember-pc?color=ff5a1f)](https://github.com/Ol775/ember-pc/releases/latest)
+[![MIT licence](https://img.shields.io/github/license/Ol775/ember-pc?color=ff5a1f)](LICENSE)
+![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20%7C%2011-ff5a1f)
+![.NET 8](https://img.shields.io/badge/.NET-8-ff5a1f)
+![Local only](https://img.shields.io/badge/network-local%20only-ff5a1f)
+
+</div>
+
+<p align="center"><a href="#features">Features</a> · <a href="#screenshots">Screenshots</a> · <a href="#install">Install</a> · <a href="#safety">Safety</a> · <a href="#faq">FAQ</a> · <a href="ROADMAP.md">Roadmap</a> · <a href="PRIVACY.md">Privacy</a></p>
+
+**Ember is a free, open source Windows app that shows your PC's temperatures and power draw, runs your fans on quiet-to-extreme curves, and lights your RGB gear, all from one calm, macOS-style window.** A small background service reads the sensors and writes fan speeds; the app only displays and asks. Nothing leaves your PC. It has dark, OLED black and light themes.
+
+> **Install:** download `Ember-Setup-<version>.exe` from the [latest release](https://github.com/Ol775/ember-pc/releases/latest) · [more options](#install) · builds marked **Pre-release** are betas
 
 ## Features
+
+- **Live dashboard** with CPU, GPU, motherboard and fan sensors and a 10-minute history
+- **Five fan modes** from Super quiet to Extreme, or your own manual curves, with the safety limits enforced
+- **Power draw** for the whole PC, CPU and GPU, measured at the wall with a read-only smart plug
+- **RGB lighting** through OpenRGB, Govee, Logitech, Philips Hue and Corsair, with scenes, effects, music and screen sync
+- **Game detection** that switches the fans to your game mode (Beta)
+- **Dark, OLED black and light**, nine accent colours or your own
+- **Checked updates and no telemetry**: nothing is downloaded until you choose it
+
+> [!NOTE]
+> Fan speeds are written only for headers you have tested and enabled yourself, and Ember never switches a smart plug. Ember is independent and not affiliated with the hardware brands it works with.
+
+<details>
+<summary><b>Everything it does</b></summary>
 
 - **Live dashboard.** CPU, GPU, motherboard and fan sensors with a 10-minute temperature history, in Celsius or Fahrenheit.
 - **Fan modes.** **Super quiet**, **Quiet**, **Normal**, **Performance** and **Extreme** curves, switched with one click, or draw your own **manual curves** for the CPU fan and the system fans, with the safety limits enforced.
@@ -29,6 +52,8 @@
 - **Updates.** Ember checks GitHub for a newer release and asks whether to update now, later, or skip that version. **Update now** downloads the installer, checks it against the release checksum and updates in place. Nothing is downloaded until you choose it.
 - **Stream Deck plugin (beta builds).** Keys for lighting scenes, lights on and off, brightness, fan modes, opening Ember, and live CPU and GPU temperature and fan speed.
 - **Private by design.** No accounts, no telemetry. The only network use is what you switch on. See [PRIVACY.md](PRIVACY.md).
+
+</details>
 
 ## Screenshots
 
