@@ -18,7 +18,7 @@ Only what you switch on, and only to the places named here.
 ## What Ember reads on your PC
 
 - **Sensors.** The Ember service reads temperatures, fan speeds, loads and power from your hardware, and writes fan speeds. Sensor data moves over a local named pipe.
-- **Game libraries.** The Games page reads the install records of Steam, Epic Games, GOG, Ubisoft Connect and the EA app (and looks inside the game folders for program names) to know which programs are games. It only reads; nothing is changed or sent.
+- **Game libraries.** The Games page reads the install records of Steam, Epic Games, GOG, Ubisoft Connect and the EA app (and looks inside the game folders for program names) to know which programs are games. It only reads; nothing is changed or sent. It also shows the cover Steam keeps in its own local picture cache, or the icon of the game program, and notes when a library game was last in front of you (half-minute checks of the foreground program, kept in `play-history.json`). Folders on other PCs on the network are never read.
 - **Game detection** (off until you switch on Experimental features) looks at which program is in the foreground and whether it fills the screen, to switch the fan mode. It keeps only the program names you mark as "not a game".
 - **Music effects** listen to the sound your PC is playing (not a microphone) while a music layer is on, only to measure how loud each pitch is. Nothing is recorded, saved or sent.
 - **Reactive keys** (an effect you add yourself) notices when a key goes down, only while that layer is on, to flash the keyboard lights where the key is. It keeps no text and no history: each press is reduced to a position on the keyboard and forgotten after a few seconds.
@@ -28,7 +28,7 @@ Only what you switch on, and only to the places named here.
 ## What Ember stores
 
 - `%ProgramData%\Ember`: fan settings (writable only by administrators).
-- `%AppData%\Ember`: preferences, lighting scenes, the saved paint library (`paints`), the game library from the last scan (`games.json`), fan modes you give single games (`game-profiles.json`), which smart plugs you linked (`power-plugs.json`), the Nanoleaf address (`nanoleaf.json`) and the diagnostic log.
+- `%AppData%\Ember`: preferences, lighting scenes, the saved paint library (`paints`), the game library from the last scan (`games.json`), when each game was last played (`play-history.json`), the energy your PC used each day (`power-days.json`), fan modes you give single games (`game-profiles.json`), which smart plugs you linked (`power-plugs.json`), the Nanoleaf address (`nanoleaf.json`) and the diagnostic log.
 - **Windows Credential Manager:** your Govee key, the Hue key, the Nanoleaf token, the Meross sign-in and your Tapo account. They are never kept in a settings file.
 - Delete these folders and entries to remove everything.
 

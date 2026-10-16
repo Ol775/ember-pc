@@ -58,6 +58,18 @@ public class GradientTests
     }
 }
 
+public class GradientOrderTests
+{
+    [Fact]
+    public void Stops_given_out_of_order_give_the_same_colours()
+    {
+        var red = new Color(1, 0, 0); var blue = new Color(0, 0, 1);
+        var sorted = new GradientEffect([new ColorStop(0, red), new ColorStop(1, blue)], 0, 1);
+        var shuffled = new GradientEffect([new ColorStop(1, blue), new ColorStop(0, red)], 0, 1);
+        foreach (var t in new[] { 0.0, 0.25, 0.5, 0.9, 1.0 }) Assert.Equal(sorted.At(t), shuffled.At(t));
+    }
+}
+
 public class GradientValidationTests
 {
     static LightingState With(Layer layer) => LightingState.Default with { Scenes = [new Scene("S", [layer], []) ], CurrentScene = "S" };

@@ -26,7 +26,7 @@ Ember controls real fans, so the part that touches hardware is small, separate a
 | `src/Ember.Lighting` | Device sources and the lighting engine: layered effects, scenes, and one source per integration. Also the smart-plug readers used by the Power page. |
 | `src/Ember.StreamDeck` | The Stream Deck plugin (beta builds). Talks to the app over `ember.app.v1`. |
 | `src/Ember.Setup` | The installer program. |
-| `tests/` | Unit tests for Core, Service and Lighting. The WPF app and the install code are verified by hand on Windows (see [hardware-checks.md](hardware-checks.md)). |
+| `tests/` | Unit tests for Core, Service and Lighting, and `Ember.App.Tests`, which runs the real window as a simulation (no devices, network or service, files in a scratch folder: set `EMBER_UI_TESTS=1`, and `EMBER_UI_SHOTS=<folder>` to save a picture of every page). Those tests check that every page opens and draws, how much processor time and memory the window uses, and that browsing the pages again and again does not leak. The install code and real hardware are verified by hand on Windows (see [hardware-checks.md](hardware-checks.md)). |
 
 ## Talking between parts
 

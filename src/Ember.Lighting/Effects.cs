@@ -84,7 +84,10 @@ public sealed record GradientEffect(IReadOnlyList<ColorStop> Stops, double Speed
     public Color At(double t)
     {
         if (Stops.Count == 0) return Color.Black;
-        var stops = Stops.OrderBy(s => s.At).ToList();
+        // The stops are almost always kept in order already (the editor sorts them): then nothing is copied, which matters for a call per LED per frame.
+        var stops = Stops;
+        for (var i = 1; i < stops.Count; i++)
+            if (stops[i].At < stops[i - 1].At) { stops = stops.OrderBy(s => s.At).ToList(); break; }
         if (t <= stops[0].At) return stops[0].Colour;
         for (var i = 1; i < stops.Count; i++)
         {

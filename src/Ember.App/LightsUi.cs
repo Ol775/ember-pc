@@ -213,6 +213,29 @@ static class LightsUi
                     Notify();
                 };
                 thumb.MouseLeftButtonUp += (_, _) => thumb.ReleaseMouseCapture();
+                // Keyboard: arrows move the stop (Shift: larger steps), Delete removes it while more than two remain.
+                thumb.Focusable = true;
+                thumb.KeyDown += (_, e) =>
+                {
+                    var step = (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) != 0 ? 0.05 : 0.01;
+                    switch (e.Key)
+                    {
+                        case System.Windows.Input.Key.Left or System.Windows.Input.Key.Right:
+                            var at = Math.Clamp(stops[index].At + (e.Key == System.Windows.Input.Key.Left ? -step : step), 0, 1);
+                            stops[index] = stops[index] with { At = at };
+                            Canvas.SetLeft(thumb, at * width);
+                            Paint();
+                            Notify();
+                            e.Handled = true;
+                            break;
+                        case System.Windows.Input.Key.Delete when stops.Count > 2:
+                            stops.RemoveAt(index);
+                            selected = Math.Min(selected, stops.Count - 1);
+                            Paint(); Layout(); Detail(); Notify();
+                            e.Handled = true;
+                            break;
+                    }
+                };
                 canvas.Children.Add(thumb);
             }
         }

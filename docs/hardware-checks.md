@@ -200,3 +200,15 @@ An unsigned plugin was installed by Stream Deck 7.6 and its program registered w
 - [ ] "Send a test alert" shows a Windows notification, and clicking it opens Ember. Seen: _
 - [ ] With a low CPU limit (60 °C) under load, the hot alert appears once, not repeatedly. Seen: _
 - [ ] Unplugging or stopping a case fan while the PC is warm gives the "A fan has stopped" alert (only try this with a fan you can safely stop for a moment). Seen: _
+
+## The new look and the beta.5 additions (written and tested as a simulation only: the window, every page and the lighting engine ran against made-up readings and devices, never on the real PC)
+
+- [ ] Lights: add an Aurora wave layer. Drag its colour handles, click the bar to add a stop (up to six), remove one, and change Speed, Softness and Direction (→ ← ↑ ↓ Out). The keyboard, RAM and the strip show the colours moving the way the preview does. Seen: _
+- [ ] Lights: the Applies to chips. Take RAM off a layer and the layer stops lighting RAM and nothing else; the last device cannot be removed. Seen: _
+- [ ] Lights: Solo layer plays only the chosen layer on the real devices and the preview; pressing it again, or picking another scene, brings the rest back. Seen: _
+- [ ] Power: the standing charge changes the three costs, the ranges 10 min, 1 hour, Today and 7 days draw, and the tip names the part that uses the most. Seen: _
+- [ ] Games: each Steam game shows its own cover when Steam has one in its picture cache, other games show their program icon; "Last played" fills in after a game has been in front for half a minute; "Not played yet" for the rest. Seen: _
+- [ ] Devices: the logos (and the plain marks for Ember, OpenRGB, Govee, Meross and Nanoleaf) look right in dark, OLED and light themes. Seen: _
+- [ ] Settings: Fan control, Experimental and Updates are laid out as rows; Check now, Update now (do not press it on the PC without meaning to), the channel picker and Open settings folder all still work. Seen: _
+- [ ] Update now: the setup program is held and checked again just before it starts, so a changed file is refused with a message instead of running. (Hard to provoke by hand; covered by a unit test.) Seen: _
+- [ ] Watch the Task Manager figures for Ember with the window open on the Dashboard, Fans and Power pages: about 1 % of one core and well under 100 MB is expected. Seen: _

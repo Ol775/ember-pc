@@ -123,6 +123,20 @@ public class LightsPageTests
             UiHost.Settle();
             UiHost.Run(() => Save(host!, "Lights-gradient"));
 
+            // The colour bar from the keyboard: Right moves the first stop a little, Delete takes the middle one away.
+            void Key(string stopName, System.Windows.Input.Key key)
+            {
+                var thumb = Find<System.Windows.Controls.Border>(page!, b => System.Windows.Automation.AutomationProperties.GetName(b) == stopName) ?? throw new InvalidOperationException(stopName);
+                var args = new System.Windows.Input.KeyEventArgs(System.Windows.Input.Keyboard.PrimaryDevice, PresentationSource.FromVisual(thumb)!, 0, key) { RoutedEvent = System.Windows.Input.Keyboard.KeyDownEvent };
+                thumb.RaiseEvent(args);
+            }
+            GradientEffect Aurora() => (GradientEffect)manager.State.Current.Layers.First(l => l.Id == "aurora").Effect;
+            Assert.Equal(3, Aurora().Stops.Count);
+            UiHost.Run(() => Key("Colour stop 1 of 3", System.Windows.Input.Key.Right));
+            Assert.Equal(0.01, Aurora().Stops.First().At, 3);
+            UiHost.Run(() => Key("Colour stop 2 of 3", System.Windows.Input.Key.Delete));
+            Assert.Equal(2, Aurora().Stops.Count);
+
             // The Solo button plays the chosen layer alone, and a second press brings the rest back.
             UiHost.Run(() => Click(page!, "Play only the chosen layer on the lights, to see what it does on its own"));
             Assert.Equal("aurora", manager.SoloLayer);

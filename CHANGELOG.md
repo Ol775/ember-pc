@@ -2,6 +2,27 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.3.0-beta.5 (2026-10-17)
+
+### Added
+
+- **Gradient layers with colour stops.** A new Aurora wave effect rolls any row of up to six colours across the lights. Drag the handles on the colour bar to move a stop, click the bar to add one, and set Speed, Softness and the Direction (right, left, up, down or out from the middle).
+- **Choose which devices a layer lights.** Every layer has Applies to chips, one for each device on the canvas, so a layer can paint the keyboard only, or everything but the fans.
+- **Solo layer.** Play one layer alone, on the lights and in the preview, to see what it does by itself. Reset puts a layer's effect back to its starting look.
+- **Power: standing charge, more ranges and a tip.** Add your daily standing charge to the cost estimate, switch the chart between 10 minutes, 1 hour, today and 7 days, and read a plain tip about the part of the PC that uses the most.
+- **Games: covers and last played.** Each game shows its Steam cover (from Steam's own picture cache) or its program icon, and a line such as "Last played 2 days ago", learned from the games that are in front of you. The dates stay on this PC (play-history.json in your Ember folder).
+- **Logos for every launcher and device.** The Steam, Epic Games, GOG, Ubisoft Connect and EA app marks head the Games cards, and Ember, OpenRGB, Govee, Meross and Nanoleaf have plain marks of their own on the Devices page.
+
+### Changed
+
+- **Settings as rows.** Fan control, Experimental and Updates are laid out like General and Appearance: the name and a sentence on the left, the control on the right.
+- **Quieter on the PC.** The Dashboard, Fans and Power pages no longer measure unchanged text again every half second, the hidden classic chart is no longer drawn, and long chart lines use fewer curve segments, so the window uses less processor time and makes less garbage.
+
+### Fixed
+
+- **The update installer cannot be swapped.** Update now holds the downloaded setup program and checks its checksum once more right before it starts, so a file that changed in between is refused.
+- **Network folders are never read.** A game folder that points at another PC on the network is ignored, so a bad entry cannot make Ember contact it.
+
 ## 1.3.0-beta.4 (2026-10-16)
 
 ### Changed

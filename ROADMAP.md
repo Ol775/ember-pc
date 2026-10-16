@@ -19,7 +19,6 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 - Razer devices: only show the ones that are plugged in, once Synapse offers a way to tell
 - A lighting scene per game, next to the fan mode per game
 - Global hotkeys for scenes, lights on and off, and fan mode
-- Power cost: kilowatt hours and an estimated cost from your own tariff on the Power page
 - Export sensor history to a file
 - Windows Dynamic Lighting (the built-in Windows lighting standard) as another source of devices
 - A tray tooltip with the current temperatures and power draw
@@ -56,6 +55,7 @@ ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up i
 - A Power page: CPU, GPU, motherboard and the rest, and other plugs, with a wall plug (Meross or Tapo, read only) for the whole PC
 - A Games page that scans Steam, Epic, GOG, Ubisoft Connect and the EA app, with a fan mode per game (off by default)
 - A schedule for fan modes and lights (for example quiet fans and dim lights at night), and Windows notifications for a hot part or a stopped fan (beta)
+- A Specs page with S.M.A.R.T. drive health, a Power cost estimate with a daily and monthly split, and a last played date and cover for each game (beta)
 
 ### Lighting
 
