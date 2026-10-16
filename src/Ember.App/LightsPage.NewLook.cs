@@ -280,7 +280,8 @@ public sealed partial class LightsPage
     void BuildNewEditor(Layer layer, LightingState state)
     {
         var id = layer.Id;
-        if (_m!.SoloLayer is not null) { _m.SoloLayer = id; UpdateSolo(); }
+        if (_m!.SoloLayer is not null) _m.SoloLayer = id;   // the solo follows the chosen layer
+        UpdateSolo();
         _editor.Children.Add(NewEditorHeader(layer));
         Action<Func<Effect, Effect>> apply = change => EditLayer(id, x => x with { Effect = change(x.Effect) });
         EffectFields(layer.Effect, id, apply);

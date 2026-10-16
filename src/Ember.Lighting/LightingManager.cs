@@ -128,7 +128,11 @@ public sealed class LightingManager : IAsyncDisposable
     public void SetBrightness(double brightness) =>
         EditScene(sc => sc with { Brightness = Math.Clamp(brightness, 0, 1) });
 
-    public void SelectScene(string name) => Mutate(s => s.Scenes.Any(x => x.Name == name) ? s with { CurrentScene = name } : s);
+    public void SelectScene(string name)
+    {
+        lock (_gate) _solo = null;   // a layer played alone belongs to the scene it was chosen in
+        Mutate(s => s.Scenes.Any(x => x.Name == name) ? s with { CurrentScene = name } : s);
+    }
 
     /// <summary>Saves a copy of the current scene under a new name (or replaces the scene of that name) and selects it.</summary>
     public bool SaveSceneAs(string name)

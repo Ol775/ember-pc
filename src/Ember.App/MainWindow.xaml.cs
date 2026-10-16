@@ -432,7 +432,10 @@ public partial class MainWindow : Window
             var got = await _installer.DownloadAsync(release, folder, progress);
             UpdateNote.Text = got.Message;
             DiagLog.Info("Update", $"Download of {release.Version}: {(got.Ok ? "ok" : "failed")}, {got.Message}");
-            if (!got.Ok || got.Path is null) return;
+            if (!got.Ok || got.Path is null || got.Sha256 is null) return;
+            // Hold the file (nobody can swap it) and check it once more, until the installer has started.
+            using var held = UpdateInstaller.OpenChecked(got.Path, got.Sha256);
+            if (held is null) { UpdateNote.Text = "The downloaded installer changed before it could start, so it was not run. Press Update now to download it again."; return; }
             UpdateNote.Text = "Starting the installer. Windows will ask for permission, then Ember closes, updates and opens again.";
             var accepted = Math.Max(_vm.Prefs.AcceptedTerms, TermsAcceptance.ByInstaller());
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(got.Path, "/UPDATE /ACCEPTED=" + accepted) { UseShellExecute = true }); }
@@ -913,6 +916,7 @@ public partial class MainWindow : Window
         NewDashboardPage.Visibility = NavDashboard.IsChecked == true && BuildFeatures.NewLook ? Visibility.Visible : Visibility.Collapsed;
         FansPageView.Visibility = NavFans.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         SettingsPageView.Visibility = NavSettings.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        if (IsLoaded) Refresh();   // the pages that were not being redrawn while hidden catch up at once
     }
 
     void OnUnitPicked(object sender, RoutedEventArgs e)
@@ -1095,14 +1099,17 @@ public partial class MainWindow : Window
         }
         _trimmed = false;
         _vm.Refresh(DateTimeOffset.UtcNow);
-        _chart.Update(_vm.ChartWidth, _vm.ChartHeight, _vm.Unit, _vm.CpuLine, _vm.GpuLine, _vm.CpuText, _vm.GpuText);
+        if (DashboardPage.Visibility == Visibility.Visible) _chart.Update(_vm.ChartWidth, _vm.ChartHeight, _vm.Unit, _vm.CpuLine, _vm.GpuLine, _vm.CpuText, _vm.GpuText);   // the classic chart is not drawn while another page (or the new dashboard) is shown
         if (BuildFeatures.NewLook && NewDashboardPage.Visibility == Visibility.Visible) NewDash.Update(_vm, DashboardInputsNow());
         if (DevicesPageView.Visibility == Visibility.Visible) Devices.Update(_vm, _lights);
         if (PowerPageView.Visibility == Visibility.Visible) Power.Update();
         if (GamesPageView.Visibility == Visibility.Visible) Games.Update(_library, _libraryScanning, _detection.ActiveGame, _vm.FansPage.Experimental);
         // WPF only announces a live region when the app raises LiveRegionChanged itself.
-        Curve.SetState(_vm.FansPage.Mode, _vm.FansPage.Curves, _cpuTemp, _caseTemp);
-        _ai.Refresh();
+        if (FansPageView.Visibility == Visibility.Visible)
+        {
+            Curve.SetState(_vm.FansPage.Mode, _vm.FansPage.Curves, _cpuTemp, _caseTemp);
+            _ai.Refresh();
+        }
         _tray.SetMode(_vm.FansPage.Mode, _cpuTemp is { } t ? $"CPU {t:0} °C" : null);
         if (_vm.ConnectionText != _announcedConnection)
         {

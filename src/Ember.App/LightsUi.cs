@@ -180,6 +180,12 @@ static class LightsUi
 
         void Notify() => changed(effect with { Stops = stops.OrderBy(s => s.At).Select(s => s).ToList() });
 
+        void Highlight()
+        {
+            for (var i = 0; i < canvas.Children.Count; i++)
+                if (canvas.Children[i] is Border b) b.BorderBrush = i == selected ? Res("AccentBrush") : Brushes.White;
+        }
+
         void Layout()
         {
             canvas.Children.Clear();
@@ -195,7 +201,8 @@ static class LightsUi
                 thumb.BorderBrush = index == selected ? Res("AccentBrush") : Brushes.White;
                 AutomationProperties.SetName(thumb, $"Colour stop {index + 1} of {stops.Count}");
                 Canvas.SetLeft(thumb, Math.Clamp(stops[i].At, 0, 1) * width);
-                thumb.MouseLeftButtonDown += (_, e) => { selected = index; thumb.CaptureMouse(); e.Handled = true; Layout(); Detail(); };
+                // Choosing a handle only recolours the rings: the handle itself stays, so it keeps the mouse while it is dragged.
+                thumb.MouseLeftButtonDown += (_, e) => { selected = index; thumb.CaptureMouse(); e.Handled = true; Highlight(); Detail(); };
                 thumb.MouseMove += (_, e) =>
                 {
                     if (!thumb.IsMouseCaptured) return;

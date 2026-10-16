@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 
 namespace Ember.Core;
 
-public sealed record DownloadResult(bool Ok, string? Path, string Message);
+public sealed record DownloadResult(bool Ok, string? Path, string Message, string? Sha256 = null);
 
 /// <summary>
 /// Downloads the setup program of a release the checker found, only when the person asks, and checks it against the release's
@@ -52,7 +52,7 @@ public sealed class UpdateInstaller(HttpClient http)
                 return new(false, null, "The download does not match its checksum, so it was thrown away.");
             }
             File.Move(part, path, true);
-            return new(true, path, "Downloaded and checked.");
+            return new(true, path, "Downloaded and checked.", expected);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (Exception ex) { DiagLog.Warn("Update", "Installer download failed", ex); return new(false, null, "Could not download the update (" + ex.Message + "). Check your connection."); }
@@ -64,6 +64,25 @@ public sealed class UpdateInstaller(HttpClient http)
         res.EnsureSuccessStatusCode();
         if (res.Content.Headers.ContentLength > 4096) throw new InvalidDataException("checksum file too large");
         return await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Opens the downloaded setup program so that nothing can change or replace it while it is open, and checks it against the published hash once more.
+    /// Keep the stream open until the installer has started: the file is then the one that was checked. Null when the file is gone or no longer matches.
+    /// </summary>
+    public static FileStream? OpenChecked(string path, string sha256)
+    {
+        FileStream? stream = null;
+        try
+        {
+            stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var actual = Convert.ToHexString(SHA256.HashData(stream));
+            stream.Position = 0;
+            if (string.Equals(actual, sha256, StringComparison.OrdinalIgnoreCase)) return stream;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        stream?.Dispose();
+        return null;
     }
 
     /// <summary>The 64-digit hash at the start of a "hash  filename" line, upper-cased; null when it is not one.</summary>

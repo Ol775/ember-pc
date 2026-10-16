@@ -159,4 +159,99 @@ public class LightsPageTests
             manager.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(5));
         }
     }
+    [UiFact]
+    public void Picking_layers_and_scenes_again_and_again_does_not_grow_memory()
+    {
+        _ = UiHost.Window;
+        var dir = Path.Combine(UiHost.DataDir, "lights-leak");
+        Directory.CreateDirectory(dir);
+        var (manager, _) = Manager(dir);
+        LightsPage? page = null;
+        Window? host = null;
+        try
+        {
+            UiHost.Run(() =>
+            {
+                page = new LightsPage();
+                page.Attach(manager);
+                host = new Window { Content = page, Width = 1280, Height = 1500, Left = -3000, Top = 0, ShowInTaskbar = false, ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual };
+                host.SetResourceReference(Window.BackgroundProperty, "WindowBrush");
+                host.Show();
+            });
+            manager.Start();
+            manager.RefreshDevices();
+            for (var i = 0; i < 100 && manager.Devices.Count < 4; i++) Thread.Sleep(50);
+            manager.Arrange();
+            Thread.Sleep(500);
+            UiHost.Settle();
+
+            void Lap()
+            {
+                foreach (var name in new[] { "Edit layer Aurora wave", "Edit layer Reactive keys", "Edit layer CPU temperature" })
+                {
+                    UiHost.Run(() => Click(page!, name));
+                    UiHost.Settle();
+                }
+                manager.SelectScene("Static amber"); UiHost.Settle();
+                manager.SelectScene("Aurora"); UiHost.Settle();
+            }
+            for (var i = 0; i < 5; i++) Lap();
+            long Used() { GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect(); return GC.GetTotalMemory(true); }
+            var before = Used();
+            for (var i = 0; i < 60; i++) Lap();
+            var grown = (Used() - before) / 1024.0 / 1024.0;
+            Assert.True(grown < 6, $"Managed memory grew by {grown:0.0} MB over 60 laps of picking layers and scenes");
+            UiHost.ThrowIfErrors();
+        }
+        finally
+        {
+            UiHost.Run(() => host?.Close());
+            manager.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(5));
+        }
+    }
+    [UiFact]
+    public void An_animated_scene_on_four_devices_stays_light()
+    {
+        _ = UiHost.Window;
+        var dir = Path.Combine(UiHost.DataDir, "lights-perf");
+        Directory.CreateDirectory(dir);
+        var (manager, sinks) = Manager(dir);
+        // Move the gradient so every frame changes.
+        manager.EditScene(sc => sc with { Layers = sc.Layers.Select(l => l.Id == "aurora" ? l with { Effect = ((GradientEffect)l.Effect) with { Speed = 0.5 } } : l).ToList() });
+        Window? host = null;
+        try
+        {
+            UiHost.Run(() =>
+            {
+                var page = new LightsPage();
+                page.Attach(manager);
+                host = new Window { Content = page, Width = 1280, Height = 900, Left = -3000, Top = 0, ShowInTaskbar = false, ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual };
+                host.SetResourceReference(Window.BackgroundProperty, "WindowBrush");
+                host.Show();
+            });
+            manager.Start();
+            manager.RefreshDevices();
+            for (var i = 0; i < 100 && manager.Devices.Count < 4; i++) Thread.Sleep(50);
+            manager.Arrange();
+            Thread.Sleep(2000);
+            var process = System.Diagnostics.Process.GetCurrentProcess();
+            process.Refresh();
+            var cpu0 = process.TotalProcessorTime;
+            var sends0 = sinks.Sum(s => s.Sends);
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            Thread.Sleep(10000);
+            process.Refresh();
+            var core = (process.TotalProcessorTime - cpu0).TotalMilliseconds / sw.Elapsed.TotalMilliseconds * 100;
+            var sendsPerSecond = (sinks.Sum(s => s.Sends) - sends0) / sw.Elapsed.TotalSeconds;
+            Console.WriteLine($"PERF animated scene: {core:0.0} % of one core, {sendsPerSecond:0} device sends a second");
+            File.WriteAllText(Path.Combine(Path.GetTempPath(), "lights-perf.txt"), $"{core:0.0} % of one core, {sendsPerSecond:0} device sends a second");
+            Assert.True(core < 25, $"An animated scene used {core:0} % of a core");
+            UiHost.ThrowIfErrors();
+        }
+        finally
+        {
+            UiHost.Run(() => host?.Close());
+            manager.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(5));
+        }
+    }
 }

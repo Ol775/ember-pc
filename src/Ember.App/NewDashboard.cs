@@ -383,7 +383,7 @@ public sealed class NewDashboard : UserControl
         }
         if (cpu.Count >= 2)
         {
-            var area = new Path { Data = Ui.Smooth(cpu, _chartH), IsHitTestVisible = false };
+            var area = new Path { Data = Ui.Smooth(Ui.Thin(cpu), _chartH), IsHitTestVisible = false };
             var accent = ((SolidColorBrush)Res("AccentBrush")).Color;
             area.Fill = new LinearGradientBrush([new GradientStop(Color.FromArgb(0x59, accent.R, accent.G, accent.B), 0), new GradientStop(Color.FromArgb(0, accent.R, accent.G, accent.B), 1)], 90);
             _chart.Children.Add(area);
@@ -391,7 +391,7 @@ public sealed class NewDashboard : UserControl
         foreach (var (points, brush) in new[] { (cpu, "AccentBrush"), (gpu, "GpuBrush") })
         {
             if (points.Count < 2) continue;
-            var line = new Path { Data = Ui.Smooth(points), StrokeThickness = 2.5, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round, IsHitTestVisible = false };
+            var line = new Path { Data = Ui.Smooth(Ui.Thin(points)), StrokeThickness = 2.5, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round, IsHitTestVisible = false };
             line.SetResourceReference(Shape.StrokeProperty, brush);
             _chart.Children.Add(line);
         }

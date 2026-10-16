@@ -116,6 +116,7 @@ public partial class CurveEditor : UserControl
     void Rebuild()
     {
         if (Plot.ActualWidth < 60) return;
+        _markerKey = null;   // the marker is drawn again with the rest
         Plot.Children.Clear();
         _thumbs.Clear();
         _ringPoints.Clear();
@@ -212,8 +213,15 @@ public partial class CurveEditor : UserControl
 
     string GroupName => _group == CurveGroup.Cpu ? "CPU" : "System";
 
+    (double T, double Pct, double Width, int Points, bool Editable)? _markerKey;
+
     void UpdateMarker()
     {
+        // Nothing to move while the temperature, the speed it asks for, the width and the curve are the same.
+        (double, double, double, int, bool)? key = CurrentTemp is { } now && _shown.Count >= 2 && now >= MinT && now <= MaxT
+            ? (Math.Round(now, 1), Math.Round(SpeedAt(now), 1), Plot.ActualWidth, _shown.Count, _editable) : null;
+        if (key is not null && key.Equals(_markerKey)) return;
+        _markerKey = key;
         if (BuildFeatures.NewLook) { UpdateMarkerNew(); return; }
         if (_marker is null || _markerAcross is null || _markerDot is null || _markerPill is null || _markerLabel is null) return;
         if (CurrentTemp is not { } t || _shown.Count < 2 || t < MinT || t > MaxT)
@@ -376,10 +384,11 @@ public partial class CurveEditor : UserControl
     void UpdateTexts()
     {
         var what = _group == CurveGroup.Cpu ? "the CPU fan" : "the system fans";
-        Hint.Text = _editable
+        var hint = _editable
             ? $"Manual curve for {what}. Drag a point, or select one and use the arrow keys (Shift moves by 5). Fans never go below 30% (CPU) or 20% (system), and the curve must reach 60% by 80 °C and 80% by 85 °C."
             : $"The {FansViewState.Label(_mode)} curve for {what}. Choose Manual above to change it, or copy it with the button below.";
-        if (_group == CurveGroup.Cpu) Hint.Text += " The CPU fan also ramps up early above 70 °C, whatever the curve says.";
+        if (_group == CurveGroup.Cpu) hint += " The CPU fan also ramps up early above 70 °C, whatever the curve says.";
+        if (Hint.Text != hint) Hint.Text = hint;   // one assignment, and only when it changed: a text that is set twice is measured twice
         // Points that break the shape rules (mid-edit) cannot be evaluated; the hot-end rules do not matter for a number.
         var curve = _shown.Count >= 2 ? TryCurve(_shown) : null;
         NowText.Text = curve is not null && CurrentTemp is { } t

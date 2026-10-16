@@ -12,7 +12,7 @@ public partial class MainWindow
     static void OpenLink(string url)
     {
         // Only addresses of this project on GitHub are ever opened from these pages.
-        if (!url.StartsWith(RepoUrl, StringComparison.Ordinal)) return;
+        if (url != RepoUrl && !url.StartsWith(RepoUrl + "/", StringComparison.Ordinal)) return;
         try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }); }
         catch (Exception) { /* no browser to open */ }
     }

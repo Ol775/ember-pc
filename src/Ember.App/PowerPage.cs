@@ -109,7 +109,7 @@ public sealed class PowerPage : UserControl
             tipBody.Children.Add(_tip);
             _root.Children.Add(WithMargin(Ui.Card(tipBody, name: "Tip"), 0, 12, 0, 0));
         }
-        ThemeManager.Changed += () => _plugKey = null;
+        ThemeManager.Changed += () => { _plugKey = null; _chartKey = null; _splitBuilt = false; _wattsText = null; };
     }
 
     FrameworkElement BuildHero()
@@ -282,6 +282,7 @@ public sealed class PowerPage : UserControl
         _sourceChip.Background = Brushes.Transparent;
         _sourceChip.SetResourceReference(Border.BorderBrushProperty, "PanelBorderBrush");
         _sourceChipText.FontSize = 13;
+        _sourceChipText.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
         return hero;
     }
 
@@ -629,8 +630,13 @@ public sealed class PowerPage : UserControl
     string Share(PowerTrack t) => t.Now is { } v && _total.Now is { } all && all > 0 ? $"{Math.Min(100, v / all * 100):0}%" : "";
 
     /// <summary>The figure as a large number with a small unit beside it.</summary>
+    string? _wattsText;
+
     void ShowWatts(double? watts)
     {
+        var text = watts is { } shownWatts ? shownWatts.ToString("0") : "–";
+        if (text == _wattsText) return;   // the same figure: leave the text alone, so it is not measured again
+        _wattsText = text;
         _heroWatts.Inlines.Clear();
         _heroWatts.Inlines.Add(new Run(watts is { } w ? w.ToString("0") : "–"));
         if (watts is not null) _heroWatts.Inlines.Add(new Run(" ") { FontSize = 10 });
@@ -643,54 +649,74 @@ public sealed class PowerPage : UserControl
         else _heroWatts.Text = _total.Now is { } w ? $"{w:0} W" : "–";
         _heroSource.Text = _totalFromPlug ? "Measured at the wall by your smart plug" : _total.Now is null ? "Waiting for the sensors" : "CPU and GPU only. Link your PC's plug for the whole PC";
         _heroStats.Text = _total.Average is { } a ? (BuildFeatures.NewLook ? $"avg {a:0} W  ·  peak {_total.Peak:0} W" : $"average {a:0} W   ·   peak {_total.Peak:0} W   ·   {_total.Kwh:0.000} kWh used") : "";
-        _sourceChipText.Text = _totalFromPlug ? "Wall plug" : "Sensors only";
         if (BuildFeatures.NewLook)
         {
             var plugName = _providers.SelectMany(p => p.Plugs).FirstOrDefault(p => p.Uuid == _linkState.PcPlug)?.Name;
-            _sourceChipText.Text = _totalFromPlug && plugName is not null ? $"Measured by plug \"{plugName}\"" : _totalFromPlug ? "Measured at the wall" : "CPU and GPU sensors only";
-            _sourceChipText.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
+            var chip = _totalFromPlug && plugName is not null ? $"Measured by plug \"{plugName}\"" : _totalFromPlug ? "Measured at the wall" : "CPU and GPU sensors only";
+            if (_sourceChipText.Text != chip) _sourceChipText.Text = chip;   // set once, and only when it changed
         }
         else
         {
+            _sourceChipText.Text = _totalFromPlug ? "Wall plug" : "Sensors only";
             _sourceChip.Background = _totalFromPlug ? ThemeManager.GoodSoft : (Brush)Application.Current.FindResource("AccentSoftBrush");
             _sourceChipText.Foreground = _totalFromPlug ? ThemeManager.Good : (Brush)Application.Current.FindResource("AccentTextBrush");
         }
 
         // The split bar and its legend: CPU, GPU and the rest of the wall draw (or nothing when only CPU and GPU are known).
+        // The pieces are made once and only their widths and texts change, so a redraw allocates next to nothing.
         var parts = new (string Name, double? W, string? Key, Brush? Fixed)[]
         {
             ("CPU", _cpu.Now, CpuKey, null), ("GPU", _gpu.Now, GpuKey, null),
             ("Motherboard and the rest", _totalFromPlug ? _rest.Now : null, null, Rest),
         };
+        if (!_splitBuilt) BuildSplit(parts);
         var sum = parts.Sum(p => p.W ?? 0);
+        var shown = 0;
+        for (var i = 0; i < parts.Length; i++)
+        {
+            var v = parts[i].W ?? 0;
+            var show = sum > 0 && v > 0;
+            _splitColumns[i].Width = new GridLength(show ? v : 0, GridUnitType.Star);
+            _splitSegments[i].Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            if (show) _splitSegments[i].Margin = new Thickness(shown++ == 0 ? 0 : 2, 0, 0, 0);
+            var text = parts[i].Name + "   " + (parts[i].W is { } x ? $"{x:0} W" + (sum > 0 ? $"  ({x / sum * 100:0}%)" : "") : "–");
+            if (_legendTexts[i].Text != text) _legendTexts[i].Text = text;
+        }
+        _splitEmpty.Visibility = shown == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    bool _splitBuilt;
+    readonly ColumnDefinition[] _splitColumns = [new(), new(), new()];
+    readonly Border[] _splitSegments = [new(), new(), new()];
+    readonly TextBlock[] _legendTexts = [new(), new(), new()];
+    readonly Border _splitEmpty = new() { CornerRadius = new CornerRadius(4), Opacity = 0.35, Visibility = Visibility.Collapsed };
+
+    void BuildSplit((string Name, double? W, string? Key, Brush? Fixed)[] parts)
+    {
+        _splitBuilt = true;
         _split.ColumnDefinitions.Clear();
         _split.Children.Clear();
         _legend.Children.Clear();
-        var col = 0;
-        foreach (var p in parts)
+        foreach (var c in _splitColumns) _split.ColumnDefinitions.Add(c);
+        _splitEmpty.SetResourceReference(Border.BackgroundProperty, "PanelBorderBrush");
+        Grid.SetColumnSpan(_splitEmpty, 3);
+        _split.Children.Add(_splitEmpty);
+        for (var i = 0; i < parts.Length; i++)
         {
-            var v = p.W ?? 0;
-            if (sum > 0 && v > 0)
-            {
-                _split.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(v, GridUnitType.Star) });
-                var seg = new Border { CornerRadius = new CornerRadius(4), Margin = new Thickness(col == 0 ? 0 : 2, 0, 0, 0) };
-                if (p.Key is not null) seg.SetResourceReference(Border.BackgroundProperty, p.Key); else seg.Background = p.Fixed;
-                Grid.SetColumn(seg, col++);
-                _split.Children.Add(seg);
-            }
+            var seg = _splitSegments[i];
+            seg.CornerRadius = new CornerRadius(4);
+            if (parts[i].Key is { } key) seg.SetResourceReference(Border.BackgroundProperty, key); else seg.Background = parts[i].Fixed;
+            Grid.SetColumn(seg, i);
+            _split.Children.Add(seg);
+
             var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 0) };
             var dot = new Ellipse { Width = 8, Height = 8, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
-            if (p.Key is not null) dot.SetResourceReference(Shape.FillProperty, p.Key); else dot.Fill = p.Fixed;
+            if (parts[i].Key is { } dotKey) dot.SetResourceReference(Shape.FillProperty, dotKey); else dot.Fill = parts[i].Fixed;
             row.Children.Add(dot);
-            row.Children.Add(Text(p.Name + "   " + (p.W is { } x ? $"{x:0} W" + (sum > 0 ? $"  ({x / sum * 100:0}%)" : "") : "–"), size: 13));
+            var text = Text("", size: 13);
+            _legendTexts[i] = text;
+            row.Children.Add(text);
             _legend.Children.Add(row);
-        }
-        if (_split.ColumnDefinitions.Count == 0)
-        {
-            _split.ColumnDefinitions.Add(new ColumnDefinition());
-            var empty = new Border { CornerRadius = new CornerRadius(4), Opacity = 0.35 };
-            empty.SetResourceReference(Border.BackgroundProperty, "PanelBorderBrush");
-            _split.Children.Add(empty);
         }
     }
 
@@ -749,28 +775,40 @@ public sealed class PowerPage : UserControl
         _chartNote.Text = _totalFromPlug ? "Measured at the wall" : "CPU plus GPU";
     }
 
+    string? _chartKey;
     int _rangePoints = 600, _range;   // the chart shows the last ten minutes, an hour, the day so far since Ember started, or the last seven days
 
     /// <summary>The live chart of the redesign: a smooth line with a soft area under it, no axis labels.</summary>
     void DrawChartNew()
     {
-        _chart.Children.Clear();
         var pts = _range switch
         {
-            2 => _total.Coarse.ToList(),
+            2 => _total.Coarse,
             3 => _ledger.Last(7, DateOnly.FromDateTime(DateTime.Now)).Select(d => d.AverageW).ToList(),
-            _ => _total.Recent.Count > _rangePoints ? _total.Recent.Skip(_total.Recent.Count - _rangePoints).ToList() : _total.Recent.ToList(),
+            _ => _total.Recent,
         };
+        var from = _range is 0 or 1 && pts.Count > _rangePoints ? pts.Count - _rangePoints : 0;
+        var count = pts.Count - from;
         var w = _chart.ActualWidth;
         var h = _chart.Height;
-        if (w < 10 || pts.Count < 2) { _chartNote.Text = "Waiting for readings…"; return; }
-        var top = Math.Max(20, Math.Ceiling(pts.Max() * 1.25 / 20) * 20);
-        var step = w / (Math.Max(pts.Count, 60) - 1);
-        var pc = new List<Point>(pts.Count);
-        for (var i = 0; i < pts.Count; i++) pc.Add(new Point(i * step, h - 3 - pts[i] / top * (h - 10)));
+        if (w < 10 || count < 2) { _chart.Children.Clear(); _chartKey = null; _chartNote.Text = "Waiting for readings…"; return; }
+
+        // Nothing new (same range, width and readings): keep what is drawn, which costs nothing.
+        var key = $"{_range}|{w:0}|{count}|{pts[^1]:0.0}|{pts[from + count / 2]:0.0}|{_totalFromPlug}";
+        if (key == _chartKey) return;
+        _chartKey = key;
+        _chart.Children.Clear();
+
+        var max = 0.0;
+        for (var i = from; i < pts.Count; i++) max = Math.Max(max, pts[i]);
+        var top = Math.Max(20, Math.Ceiling(max * 1.25 / 20) * 20);
+        var step = w / (Math.Max(count, _range == 3 ? 7 : 60) - 1);
+        var pc = new List<Point>(count);
+        for (var i = 0; i < count; i++) pc.Add(new Point(i * step, h - 3 - pts[from + i] / top * (h - 10)));
+        var thin = Ui.Thin(pc, 200);   // a line a few hundred pixels wide gains nothing from thousands of curve segments
         var color = ((SolidColorBrush)Application.Current.FindResource(CpuKey)).Color;
-        var area = new Path { Data = Ui.Smooth(pc, h), IsHitTestVisible = false, Fill = new LinearGradientBrush(Color.FromArgb(0x70, color.R, color.G, color.B), Color.FromArgb(0, color.R, color.G, color.B), 90) };
-        var line = new Path { Data = Ui.Smooth(pc), StrokeThickness = 2.5, StrokeLineJoin = PenLineJoin.Round, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, IsHitTestVisible = false };
+        var area = new Path { Data = Ui.Smooth(thin, h), IsHitTestVisible = false, Fill = new LinearGradientBrush(Color.FromArgb(0x70, color.R, color.G, color.B), Color.FromArgb(0, color.R, color.G, color.B), 90) };
+        var line = new Path { Data = Ui.Smooth(thin), StrokeThickness = 2.5, StrokeLineJoin = PenLineJoin.Round, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, IsHitTestVisible = false };
         line.SetResourceReference(Shape.StrokeProperty, CpuKey);
         _chart.Children.Add(area);
         _chart.Children.Add(line);

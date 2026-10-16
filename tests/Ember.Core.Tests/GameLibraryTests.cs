@@ -162,3 +162,19 @@ public class GameLibraryTests : IDisposable
         Assert.Null(GameLookup.ByExe(lib, null));
     }
 }
+
+public class NetworkPathTests
+{
+    [Theory]
+    [InlineData(@"\\server\share\game", true)]
+    [InlineData("//server/share/game", true)]
+    [InlineData(@"C:\Games\Starfall", false)]
+    [InlineData("D:/Games/Starfall", false)]
+    public void Network_shares_are_recognised(string path, bool network) => Assert.Equal(network, GameScanner.IsNetworkPath(path));
+
+    [Fact]
+    public void A_network_folder_is_never_read()
+    {
+        Assert.Null(GameScanner.FromFolder("A", "GOG", @"\\127.0.0.1\nowhere\game"));
+    }
+}

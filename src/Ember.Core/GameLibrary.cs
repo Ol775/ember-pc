@@ -122,13 +122,16 @@ public static partial class GameScanner
     {
         try
         {
-            if (!Directory.Exists(installDir)) return null;
+            if (IsNetworkPath(installDir) || !Directory.Exists(installDir)) return null;
             var exes = FindExes(installDir).ToList();
             if (launchExe is { Length: > 0 } && Path.GetFileName(launchExe) is { Length: > 0 } l && !exes.Contains(l, StringComparer.OrdinalIgnoreCase)) exes.Add(l);
             return exes.Count == 0 ? null : new LibraryGame(name.Trim(), launcher, installDir, exes);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return null; }
     }
+
+    /// <summary>A share on the network (a server share, written with two backslashes): never read, so a bad entry cannot make this PC contact another one.</summary>
+    public static bool IsNetworkPath(string path) => path.StartsWith("\\\\", StringComparison.Ordinal) || path.StartsWith("//", StringComparison.Ordinal);
 
     /// <summary>The program file names in a game folder (a few levels deep), biggest first, without installers and helpers.</summary>
     public static IEnumerable<string> FindExes(string dir)

@@ -79,4 +79,46 @@ public class WindowTests
         Assert.True(grown < 6, $"Managed memory grew by {grown:0.0} MB over 40 laps of every page");
         UiHost.ThrowIfErrors();
     }
+    [UiFact]
+    public void The_power_page_draws_each_range_from_history()
+    {
+        if (!Ember.Core.BuildFeatures.NewLook) return;   // the range buttons belong to the new look
+        var window = UiHost.Window;
+        var start = DateTimeOffset.UtcNow.AddMinutes(-70);
+        UiHost.Run(() =>
+        {
+            for (var i = 0; i < 70 * 60; i++)
+            {
+                var wave = Math.Sin(i / 90.0) * 30 + Math.Sin(i / 11.0) * 8;
+                window.Power.Feed(start.AddSeconds(i), new Ember.Core.PowerSummary(70 + wave, 26 + wave / 4, null));
+            }
+        });
+        Open("Power");
+        var segments = UiHost.Run(() => FindAll<System.Windows.Controls.RadioButton>(window.Power).Where(r => r.GroupName == "PowerRange").ToList());
+        Assert.Equal(4, segments.Count);
+        for (var i = 0; i < segments.Count; i++)
+        {
+            var radio = segments[i];
+            UiHost.Run(() => { radio.IsChecked = true; radio.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent)); });
+            UiHost.Settle();
+            UiHost.Shot("Power-range-" + i);
+        }
+        UiHost.ThrowIfErrors();
+    }
+
+    static List<T> FindAll<T>(DependencyObject root) where T : DependencyObject
+    {
+        var found = new List<T>();
+        void Walk(DependencyObject o)
+        {
+            for (var i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(o); i++)
+            {
+                var c = System.Windows.Media.VisualTreeHelper.GetChild(o, i);
+                if (c is T t) found.Add(t);
+                Walk(c);
+            }
+        }
+        Walk(root);
+        return found;
+    }
 }

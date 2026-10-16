@@ -23,6 +23,7 @@ static class GameLogos
     public static Logo? For(LibraryGame game)
     {
         var key = game.Launcher + "|" + game.Name;
+        if (GameScanner.IsNetworkPath(game.InstallDir)) return null;
         if (Cache.TryGetValue(key, out var hit)) return hit;
         Logo? logo = null;
         try { logo = SteamCover(game) ?? ExeIcon(game); }

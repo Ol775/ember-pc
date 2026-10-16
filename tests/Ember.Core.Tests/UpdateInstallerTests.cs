@@ -64,4 +64,21 @@ public class UpdateInstallerTests : IDisposable
         Assert.EndsWith("Ember-Setup-0.2.0.exe", r.InstallerUrl);
         Assert.EndsWith(".exe.sha256", r.HashUrl);
     }
+
+    [Fact]
+    public void A_checked_file_is_held_so_it_cannot_be_swapped_and_a_changed_file_is_refused()
+    {
+        Directory.CreateDirectory(_dir);
+        var path = Path.Combine(_dir, "setup.exe");
+        File.WriteAllBytes(path, Payload);
+        using (var held = UpdateInstaller.OpenChecked(path, Hash))
+        {
+            Assert.NotNull(held);
+            Assert.ThrowsAny<IOException>(() => File.WriteAllBytes(path, [9, 9]));   // nothing can write to it while it is held
+            Assert.ThrowsAny<IOException>(() => File.Delete(path));
+        }
+        File.WriteAllBytes(path, [9, 9]);
+        Assert.Null(UpdateInstaller.OpenChecked(path, Hash));
+        Assert.Null(UpdateInstaller.OpenChecked(Path.Combine(_dir, "missing.exe"), Hash));
+    }
 }

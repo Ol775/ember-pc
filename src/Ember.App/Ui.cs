@@ -124,6 +124,16 @@ static class Ui
         return grid;
     }
 
+    /// <summary>At most <paramref name="max"/> points spread evenly along the line, always ending on the last one: a line that is a few hundred pixels wide gains nothing from more, and every point costs a curve segment each time it is drawn.</summary>
+    public static IList<Point> Thin(IList<Point> p, int max = 160)
+    {
+        if (p.Count <= max) return p;
+        var thin = new List<Point>(max);
+        for (var i = 0; i < max - 1; i++) thin.Add(p[(int)((long)i * (p.Count - 1) / (max - 1))]);
+        thin.Add(p[^1]);
+        return thin;
+    }
+
     /// <summary>A smooth curve through the points (a Catmull-Rom spline drawn as Bezier segments), optionally closed down to a baseline for an area fill.</summary>
     public static Geometry Smooth(IList<Point> p, double closeToY = double.NaN)
     {
