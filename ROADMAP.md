@@ -7,6 +7,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 - Nanoleaf, Razer Chroma, Meross and Tapo (marked Beta in every build): written and unit-tested, but not yet tried on enough real devices
 - Game detection (Beta, in the production build behind Experimental features) and GPU fan control (beta builds only): working on the test PC, to be tried on other PCs and graphics cards before they leave Experimental
 - Scheduled fan modes and scenes, and Windows alerts for a hot part or a stopped fan (beta builds only)
+- Logitech G keys and badge (beta.3): the keyboard and G keys staying lit together after updating, and the badge on its own
 - Stream Deck plugin (beta builds only): hold actions, the readout keys, and Update and Remove from the Devices page
 - Per-key keyboard layouts and Govee segments on more keyboards and lamps
 - A clean install on a PC that never had Ember
@@ -24,6 +25,8 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 - A tray tooltip with the current temperatures and power draw
 - Stream Deck: show the GPU fan percentage when the card reports 0 RPM at idle
 - Corsair: say "update iCUE" when iCUE refuses the connection
+- Logitech: show the G keys device only on keyboards that have G keys, and keep OpenRGB from also listing a keyboard Ember already drives through G HUB (the G915 appeared twice)
+- Spectrum bars: stay see-through in silence on single-row lights, so a steady colour layer underneath is not blacked out
 
 ## Later (ideas, no promise)
 
@@ -57,7 +60,7 @@ ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up i
 ### Lighting
 
 - Lighting through OpenRGB and Govee (LAN and cloud), layered effects, scenes, screen sync, music-reactive effects
-- Logitech G keyboards and mice through G HUB, per key, with the programmable G keys as a device of their own
+- Logitech G keyboards and mice through G HUB, per key, with the programmable G keys and the LIGHTSPEED badge as a device of their own
 - Corsair devices through iCUE (keep iCUE up to date)
 - A Stream Deck plugin (beta): keys for scenes, lights, brightness, fan mode and live temperature and fan readouts
 - Philips Hue lights through the bridge, Nanoleaf light panels through the controller, Razer Chroma through Synapse, Meross and Tapo bulbs on the local network
