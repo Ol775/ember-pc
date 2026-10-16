@@ -36,3 +36,5 @@ To light Corsair devices Ember uses Corsair's SDK libraries, shipped unmodified 
 The signed PawnIO driver lets Ember read motherboard sensors and fan headers. The Ember installer downloads PawnIO's official setup from <https://github.com/namazso/PawnIO.Setup> and checks its SHA-256 and signature before running it. It is not included in Ember's files because its setup program publishes no redistribution terms. PawnIO itself is published by its author under its own licence (<https://github.com/namazso/PawnIO>).
 
 - **Logitech G HUB** (not bundled): if it is installed, Ember loads its LED SDK engine (sdk_legacy_led_x64.dll, found through G HUB's own registry entry and only if it sits under Program Files) to light Logitech G keyboards and mice. Logitech and G HUB are trademarks of Logitech; Ember is not affiliated with Logitech.
+
+- **Brand marks from Simple Icons** (CC0, <https://simpleicons.org>): the Logitech, Corsair, Razer, Philips Hue, Elgato and TP-Link marks on the Devices page, drawn as single-colour shapes. The names and logos belong to their owners. Ember is not affiliated with them; the marks only say which integration a card is for.

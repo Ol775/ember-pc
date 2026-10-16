@@ -67,6 +67,7 @@ public partial class MainWindow : Window
             var plugs = new Ember.Lighting.Meross.PlugMonitor(MerossSession, new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http), () => Power.Links);
             var providers = new Ember.Lighting.Meross.IPlugProvider[] { plugs, new Ember.Lighting.Tapo.TapoPlugMonitor(_tapo, () => Power.Links) };
             Power.Attach(providers, new Ember.Lighting.Meross.PlugLinkStore(Ember.Lighting.Meross.PlugLinkStore.DefaultPath));
+            Power.AttachCost(PowerLedger.Load(PowerLedger.DefaultPath), () => _vm.Prefs.PricePerKwh, price => Remember(_vm.Prefs with { PricePerKwh = price }));
             _plugTimer = new DispatcherTimer(TimeSpan.FromSeconds(3), DispatcherPriority.Background, async (_, _) =>
             {
                 // In the tray the plugs are read less often: nobody is watching the live figure.
@@ -784,7 +785,11 @@ public partial class MainWindow : Window
         _thermalStore.Delete();
     }
 
-    void SaveThermal() { if (_thermal.LastSample is not null) _thermalStore.TrySave(_thermal); }
+    void SaveThermal()
+    {
+        if (_thermal.LastSample is not null) _thermalStore.TrySave(_thermal);
+        Power.SaveLedger();
+    }
 
     async void OnCurveCopy(IReadOnlyList<CurvePoint> points)
     {
@@ -1039,6 +1044,7 @@ public partial class MainWindow : Window
             // A ring fills over 0 to 100 degrees; with no reading it sits empty and shows a dash.
             (CpuRing.Fraction, CpuRing.Label) = (_cpuTemp is { } c ? c / 100 : 0, _cpuTemp is { } c2 ? $"{c2:0}°" : "–");
             (GpuRing.Fraction, GpuRing.Label) = (_gpuTemp is { } g ? g / 100 : 0, _gpuTemp is { } g2 ? $"{g2:0}°" : "–");
+            if (DashboardPage.Visibility == Visibility.Visible) UpdateTiles();
         }
         if (DevicesPageView.Visibility == Visibility.Visible) Devices.Update(_vm, _lights);
         if (PowerPageView.Visibility == Visibility.Visible) Power.Update();

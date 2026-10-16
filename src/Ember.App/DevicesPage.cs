@@ -28,9 +28,7 @@ public sealed class DevicesPage : UserControl
     {
         Content = _root;
         Focusable = false;
-        var title = new TextBlock { Text = "Devices and integrations", FontSize = 22, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 16) };
-        AutomationProperties.SetHeadingLevel(title, AutomationHeadingLevel.Level2);
-        _root.Children.Add(title);
+        _root.Children.Add(BuildHeading());
         _root.Children.Add(_cards);
         _root.Children.Add(Panel("All devices", _rows, new Thickness(0)));
         ThemeManager.Changed += () => _key = null;
@@ -38,6 +36,7 @@ public sealed class DevicesPage : UserControl
 
     public void Update(MainViewModel vm, LightingManager lights)
     {
+        _lights = lights;
         var headers = vm.FansPage.Headers;
         var devices = lights.Devices;
         var status = lights.SourceStatus;
@@ -54,7 +53,7 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Card("Sensors and fans", vm.FansPage.ServiceAvailable ? "Connected" : "Service not running", vm.FansPage.ServiceAvailable,
             "LibreHardwareMonitor, runs in the Ember service",
             $"{headers.Count} fan headers shown, {controllable} controlled by Ember" + (_serviceNote.Length > 0 ? "\n" + _serviceNote : ""),
-            actions: ServiceActions()));
+            actions: BuildFeatures.NewLook ? null : ServiceActions()));
         _cards.Children.Add(Source("OpenRGB", "SDK server on localhost, started with Ember", devices, status, lights));
         _cards.Children.Add(Source("Govee", "LAN first; cloud only with your API key", devices, status, lights));
         _cards.Children.Add(Source("Logitech", "Keyboards and mice, through G HUB", devices, status, lights));
@@ -116,13 +115,13 @@ public sealed class DevicesPage : UserControl
     {
         _cards.ColumnDefinitions.Clear();
         _cards.RowDefinitions.Clear();
-        _cards.ColumnDefinitions.Add(new ColumnDefinition());
-        _cards.ColumnDefinitions.Add(new ColumnDefinition());
-        for (var r = 0; r < (_cards.Children.Count + 1) / 2; r++) _cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        var columns = BuildFeatures.NewLook ? 3 : 2;
+        for (var c = 0; c < columns; c++) _cards.ColumnDefinitions.Add(new ColumnDefinition());
+        for (var r = 0; r < (_cards.Children.Count + columns - 1) / columns; r++) _cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         for (var i = 0; i < _cards.Children.Count; i++)
         {
-            Grid.SetColumn(_cards.Children[i], i % 2);
-            Grid.SetRow(_cards.Children[i], i / 2);
+            Grid.SetColumn(_cards.Children[i], i % columns);
+            Grid.SetRow(_cards.Children[i], i / columns);
         }
     }
 
@@ -182,8 +181,90 @@ public sealed class DevicesPage : UserControl
         return tag;
     }
 
+    LightingManager? _lights;
+
+    FrameworkElement BuildHeading()
+    {
+        if (!BuildFeatures.NewLook)
+        {
+            var classic = new TextBlock { Text = "Devices and integrations", FontSize = 22, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 16) };
+            AutomationProperties.SetHeadingLevel(classic, AutomationHeadingLevel.Level2);
+            return classic;
+        }
+        var head = new DockPanel { Margin = new Thickness(0, 0, 0, 16) };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        buttons.Children.Add(Pill("Restart services", () => _ = RestartServicesAsync(), "Restart the Ember services"));
+        var scan = Pill("Scan for devices", () => { _lights?.RefreshDevices(); _key = null; }, "Look for devices again");
+        scan.Style = Sty("PrimaryButton");
+        scan.Margin = new Thickness(0, 0, 0, 6);
+        buttons.Children.Add(scan);
+        DockPanel.SetDock(buttons, Dock.Right);
+        head.Children.Add(buttons);
+        var text = new StackPanel();
+        var title = new TextBlock { Text = "Devices", FontSize = 24, FontWeight = FontWeights.SemiBold };
+        AutomationProperties.SetHeadingLevel(title, AutomationHeadingLevel.Level2);
+        text.Children.Add(title);
+        text.Children.Add(WithMargin(Text("Everything Ember can light or read. Switch an integration off and Ember lets go of it.", muted: true, size: 13), 0, 2, 0, 0));
+        head.Children.Add(text);
+        return head;
+    }
+
+    /// <summary>The mark of an integration: its logo where there is one, else its first letters, on a rounded tile.</summary>
+    static FrameworkElement LogoTile(string title)
+    {
+        var tile = new Border { Width = 40, Height = 40, CornerRadius = new CornerRadius(12), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
+        tile.SetResourceReference(Border.BackgroundProperty, "TrackBrush");
+        if (BrandLogos.For(title) is { } path)
+        {
+            var shape = new System.Windows.Shapes.Path { Data = Geometry.Parse(path), Stretch = Stretch.Uniform, Width = 20, Height = 20, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            shape.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "TextBrush");
+            tile.Child = shape;
+        }
+        else
+        {
+            var letters = title switch { "Sensors and fans" => "Ss", "OpenRGB" => "Rg", "Govee" => "Gv", "Nanoleaf" => "Nl", "Meross" => "Me", _ => title[..Math.Min(2, title.Length)] };
+            var t = new TextBlock { Text = letters, FontWeight = FontWeights.Bold, FontSize = 14, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            t.SetResourceReference(TextBlock.ForegroundProperty, "AccentTextBrush");
+            tile.Child = t;
+        }
+        return tile;
+    }
+
+    /// <summary>The redesigned card: logo, name and switch on top, the status as a small tag, then what it is and what it found.</summary>
+    static FrameworkElement NewCard(string title, string pill, bool good, string blurb, string detail, FrameworkElement? toggle, FrameworkElement? actions)
+    {
+        var head = new DockPanel();
+        var logo = LogoTile(title);
+        DockPanel.SetDock(logo, Dock.Left);
+        head.Children.Add(logo);
+        if (toggle is not null) { toggle.Margin = new Thickness(0); toggle.VerticalAlignment = VerticalAlignment.Center; DockPanel.SetDock(toggle, Dock.Right); head.Children.Add(toggle); }
+        var name = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        name.Children.Add(Text(title, weight: FontWeights.SemiBold, size: 15));
+        if (BetaIntegrations.Contains(title)) name.Children.Add(BetaTag());
+        head.Children.Add(name);
+
+        var chip = new Border
+        {
+            CornerRadius = new CornerRadius(10), Padding = new Thickness(9, 2, 9, 3), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 12, 0, 0),
+            Child = new TextBlock { Text = pill, FontSize = 11.5, FontWeight = FontWeights.SemiBold },
+        };
+        if (good) { chip.Background = ThemeManager.GoodSoft; ((TextBlock)chip.Child).Foreground = ThemeManager.Good; }
+        else { chip.SetResourceReference(Border.BackgroundProperty, "TrackBrush"); ((TextBlock)chip.Child).SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush"); }
+
+        var body = new StackPanel();
+        body.Children.Add(head);
+        body.Children.Add(chip);
+        body.Children.Add(WithMargin(Text(blurb, muted: true, size: 12.5), 0, 8, 0, 0));
+        if (detail.Length > 0) body.Children.Add(WithMargin(Text(detail, size: 12.5), 0, 4, 0, 0));
+        if (actions is not null) body.Children.Add(WithMargin(actions, 0, 10, 0, 0));
+        var box = Panel(title, body, new Thickness(6));
+        box.Header = null;
+        return box;
+    }
+
     static FrameworkElement Card(string title, string pill, bool good, string blurb, string detail, FrameworkElement? toggle = null, FrameworkElement? actions = null)
     {
+        if (BuildFeatures.NewLook) return NewCard(title, pill, good, blurb, detail, toggle, actions);
         var head = new DockPanel();
         var chip = new Border
         {

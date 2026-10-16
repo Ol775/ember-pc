@@ -12,7 +12,7 @@ public sealed record AppPreferences(TemperatureUnit Unit, StartPage StartPage, T
     AccentChoice Accent = AccentChoice.Orange, UpdateChannel Channel = UpdateChannel.Stable, bool AutoCheckUpdates = true, int AcceptedTerms = 0,
     bool KeepInTray = false, bool StartMinimised = false, bool AiLearning = false, double AiPreference = 0.35,
     SurfaceTone Tone = SurfaceTone.Warm, HighlightStrength Highlight = HighlightStrength.Normal, string CustomAccent = ThemePalette.DefaultCustomAccent,
-    string SkippedVersion = "", UiSize Size = UiSize.Normal, string GpuColour = "Auto", bool RememberWindow = false, string Window = "")
+    string SkippedVersion = "", UiSize Size = UiSize.Normal, string GpuColour = "Auto", bool RememberWindow = false, string Window = "", double PricePerKwh = 0.28)
 {
     public static readonly AppPreferences Default = new(TemperatureUnit.Celsius, StartPage.Dashboard);
 
@@ -61,7 +61,8 @@ public sealed class PreferencesStore(string path)
                 Field(doc.RootElement, "Size", AppPreferences.Default.Size),
                 GpuChoice(Field(doc.RootElement, "GpuColour", AppPreferences.Default.GpuColour)),
                 Field(doc.RootElement, "RememberWindow", AppPreferences.Default.RememberWindow),
-                WindowText(Field(doc.RootElement, "Window", AppPreferences.Default.Window)));
+                WindowText(Field(doc.RootElement, "Window", AppPreferences.Default.Window)),
+                Price(Field(doc.RootElement, "PricePerKwh", AppPreferences.Default.PricePerKwh)));
         }
         catch (Exception)
         {
@@ -79,6 +80,9 @@ public sealed class PreferencesStore(string path)
     static string WindowText(string v) => WindowPlacement.TryParse(v, out _) ? v : "";
 
     static string CustomColour(string v) => ThemePalette.IsHexColour(v) ? v.ToLowerInvariant() : AppPreferences.Default.CustomAccent;
+
+    /// <summary>The price of a kWh the person typed: a sensible positive number, else the default.</summary>
+    static double Price(double v) => double.IsFinite(v) && v is >= 0 and <= 10 ? v : AppPreferences.Default.PricePerKwh;
 
     static double ClampUnit(double v) => double.IsFinite(v) ? Math.Clamp(v, 0, 1) : AppPreferences.Default.AiPreference;
 

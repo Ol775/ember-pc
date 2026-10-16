@@ -24,12 +24,17 @@ static class SystemSpecs
     const string Hardware = @"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System";
     const string GpuClass = @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}";
 
-    public static IReadOnlyList<SpecGroup> Collect() =>
-        new[]
+    public static SpecReport Collect()
+    {
+        var drives = ReadDrives();
+        var groups = new[]
         {
-            Group("Processor", Cpu), Group("Graphics", Gpus), Group("Memory", Memory), Group("Motherboard", Board),
-            Group("Storage", Storage), Group("Drive health (S.M.A.R.T.)", Drives), Group("Displays", Displays), Group("Windows", Windows), Group("Ember", EmberInfo),
-        }.Where(g => g.Items.Count > 0).ToList();
+            Group("Processor", Cpu), Group("Graphics", Gpus), Group("Memory", Memory), Group("Motherboard", Board), Group("Storage", Storage),
+            new SpecGroup("Drive health (S.M.A.R.T.)", drives.Select(d => new SpecItem(d.Name, d.ToLine(), !d.HealthOk)).ToList()),
+            Group("Displays", Displays), Group("Windows", Windows), Group("Ember", EmberInfo),
+        };
+        return new SpecReport(groups.Where(g => g.Items.Count > 0).ToList(), drives);
+    }
 
     static SpecGroup Group(string title, Func<IEnumerable<SpecItem>> read)
     {
@@ -103,41 +108,70 @@ static class SystemSpecs
     /// Health of each physical drive. Windows tells everyone the health status and (for SATA drives) whether S.M.A.R.T. predicts a
     /// failure; temperature, wear and hours on are shown where the drive reports them.
     /// </summary>
-    static IEnumerable<SpecItem> Drives()
+    public static IReadOnlyList<DriveSpec> ReadDrives()
+    {
+        try { return ReadDrivesCore(); }
+        catch (Exception ex) { DiagLog.Warn("Specs", "The drives could not be read", ex); return []; }
+    }
+
+    static List<DriveSpec> ReadDrivesCore()
     {
         const string storage = @"root\Microsoft\Windows\Storage";
         var predicted = new List<(string Instance, bool Fail)>();
         try { foreach (var p in Query(@"root\wmi", "SELECT InstanceName, PredictFailure FROM MSStorageDriver_FailurePredictStatus")) predicted.Add((p["InstanceName"]?.ToString() ?? "", p["PredictFailure"] is true)); }
         catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException) { /* USB and NVMe drives do not report this */ }
 
+        // Which drive letters live on which physical disk.
+        var letters = new Dictionary<string, List<char>>();
+        try
+        {
+            foreach (var p in Query(storage, "SELECT DiskNumber, DriveLetter FROM MSFT_Partition"))
+            {
+                var letter = p["DriveLetter"] is null ? 0 : Convert.ToInt32(p["DriveLetter"]);
+                if (letter <= 0 || p["DiskNumber"] is null) continue;
+                var disk = p["DiskNumber"]!.ToString()!;
+                if (!letters.TryGetValue(disk, out var list)) letters[disk] = list = [];
+                list.Add((char)letter);
+            }
+        }
+        catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException) { /* the drives just show no letters */ }
+
+        var drives = new List<DriveSpec>();
         foreach (var d in Query(storage, "SELECT * FROM MSFT_PhysicalDisk").OrderBy(d => d["DeviceId"]?.ToString()?.PadLeft(4)))
         {
             var name = d["FriendlyName"]?.ToString()?.Trim() ?? "Drive";
-            var parts = new List<string>();
-            var alert = false;
             var health = d["HealthStatus"] is ushort h ? h : (ushort)5;
-            if (health == 0) parts.Add("Healthy"); else if (health == 1) { parts.Add("Warning"); alert = true; } else if (health == 2) { parts.Add("Unhealthy"); alert = true; }
+            var text = health switch { 0 => "Healthy", 1 => "Warning", 2 => "Unhealthy", _ => "" };
+            var ok = health is 0 or 5;
             // MSStorageDriver names the drive by the first 16 characters of its model.
             var model = name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Last();
             model = model[..Math.Min(16, model.Length)];
             if (predicted.FirstOrDefault(p => p.Instance.Contains(model, StringComparison.OrdinalIgnoreCase)) is { Instance.Length: > 0 } match)
             {
-                if (match.Fail) { parts.Add("S.M.A.R.T. predicts a failure: back up now"); alert = true; }
-                else parts.Add("S.M.A.R.T. passed");
+                if (match.Fail) { text = "S.M.A.R.T. predicts a failure: back up now"; ok = false; }
+                else if (ok) text = "S.M.A.R.T. passed";
             }
-            parts.Add((d["BusType"] is ushort bus ? bus switch { 17 => "NVMe", 11 => "SATA", 7 => "USB", _ => "" } : "") + (d["MediaType"] is ushort mt ? mt switch { 3 => " hard disk", 4 => " SSD", _ => "" } : ""));
-            if (d["Size"] is ulong size) parts.Add(SpecSheet.Bytes(size));
+            var bus = d["BusType"] is ushort b ? b : (ushort)0;
+            var media = d["MediaType"] is ushort mt ? mt : (ushort)0;
+            var kind = (bus switch { 17 => "NVMe", 11 => "SATA", 7 => "USB", _ => "" } + media switch { 3 => " hard disk", 4 => " SSD", _ => "" }).Trim();
+
             // The counters hang off the disk (the same route Get-StorageReliabilityCounter takes); a drive that gives none just shows less.
             ManagementBaseObject? c = null;
             try { c = d.GetRelated("MSFT_StorageReliabilityCounter").Cast<ManagementBaseObject>().FirstOrDefault(); } catch (ManagementException) { }
-            if (c is not null)
-            {
-                if (Num(c["Temperature"]) is > 0 and var t) parts.Add($"{t} °C");
-                if (d["MediaType"] is (ushort)4 && Num(c["Wear"]) is >= 0 and < 255 and var w) parts.Add($"{w}% worn");
-                if (Num(c["PowerOnHours"]) is > 0 and var hours) parts.Add($"{hours:N0} h on");
-            }
-            yield return new(name, string.Join(", ", parts.Select(p => p.Trim()).Where(p => p.Length > 0)), alert);
+            int? temp = c is not null && Num(c["Temperature"]) is > 0 and var t ? (int)t : null;
+            long? hours = c is not null && Num(c["PowerOnHours"]) is > 0 and var oh ? oh : null;
+            int? wear = c is not null && media == 4 && Num(c["Wear"]) is >= 0 and < 255 and var w ? (int)w : null;
+
+            // Space is the total of its volumes; a disk with none (or one that went away) shows its size and no free space.
+            ulong total = 0, free = 0;
+            var mine = letters.TryGetValue(d["DeviceId"]?.ToString() ?? "", out var own) ? own.OrderBy(x => x).ToList() : [];
+            foreach (var letter in mine)
+                try { var di = new DriveInfo(letter.ToString()); total += (ulong)di.TotalSize; free += (ulong)di.AvailableFreeSpace; }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException) { /* not ready */ }
+            if (total == 0 && d["Size"] is ulong size) total = free = size;
+            drives.Add(new DriveSpec(name, kind, bus == 7, string.Join(" ", mine.Select(x => x + ":")), total, free, text, ok, temp, hours, wear));
         }
+        return drives;
     }
 
     static long? Num(object? o) => o is null ? null : Convert.ToInt64(o);

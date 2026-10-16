@@ -162,3 +162,22 @@ public class SkippedVersionTests : IDisposable
         Assert.False(store.Load().AutoCheckUpdates);
     }
 }
+
+public class PricePreferenceTests
+{
+    static AppPreferences RoundTrip(string json)
+    {
+        var path = Path.Combine(Path.GetTempPath(), "ember-prefs-" + Guid.NewGuid().ToString("N") + ".json");
+        try { File.WriteAllText(path, json); return new PreferencesStore(path).Load(); }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public void Price_is_kept_when_sensible_and_defaulted_otherwise()
+    {
+        Assert.Equal(0.31, RoundTrip("{\"PricePerKwh\":0.31}").PricePerKwh);
+        Assert.Equal(0.28, RoundTrip("{\"PricePerKwh\":-4}").PricePerKwh);
+        Assert.Equal(0.28, RoundTrip("{\"PricePerKwh\":1000}").PricePerKwh);
+        Assert.Equal(0.28, RoundTrip("{}").PricePerKwh);
+    }
+}

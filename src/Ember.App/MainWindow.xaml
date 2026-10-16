@@ -87,10 +87,22 @@
                               AutomationProperties.Name="{Binding MotherboardText, StringFormat=Motherboard temperature {0}}">
                         <StackPanel><TextBlock Text="{Binding MotherboardText}" Style="{StaticResource StatValue}" /><TextBlock Text="{Binding MotherboardSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
-                    <GroupBox Header="Fans (average)" Style="{StaticResource Panel}" Margin="6"
+                    <Grid Margin="6">
+                    <GroupBox x:Name="FansAvgCard" Header="Fans (average)" Style="{StaticResource Panel}" Margin="0"
                               AutomationProperties.Name="{Binding FanAverageText, StringFormat=Fans average {0}}">
                         <StackPanel><TextBlock Text="{Binding FanAverageText}" Style="{StaticResource StatValue}" /><TextBlock Text="{Binding FansSub}" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" /></StackPanel>
                     </GroupBox>
+                    <GroupBox x:Name="ModeCard" Header="Fan mode" Style="{StaticResource Panel}" Margin="0" Visibility="Collapsed" AutomationProperties.Name="Fan mode">
+                        <ItemsControl ItemsSource="{Binding FansPage.Modes}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <RadioButton GroupName="DashboardMode" Content="{Binding Label}" IsChecked="{Binding Selected, Mode=OneWay}"
+                                                 IsEnabled="{Binding Enabled}" Tag="{Binding Mode}" Click="OnModePicked" Style="{StaticResource ModeRow}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </GroupBox>
+                    </Grid>
                 </UniformGrid>
 
                 <Grid>
@@ -149,6 +161,20 @@
                     </StackPanel>
                 </GroupBox>
                 </Grid>
+                <UniformGrid x:Name="TilesRow" Columns="4" Margin="-6,10,-6,0" Visibility="Collapsed">
+                    <GroupBox Header="Wall power" Style="{StaticResource Panel}" Margin="6" AutomationProperties.Name="Wall power">
+                        <StackPanel><TextBlock x:Name="TilePower" Text="–" FontSize="20" FontWeight="SemiBold" /><TextBlock x:Name="TilePowerSub" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" /></StackPanel>
+                    </GroupBox>
+                    <GroupBox Header="Lights" Style="{StaticResource Panel}" Margin="6" AutomationProperties.Name="Lights">
+                        <StackPanel><TextBlock x:Name="TileScene" Text="–" FontSize="20" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" /><TextBlock x:Name="TileSceneSub" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" /></StackPanel>
+                    </GroupBox>
+                    <GroupBox Header="Game" Style="{StaticResource Panel}" Margin="6" AutomationProperties.Name="Game">
+                        <StackPanel><TextBlock x:Name="TileGame" Text="–" FontSize="20" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" /><TextBlock x:Name="TileGameSub" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" /></StackPanel>
+                    </GroupBox>
+                    <GroupBox Header="Drives" Style="{StaticResource Panel}" Margin="6" AutomationProperties.Name="Drives">
+                        <StackPanel><TextBlock x:Name="TileDrives" Text="Checking…" FontSize="20" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" /><TextBlock x:Name="TileDrivesSub" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" /></StackPanel>
+                    </GroupBox>
+                </UniformGrid>
             </StackPanel>
         </ScrollViewer>
 

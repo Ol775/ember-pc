@@ -27,6 +27,9 @@ public partial class MainWindow
             (CpuRing.Visibility, GpuRing.Visibility) = (Visibility.Visible, Visibility.Visible);
             (CpuValue.Visibility, GpuValue.Visibility) = (Visibility.Collapsed, Visibility.Collapsed);
             Root.ColumnDefinitions[0].Width = new GridLength(224);
+            (ModeCard.Visibility, FansAvgCard.Visibility, TilesRow.Visibility) = (Visibility.Visible, Visibility.Collapsed, Visibility.Visible);
+            Specs.ReportReady += report => UpdateDriveTile(report);
+            _ = Task.Delay(20000).ContinueWith(_ => Dispatcher.InvokeAsync(() => Specs.LoadAsync())); // reads the drives once, after start-up has settled
         }
         if (!BuildFeatures.IsProduction) return;
         NavRoadmap.Visibility = Visibility.Collapsed;
@@ -174,5 +177,35 @@ public partial class MainWindow
         row.Children.Add(banner);
         row.Children.Add(bar);
         return row;
+    }
+}
+
+public partial class MainWindow
+{
+    /// <summary>The four tiles under the dashboard chart (redesign): wall power, lights, game and drive health.</summary>
+    void UpdateTiles()
+    {
+        var watts = Power.TotalWatts;
+        TilePower.Text = watts is { } w ? $"{w:0} W" : "–";
+        TilePowerSub.Text = Power.TotalFromPlug ? "Measured at the wall" : watts is null ? "Waiting for the sensors" : "CPU and GPU only";
+
+        var state = _lights.State;
+        TileScene.Text = state.On ? state.Current.Name : "Off";
+        var lit = _lights.Devices.Count(d => !d.Disabled);
+        TileSceneSub.Text = !state.On ? "Lights are off" : lit == 1 ? "1 device lit" : $"{lit} devices lit";
+
+        var game = _detection.ActiveGame;
+        TileGame.Text = game ?? "No game";
+        TileGameSub.Text = !_vm.FansPage.Experimental ? "Detection is off" : game is null ? "Detection is on" : "Game mode is on";
+    }
+
+    void UpdateDriveTile(SpecReport report)
+    {
+        if (report.Drives.Count == 0) { TileDrives.Text = "–"; TileDrivesSub.Text = "No drive information"; return; }
+        var sick = report.Drives.Count - report.HealthyDrives;
+        TileDrives.Text = sick == 0 ? "All healthy" : sick == 1 ? "1 needs a look" : $"{sick} need a look";
+        TileDrivesSub.Text = report.NearlyFullDrives > 0
+            ? $"{report.HealthyDrives} of {report.Drives.Count} pass · {report.NearlyFullDrives} nearly full"
+            : $"{report.HealthyDrives} of {report.Drives.Count} pass S.M.A.R.T.";
     }
 }

@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Ember.Core;
@@ -53,16 +55,30 @@ public sealed class PowerPage : UserControl
 
         var head = new DockPanel { Margin = new Thickness(0, 0, 0, 14) };
         _sourceChip.Child = _sourceChipText;
-        DockPanel.SetDock(_sourceChip, Dock.Right);
-        head.Children.Add(_sourceChip);
+        // The redesign shows the source chip inside the hero card; the classic page keeps it in the heading.
+        if (!BuildFeatures.NewLook)
+        {
+            DockPanel.SetDock(_sourceChip, Dock.Right);
+            head.Children.Add(_sourceChip);
+        }
         var title = new TextBlock { Text = "Power", FontSize = 24, FontWeight = FontWeights.SemiBold };
         AutomationProperties.SetHeadingLevel(title, AutomationHeadingLevel.Level2);
         head.Children.Add(title);
         _root.Children.Add(head);
 
-        _root.Children.Add(BuildHero());
-        _root.Children.Add(BuildChart());
-        _root.Children.Add(BuildCards());
+        var cards = BuildCards();   // always built: Update fills them, even when the redesign leaves them out
+        if (BuildFeatures.NewLook)
+        {
+            // Redesign: the live figure with its chart beside the cost estimate, then the breakdown beside the daily chart.
+            _root.Children.Add(TwoColumns(BuildNewHero(), BuildCostCard(), 1.45, 1));
+            _root.Children.Add(TwoColumns(BuildBreakdown(), BuildDailyCard(), 1.2, 1));
+        }
+        else
+        {
+            _root.Children.Add(BuildHero());
+            _root.Children.Add(BuildChart());
+            _root.Children.Add(cards);
+        }
 
         var plugBody = new StackPanel();
         plugBody.Children.Add(Text("Link a smart plug to see what your whole PC draws from the wall, and what other devices on plugs use. Ember only reads from a plug and never switches it. Only plugs that measure energy (Meross MSS310 and MSS315, Tapo P110 and P115) report power.", muted: true, size: 13));
@@ -158,6 +174,273 @@ public sealed class PowerPage : UserControl
         return grid;
     }
 
+    // ---- cost estimate, daily use and breakdown (redesign) ----
+
+    PowerLedger _ledger = new();
+    Func<double> _price = () => 0.28;
+    Action<double> _savePrice = _ => { };
+    readonly TextBlock _costToday = Text("–", size: 24, weight: FontWeights.SemiBold), _costMonth = Text("–", size: 24, weight: FontWeights.SemiBold), _costYear = Text("–", size: 24, weight: FontWeights.SemiBold);
+    readonly TextBlock _kwhToday = Text("", muted: true, size: 12), _kwhMonth = Text("", muted: true, size: 12), _kwhYear = Text("", muted: true, size: 12);
+    readonly TextBlock _costNote = Text("", muted: true, size: 12);
+    readonly TextBox _priceBox = new() { Style = Sty("TextField"), Width = 78, TextAlignment = TextAlignment.Right, Padding = new Thickness(6, 3, 6, 3), VerticalContentAlignment = VerticalAlignment.Center };
+    readonly Canvas _daily = new() { Height = 168, ClipToBounds = true };
+    readonly Grid _table = new();
+    string? _dailyKey, _tableKey;
+
+    /// <summary>Gives the page the energy ledger and the person's price per kWh (and where to keep a change to it).</summary>
+    public void AttachCost(PowerLedger ledger, Func<double> price, Action<double> savePrice)
+    {
+        (_ledger, _price, _savePrice) = (ledger, price, savePrice);
+        _priceBox.Text = price().ToString("0.00##", System.Globalization.CultureInfo.CurrentCulture);
+    }
+
+    public void SaveLedger()
+    {
+        if (_ledger.Dirty) _ledger.TrySave(PowerLedger.DefaultPath, DateOnly.FromDateTime(DateTime.Now));
+    }
+
+    static FrameworkElement TwoColumns(FrameworkElement left, FrameworkElement right, double leftWeight, double rightWeight)
+    {
+        var row = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(leftWeight, GridUnitType.Star), MinWidth = 260 });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(rightWeight, GridUnitType.Star), MinWidth = 260 });
+        left.Margin = new Thickness(0, 0, 6, 0);
+        right.Margin = new Thickness(6, 0, 0, 0);
+        Grid.SetColumn(right, 1);
+        row.Children.Add(left);
+        row.Children.Add(right);
+        return row;
+    }
+
+    /// <summary>The redesign's big card: "Whole PC, right now", the figure in large type with the average and peak, and the live chart under it.</summary>
+    FrameworkElement BuildNewHero()
+    {
+        var top = new DockPanel();
+        DockPanel.SetDock(_sourceChip, Dock.Right);
+        top.Children.Add(_sourceChip);
+        var label = Text("WHOLE PC, RIGHT NOW", size: 11.5, weight: FontWeights.SemiBold);
+        label.SetResourceReference(TextBlock.ForegroundProperty, "AccentTextBrush");
+        top.Children.Add(label);
+
+        _heroWatts.FontFamily = new FontFamily("Cascadia Mono, Consolas");
+        _heroWatts.FontSize = 54;
+        _heroWatts.FontWeight = FontWeights.Medium;
+        var figure = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
+        figure.Children.Add(_heroWatts);
+        _heroStats.VerticalAlignment = VerticalAlignment.Bottom;
+        _heroStats.Margin = new Thickness(16, 0, 0, 10);
+        figure.Children.Add(_heroStats);
+
+        _area.Opacity = 1;
+        _line.SetResourceReference(Shape.StrokeProperty, CpuKey);
+        _chart.Children.Add(_area);
+        _chart.Children.Add(_line);
+        _chart.Height = 96;
+
+        var body = new StackPanel();
+        body.Children.Add(top);
+        body.Children.Add(figure);
+        body.Children.Add(_heroSource);
+        body.Children.Add(WithMargin(_chart, 0, 10, 0, 0));
+        var hero = new Border { CornerRadius = new CornerRadius(18), Padding = new Thickness(20, 16, 20, 14), BorderThickness = new Thickness(1), Child = body };
+        hero.SetResourceReference(Border.BackgroundProperty, "AccentSoftBrush");
+        hero.SetResourceReference(Border.BorderBrushProperty, "AccentBrush");
+        return hero;
+    }
+
+    FrameworkElement BuildCostCard()
+    {
+        var symbol = new TextBlock { Text = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 4, 0) };
+        symbol.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
+        AutomationProperties.SetName(_priceBox, "Price per kilowatt hour");
+        _priceBox.LostKeyboardFocus += (_, _) => CommitPrice();
+        _priceBox.KeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Enter) { CommitPrice(); System.Windows.Input.Keyboard.ClearFocus(); } };
+        var priceRow = new DockPanel { Margin = new Thickness(0, 12, 0, 0) };
+        var priceInput = new StackPanel { Orientation = Orientation.Horizontal };
+        priceInput.Children.Add(symbol);
+        priceInput.Children.Add(_priceBox);
+        DockPanel.SetDock(priceInput, Dock.Right);
+        priceRow.Children.Add(priceInput);
+        priceRow.Children.Add(Text("Price per kWh", muted: true, size: 13));
+
+        var figures = new UniformGrid { Columns = 3 };
+        figures.Children.Add(Figure("Today so far", _costToday, _kwhToday));
+        figures.Children.Add(Figure("A month", _costMonth, _kwhMonth));
+        figures.Children.Add(Figure("A year", _costYear, _kwhYear));
+        var body = new StackPanel();
+        body.Children.Add(figures);
+        body.Children.Add(priceRow);
+        body.Children.Add(WithMargin(_costNote, 0, 8, 0, 0));
+        return Panel("Cost estimate", body, new Thickness(0));
+    }
+
+    FrameworkElement BuildDailyCard()
+    {
+        var legend = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
+        foreach (var (name, key) in new[] { ("CPU", CpuKey), ("GPU", GpuKey), ("The rest", "GoodBrush") })
+        {
+            var dot = new Ellipse { Width = 9, Height = 9, Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
+            if (key == "GoodBrush") dot.Fill = ThemeManager.Good; else dot.SetResourceReference(Shape.FillProperty, key);
+            legend.Children.Add(dot);
+            legend.Children.Add(WithMargin(Text(name, muted: true, size: 12), 0, 0, 14, 0));
+        }
+        var dailyBody = new StackPanel();
+        dailyBody.Children.Add(legend);
+        dailyBody.Children.Add(_daily);
+        _daily.SizeChanged += (_, _) => { _dailyKey = null; DrawDaily(); };
+        return Panel("Daily use (kWh)", dailyBody, new Thickness(0));
+    }
+
+    /// <summary>"Where the power goes": the split bar of the live draw, then the week's average per part.</summary>
+    FrameworkElement BuildBreakdown()
+    {
+        var body = new StackPanel();
+        body.Children.Add(Text("Average over the last week", muted: true, size: 12));
+        body.Children.Add(_split);
+        body.Children.Add(_table);
+        return Panel("Where the power goes", body, new Thickness(0));
+    }
+
+    static FrameworkElement Figure(string label, TextBlock value, TextBlock kwh)
+    {
+        var s = new StackPanel();
+        s.Children.Add(Text(label, muted: true, size: 12));
+        s.Children.Add(WithMargin(value, 0, 4, 0, 0));
+        s.Children.Add(WithMargin(kwh, 0, 2, 0, 0));
+        return s;
+    }
+
+    void CommitPrice()
+    {
+        if (double.TryParse(_priceBox.Text.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out var v) && v is >= 0 and <= 10)
+        {
+            if (Math.Abs(v - _price()) > 1e-9) _savePrice(v);
+            _dailyKey = _tableKey = null;
+        }
+        _priceBox.Text = _price().ToString("0.00##", System.Globalization.CultureInfo.CurrentCulture);   // a bad entry goes back to the last good price
+    }
+
+    void UpdateCost()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        var price = _price();
+        var t = _ledger.Today(today);
+        var typical = _ledger.Typical(today);
+        _costToday.Text = t.Seconds > 0 ? PowerCost.Format(PowerCost.Of(t.Kwh, price)) : "–";
+        _kwhToday.Text = t.Seconds > 0 ? $"{t.Kwh:0.00} kWh" : "No readings yet";
+        var daily = typical.TotalKwh;
+        _costMonth.Text = daily > 0 ? PowerCost.Format(PowerCost.Of(daily * PowerCost.DaysPerMonth, price)) : "–";
+        _kwhMonth.Text = daily > 0 ? $"{daily * PowerCost.DaysPerMonth:0} kWh" : "";
+        _costYear.Text = daily > 0 ? PowerCost.Format(PowerCost.Of(daily * PowerCost.DaysPerYear, price)) : "–";
+        _kwhYear.Text = daily > 0 ? $"{daily * PowerCost.DaysPerYear:#,0} kWh" : "";
+        _costNote.Text = daily == 0 ? "The estimate appears once Ember has watched the PC for a few minutes."
+            : _totalFromPlug ? "An estimate from your own use, measured at the wall. Not a bill."
+            : "An estimate from the CPU and graphics card only. Link your PC's plug for the whole PC.";
+
+        DrawDaily();
+        var key = $"{today}|{price}|{typical}";
+        if (key != _tableKey) { _tableKey = key; FillTable(typical, price); }
+    }
+
+    void DrawDaily()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        var days = _ledger.Last(8, today);
+        var key = $"{_daily.ActualWidth:0}|{string.Join(",", days.Select(d => d.Wh.ToString("0")))}";
+        if (key == _dailyKey || _daily.ActualWidth < 100) return;
+        _dailyKey = key;
+        _daily.Children.Clear();
+        const double labelH = 18, valueH = 16;
+        var plotH = _daily.Height - labelH - valueH;
+        var max = Math.Max(0.1, days.Max(d => d.Kwh));
+        var slot = _daily.ActualWidth / days.Count;
+        var barW = Math.Min(40, slot - 10);
+        for (var i = 0; i < days.Count; i++)
+        {
+            var d = days[i];
+            var x = i * slot + (slot - barW) / 2;
+            var isToday = d.Date == today;
+            var y = _daily.Height - labelH;
+            foreach (var (wh, brushKey) in new[] { (d.RestWh, "GoodBrush"), (d.GpuWh, GpuKey), (d.CpuWh, CpuKey) })
+            {
+                var h = d.Wh <= 0 ? 0 : wh / 1000 / max * plotH;
+                if (h < 0.5) continue;
+                var seg = new Border { Width = barW, Height = h, CornerRadius = new CornerRadius(2), Opacity = isToday ? 0.6 : 1 };
+                if (brushKey == "GoodBrush") seg.Background = ThemeManager.Good; else seg.SetResourceReference(Border.BackgroundProperty, brushKey);
+                Canvas.SetLeft(seg, x);
+                Canvas.SetTop(seg, y - h);
+                _daily.Children.Add(seg);
+                y -= h + 1;
+            }
+            var value = Text(d.Seconds > 0 ? d.Kwh.ToString("0.0") : "", size: 11);
+            value.FontFamily = new FontFamily("Cascadia Mono, Consolas");
+            value.Width = slot; value.TextAlignment = TextAlignment.Center;
+            Canvas.SetLeft(value, i * slot);
+            Canvas.SetTop(value, Math.Max(0, y - valueH));
+            _daily.Children.Add(value);
+            var name = Text(isToday ? "Today" : d.Date.ToString("ddd", System.Globalization.CultureInfo.CurrentCulture), muted: !isToday, size: 11);
+            name.Width = slot; name.TextAlignment = TextAlignment.Center;
+            Canvas.SetLeft(name, i * slot);
+            Canvas.SetTop(name, _daily.Height - labelH + 2);
+            _daily.Children.Add(name);
+        }
+    }
+
+    void FillTable(PowerLedger.Averages a, double price)
+    {
+        _table.Children.Clear();
+        _table.RowDefinitions.Clear();
+        _table.ColumnDefinitions.Clear();
+        foreach (var w in new[] { new GridLength(1, GridUnitType.Star), new GridLength(66), new GridLength(86), new GridLength(104) })
+            _table.ColumnDefinitions.Add(new ColumnDefinition { Width = w });
+        if (a.TotalKwh <= 0)
+        {
+            _table.RowDefinitions.Add(new RowDefinition());
+            _table.Children.Add(Text("This fills in once Ember has watched the PC for a few minutes.", muted: true, size: 13));
+            return;
+        }
+        var mono = new FontFamily("Cascadia Mono, Consolas");
+        void Cell(string text, int row, int col, bool muted = false, bool bold = false, Brush? brush = null)
+        {
+            var t = Text(text, muted: muted, size: col == 0 ? 13 : 12.5, weight: bold ? FontWeights.SemiBold : null);
+            if (col > 0) { t.FontFamily = mono; t.TextAlignment = TextAlignment.Right; }
+            if (brush is not null) t.Foreground = brush;
+            t.Margin = new Thickness(0, 6, col == 3 ? 0 : 8, 6);
+            Grid.SetRow(t, row); Grid.SetColumn(t, col);
+            _table.Children.Add(t);
+        }
+        var rows = new (string Name, double W, double Kwh, bool Bold)[]
+        {
+            ("CPU", a.CpuW, a.CpuKwh, false), ("Graphics card", a.GpuW, a.GpuKwh, false), ("Board and the rest", a.RestW, a.RestKwh, false), ("Total", a.TotalW, a.TotalKwh, true),
+        };
+        string[] heads = ["Part", "Average", "kWh a day", "Cost a month"];
+        _table.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        for (var c = 0; c < 4; c++) Cell(heads[c].ToUpperInvariant(), 0, c, muted: true);
+        for (var i = 0; i < rows.Length; i++)
+        {
+            var r = rows[i];
+            _table.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            var line = new Border { BorderThickness = new Thickness(0, 1, 0, 0), IsHitTestVisible = false };
+            line.SetResourceReference(Border.BorderBrushProperty, "PanelBorderBrush");
+            Grid.SetRow(line, i + 1); Grid.SetColumnSpan(line, 4);
+            _table.Children.Add(line);
+            Cell(r.Name, i + 1, 0, bold: r.Bold);
+            if (i < 3)
+            {
+                var dot = new Ellipse { Width = 9, Height = 9, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 0) };
+                if (i == 2) dot.Fill = ThemeManager.Good; else dot.SetResourceReference(Shape.FillProperty, i == 0 ? CpuKey : GpuKey);
+                Grid.SetRow(dot, i + 1);
+                _table.Children.Add(dot);
+                ((TextBlock)_table.Children[^2]).Margin = new Thickness(18, 6, 8, 6);
+            }
+            Cell($"{r.W:0} W", i + 1, 1, bold: r.Bold);
+            Cell($"{r.Kwh:0.00}", i + 1, 2, bold: r.Bold);
+            var money = PowerCost.Format(PowerCost.Of(r.Kwh * PowerCost.DaysPerMonth, price));
+            if (r.Bold) Cell(money, i + 1, 3, bold: true, brush: Application.Current.FindResource("AccentTextBrush") as Brush);
+            else Cell(money, i + 1, 3);
+        }
+    }
+
     public void Attach(IReadOnlyList<IPlugProvider> providers, PlugLinkStore store)
     {
         _providers = providers;
@@ -166,6 +449,10 @@ public sealed class PowerPage : UserControl
     }
 
     public PlugLinks Links => _linkState;
+
+    /// <summary>The whole-PC draw right now (from the wall plug when one is linked), and whether it comes from the plug.</summary>
+    public double? TotalWatts => _total.Now;
+    public bool TotalFromPlug => _totalFromPlug;
 
     double? FreshWatts(string id)
     {
@@ -197,11 +484,13 @@ public sealed class PowerPage : UserControl
                 t.Add(at, pw);
             }
         _other.Add(at, others);
+        _ledger.Add(at, sensors.CpuW, sensors.GpuW, wall is { } wallW && sensors.MeasuredW is not null ? Math.Max(0, wallW - (sensors.CpuW ?? 0) - (sensors.GpuW ?? 0)) : sensors.BoardW);
     }
 
     public void Update()
     {
         UpdateHero();
+        UpdateCost();
         DrawChart();
 
         Fill("CPU", _cpu, _cpu.Now is null ? "No CPU power sensor found" : "Processor package", Share(_cpu));
@@ -227,11 +516,20 @@ public sealed class PowerPage : UserControl
 
     string Share(PowerTrack t) => t.Now is { } v && _total.Now is { } all && all > 0 ? $"{Math.Min(100, v / all * 100):0}%" : "";
 
+    /// <summary>The figure as a large number with a small unit beside it.</summary>
+    void ShowWatts(double? watts)
+    {
+        _heroWatts.Inlines.Clear();
+        _heroWatts.Inlines.Add(new Run(watts is { } w ? w.ToString("0") : "–"));
+        if (watts is not null) _heroWatts.Inlines.Add(new Run("2009W") { FontSize = 20, FontWeight = FontWeights.Normal, Foreground = (Brush)Application.Current.FindResource("MutedBrush") });
+    }
+
     void UpdateHero()
     {
-        _heroWatts.Text = _total.Now is { } w ? $"{w:0} W" : "–";
+        if (BuildFeatures.NewLook) ShowWatts(_total.Now);
+        else _heroWatts.Text = _total.Now is { } w ? $"{w:0} W" : "–";
         _heroSource.Text = _totalFromPlug ? "Measured at the wall by your smart plug" : _total.Now is null ? "Waiting for the sensors" : "CPU and GPU only. Link your PC's plug for the whole PC";
-        _heroStats.Text = _total.Average is { } a ? $"average {a:0} W   ·   peak {_total.Peak:0} W   ·   {_total.Kwh:0.000} kWh used" : "";
+        _heroStats.Text = _total.Average is { } a ? (BuildFeatures.NewLook ? $"avg {a:0} W  ·  peak {_total.Peak:0} W" : $"average {a:0} W   ·   peak {_total.Peak:0} W   ·   {_total.Kwh:0.000} kWh used") : "";
         _sourceChipText.Text = _totalFromPlug ? "Wall plug" : "Sensors only";
         _sourceChip.Background = _totalFromPlug ? ThemeManager.GoodSoft : (Brush)Application.Current.FindResource("AccentSoftBrush");
         _sourceChipText.Foreground = _totalFromPlug ? ThemeManager.Good : (Brush)Application.Current.FindResource("AccentTextBrush");
