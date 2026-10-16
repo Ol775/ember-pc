@@ -16,6 +16,7 @@ public static class ThemeManager
     static Look _look = new(true);
     public static event Action? Changed;
 
+    public static Brush Warn => Frozen(IsDark ? "#ffb04d" : "#b45f06");
     public static Brush Good => Frozen(IsDark ? "#5fd38d" : "#1c7f45");
     public static Brush GoodSoft => Frozen(IsDark ? "#12301f" : "#d9f2e3");
 

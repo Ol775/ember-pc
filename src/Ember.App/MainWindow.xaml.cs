@@ -69,8 +69,12 @@ public partial class MainWindow : Window
             Power.Attach(providers, new Ember.Lighting.Meross.PlugLinkStore(Ember.Lighting.Meross.PlugLinkStore.DefaultPath));
             _plugTimer = new DispatcherTimer(TimeSpan.FromSeconds(3), DispatcherPriority.Background, async (_, _) =>
             {
+                // In the tray the plugs are read less often: nobody is watching the live figure.
+                var every = TimeSpan.FromSeconds(Hidden ? 15 : 3);
+                if (_plugTimer!.Interval != every) _plugTimer.Interval = every;
                 try { await Task.WhenAll(providers.Select(p => p.PollAsync(_cts.Token))); }
                 catch (Exception ex) when (ex is OperationCanceledException or HttpRequestException) { }
+                catch (Exception ex) { DiagLog.Warn("Power", "Reading the plugs failed", ex); }
             }, Dispatcher);
             _plugTimer.Start();
         }
@@ -260,8 +264,12 @@ public partial class MainWindow : Window
     async Task AutomaticUpdateCheckAsync()
     {
         if (!_vm.Prefs.AutoCheckUpdates || _quitting) return;
-        await CheckForUpdatesAsync(announce: false);
-        if (_found is { } release) await PromptForUpdateAsync(release);
+        try
+        {
+            await CheckForUpdatesAsync(announce: false);
+            if (_found is { } release) await PromptForUpdateAsync(release);
+        }
+        catch (Exception ex) { DiagLog.Warn("Update", "Automatic update check failed", ex); } // the next check tries again
     }
 
     /// <summary>Asks once per version per run (until "Remind me later" is chosen): in the window if it is open, else from the tray.</summary>
@@ -423,7 +431,15 @@ public partial class MainWindow : Window
             if (_lights.WantsAudio) { if (!_audio.Running) _audio.Start(); _audio.CheckSilence(); }
             else if (_audio.Running) _audio.Stop();
             if (_lights.WantsKeys) _keys.Start(); else if (_keys.Running) _keys.Stop();
-            if (!_lights.WantsScreen) { _screen = null; _lights.SetInputs(_cpuTemp, _gpuTemp, null); return; }
+            if (!_lights.WantsScreen)
+            {
+                _screen = null;
+                _lights.SetInputs(_cpuTemp, _gpuTemp, null);
+                // Nothing needs the screen: only check twice a second whether a layer has started to.
+                var idle = TimeSpan.FromMilliseconds(_lights.WantsAudio ? 100 : 500);
+                if (_screenTimer.Interval != idle) _screenTimer.Interval = idle;
+                return;
+            }
             // The graphics card hands over the frame when it can (fast); otherwise the older, slower copy through Windows.
             var monitor = _lights.ScreenMonitor;
             var zones = _dxgi.Capture(monitor: monitor) ?? ScreenGrabber.Capture(monitor: monitor);
@@ -839,7 +855,9 @@ public partial class MainWindow : Window
 
     void OnNavChanged(object sender, RoutedEventArgs e)
     {
-        if (DashboardPage is null || FansPageView is null || SettingsPageView is null || LightsPageView is null || DevicesPageView is null || PowerPageView is null || GamesPageView is null) return;
+        if (DashboardPage is null || FansPageView is null || SettingsPageView is null || LightsPageView is null || DevicesPageView is null || PowerPageView is null || GamesPageView is null || SpecsPageView is null) return;
+        SpecsPageView.Visibility = NavSpecs.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        if (NavSpecs.IsChecked == true) _ = Specs.LoadAsync();
         GamesPageView.Visibility = NavGames.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         // Opening the page scans again when the last scan is more than five minutes old.
         if (NavGames.IsChecked == true && DateTimeOffset.Now - _library.ScannedAt > TimeSpan.FromMinutes(5)) _ = ScanLibraryAsync();
@@ -903,6 +921,7 @@ public partial class MainWindow : Window
         Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
         Activate();
+        Refresh();
     }
 
     void Quit()
@@ -985,8 +1004,34 @@ public partial class MainWindow : Window
         Refresh();
     }
 
+    bool Hidden => !IsVisible || WindowState == WindowState.Minimized;
+    bool _trimmed;
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern bool SetProcessWorkingSetSize(IntPtr process, nint min, nint max);
+
+    /// <summary>Once per trip to the tray: collect garbage and hand unused pages back to Windows (they come back on demand when the window opens).</summary>
+    static void TrimMemory()
+    {
+        try
+        {
+            GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
+            SetProcessWorkingSetSize(System.Diagnostics.Process.GetCurrentProcess().Handle, -1, -1);
+        }
+        catch (Exception ex) { DiagLog.Warn("App", "Trimming memory failed", ex); }
+    }
+
     void Refresh()
     {
+        // In the tray nobody sees the pages: keep the tray tip current, redraw rarely, and draw everything the moment the window shows.
+        var every = TimeSpan.FromMilliseconds(Hidden ? 2000 : 500);
+        if (_refresh.Interval != every) _refresh.Interval = every;
+        if (Hidden)
+        {
+            _tray.SetMode(_vm.FansPage.Mode, _cpuTemp is { } c ? $"CPU {c:0} °C" : null);
+            if (!_trimmed) { _trimmed = true; TrimMemory(); }
+            return;
+        }
+        _trimmed = false;
         _vm.Refresh(DateTimeOffset.UtcNow);
         _chart.Update(_vm.ChartWidth, _vm.ChartHeight, _vm.Unit, _vm.CpuLine, _vm.GpuLine, _vm.CpuText, _vm.GpuText);
         if (DevicesPageView.Visibility == Visibility.Visible) Devices.Update(_vm, _lights);

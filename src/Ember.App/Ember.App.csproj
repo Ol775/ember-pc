@@ -6,6 +6,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>Assets\ember.ico</ApplicationIcon>
+    <!-- No background GC thread: the app is small and a short blocking collection is cheaper than the extra thread and memory. -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
   </PropertyGroup>
   <!-- WinForms is here only for the tray icon: keep its names out of the WPF code. -->
   <ItemGroup>
@@ -24,6 +26,7 @@
     <ProjectReference Include="..\Ember.Core\Ember.Core.csproj" />
     <ProjectReference Include="..\Ember.Lighting\Ember.Lighting.csproj" />
     <PackageReference Include="NAudio.Wasapi" />
+    <PackageReference Include="System.Management" />
     <PackageReference Include="Vortice.Direct3D11" />
     <PackageReference Include="Vortice.DXGI" />
     <Resource Include="Assets\ember.ico" />

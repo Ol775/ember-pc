@@ -25,7 +25,12 @@ public partial class App : Application
             return;
         }
         DiagLog.Prune();
-        DispatcherUnhandledException += (_, args) => DiagLog.Error("App", "Unhandled error on the window thread", args.Exception);
+        // A failed click, timer tick or async handler is logged and the window carries on; only running out of memory ends the app.
+        DispatcherUnhandledException += (_, args) =>
+        {
+            DiagLog.Error("App", "Unhandled error on the window thread", args.Exception);
+            args.Handled = args.Exception is not OutOfMemoryException;
+        };
         AppDomain.CurrentDomain.UnhandledException += (_, args) => DiagLog.Error("App", "Unhandled error (ending: " + args.IsTerminating + ")", args.ExceptionObject as Exception);
         TaskScheduler.UnobservedTaskException += (_, args) => DiagLog.Warn("App", "Unobserved task error", args.Exception);
         DiagLog.Info("App", $"Starting Ember {AppInfo.Version}, Windows {Environment.OSVersion.Version}, .NET {Environment.Version}, " +
