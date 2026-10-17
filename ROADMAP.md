@@ -22,9 +22,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 
 ## Later (ideas, no promise)
 
-- Share and import fan curves and lighting scenes as files
 - More fan sources, such as other fan controllers, if their makers publish a way to talk to them
-- A compact dashboard window for a second monitor
 - Code signing, so Windows stops warning about an unknown publisher and Smart App Control stops blocking Ember
 
 ## Works through OpenRGB
@@ -58,6 +56,7 @@ ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up i
 - Corsair devices through iCUE (keep iCUE up to date)
 - A Stream Deck plugin (beta): keys for scenes, lights, brightness, fan mode and live temperature and fan readouts
 - Philips Hue lights through the bridge, Nanoleaf light panels through the controller, Razer Chroma through Synapse, Meross and Tapo bulbs on the local network
+- Scenes and manual fan curves as shareable files, and a compact always-on-top window
 - A lighting scene per game next to the fan mode per game, global hotkeys (Ctrl+Alt+Shift with L, S and F), Nanoleaf panels laid out as they sit on the wall, the G keys device only on keyboards that have G keys, and no second listing of a keyboard G HUB already drives
 - WiZ, LIFX, Yeelight and Kasa bulbs, found on the local network with no account (beta)
 - Per-LED painting, gradients, rainbow, import and export, a paint library, and paint for several devices at once

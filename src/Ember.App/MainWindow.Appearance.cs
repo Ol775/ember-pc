@@ -33,6 +33,7 @@ public partial class MainWindow
             ArrangeFansPage();
             OnNavChanged(this, new RoutedEventArgs());   // the dashboard was chosen before the redesign page existed
             NewDash.ModePicked += mode => _ = SendAsync(new SetMode(mode));
+            NewDash.CompactRequested += ToggleCompact;
             NewDash.ChartResized += (w, h) => { _vm.SetChartSize(w, h); Refresh(); };
             Specs.ReportReady += report => NewDash.SetDrives(report);
             _ = Task.Delay(8000).ContinueWith(_ => Dispatcher.InvokeAsync(() => Specs.LoadAsync())); // reads the drives once, after start-up has settled

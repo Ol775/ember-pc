@@ -46,7 +46,9 @@
             <Button x:Name="AddButton" Content="Add point" Click="OnAdd" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
             <Button x:Name="RemoveButton" Content="Remove point" Click="OnRemove" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
             <Button x:Name="ResetButton" Content="Reset to Normal" Click="OnReset" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
-            <Button x:Name="CopyButton" Content="Customise this curve" Click="OnCopy" Style="{StaticResource ActionButton}" Margin="0" />
+            <Button x:Name="CopyButton" Content="Customise this curve" Click="OnCopy" Style="{StaticResource ActionButton}" Margin="0,0,8,0" />
+            <Button x:Name="ExportButton" Content="Export curves" Click="OnExport" Style="{StaticResource ActionButton}" Margin="0,0,8,0" ToolTip="Save both manual curves as a file to share or keep" />
+            <Button x:Name="ImportButton" Content="Import curves" Click="OnImport" Style="{StaticResource ActionButton}" Margin="0" ToolTip="Load manual curves from a file someone shared; they are checked against the safety rules" />
         </WrapPanel>
     </StackPanel>
 </UserControl>

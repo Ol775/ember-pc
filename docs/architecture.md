@@ -38,7 +38,7 @@ Both service pipes are restricted to SYSTEM, Administrators and the interactive 
 
 ## Production and beta builds
 
-A release without a label (1.4.0) is the production build; one with a label (1.5.0-beta.1) is a beta build. `BuildFeatures` in `Ember.Core` says what each includes, and the service refuses messages for a feature the build does not have. Beta builds also show the schedule and alerts, GPU fan control, the Stream Deck plugin and the roadmap page. Features that are written and tested but not yet proven on enough hardware are marked **Beta** in the app.
+A release without a label (1.5.0) is the production build; one with a label (1.6.0-beta.1) is a beta build. `BuildFeatures` in `Ember.Core` says what each includes, and the service refuses messages for a feature the build does not have. Beta builds also show the schedule and alerts, GPU fan control, the Stream Deck plugin and the roadmap page. Features that are written and tested but not yet proven on enough hardware are marked **Beta** in the app.
 
 ## Why PawnIO
 

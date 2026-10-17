@@ -13,6 +13,7 @@ Only what you switch on, and only to the places named here.
 - **Tapo (TP-Link).** You save your Tapo email and password in Windows Credential Manager. Ember uses them only to sign in to your Tapo devices on your home network, directly; they are never sent to TP-Link or any cloud.
 - **WiZ, LIFX, Yeelight and Kasa lights.** No account, no cloud. Ember sends a broadcast (or multicast) message on your home network to find them, then talks to the ones that answer, directly. Kasa also finds plugs this way.
 - **Shelly plugs.** No account, no cloud. Ember asks each address on your home network (a /24 range) one web request, "who are you", and only reads the power of the ones that are Shelly plugs you linked.
+- **Global hotkeys** (off until you switch them on): Windows tells Ember when Ctrl+Alt+Shift with L, S or F is pressed. Ember does not read any other key.
 - **Smart plugs** (Meross, Tapo, Kasa or Shelly) are only read, to show the Power page what they draw. Ember never switches a plug.
 - **On this PC only:** OpenRGB (localhost), Logitech G HUB, Corsair iCUE, Razer Synapse (its local Chroma SDK) and the Stream Deck plugin (a local named pipe) are reached on this PC, and nothing is sent to their makers by Ember.
 - **Nanoleaf.** Ember talks to your Nanoleaf controller directly over your home network (plain HTTP on port 16021, as the controller offers). Finding it sends a search on your local network only. Nothing goes to Nanoleaf or any cloud.

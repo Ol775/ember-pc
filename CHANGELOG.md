@@ -2,6 +2,26 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.6.0-beta.1 (2026-10-17)
+
+### Added
+
+- **GPU fan on the Stream Deck shows a percentage** when the card idles with its fans stopped (0 RPM), instead of a bare 0.
+
+## 1.5.0 (2026-10-17)
+
+### Added
+
+- **A lighting scene for each game.** On the Games page, with the per-game switch on, a game can have a scene of its own next to its fan mode. The scene (and lights on) show while the game runs, and the earlier scene and on or off come back when it ends, unless you chose another scene in between.
+- **Global hotkeys.** Settings, General: with them on, Ctrl+Alt+Shift with L switches the lights, S goes to the next scene and F to the next fan mode, even while a game has the focus. A combination another program already holds is skipped.
+- **Share scenes and fan curves as files.** On Lights, Export saves the chosen scene (with no device names in it) and Import adds one from a file; on Fans, Export curves and Import curves do the same for your two manual curves, and an imported curve is checked against the safety rules before it is used.
+- **A compact view.** The Compact view button on the Dashboard (and the tray menu) opens a small window that stays on top with the temperatures, fan mode and power draw. Drag it anywhere; double-click or press Escape to close it.
+
+### Changed
+
+- **Nanoleaf panels sit on the Lights canvas as they hang on the wall** (a grid built from the controller's own layout) instead of in one row, so effects sweep across the real shape.
+- **The G keys device appears only on a Logitech keyboard that has G keys**, and a keyboard Ember already drives through G HUB is no longer listed a second time from OpenRGB.
+
 ## 1.5.0-beta.1 (2026-10-17)
 
 ### Added

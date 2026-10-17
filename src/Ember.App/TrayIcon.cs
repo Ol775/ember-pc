@@ -13,11 +13,12 @@ public sealed class TrayIcon : IDisposable
     readonly ToolStripMenuItem[] _modes;
     readonly Action _open, _quit;
 
-    public TrayIcon(Action open, Action quit, Action<FanMode> setMode)
+    public TrayIcon(Action open, Action quit, Action<FanMode> setMode, Action? compact = null)
     {
         _open = open; _quit = quit;
         var menu = new ContextMenuStrip();
         menu.Items.Add("Open Ember", null, (_, _) => _open());
+        if (compact is not null) menu.Items.Add("Compact view", null, (_, _) => compact());
         menu.Items.Add(new ToolStripSeparator());
         var order = new[] { FanMode.SuperQuiet, FanMode.Quiet, FanMode.Normal, FanMode.Performance, FanMode.Extreme };
         _modes = order.Select(m =>

@@ -178,13 +178,15 @@ public partial class MainWindow : Window
         RememberWindowSwitch.IsChecked = _vm.Prefs.RememberWindow;
         Curve.Committed += OnCurveCommitted;
         Curve.CopyRequested += OnCurveCopy;
+        Curve.ExportRequested += ExportCurves;
+        Curve.ImportRequested += ImportCurves;
 
         _run = AppData.Simulated ? Task.CompletedTask : Task.Run(() => connection.RunAsync(_cts.Token));
         _ai = new AiPanel(_thermal, () => _vm.Prefs, p => Remember(p), ApplySuggestionAsync, ForgetThermal);
         AiHost.Children.Add(_ai);
         _thermalSave = new DispatcherTimer(TimeSpan.FromMinutes(5), DispatcherPriority.Background, (_, _) => SaveThermal(), Dispatcher);
         _thermalSave.Start();
-        _tray = new TrayIcon(ShowFromTray, Quit, mode => _ = SendAsync(new SetMode(mode)));
+        _tray = new TrayIcon(ShowFromTray, Quit, mode => _ = SendAsync(new SetMode(mode)), () => Dispatcher.InvokeAsync(ToggleCompact));
         if (!BuildFeatures.IsProduction) BuildAutomation();
         Closing += OnClosing;
         Closed += OnClosed;
@@ -505,6 +507,26 @@ public partial class MainWindow : Window
     }
 
     /// <summary>The tooltip of the tray icon: the temperatures and the draw at the wall (or CPU plus GPU), whatever is known. Windows allows 63 characters.</summary>
+    CompactWindow? _compact;
+
+    /// <summary>Shows or closes the small always-on-top view (from the tray menu).</summary>
+    void ToggleCompact()
+    {
+        if (_compact is { IsVisible: true }) { _compact.Close(); return; }
+        _compact = new CompactWindow();
+        _compact.Closed += (_, _) => _compact = null;
+        UpdateCompact();
+        _compact.Show();
+    }
+
+    void UpdateCompact()
+    {
+        if (_compact is null) return;
+        var unit = _vm.Unit;
+        string T(double? v) => v is { } d ? Temperature.Convert(d, unit).ToString("0") + "°" : "–";
+        _compact.Show("CPU " + T(_cpuTemp) + "   GPU " + T(_gpuTemp), "Fans: " + FansViewState.Label(_vm.FansPage.Mode), Power.TotalWatts is { } w ? w.ToString("0") + " W at the " + (Power.TotalFromPlug ? "wall" : "CPU and GPU") : "");
+    }
+
     string? TraySummary()
     {
         var parts = new List<string>();
@@ -866,6 +888,38 @@ public partial class MainWindow : Window
         Power.SaveLedger();
     }
 
+    void ExportCurves()
+    {
+        var dlg = new Microsoft.Win32.SaveFileDialog { Filter = "Ember fan curves|*.json", Title = "Export fan curves", FileName = "ember-fan-curves" };
+        if (dlg.ShowDialog() != true) return;
+        try { System.IO.File.WriteAllText(dlg.FileName, CurveFile.Export(_vm.FansPage.Curves)); Curve.ReportFailure("Saved both manual curves to " + System.IO.Path.GetFileName(dlg.FileName) + "."); }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { Curve.ReportFailure("Could not save the file: " + ex.Message); }
+    }
+
+    /// <summary>Loads both manual curves from a file. They are checked against the same rules as a curve drawn by hand, and the service checks them again.</summary>
+    async void ImportCurves()
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "Ember fan curves|*.json|All files|*.*", Title = "Import fan curves" };
+        if (dlg.ShowDialog() != true) return;
+        string text;
+        try
+        {
+            if (new System.IO.FileInfo(dlg.FileName).Length > CurveFile.MaxBytes) { Curve.ReportFailure("That file is too large to be a fan curve file."); return; }
+            text = System.IO.File.ReadAllText(dlg.FileName);
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { Curve.ReportFailure("Could not read the file: " + ex.Message); return; }
+        if (CurveFile.TryImport(text, out var problem) is not { } curves) { Curve.ReportFailure("Not imported: " + problem + "."); return; }
+        if (!_vm.FansPage.Curves.Equals(ManualCurves.Default)
+            && MessageBox.Show(this, "This replaces both of your manual curves with the ones in the file. Continue?", "Import fan curves",
+                MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+        foreach (var group in new[] { CurveGroup.Cpu, CurveGroup.Case })
+        {
+            var reply = await ControlClient.SendAsync(new SetCurve(group, curves.For(group)));
+            if (!reply.Ok) { Curve.ReportFailure("The service did not accept that curve: " + (reply.Error ?? "unknown reason") + "."); return; }
+        }
+        await SendAsync(new SetMode(FanMode.Manual));
+    }
+
     async void OnCurveCopy(IReadOnlyList<CurvePoint> points)
     {
         if (!_vm.FansPage.Curves.Equals(ManualCurves.Default)
@@ -1155,6 +1209,7 @@ public partial class MainWindow : Window
         if (_refresh.Interval != every) _refresh.Interval = every;
         if (Hidden)
         {
+            UpdateCompact();
             _tray.SetMode(_vm.FansPage.Mode, TraySummary());
             if (!_trimmed) { _trimmed = true; TrimMemory(); }
             return;
@@ -1172,6 +1227,7 @@ public partial class MainWindow : Window
             Curve.SetState(_vm.FansPage.Mode, _vm.FansPage.Curves, _cpuTemp, _caseTemp);
             _ai.Refresh();
         }
+        UpdateCompact();
         _tray.SetMode(_vm.FansPage.Mode, TraySummary());
         if (_vm.ConnectionText != _announcedConnection)
         {

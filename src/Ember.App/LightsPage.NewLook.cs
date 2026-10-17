@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -190,7 +191,41 @@ public sealed partial class LightsPage
             if (_saveRow.Visibility == Visibility.Visible) _sceneName?.Focus();
         };
         wrap.Children.Add(add);
+        foreach (var (label, tip, run) in new (string, string, Action)[]
+        {
+            ("Import", "Add a scene from a file someone shared", ImportSceneFile),
+            ("Export", "Save the chosen scene as a file to share or keep (it holds no device names)", ExportSceneFile),
+        })
+        {
+            var b = new Button { Content = label, Style = Sty("SceneChipPlain"), ToolTip = tip };
+            AutomationProperties.SetName(b, label + " scene file");
+            var action = run;
+            b.Click += (_, _) => action();
+            wrap.Children.Add(b);
+        }
         _scenes.Children.Add(wrap);
+    }
+
+    void ExportSceneFile()
+    {
+        var scene = _m!.State.Current;
+        var dlg = new Microsoft.Win32.SaveFileDialog { Filter = "Ember scene|*.json", Title = "Export scene", FileName = "ember-scene-" + string.Concat(scene.Name.Where(c => char.IsLetterOrDigit(c) || c is ' ' or '-')).Trim().Replace(' ', '-') };
+        if (dlg.ShowDialog() != true) return;
+        try { File.WriteAllText(dlg.FileName, SceneFile.Export(scene)); SetNote("Exported " + scene.Name + " to " + Path.GetFileName(dlg.FileName) + "."); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { SetNote("Could not save the file: " + ex.Message); }
+    }
+
+    void ImportSceneFile()
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "Ember scene|*.json|All files|*.*", Title = "Import scene" };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            if (new FileInfo(dlg.FileName).Length > SceneFile.MaxBytes) { SetNote("That file is too large to be a scene."); return; }
+            if (SceneFile.TryImport(File.ReadAllText(dlg.FileName)) is not { } scene) { SetNote("That is not a scene file Ember can read. It should be an exported Ember scene."); return; }
+            SetNote(_m!.ImportScene(scene) ? "Imported " + scene.Name + ". Arrange it on the canvas and choose which devices each layer lights." : "There is no room for another scene.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { SetNote("Could not read the file: " + ex.Message); }
     }
 
     // ---- layers ----

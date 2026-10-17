@@ -40,6 +40,8 @@ public sealed record LightingState(
         g.Stops is { Count: >= 1 and <= 8 } stops && stops.All(st => double.IsFinite(st.At) && st.At is >= 0 and <= 1 && new[] { st.Colour.R, st.Colour.G, st.Colour.B, st.Colour.A }.All(double.IsFinite))
         && double.IsFinite(g.Speed) && Math.Abs(g.Speed) <= 10 && double.IsFinite(g.Softness) && g.Softness is >= 0 and <= 1;
 
+    public static bool IsValidScene(Scene? s) => Valid(s);
+
     static bool Valid(Scene? s) =>
         s is { Name: { Length: > 0 and <= 60 }, Layers: { Count: <= MaxLayers }, Placements: { Count: <= MaxPlacements } }
         && double.IsFinite(s.Brightness) && s.Brightness is >= 0 and <= 1
@@ -62,6 +64,9 @@ public sealed class LightingStore(string path)
         WriteIndented = true,
         Converters = { new JsonStringEnumConverter(allowIntegerValues: false) },
     };
+
+    /// <summary>The same settings, for the scene files.</summary>
+    internal static JsonSerializerOptions JsonOptions => Options;
 
     public static string DefaultPath => Path.Combine(
         Ember.Core.AppData.Roaming, "Ember", "lighting.json");

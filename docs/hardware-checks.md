@@ -227,3 +227,14 @@ An unsigned plugin was installed by Stream Deck 7.6 and its program registered w
 - [ ] Shelly: a plug or relay with a power meter appears on Power after a minute or so (the network scan runs about every five minutes), can be linked and shows its watts. A device with a password on its web page says so. Seen: _
 - [ ] None of these ever switches a plug or relay: the plug is only read. Seen: _
 - [ ] Task Manager while all of them are on: no steady network traffic beyond a scan every few minutes, and no rise in processor use. Seen: _
+
+## Roadmap features of 1.5.0 (written and tested as a simulation only)
+
+- [ ] Games: with the per-game switch on, give a game a lighting scene, start it, and the lights switch to that scene and on; close it and the earlier scene and on or off return. Seen: _
+- [ ] Settings, General: switch Global hotkeys on; Ctrl+Alt+Shift+L toggles the lights, +S goes to the next scene, +F the next fan mode, also in a full-screen game. A combination another program holds is reported. Seen: _
+- [ ] Lights: Export a scene, Import it again (it gets a new name and this PC's layout); the file contains no device names. Seen: _
+- [ ] Fans: Export curves, change a curve, Import the file back; a file with a lazy curve (20% at 80 °C) is refused with a reason. Seen: _
+- [ ] Compact view from the Dashboard button and from the tray menu: stays on top of a game window, drags, closes with Escape and a double-click, shows the right temperatures. Seen: _
+- [ ] Nanoleaf (needs the hardware): the panels appear on the Lights canvas in the shape they hang on the wall, not upside down, and an effect sweeps across them correctly. Seen: _
+- [ ] Logitech: a keyboard without G keys shows no "Logitech G keys and badge" device; the G915 appears once, not twice (OpenRGB copy hidden). Seen: _
+- [ ] Stream Deck: the GPU fan key shows a percentage while the card idles at 0 RPM. Seen: _

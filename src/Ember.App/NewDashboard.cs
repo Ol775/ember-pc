@@ -62,8 +62,14 @@ public sealed class NewDashboard : UserControl
         AutomationProperties.SetHeadingLevel(title, AutomationHeadingLevel.Level2);
         var heading = new DockPanel { Margin = new Thickness(0, 0, 0, 16) };
         _chip.VerticalAlignment = VerticalAlignment.Top;
-        DockPanel.SetDock(_chip, Dock.Right);
-        heading.Children.Add(_chip);
+        var compact = LightsUi.Pill("Compact view", () => CompactRequested?.Invoke(), "Open a small window that stays on top");
+        compact.Margin = new Thickness(0, 0, 10, 0);
+        compact.VerticalAlignment = VerticalAlignment.Top;
+        var corner = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top };
+        corner.Children.Add(compact);
+        corner.Children.Add(_chip);
+        DockPanel.SetDock(corner, Dock.Right);
+        heading.Children.Add(corner);
         var titles = new StackPanel();
         titles.Children.Add(title);
         titles.Children.Add(_subtitle);
@@ -234,6 +240,8 @@ public sealed class NewDashboard : UserControl
     }
 
     // ---- updates ----
+
+    public event Action? CompactRequested;
 
     string? _chartKey;
 

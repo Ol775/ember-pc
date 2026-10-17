@@ -26,6 +26,7 @@ public partial class CurveEditor : UserControl
     public event Action<CurveGroup, IReadOnlyList<CurvePoint>>? Committed;
     /// <summary>The user wants the shown preset curve copied into Manual (both groups) and Manual picked.</summary>
     public event Action<IReadOnlyList<CurvePoint>>? CopyRequested;
+    public event Action? ExportRequested, ImportRequested;
 
     readonly DispatcherTimer _commit;
     readonly List<Thumb> _thumbs = [];
@@ -514,6 +515,8 @@ public partial class CurveEditor : UserControl
     }
 
     void OnCopy(object sender, RoutedEventArgs e) => CopyRequested?.Invoke(_shown.ToList());
+    void OnExport(object sender, RoutedEventArgs e) => ExportRequested?.Invoke();
+    void OnImport(object sender, RoutedEventArgs e) => ImportRequested?.Invoke();
 
     /// <summary>A local change was made: show what is wrong with it, or send it after a short pause.</summary>
     void Touched()

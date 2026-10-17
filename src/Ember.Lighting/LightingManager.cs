@@ -150,6 +150,22 @@ public sealed class LightingManager : IAsyncDisposable
         return ok;
     }
 
+    /// <summary>Adds a scene read from a file (named like its file, made unique) with this PC's own devices laid out as in the current scene, and selects it. False when there is no room.</summary>
+    public bool ImportScene(Scene scene)
+    {
+        var ok = true;
+        Mutate(s =>
+        {
+            var name = scene.Name.Trim().Length is > 0 and <= 60 ? scene.Name.Trim() : "Imported scene";
+            var unique = name;
+            for (var n = 2; s.Scenes.Any(x => x.Name == unique); n++) unique = (name.Length > 52 ? name[..52] : name) + " (" + n + ")";
+            var add = scene with { Name = unique, Placements = s.Current.Placements };
+            if (s.Scenes.Count >= LightingState.MaxScenes || !LightingState.IsValidScene(add)) { ok = false; return s; }
+            return s with { Scenes = s.Scenes.Append(add).ToList(), CurrentScene = unique };
+        });
+        return ok;
+    }
+
     public void DeleteScene(string name) => Mutate(s =>
     {
         if (s.Scenes.Count <= 1) return s;

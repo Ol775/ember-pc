@@ -26,7 +26,7 @@
 
 Both builds have the same **new look**: icon sidebar, ring gauges, rounded cards, a live preview on Lights, and the tour below. They differ in how much has been proven on real hardware.
 
-| | **Stable 1.4.0** | **Beta 1.5.0-beta.1** |
+| | **Stable 1.5.0** | **Beta 1.6.0-beta.1** |
 |---|---|---|
 | **Everything on the pages below** | Dashboard, Fans, Lights, Devices, Games, Power, Specs and Settings, with device renaming, gradient layers, *Applies to*, *Solo layer*, game covers and last played, Power ranges, currencies and CSV export | The same |
 | **Lights and plugs** | OpenRGB, Govee, Logitech, Philips Hue, Corsair; Razer, Nanoleaf, Meross, Tapo, WiZ, LIFX, Yeelight and Kasa (Beta); Meross, Tapo, Kasa and Shelly plugs, read only | The same |
@@ -43,6 +43,7 @@ The pictures on this page show the new look. See the [changelog](CHANGELOG.md) f
 - **RGB lighting** through OpenRGB, Govee, Logitech, Philips Hue and Corsair, with scenes, effects, music and screen sync
 - **Game detection** that switches the fans to your game mode (Beta), with game covers and a last-played line on the Games page (beta look)
 - **Schedule and alerts** (beta): quiet fans at night, a notice when a part runs hot or a fan stops
+- **Lighting scene and fan mode per game**, **global hotkeys** (Ctrl+Alt+Shift with L, S, F), **scenes and fan curves as shareable files**, and a **compact always-on-top view**
 - **Dark, OLED black and light**, nine accent colours or your own
 - **No telemetry**: nothing is downloaded until you choose it
 
