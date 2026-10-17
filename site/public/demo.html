@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en" data-accent-only>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ember Demo</title>
+<meta name="description" content="Scroll through Ember's dashboard, fans, lights, games and power pages.">
+<link rel="canonical" href="https://emberpc.uk/demo">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#120d0b">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Ember">
+<meta property="og:title" content="Ember Demo"><meta property="og:description" content="Scroll through Ember's dashboard, fans, lights, games and power pages."><meta property="og:url" content="https://emberpc.uk/demo">
+<link rel="preload" href="/fonts/geist-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script id="ember-theme">
+(function(){
+  // Site-wide look: theme, tint and accent chosen on the page are kept for every page of the site.
+  var K="ember-site-theme",CK="ember-consent",mem=null,root=document.documentElement,mq=matchMedia("(prefers-color-scheme:dark)"),
+      orig=root.getAttribute("data-theme"),def={mode:"system",tint:"warm",accent:null},touched=false;
+  function consent(){try{return localStorage.getItem(CK)}catch(e){return null}}
+  // choices persist on this device only after the visitor agrees; until then they last for the page view
+  function load(){var base=Object.assign({},def);try{if(consent()==="yes"){var v=JSON.parse(localStorage.getItem(K));if(v)return Object.assign(base,v)}}catch(e){}return Object.assign(base,mem||{})}
+  function save(s){mem=s;try{if(consent()==="yes")localStorage.setItem(K,JSON.stringify(s))}catch(e){}}
+  var H={warm:20,neutral:0,cool:215},S={warm:28,neutral:3,cool:26};
+  var PAL=["--bg","--bg2","--card","--fg","--mute","--line","--glass"],ACC=["--ember","--ember-hi","--glow","--on-ember"];
+  function lum(hex){var m=/^#?([0-9a-f]{6})$/i.exec(hex);if(!m)return 0;var n=parseInt(m[1],16);return(.2126*(n>>16)+.7152*(n>>8&255)+.0722*(n&255))/255}
+  function apply(s){
+    var isDef=s.mode===def.mode&&s.tint===def.tint&&!s.accent;
+    if(isDef&&!touched)return;
+    touched=true;
+    if(root.hasAttribute("data-accent-only")){accent(s);return}
+    var dark=s.mode==="dark"||s.mode==="oled"||(s.mode==="system"&&(orig?orig==="dark":mq.matches));
+    if(s.mode==="system"){orig?root.setAttribute("data-theme",orig):root.removeAttribute("data-theme")}
+    else root.setAttribute("data-theme",dark?"dark":"light");
+    var st=root.style,h=H[s.tint]||20,sat=S[s.tint]||28,oled=s.mode==="oled";
+    if(s.tint==="warm"&&!oled){PAL.forEach(function(v){st.removeProperty(v)})}
+    else{
+      var bg,bg2,card;
+      if(dark){bg=oled?"#000":"hsl("+h+" "+sat+"% 6%)";bg2=oled?"#0d0d0d":"hsl("+h+" "+sat+"% 9%)";card=oled?"#121212":"hsl("+h+" "+sat+"% 11%)";
+        st.setProperty("--fg","hsl("+h+" "+Math.min(55,sat*2)+"% 95%)");st.setProperty("--mute","hsl("+h+" "+Math.min(18,sat)+"% 66%)");st.setProperty("--line","hsl("+h+" 40% 85% / .12)")}
+      else{bg="hsl("+h+" "+Math.round(sat*.9)+"% 95%)";bg2="hsl("+h+" "+Math.round(sat*.8)+"% 91%)";card="#fff";
+        st.setProperty("--fg","hsl("+h+" "+(sat+10)+"% 10%)");st.setProperty("--mute","hsl("+h+" 10% 40%)");st.setProperty("--line","hsl("+h+" 40% 15% / .12)")}
+      st.setProperty("--bg",bg);st.setProperty("--bg2",bg2);st.setProperty("--card",card);
+      st.setProperty("--glass",bg.charAt(0)==="#"?"rgba(0,0,0,.72)":bg.replace(")"," / .72)"));
+    }
+    accent(s);
+  }
+  function accent(s){var st=root.style;
+    if(s.accent){var a=s.accent;
+      st.setProperty("--ember",a);st.setProperty("--ember-hi","color-mix(in srgb,"+a+" 62%,#fff)");
+      st.setProperty("--glow","color-mix(in srgb,"+a+" 24%,transparent)");st.setProperty("--on-ember",lum(a)>.62?"#1a0c06":"#fff");
+    }else ACC.forEach(function(v){st.removeProperty(v)});
+  }
+  var api=window.emberTheme={def:def,get:load,
+    set:function(p){var s=Object.assign(load(),p);save(s);apply(s);return s},
+    reset:function(){save(Object.assign({},def));apply(Object.assign({},def));return Object.assign({},def)}};
+  window.emberConsent={get:consent,set:function(v){try{localStorage.setItem(CK,v)}catch(e){}
+    if(v==="yes")save(load());else{try{localStorage.removeItem(K)}catch(e){}}
+    document.dispatchEvent(new Event("ember-consent"))}};
+  mq.addEventListener&&mq.addEventListener("change",function(){var s=load();if(s.mode==="system")apply(s)});
+  apply(load());
+})();
+</script>
+<style id="ember-fx-css">
+/* motion shared by every page: all of it starts from a visible resting state */
+@keyframes fxUp{from{opacity:0;transform:translateY(1.4rem)}}
+@keyframes fxFade{from{opacity:0}}
+@keyframes fxDraw{from{stroke-dashoffset:1}}
+.fx-in{animation:fxUp .9s var(--spring,cubic-bezier(.34,1.45,.5,1)) both;animation-delay:calc(var(--d,0)*90ms)}
+.fx-hide{opacity:0;transform:translateY(1.4rem)}
+.fx-rv{transition:opacity .7s ease,transform .9s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+.fx-show{opacity:1!important;transform:none!important}
+nav .bar,nav>.bar{transition:box-shadow .35s,background .35s,border-color .35s}
+nav.scrolled .bar{box-shadow:0 1rem 2.5rem -1rem rgba(0,0,0,.6);border-color:color-mix(in srgb,var(--ember) 22%,var(--line,rgba(255,255,255,.12)))}
+.fx-draw{stroke-dasharray:1;stroke-dashoffset:0;animation:fxDraw 1.6s cubic-bezier(.4,0,.2,1) both}
+.fx-grow{transform-origin:left;animation:fxGrow 1.1s var(--spring,cubic-bezier(.34,1.45,.5,1)) both}
+@keyframes fxGrow{from{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.fx-in,.fx-draw,.fx-grow{animation:none!important}.fx-hide{opacity:1;transform:none}}
+/* phones: never scroll sideways, and the bar keeps to what fits */
+html{overflow-x:hidden}
+body{overflow-x:clip}
+.navbtn{display:none;flex:none;width:2.5rem;height:2.5rem;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;place-items:center;touch-action:manipulation;transition:transform .45s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+.navbtn:active{transform:scale(.9);transition-duration:.08s}
+.navbtn .nb{display:block;width:1rem;height:.5rem;background:linear-gradient(currentColor,currentColor) 0 0/100% 2px no-repeat,linear-gradient(currentColor,currentColor) 0 100%/100% 2px no-repeat;transition:transform .4s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+nav.open .navbtn{color:var(--ember)}nav.open .navbtn .nb{transform:scaleY(.4)}
+@media (max-width:560px){
+  nav .bar{gap:.5rem!important;padding:0 .5rem 0 1rem!important}
+  nav .brand{font-size:1rem}
+  nav .navbtn{display:grid;margin-left:auto}
+  nav .bar>.btn{padding:.5rem 1rem!important}
+  nav .links{position:absolute;top:calc(100% + .5rem);left:0;right:0;margin:0;padding:.5rem;flex-direction:column;gap:.125rem;border:1px solid var(--line);border-radius:1.25rem;
+    background:color-mix(in srgb,var(--bg) 96%,transparent);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);
+    opacity:0;transform:translateY(-.5rem) scale(.98);pointer-events:none;transition:opacity .25s,transform .45s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+  nav.open .links{opacity:1;transform:none;pointer-events:auto}
+  nav .links a{display:block!important;padding:.8rem 1rem!important;font-size:1rem!important}
+  .cb{padding:.9rem!important;font-size:.78rem!important;gap:.4rem!important;border-radius:1rem!important}.cb h2{font-size:.9rem!important}.cb button{padding:.5rem .75rem!important;font-size:.8125rem!important;flex-basis:7rem!important}
+}
+.tabs{scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+@media (max-width:560px){.tabs{flex-wrap:wrap!important;width:auto!important;border-radius:1.25rem!important}.tabs button{padding:.45rem .85rem!important}}
+/* comfortable tap targets on touch screens */
+@media (pointer:coarse),(max-width:560px){
+  footer a,.legal-links a{display:inline-flex;align-items:center;min-height:2.75rem}
+  summary{min-height:2.75rem;align-items:center}
+  nav .brand{min-height:2.75rem}
+}
+.cb{background:color-mix(in srgb,var(--bg) 95%,transparent)!important}
+.legal-links{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;margin-top:1rem;font-size:.8125rem}.legal-links a{color:var(--mute);text-underline-offset:.18em}.legal-links a:hover{color:var(--fg)}
+</style>
+
+<style>
+/* Layout: a scroll-driven product film. Intro, one pinned stage whose window changes page as you scroll, a lit-word statement, then the numbers. Single look, dark. */
+:root{
+  --bg:#0d0907; --bg2:#17100d; --fg:#fbece3; --mute:#b49a8c; --line:rgba(255,200,170,.12);
+  --ember:#ff5a1f; --ember-hi:#ffb347; --teal:#3dd6c8; --glow:rgba(255,90,31,.25);
+  --display:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --spring:cubic-bezier(.34,1.45,.5,1);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 1.0625rem/1.5 var(--display);-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow-x:hidden}
+a{color:inherit}
+p,h1,h2,h3{margin:0;text-wrap:balance}
+.wrap{max-width:72rem;margin-inline:auto}
+.eyebrow{font:500 .75rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ember)}
+
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;margin-top:.75rem}
+nav .bar{display:flex;align-items:center;gap:1rem;padding:.5rem .5rem .5rem 1rem;border:1px solid var(--line);border-radius:999px;
+  background:rgba(13,9,7,.72);-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px)}
+.brand{display:flex;align-items:center;gap:.6rem;font-weight:650;letter-spacing:-.02em;text-decoration:none}
+.brand svg{width:1.7rem;height:1.7rem}
+.btn{display:inline-flex;align-items:center;padding:.6rem 1.2rem;border-radius:999px;border:1px solid var(--line);font:600 .9375rem var(--display);text-decoration:none;color:var(--fg);
+  transition:transform .45s var(--spring);touch-action:manipulation}
+.btn:active{transform:scale(.95);transition-duration:.08s}
+.btn.pri{background:linear-gradient(180deg,var(--ember-hi),var(--ember));color:#1a0c06;border-color:transparent;box-shadow:0 .5rem 1.6rem -.4rem var(--glow),inset 0 1px 0 rgba(255,255,255,.35)}
+nav .btn{margin-left:auto}
+:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:.5rem}
+
+/* intro */
+.intro{text-align:center;padding-block:clamp(4rem,12vw,9rem) 2rem;position:relative}
+.intro::before{content:"";position:absolute;inset:-4rem -50vw auto;height:40rem;z-index:-1;background:radial-gradient(38rem 22rem at 50% 25%,var(--glow),transparent 70%)}
+.intro h1{font-size:clamp(3.2rem,12vw,8.5rem);line-height:.95;letter-spacing:-.055em;font-weight:700;
+  background:linear-gradient(180deg,#fff6ef 30%,var(--ember-hi));-webkit-background-clip:text;background-clip:text;color:transparent}
+.intro p{font-size:clamp(1.15rem,2.6vw,1.6rem);color:var(--mute);margin:1.25rem auto 0;max-width:34rem;letter-spacing:-.015em}
+.intro .scroll{margin-top:2.5rem;font:500 .75rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.intro .scroll::after{content:"";display:block;width:1px;height:2.5rem;margin:.75rem auto 0;background:linear-gradient(var(--ember),transparent)}
+
+/* pinned film */
+.film{height:520vh;position:relative}
+.pin{position:sticky;top:0;height:100vh;height:100svh;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);gap:clamp(1rem,4vw,4rem);align-items:center;padding-top:4.5rem}
+.caps{position:relative;height:16rem}
+.cap{position:absolute;inset:0;display:grid;align-content:center;gap:1rem;opacity:0;will-change:opacity,transform}
+.cap h2{font-size:clamp(2rem,5vw,3.6rem);line-height:1.02;letter-spacing:-.04em;font-weight:700}
+.cap p{color:var(--mute);font-size:1.125rem;max-width:26rem}
+.dots{display:flex;gap:.5rem;margin-top:2rem}
+.dots i{height:.35rem;width:1.5rem;border-radius:999px;background:var(--line);overflow:hidden;position:relative}
+.dots i::after{content:"";position:absolute;inset:0;background:var(--ember);transform:scaleX(var(--f,0));transform-origin:left}
+.device{position:relative;aspect-ratio:16/10.5;max-height:72vh;width:100%;border:1px solid var(--line);border-radius:1.25rem;background:var(--bg2);overflow:hidden;
+  box-shadow:0 4rem 8rem -2rem rgba(0,0,0,.7),0 0 6rem -2rem var(--glow);transform:scale(var(--sc,1));will-change:transform}
+.top{height:2rem;display:flex;align-items:center;gap:.4rem;padding-inline:.9rem;border-bottom:1px solid var(--line);font:500 .6875rem var(--mono);color:var(--mute)}
+.top i{width:.6rem;height:.6rem;border-radius:50%;background:rgba(255,255,255,.14)}
+.top span{margin-left:.6rem}
+.scr{position:absolute;inset:2rem 0 0;padding:1.25rem 1.5rem;display:grid;gap:.9rem;align-content:start;opacity:0;will-change:opacity,transform}
+.scr h4{margin:0;font-size:1.25rem;letter-spacing:-.025em}
+.lbl{font:500 .625rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.card{border:1px solid var(--line);border-radius:.9rem;padding:.9rem;background:rgba(255,255,255,.025);min-width:0}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem}
+.ring{--p:0;--c:var(--ember);position:relative;width:4rem;height:4rem;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),rgba(255,255,255,.08) 0);display:grid;place-items:center;margin-bottom:.5rem}
+.ring::before{content:"";position:absolute;inset:.38rem;border-radius:50%;background:var(--bg2)}
+.ring b{position:relative;font:500 1rem var(--mono)}
+.big{font:500 2.2rem/1 var(--mono);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.seg{display:grid;grid-template-columns:repeat(5,1fr);padding:.25rem;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);position:relative;font-size:.75rem;text-align:center;color:var(--mute)}
+.seg span{position:relative;z-index:1;padding:.45rem 0}
+.seg .th{position:absolute;top:.25rem;bottom:.25rem;left:.25rem;width:calc((100% - .5rem)/5);border-radius:999px;background:linear-gradient(180deg,var(--ember-hi),var(--ember));transform:translateX(calc(var(--i,0)*100%))}
+.seg .on{color:#1a0c06;font-weight:600}
+.seg b{font-weight:inherit}.seg .s{display:none}
+@media (max-width:560px){.seg .f{display:none}.seg .s{display:inline}.seg span{white-space:nowrap}}
+.curve{width:100%;height:7.5rem;display:block}
+.keys{display:grid;grid-template-columns:repeat(14,1fr);gap:.25rem}
+.keys i{aspect-ratio:1;border-radius:.25rem}
+.layers{display:grid;gap:.4rem}
+.layer{display:flex;justify-content:space-between;font-size:.8125rem;padding:.5rem .7rem;border-radius:.6rem;background:rgba(255,255,255,.04)}
+.layer em{font:500 .625rem var(--mono);font-style:normal;color:var(--mute);letter-spacing:.08em;text-transform:uppercase}
+.games{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem}
+.cover{aspect-ratio:3/4;border-radius:.8rem;padding:.55rem;display:flex;flex-direction:column;justify-content:flex-end;gap:.3rem;font-size:.75rem;font-weight:600;line-height:1.15;background:linear-gradient(160deg,var(--a),var(--b));position:relative;overflow:hidden;opacity:var(--o,1);transform:translateY(var(--y,0))}
+.cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.65))}
+.cover *{position:relative;z-index:1}
+.cover span{font:500 .5rem var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:.15rem .4rem;border-radius:999px;background:rgba(255,255,255,.18);width:max-content}
+.donut{--a:0;--b:0;width:8rem;aspect-ratio:1;border-radius:50%;position:relative;display:grid;place-items:center;background:conic-gradient(var(--ember) calc(var(--a)*1%),var(--teal) 0 calc(var(--b)*1%),var(--ember-hi) 0)}
+.donut::before{content:"";position:absolute;inset:1rem;border-radius:50%;background:var(--bg2)}
+.donut b{position:relative;font:500 1.6rem/1 var(--mono);letter-spacing:-.04em;text-align:center}
+.donut small{display:block;font:500 .5625rem var(--mono);color:var(--mute);letter-spacing:.08em}
+.pwr{display:grid;grid-template-columns:auto 1fr;gap:1.25rem;align-items:center}
+.leg{display:grid;gap:.5rem;font:500 .8125rem var(--mono)}
+.leg span::before{content:"";display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--c);margin-right:.5rem}
+
+/* statement */
+.say{padding-block:clamp(5rem,14vw,11rem);max-width:56rem;margin-inline:auto}
+.say p{font-size:clamp(1.9rem,5.2vw,3.6rem);line-height:1.12;letter-spacing:-.04em;font-weight:650}
+.say .w{opacity:.2;transition:opacity .25s}
+.say .w.lit{opacity:1}
+
+/* numbers */
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:2.5rem 1.5rem;padding-block:2rem 6rem;border-top:1px solid var(--line);padding-top:4rem}
+.num b{display:block;font:500 clamp(3rem,8vw,5.5rem)/1 var(--mono);letter-spacing:-.06em;color:var(--ember);font-variant-numeric:tabular-nums}
+.num p{color:var(--mute);margin-top:.6rem;max-width:16rem}
+
+.final{text-align:center;padding-block:4rem 7rem;display:grid;gap:1.5rem;justify-items:center}
+.final svg{width:4.5rem;height:4.5rem}
+.final h2{font-size:clamp(2.2rem,6vw,4.2rem);letter-spacing:-.045em;line-height:1}
+.final p{color:var(--mute);max-width:28rem}
+footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute);font-size:.8125rem}
+
+/* small screens and reduced motion: the film becomes a plain stack, complete at rest */
+@media (max-width:860px){
+  .film{height:auto}
+  .pin{position:static;height:auto;grid-template-columns:1fr;padding-top:2rem}
+  .caps{height:auto;display:grid;gap:2rem}
+  .cap,.scr{position:static;opacity:1!important;transform:none!important}
+  .scr{position:relative;inset:auto;border-bottom:1px solid var(--line)}
+  .device{aspect-ratio:auto;max-height:none;transform:none}
+  .dots{display:none}
+  .row3{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  .film{height:auto}
+  .pin{position:static;height:auto;grid-template-columns:1fr;padding-top:2rem}
+  .caps{height:auto;display:grid;gap:2rem}
+  .cap{position:static;opacity:1!important;transform:none!important}
+  .scr{position:relative;inset:auto;opacity:1!important;transform:none!important;border-bottom:1px solid var(--line)}
+  .device{aspect-ratio:auto;max-height:none;transform:none}
+  .dots{display:none}
+  .say .w{opacity:1}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff4d12"/><stop offset="1" stop-color="#ffb347"/></linearGradient>
+    <linearGradient id="core" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffc15a"/><stop offset="1" stop-color="#fff1c9"/></linearGradient>
+    <symbol id="mark" viewBox="0 0 256 256">
+      <path d="M128 30 C152 66 198 90 198 148 C198 190 167 222 128 222 C89 222 58 190 58 148 C58 120 73 100 88 85 C92 106 102 119 115 123 C104 86 116 58 128 30 Z" fill="url(#flame)"/>
+      <path d="M128 116 C141 138 166 149 166 178 C166 199 149 212 128 212 C107 212 90 199 90 178 C90 163 99 153 108 144 C112 155 118 160 125 160 C120 143 122 130 128 116 Z" fill="url(#core)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <nav><div class="bar"><a class="brand" href="/"><svg><use href="#mark"/></svg>Ember</a><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download</a></div></nav>
+
+  <header class="intro">
+    <p class="eyebrow">The demo</p>
+    <h1 style="margin-top:1rem">Meet Ember.</h1>
+    <p>Five pages. One calm window. Scroll to watch your PC settle.</p>
+    <div class="scroll">Scroll</div>
+  </header>
+
+  <div class="film" id="film">
+    <div class="pin">
+      <div>
+        <div class="caps" id="caps">
+          <div class="cap"><span class="eyebrow">Dashboard</span><h2>Your whole PC, at a glance.</h2><p>CPU, GPU, board and fans, with a ten minute history. Calm when it is calm.</p></div>
+          <div class="cap"><span class="eyebrow">Fans</span><h2>One click from silent to full.</h2><p>Five modes, each with a curve you can see. Safety limits stay on in every one.</p></div>
+          <div class="cap"><span class="eyebrow">Lights</span><h2>Light up the whole desk.</h2><p>Stack effects, paint single LEDs and watch a live preview before anything changes.</p></div>
+          <div class="cap"><span class="eyebrow">Games</span><h2>A fan mode for every game.</h2><p>Your Steam, Epic, GOG, Ubisoft Connect and EA app libraries, found for you.</p></div>
+          <div class="cap"><span class="eyebrow">Power</span><h2>What the wall socket sees.</h2><p>A read-only smart plug measures the whole PC. Ember shows you the rest.</p></div>
+        </div>
+        <div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="device" id="device" role="img" aria-label="The Ember app moving through Dashboard, Fans, Lights, Games and Power">
+        <div class="top"><i></i><i></i><i></i><span id="ttl">Ember · Dashboard</span></div>
+
+        <div class="scr">
+          <div><h4>Dashboard</h4><div class="lbl" style="margin-top:.2rem">All calm. Fans are on Normal.</div></div>
+          <div class="row3">
+            <div class="card"><div class="ring" id="r1"><b id="t1">0°</b></div><div class="lbl">CPU</div></div>
+            <div class="card"><div class="ring" id="r2" style="--c:var(--teal)"><b id="t2">0°</b></div><div class="lbl">GPU</div></div>
+            <div class="card"><div class="ring" id="r3" style="--c:var(--ember-hi)"><b id="t3">0</b></div><div class="lbl">Watts at the wall</div></div>
+          </div>
+          <div class="card"><div class="lbl">Last 10 minutes</div>
+            <svg class="curve" viewBox="0 0 600 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 70 C60 66 90 44 150 48 S250 78 310 56 S420 24 470 38 S560 58 600 50" fill="none" stroke="#ff5a1f" stroke-width="2.5"/><path d="M0 84 C80 80 160 86 240 78 S380 74 470 76 S560 80 600 74" fill="none" stroke="#3dd6c8" stroke-width="2.5"/></svg></div>
+        </div>
+
+        <div class="scr">
+          <div><h4>Fans</h4><div class="lbl" style="margin-top:.2rem" id="fmode">Normal</div></div>
+          <div class="seg" id="fseg"><span class="th"></span><span><b class="f">Super quiet</b><b class="s">Silent</b></span><span><b class="f">Quiet</b><b class="s">Quiet</b></span><span><b class="f">Normal</b><b class="s">Normal</b></span><span><b class="f">Performance</b><b class="s">Fast</b></span><span><b class="f">Extreme</b><b class="s">Max</b></span></div>
+          <div class="row3">
+            <div class="card"><div class="big" id="frpm">0</div><div class="lbl">Fan rpm</div></div>
+            <div class="card"><div class="big" id="fpct">0%</div><div class="lbl">Fan speed</div></div>
+            <div class="card"><div class="big">90°</div><div class="lbl">Forced to 100%</div></div>
+          </div>
+          <div class="card"><svg class="curve" viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true"><path id="fline" fill="none" stroke="#ff5a1f" stroke-width="3" stroke-linecap="round"/></svg></div>
+        </div>
+
+        <div class="scr">
+          <div><h4>Lights</h4><div class="lbl" style="margin-top:.2rem">Live preview</div></div>
+          <div class="card"><div class="keys" id="keys"></div></div>
+          <div class="layers"><div class="layer"><span>Gradient</span><em>Normal</em></div><div class="layer"><span>Ripples</span><em>Add</em></div><div class="layer"><span>Music bars</span><em>Screen</em></div></div>
+        </div>
+
+        <div class="scr">
+          <div><h4>Games</h4><div class="lbl" style="margin-top:.2rem">The library shown is made up</div></div>
+          <div class="games" id="games">
+            <div class="cover" style="--a:#7a2a12;--b:#1c0f0a"><span>Performance</span>Ashfall Run</div>
+            <div class="cover" style="--a:#0e5a62;--b:#0b1a1d"><span>Quiet</span>Tidewatch</div>
+            <div class="cover" style="--a:#5a3a8a;--b:#14101c"><span>Normal</span>Low Orbit</div>
+            <div class="cover" style="--a:#8a6a12;--b:#1c1608"><span>Extreme</span>Gravel Kings</div>
+          </div>
+        </div>
+
+        <div class="scr">
+          <div><h4>Power</h4><div class="lbl" style="margin-top:.2rem">Measured at the wall</div></div>
+          <div class="card pwr"><div class="donut" id="dn"><b><span id="dw">0</span><small>WATTS</small></b></div>
+            <div class="leg"><span style="--c:var(--ember)">CPU 40 W</span><span style="--c:var(--teal)">GPU 21 W</span><span style="--c:var(--ember-hi)">Everything else 35 W</span><span style="color:var(--mute)">About 0.9 kWh a day</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="say" id="say">
+    <p id="statement">Ember reads your sensors, runs your fans and lights your desk. It never sends a byte on its own, never switches your plugs, and never lets a fan stop while the CPU is hot.</p>
+  </section>
+
+  <div class="nums">
+    <div class="num"><b>90°</b><p>Every controlled fan goes to 100%, on any sensor.</p></div>
+    <div class="num"><b>5</b><p>Fan modes, plus your own curves.</p></div>
+    <div class="num"><b>13</b><p>Lighting systems, found on your network or through OpenRGB.</p></div>
+    <div class="num"><b>0</b><p>Accounts. Nothing leaves your PC.</p></div>
+  </div>
+
+  <section class="final">
+    <svg><use href="#mark"/></svg>
+    <h2>Give your PC a calmer window.</h2>
+    <p>Free, open source and local only, for Windows 10 and 11.</p>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center"><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a><a class="btn" href="/">Back to Ember</a></div>
+  </section>
+
+  <footer>Ember is an independent project by Ol775, MIT licensed, and is not affiliated with any hardware maker named on this site. Screens are drawn for this demo with made-up figures and a made-up game library.<div class="legal-links"><a href="/privacy">Privacy and cookies</a><a href="/terms">Terms and legal notices</a><a href="#" data-cookie-settings>Cookie settings</a></div></footer>
+</div>
+
+<script>
+(function(){
+  var N=5,film=document.getElementById("film"),caps=[].slice.call(document.querySelectorAll(".cap")),scrs=[].slice.call(document.querySelectorAll(".scr")),
+      dots=[].slice.call(document.querySelectorAll("#dots i")),device=document.getElementById("device"),ttl=document.getElementById("ttl"),
+      names=["Dashboard","Fans","Lights","Games","Power"];
+  function cl(x,a,b){return Math.max(a,Math.min(b,x))}
+  function ease(x){return x*x*(3-2*x)}
+  function lerp(a,b,t){return a+(b-a)*t}
+  function vis(u,first,last){ // opacity 0..1 for a page whose time runs u=0..1
+    var a=first?1:ease(cl((u+.12)/.22,0,1)), b=last?1:1-ease(cl((u-.88)/.22,0,1));
+    return Math.min(a,b);
+  }
+  // fan curves, same idea as the site's switcher
+  var modes=[[[0,10],[60,22],[80,60],[100,100]],[[0,16],[55,30],[75,70],[100,100]],[[0,22],[50,38],[70,78],[100,100]],[[0,30],[45,52],[65,88],[100,100]],[[0,45],[40,70],[60,100],[100,100]]];
+  function at(p,t){for(var i=1;i<p.length;i++){if(t<=p[i][0]){var a=p[i-1],b=p[i];return a[1]+(b[1]-a[1])*(t-a[0])/(b[0]-a[0])}}return 100}
+  var keys=document.getElementById("keys");
+  for(var q=0;q<56;q++){var k=document.createElement("i");keys.appendChild(k)}
+  var kk=[].slice.call(keys.children);
+  var covers=[].slice.call(document.querySelectorAll("#games .cover"));
+  var $=function(id){return document.getElementById(id)};
+
+  function frame(){
+    var r=film.getBoundingClientRect(),span=r.height-innerHeight;
+    var p=span>0?cl(-r.top/span,0,1):0, s=p*N;
+    device.style.setProperty("--sc",(.9+.1*ease(cl(p*10,0,1))).toFixed(3));
+    var cur=cl(Math.floor(s),0,N-1);
+    ttl.textContent="Ember · "+names[cur];
+    for(var i=0;i<N;i++){
+      var u=s-i,o=vis(u,i===0,i===N-1);
+      caps[i].style.opacity=o;caps[i].style.transform="translateY("+((1-o)*(u<.5?18:-18)).toFixed(1)+"px)";
+      scrs[i].style.opacity=o;scrs[i].style.transform="translateY("+((1-o)*(u<.5?22:-22)).toFixed(1)+"px) scale("+(.985+.015*o).toFixed(3)+")";
+      scrs[i].style.pointerEvents=o>.5?"auto":"none";
+      dots[i].style.setProperty("--f",cl(u,0,1).toFixed(3));
+    }
+    // 0 dashboard: rings fill, numbers count up
+    var t0=ease(cl(s/.55,0,1));
+    $("r1").style.setProperty("--p",58*t0);$("t1").textContent=Math.round(58*t0)+"°";
+    $("r2").style.setProperty("--p",49*t0);$("t2").textContent=Math.round(49*t0)+"°";
+    $("r3").style.setProperty("--p",62*t0);$("t3").textContent=Math.round(96*t0)+"W";
+    // 1 fans: the mode steps through, curve and readouts follow
+    var f=cl(s-1,0,1),mi=cl(Math.floor(f*5),0,4),mt=f*5-mi;
+    $("fseg").style.setProperty("--i",mi);[].forEach.call($("fseg").children,function(c,x){if(x>0)c.classList.toggle("on",x-1===mi)});
+    $("fmode").textContent=["Super quiet","Quiet","Normal","Performance","Extreme"][mi];
+    var m=modes[mi],d="";for(var t=0;t<=100;t+=2){d+=(t?"L":"M")+(t*4)+" "+(96-at(m,t)*.9)+" "}
+    $("fline").setAttribute("d",d);
+    var pct=Math.round(at(m,60));$("fpct").textContent=pct+"%";$("frpm").textContent=Math.round(pct*27/10)*10;
+    // 2 lights: a hue wave travels across the keys
+    var ls=s-2;
+    kk.forEach(function(e,n){e.style.background="hsl("+((n*6+ls*240)%360)+",90%,"+(52+10*Math.sin(n*.5+ls*6))+"%)"});
+    // 3 games: covers rise in one after another
+    var g=cl(s-3,0,1);
+    covers.forEach(function(c,n){var e=ease(cl(g*3.2-n*.5,0,1));c.style.setProperty("--o",e.toFixed(3));c.style.setProperty("--y",((1-e)*26).toFixed(1)+"px")});
+    // 4 power: the donut sweeps to its split and the wattage counts up
+    var w=ease(cl((s-4)/.5+.4,0,1));
+    $("dn").style.setProperty("--a",42*w);$("dn").style.setProperty("--b",(42+22)*w+(1-w)*0);$("dw").textContent=Math.round(96*w);
+  }
+  var tick=false;function req(){if(!tick){tick=true;requestAnimationFrame(function(){tick=false;frame()})}}
+  addEventListener("scroll",req,{passive:true});addEventListener("resize",req);frame();
+
+  // lit words: each word brightens as the statement scrolls through
+  var st=$("statement"),words=st.textContent.trim().split(/\s+/);st.textContent="";
+  var ws=words.map(function(w,i){var e=document.createElement("span");e.className="w";e.textContent=w;st.appendChild(e);if(i<words.length-1)st.appendChild(document.createTextNode(" "));return e});
+  function lit(){var r=st.getBoundingClientRect(),prog=cl((innerHeight*.8-r.top)/(r.height+innerHeight*.35),0,1);
+    var n=Math.round(prog*ws.length);ws.forEach(function(e,i){e.classList.toggle("lit",i<n)})}
+  addEventListener("scroll",lit,{passive:true});addEventListener("resize",lit);lit();
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches)ws.forEach(function(e){e.classList.add("lit")});
+})();
+</script>
+<script id="ember-fx">
+(function(){
+  var still=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  var $$=function(q,r){return [].slice.call((r||document).querySelectorAll(q))};
+  // nav picks up depth once you scroll
+  var nav=document.querySelector("nav");
+  function sc(){nav&&nav.classList.toggle("scrolled",scrollY>8)}
+  addEventListener("scroll",sc,{passive:true});sc();
+  var lk=nav&&nav.querySelector(".links");
+  if(lk){var mb=document.createElement("button");mb.type="button";mb.className="navbtn";mb.setAttribute("aria-label","Menu");mb.setAttribute("aria-expanded","false");mb.innerHTML="<span class=\"nb\"></span>";
+    nav.querySelector(".bar").insertBefore(mb,lk.nextSibling);
+    var tog=function(o){nav.classList.toggle("open",o);mb.setAttribute("aria-expanded",o)};
+    mb.addEventListener("click",function(){tog(!nav.classList.contains("open"))});
+    lk.addEventListener("click",function(e){if(e.target.closest("a"))tog(false)});
+    document.addEventListener("keydown",function(e){if(e.key==="Escape")tog(false)});
+    document.addEventListener("click",function(e){if(!nav.contains(e.target))tog(false)})}
+  if(still)return;
+
+  // entrance for the first screen, in reading order
+  var first=$$("header .eyebrow,header h1,header .tagline,header .lede,header .cta,header .pills,header .stats,header .win,.intro>*");
+  first.forEach(function(e,i){e.style.setProperty("--d",i);e.classList.add("fx-in")});
+
+  // scroll reveal for anything below the fold; what is already on screen stays put
+  var skip=".device,.win,.stage,.pin,.stop .card,.grid .card,.tile,.fx-in";
+  var sel=".head,.about,.pr>div,.card,.step,.fact,.build,.node,.panel,.num,.final,details,.shipped,.np,.led,.facts,.flow,.ww-note,.note";
+  var els=$$(sel).filter(function(e){return !e.closest(skip)&&!e.querySelector(".fx-in")});
+  // a parent that is revealed already covers its children
+  els=els.filter(function(e){return !els.some(function(p){return p!==e&&p.contains(e)&&["about","facts","flow","rm","led"].some(function(c){return p.classList.contains(c)})})});
+  var vh=innerHeight;
+  var below=els.filter(function(e){return e.getBoundingClientRect().top>vh*.92});
+  if("IntersectionObserver" in window){
+    below.forEach(function(e){e.classList.add("fx-hide","fx-rv")});
+    var batch=0,t;
+    var io=new IntersectionObserver(function(es){
+      es.filter(function(x){return x.isIntersecting}).forEach(function(x,i){
+        x.target.style.transitionDelay=Math.min(i,6)*70+"ms";x.target.classList.add("fx-show");io.unobserve(x.target)});
+    },{rootMargin:"0px 0px -8% 0px",threshold:.08});
+    below.forEach(function(e){io.observe(e)});
+  }
+
+  // numbers count up when they come into view
+  var nums=$$(".fact b,.num b,.stats b").filter(function(e){return /^\d+/.test(e.textContent)});
+  nums.forEach(function(e){
+    var m=/^(\d+)(.*)$/.exec(e.textContent.trim()),to=+m[1],tail=m[2];if(!to)return;
+    e.textContent=0+tail;
+    var go=function(){var t0=performance.now();(function f(t){var k=Math.min(1,(t-t0)/1100),v=1-Math.pow(1-k,3);e.textContent=Math.round(to*v)+tail;if(k<1)requestAnimationFrame(f)})(t0)};
+    if("IntersectionObserver" in window){var o=new IntersectionObserver(function(es){if(es[0].isIntersecting){o.disconnect();go()}},{threshold:.6});o.observe(e)}else e.textContent=to+tail;
+  });
+
+  // hero rings and chart fill in
+  $$(".win .ring").forEach(function(r,i){var p=+getComputedStyle(r).getPropertyValue("--p")||0,t0=performance.now()+250+i*120;
+    r.style.setProperty("--p",0);(function f(t){var k=Math.max(0,Math.min(1,(t-t0)/1200)),v=1-Math.pow(1-k,3);r.style.setProperty("--p",p*v);if(k<1)requestAnimationFrame(f)})(performance.now())});
+  $$(".win .chart path[fill=none]").forEach(function(p,i){p.setAttribute("pathLength","1");p.classList.add("fx-draw");p.style.animationDelay=.5+i*.25+"s"});
+  $$(".split i").forEach(function(b,i){b.classList.add("fx-grow");b.style.animationDelay=i*.15+"s"});
+  // draw the fan curve when a card scrolls in
+  var cl=document.getElementById("cline");
+  if(cl&&"IntersectionObserver" in window){var oc=new IntersectionObserver(function(es){if(es[0].isIntersecting){oc.disconnect();cl.setAttribute("pathLength","1");cl.classList.add("fx-draw")}},{threshold:.4});oc.observe(cl)}
+})();
+</script>
+<script id="ember-consent">
+(function(){
+  // The site sets no cookies and runs no analytics or ads. The only optional storage is the visitor's own look settings.
+  var C=window.emberConsent;if(!C)return;
+  var st=document.createElement("style");
+  st.textContent=".cb{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:60;width:min(26rem,calc(100vw - 32px));"+
+    "padding:1.25rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:1.25rem;background:var(--glass,rgba(18,13,11,.86));color:var(--fg,#fbece3);"+
+    "-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);"+
+    "font:400 .875rem/1.5 var(--display,system-ui,sans-serif);display:grid;gap:.75rem;transform:translateY(1.5rem);opacity:0;pointer-events:none;"+
+    "transition:opacity .35s,transform .6s cubic-bezier(.34,1.45,.5,1)}"+
+    ".cb.on{transform:none;opacity:1;pointer-events:auto}"+
+    ".cb h2{margin:0;font-size:1rem;letter-spacing:-.01em}.cb p{margin:0;color:var(--mute,#b49a8c)}.cb a{color:var(--fg,#fbece3);text-underline-offset:.15em}"+
+    ".cb .row{display:flex;gap:.5rem;flex-wrap:wrap}.cb button{flex:1 1 9rem;padding:.65rem 1rem;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.2));background:var(--card,#1d1512);color:var(--fg,#fbece3);"+
+    "font:600 .875rem var(--display,system-ui,sans-serif);cursor:pointer;touch-action:manipulation;transition:transform .45s cubic-bezier(.34,1.45,.5,1)}"+
+    ".cb button:active{transform:scale(.95);transition-duration:.08s}.cb button:focus-visible{outline:2px solid var(--ember,#ff5a1f);outline-offset:2px}"+
+    "@media (prefers-reduced-motion:reduce){.cb{transition:none}}";
+  document.head.appendChild(st);
+  var b=document.createElement("div");b.className="cb";b.setAttribute("role","dialog");b.setAttribute("aria-labelledby","cbt");b.setAttribute("aria-live","polite");
+  b.innerHTML='<h2 id="cbt">Your settings, your device</h2>'+
+    '<p>This site sets no cookies and has no analytics, ads or tracking. If you personalise the look, we can remember your choices on your device so they are still there next time. That is optional.</p>'+
+    '<p><a href="/privacy">Privacy and cookies</a></p>'+
+    '<div class="row"><button type="button" data-v="no">No thanks</button><button type="button" data-v="yes">Remember my choices</button></div>';
+  document.body.appendChild(b);
+  function show(on){b.classList.toggle("on",on);if(on)b.querySelector("button").focus({preventScroll:true})}
+  b.addEventListener("click",function(e){var v=e.target.getAttribute&&e.target.getAttribute("data-v");if(!v)return;C.set(v);show(false)});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&b.classList.contains("on"))show(false)});
+  document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-cookie-settings]");if(a){e.preventDefault();show(true)}});
+  if(!C.get())setTimeout(function(){show(true)},700);
+})();
+</script>
+</body>
+</html>
