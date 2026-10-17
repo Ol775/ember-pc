@@ -24,14 +24,16 @@
 
 ## Two builds
 
-| | **Stable 1.3.0** | **Beta 1.4.0-beta.1** |
+Both builds have the same **new look**: icon sidebar, ring gauges, rounded cards, a live preview on Lights, and the tour below. They differ in how much has been proven on real hardware.
+
+| | **Stable 1.4.0** | **Beta 1.5.0-beta.1** |
 |---|---|---|
-| **Look** | The classic window | **The new look**: icon sidebar, ring gauges, rounded cards, a live preview on Lights, and the tour below |
-| **Lights** | Rename any device, a gradient effect with colour stops, Logitech G keys | The same, plus a layer editor that fits small windows and *Applies to* chips |
-| **Also** | Power and Games pages, quieter redraws, a checked update installer | A Specs page with drive health, power cost estimate, schedule and alerts, Stream Deck plugin, GPU fan control |
+| **Everything on the pages below** | Dashboard, Fans, Lights, Devices, Games, Power, Specs and Settings, with device renaming, gradient layers, *Applies to*, *Solo layer*, game covers and last played, Power ranges, currencies and CSV export | The same |
+| **Lights and plugs** | OpenRGB, Govee, Logitech, Philips Hue, Corsair; Razer, Nanoleaf, Meross, Tapo, WiZ, LIFX, Yeelight and Kasa (Beta); Meross, Tapo, Kasa and Shelly plugs, read only | The same |
+| **Still being proven** | Hidden | Schedule and alerts, Stream Deck plugin, GPU fan control, the roadmap page |
 | **Get it** | [Latest release](https://github.com/Ol775/ember-pc/releases/latest) | [Pre-releases](https://github.com/Ol775/ember-pc/releases), or Settings, Updates, Release channel, Beta |
 
-The pictures on this page show the beta's new look. See the [changelog](CHANGELOG.md) for every change.
+The pictures on this page show the new look. See the [changelog](CHANGELOG.md) for every change.
 
 ## Features
 
@@ -53,7 +55,7 @@ The pictures on this page show the beta's new look. See the [changelog](CHANGELO
 - **Live dashboard.** CPU, GPU, motherboard and fan sensors with a 10-minute temperature history, in Celsius or Fahrenheit.
 - **Fan modes.** **Super quiet**, **Quiet**, **Normal**, **Performance** and **Extreme** curves, switched with one click, or draw your own **manual curves** for the CPU fan and the system fans, with the safety limits enforced.
 - **Safety first.** At 90 °C every controlled fan goes to 100%, a lost sensor sends fans to 100%, and a separate **watchdog** service restores safe speeds if Ember stops responding. Nothing is written to a fan header until you have tested and enabled it yourself.
-- **Power.** What your PC draws: the whole PC, the CPU, the graphics card, the motherboard and the rest, and any other plugs, each with the live watts, a graph, the average, the peak and the energy used. Link a **smart plug** (Meross MSS310 or MSS315, Tapo P110 or P115, Kasa KP115 or HS110, Shelly plugs with a power meter) and mark it as your PC's plug to measure the real draw from the wall. Plugs are **read only**: Ember never switches one.
+- **Power.** What your PC draws: the whole PC, the CPU, the graphics card, the motherboard and the rest, and any other plugs, each with the live watts, a graph, the average, the peak and the energy used. Link a **smart plug** (Meross MSS310 or MSS315, Tapo P110 or P115, Kasa KP115 or HS110, Shelly plugs with a power meter) and mark it as your PC's plug to measure the real draw from the wall. Prices can be shown in any of 17 currencies, and the daily figures export to a CSV file. Plugs are **read only**: Ember never switches one.
 - **Games.** Ember scans your **Steam, Epic Games, GOG, Ubisoft Connect and EA app** libraries (on start, when you open the page, and on **Scan now**) and switches the fans to your game mode when one of those games runs, even in a window. Give single games their own fan mode if you want to (off by default). Game detection is **Beta** and sits behind the Experimental switch.
 - **Lighting.** Drives PC devices through **OpenRGB** (bundled), **Govee** lamps over your LAN (or the Govee cloud with your own API key), **Logitech** G keyboards through G HUB, **Philips Hue** lights through the bridge on your network (no Hue account) and **Corsair** devices through iCUE. **WiZ**, **LIFX**, **Yeelight** and **Kasa** bulbs are found on your network with no account (Beta). **Razer Chroma**, **Nanoleaf** panels, **Meross** bulbs and **Tapo** bulbs are marked **Beta**: written and tested in software but not yet tried on enough real devices.
 - **Scenes and effects.** Stack effects with blend modes, paint single LEDs, give any device its own colours, and save it all as scenes. Music-reactive lights and **screen sync** (read straight from the graphics card, including HDR desktops) are built in.

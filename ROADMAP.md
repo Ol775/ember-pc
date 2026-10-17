@@ -21,12 +21,8 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 - Razer devices: only show the ones that are plugged in, once Synapse offers a way to tell
 - A lighting scene per game, next to the fan mode per game
 - Global hotkeys for scenes, lights on and off, and fan mode
-- Export sensor history to a file
-- Power page: other currencies (a currency choice next to the price per kWh, with the symbol and format of the chosen one), not only pounds
 - Windows Dynamic Lighting (the built-in Windows lighting standard) as another source of devices
-- A tray tooltip with the current temperatures and power draw
 - Stream Deck: show the GPU fan percentage when the card reports 0 RPM at idle
-- Corsair: say "update iCUE" when iCUE refuses the connection
 - Logitech: show the G keys device only on keyboards that have G keys, and keep OpenRGB from also listing a keyboard Ember already drives through G HUB (the G915 appeared twice)
 
 ## Later (ideas, no promise)
@@ -54,7 +50,8 @@ ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up i
 - Safety rules, header testing, conflict detection, watchdog service, stall recovery for fans that stop at low speed
 - AI assist: learns your temperatures and noise preference to suggest a curve you approve
 - Experimental game detection and GPU fan control, made to suit a graphics card
-- A Power page: CPU, GPU, motherboard and the rest, and other plugs, with a wall plug (Meross or Tapo, read only) for the whole PC
+- A Power page: CPU, GPU, motherboard and the rest, and other plugs, with a wall plug (Meross, Tapo, Kasa or Shelly, read only) for the whole PC, a choice of currency, and a CSV export of the daily figures
+- The redesigned look in every build, and a tray tooltip with the temperatures and the draw
 - A Games page that scans Steam, Epic, GOG, Ubisoft Connect and the EA app, with a fan mode per game (off by default)
 - A schedule for fan modes and lights (for example quiet fans and dim lights at night), and Windows notifications for a hot part or a stopped fan (beta)
 - A Specs page with S.M.A.R.T. drive health, a Power cost estimate with a daily and monthly split, and a last played date and cover for each game (beta)
@@ -66,6 +63,7 @@ ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up i
 - Corsair devices through iCUE (keep iCUE up to date)
 - A Stream Deck plugin (beta): keys for scenes, lights, brightness, fan mode and live temperature and fan readouts
 - Philips Hue lights through the bridge, Nanoleaf light panels through the controller, Razer Chroma through Synapse, Meross and Tapo bulbs on the local network
+- WiZ, LIFX, Yeelight and Kasa bulbs, found on the local network with no account (beta)
 - Per-LED painting, gradients, rainbow, import and export, a paint library, and paint for several devices at once
 - Effects: spectrum bars, ripples, reactive keys, key highlight, fire, rain, and an effect per key group
 - Own lighting for one device, switching a device off, and arranging devices on the canvas

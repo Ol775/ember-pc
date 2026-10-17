@@ -177,7 +177,7 @@ public class PricePreferenceTests
     {
         Assert.Equal(0.31, RoundTrip("{\"PricePerKwh\":0.31}").PricePerKwh);
         Assert.Equal(0.28, RoundTrip("{\"PricePerKwh\":-4}").PricePerKwh);
-        Assert.Equal(0.28, RoundTrip("{\"PricePerKwh\":1000}").PricePerKwh);
+        Assert.Equal(0.28, RoundTrip("{\"PricePerKwh\":100000}").PricePerKwh);
         Assert.Equal(0.28, RoundTrip("{}").PricePerKwh);
     }
 
@@ -187,5 +187,24 @@ public class PricePreferenceTests
         Assert.Equal(0.45, RoundTrip("{\"StandingCharge\":0.45}").StandingCharge);
         Assert.Equal(0, RoundTrip("{\"StandingCharge\":-1}").StandingCharge);
         Assert.Equal(0, RoundTrip("{}").StandingCharge);
+    }
+}
+
+public class CurrencyPreferenceTests
+{
+    static AppPreferences Load(string json)
+    {
+        var path = Path.Combine(Path.GetTempPath(), "ember-prefs-" + Guid.NewGuid().ToString("N") + ".json");
+        try { File.WriteAllText(path, json); return new PreferencesStore(path).Load(); }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public void The_currency_is_kept_when_known_and_auto_otherwise()
+    {
+        Assert.Equal("JPY", Load("{\"Currency\":\"JPY\"}").Currency);
+        Assert.Equal("Auto", Load("{\"Currency\":\"XXX\"}").Currency);
+        Assert.Equal("Auto", Load("{}").Currency);
+        Assert.Equal(30, Load("{\"PricePerKwh\":30}").PricePerKwh);   // yen and kronor are not pounds
     }
 }

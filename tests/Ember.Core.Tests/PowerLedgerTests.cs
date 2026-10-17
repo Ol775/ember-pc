@@ -144,3 +144,43 @@ public class PowerTipAndCoarseTests
         Assert.Equal(200, t.Coarse[1]);
     }
 }
+
+public class PowerCurrencyTests
+{
+    [Fact]
+    public void A_chosen_currency_sets_the_symbol_and_auto_follows_the_region()
+    {
+        var uk = new System.Globalization.CultureInfo("en-GB");
+        Assert.Equal("$0.53", PowerCost.Format(0.531, uk, "USD"));
+        Assert.Equal("€1,234", PowerCost.Format(1234.4, new System.Globalization.CultureInfo("en-GB"), "EUR"));
+        Assert.Equal("£0.53", PowerCost.Format(0.531, uk));
+        Assert.Equal("£0.53", PowerCost.Format(0.531, uk, "nonsense"));
+    }
+
+    [Fact]
+    public void Only_known_codes_are_kept_in_the_settings()
+    {
+        Assert.True(PowerCurrency.IsValid("Auto"));
+        Assert.True(PowerCurrency.IsValid("JPY"));
+        Assert.False(PowerCurrency.IsValid("XXX"));
+        Assert.False(PowerCurrency.IsValid(null));
+    }
+}
+
+public class PowerExportTests
+{
+    [Fact]
+    public void The_csv_has_a_header_and_one_row_per_day_in_date_order()
+    {
+        var days = new[]
+        {
+            new PowerLedger.Day(new DateOnly(2026, 10, 17), 1000, 500, 500, 7200),
+            new PowerLedger.Day(new DateOnly(2026, 10, 16), 0, 0, 2000, 3600),
+        };
+        var lines = PowerExport.Csv(days, 0.30, "GBP").Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal("Date,Hours watched,Average W,kWh,CPU kWh,GPU kWh,Rest kWh,Cost (GBP)", lines[0]);
+        Assert.StartsWith("2026-10-16,1.00,2000.0,2.000,0.000,0.000,2.000,0.60", lines[1]);
+        Assert.StartsWith("2026-10-17,2.00,1000.0,2.000", lines[2]);
+        Assert.Equal(3, lines.Length);
+    }
+}

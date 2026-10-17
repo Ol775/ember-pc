@@ -2,6 +2,41 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.5.0-beta.1 (2026-10-17)
+
+### Added
+
+- **WiZ, LIFX, Yeelight and Kasa lights, and Kasa and Shelly plugs (beta).** Ember finds them on your home network with no account and no cloud, shows them on the Devices page, and lights them like any other device. Kasa and Shelly plugs with a power meter can be linked on the Power page; plugs are only ever read, never switched. Turn LAN Control on for Yeelight, local communication on for WiZ, and know that newer Kasa firmware that needs a TP-Link sign-in is not found.
+- **Currencies on the Power page.** Pick any of 17 currencies next to the price per kWh; only the symbol changes, the price is your own.
+- **Export the daily power figures as a CSV file** from the Power page's cost card.
+- **A tray tooltip with the temperatures and the draw.** Hover the tray icon for the fan mode, CPU and GPU temperature and the watts.
+
+### Changed
+
+- **Single-row Spectrum bars are see-through in silence**, so a steady colour layer underneath shows instead of being blacked out.
+- **Last played is saved every minute** instead of every five.
+
+## 1.4.0 (2026-10-17)
+
+### Changed
+
+- **The new look is in the stable build.** Every page is drawn again: an icon sidebar with a status card, Instrument Sans and JetBrains Mono type, rounded cards with small capital headings, ring gauges on the Dashboard, the fan curve beside the fan headers, a live preview on Lights, and Settings as rows. The window can be made as small as 1040 by 600.
+
+### Added
+
+- **Lights: more control.** The Aurora wave takes up to six colours with a draggable stop bar, Speed, Softness and Direction. Each layer has *Applies to* chips to choose the devices it lights, a *Solo layer* button to play one layer alone, and Reset. Spectrum bars on a single-row light are see-through in silence.
+- **Rename any device** on the Devices page: type a new name and press Enter; clear it to get the device's own name back.
+- **Power: standing charge, more ranges and a saving tip.** Add your daily standing charge to the cost estimate, switch the chart between 10 minutes, 1 hour, today and 7 days, see a plain tip about the part that uses the most, show the cost in one of 17 currencies and export the daily figures as a CSV file.
+- **Games: covers and last played.** Each game shows its Steam cover (from Steam's own picture cache) or its program icon, and a "Last played" line learned from the games that are in front of you. The dates stay on this PC.
+- **Logos for every launcher and device.** The Steam, Epic Games, GOG, Ubisoft Connect and EA app marks head the Games cards; Ember, OpenRGB, Govee, Meross and Nanoleaf have plain marks of their own on the Devices page.
+- **WiZ, LIFX, Yeelight and Kasa lights, and Kasa and Shelly plugs (beta).** Found on your home network with no account and no cloud; plugs are only read, never switched.
+- **A tray tooltip with the temperatures and the draw.**
+
+### Fixed
+
+- **The Dashboard and Lights fit a small window.** Status words and tiles trim instead of wrapping, the layer editor fits its column, and Applies to lists devices by name.
+- **Quieter on the PC.** The Dashboard, Fans and Power pages no longer measure unchanged text again every half second, so the window uses a few per cent of one core at most.
+
 ## 1.4.0-beta.1 (2026-10-17)
 
 ### Fixed

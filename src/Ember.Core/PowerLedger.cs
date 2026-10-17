@@ -131,7 +131,7 @@ public sealed class PowerLedger
 /// <summary>One plain, true sentence about where to save: the part of the PC that draws the most, and what a tenth less of it is worth.</summary>
 public static class PowerTip
 {
-    public static string? For(PowerLedger.Averages a, double pricePerKwh, System.Globalization.CultureInfo? culture = null)
+    public static string? For(PowerLedger.Averages a, double pricePerKwh, System.Globalization.CultureInfo? culture = null, string currency = PowerCurrency.Auto)
     {
         if (a.TotalKwh <= 0) return null;
         var parts = new[] { ("CPU", a.CpuW, a.CpuKwh), ("graphics card", a.GpuW, a.GpuKwh), ("rest of the PC", a.RestW, a.RestKwh) };
@@ -149,11 +149,54 @@ public static class PowerCost
 
     public static double Of(double kwh, double pricePerKwh) => Math.Max(0, kwh) * Math.Max(0, pricePerKwh);
 
-    /// <summary>"£0.53", with the symbol of the person's own region.</summary>
-    public static string Format(double amount, System.Globalization.CultureInfo? culture = null)
+    /// <summary>"£0.53": the symbol of the chosen currency, or of the person's own region when none is chosen.</summary>
+    public static string Format(double amount, System.Globalization.CultureInfo? culture = null, string currency = PowerCurrency.Auto)
     {
         culture ??= System.Globalization.CultureInfo.CurrentCulture;
-        var symbol = culture.NumberFormat.CurrencySymbol;
+        var symbol = PowerCurrency.Symbol(currency, culture);
         return amount >= 100 ? symbol + amount.ToString("N0", culture) : symbol + amount.ToString("0.00", culture);
+    }
+}
+
+/// <summary>The currencies the Power page can show its estimate in. Only the symbol changes: the price is the person's own, in that currency.</summary>
+public static class PowerCurrency
+{
+    public const string Auto = "Auto";
+
+    public static readonly IReadOnlyList<(string Code, string Symbol, string Name)> All =
+    [
+        ("GBP", "£", "Pound sterling"), ("USD", "$", "US dollar"), ("EUR", "€", "Euro"), ("CAD", "C$", "Canadian dollar"),
+        ("AUD", "A$", "Australian dollar"), ("NZD", "NZ$", "New Zealand dollar"), ("CHF", "CHF ", "Swiss franc"),
+        ("SEK", "kr ", "Swedish krona"), ("NOK", "kr ", "Norwegian krone"), ("DKK", "kr ", "Danish krone"), ("PLN", "zł ", "Polish złoty"),
+        ("CZK", "Kč ", "Czech koruna"), ("JPY", "¥", "Japanese yen"), ("INR", "₹", "Indian rupee"), ("BRL", "R$", "Brazilian real"),
+        ("ZAR", "R", "South African rand"), ("MXN", "MX$", "Mexican peso"),
+    ];
+
+    public static bool IsValid(string? code) => code == Auto || All.Any(c => c.Code == code);
+
+    /// <summary>The symbol for a code; "Auto" (or an unknown code) uses the symbol of the person's own region.</summary>
+    public static string Symbol(string? code, System.Globalization.CultureInfo? culture = null)
+    {
+        foreach (var c in All) if (c.Code == code) return c.Symbol;
+        return (culture ?? System.Globalization.CultureInfo.CurrentCulture).NumberFormat.CurrencySymbol;
+    }
+}
+
+/// <summary>The daily energy figures as a spreadsheet file (CSV), for keeping or charting elsewhere. Nothing leaves the PC unless the person moves the file.</summary>
+public static class PowerExport
+{
+    public static string Csv(IReadOnlyList<PowerLedger.Day> days, double pricePerKwh, string currency, System.Globalization.CultureInfo? culture = null)
+    {
+        culture ??= System.Globalization.CultureInfo.InvariantCulture;
+        var c = System.Globalization.CultureInfo.InvariantCulture;
+        var code = currency == PowerCurrency.Auto ? "" : currency;
+        var sb = new System.Text.StringBuilder();
+        sb.Append("Date,Hours watched,Average W,kWh,CPU kWh,GPU kWh,Rest kWh,Cost").AppendLine(code.Length > 0 ? " (" + code + ")" : "");
+        foreach (var d in days.OrderBy(d => d.Date))
+            sb.Append(d.Date.ToString("yyyy-MM-dd", c)).Append(',').Append((d.Seconds / 3600).ToString("0.00", c)).Append(',')
+              .Append(d.AverageW.ToString("0.0", c)).Append(',').Append(d.Kwh.ToString("0.000", c)).Append(',')
+              .Append((d.CpuWh / 1000).ToString("0.000", c)).Append(',').Append((d.GpuWh / 1000).ToString("0.000", c)).Append(',')
+              .Append((d.RestWh / 1000).ToString("0.000", c)).Append(',').AppendLine(PowerCost.Of(d.Kwh, pricePerKwh).ToString("0.00", c));
+        return sb.ToString();
     }
 }

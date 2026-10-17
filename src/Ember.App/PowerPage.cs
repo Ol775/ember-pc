@@ -216,11 +216,18 @@ public sealed class PowerPage : UserControl
     readonly Canvas _daily = new() { Height = 168, ClipToBounds = true };
     readonly Grid _table = new();
     string? _dailyKey, _tableKey;
+    Func<string> _currency = () => PowerCurrency.Auto;
+    Action<string> _saveCurrency = _ => { };
+    readonly List<TextBlock> _symbols = [];
+    readonly Button _currencyButton = LightsUi.Pill("Currency", () => { }, "Currency of the estimate");
+
+    string Money(double amount) => PowerCost.Format(amount, null, _currency());
 
     /// <summary>Gives the page the energy ledger and the person's price per kWh (and where to keep a change to it).</summary>
-    public void AttachCost(PowerLedger ledger, Func<double> price, Action<double> savePrice, Func<double> standing, Action<double> saveStanding)
+    public void AttachCost(PowerLedger ledger, Func<double> price, Action<double> savePrice, Func<double> standing, Action<double> saveStanding, Func<string> currency, Action<string> saveCurrency)
     {
-        (_ledger, _price, _savePrice, _standing, _saveStanding) = (ledger, price, savePrice, standing, saveStanding);
+        (_ledger, _price, _savePrice, _standing, _saveStanding, _currency, _saveCurrency) = (ledger, price, savePrice, standing, saveStanding, currency, saveCurrency);
+        ShowCurrency();
         _standingBox.Text = standing().ToString("0.00##", System.Globalization.CultureInfo.CurrentCulture);
         _priceBox.Text = price().ToString("0.00##", System.Globalization.CultureInfo.CurrentCulture);
     }
@@ -288,7 +295,7 @@ public sealed class PowerPage : UserControl
 
     FrameworkElement BuildCostCard()
     {
-        var symbol = new TextBlock { Text = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 2, 0), FontFamily = Fonts.Mono };
+        var symbol = new TextBlock { Text = PowerCurrency.Symbol(_currency()).Trim(), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 2, 0), FontFamily = Fonts.Mono };
         symbol.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
         // The price sits in the row of the mockup: its label on the left, the figure on the right, no box around the number.
         StyleMoneyBox(_priceBox, "Price per kilowatt hour", CommitPrice);
@@ -297,6 +304,7 @@ public sealed class PowerPage : UserControl
         priceInput.Children.Add(_priceBox);
         var priceBox = MoneyRow("Price per kWh", priceInput, 14);
         var standingSymbol = new TextBlock { Text = symbol.Text, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 2, 0), FontFamily = Fonts.Mono };
+        _symbols.Add(symbol); _symbols.Add(standingSymbol);
         standingSymbol.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
         StyleMoneyBox(_standingBox, "Standing charge per day", CommitStanding);
         var standingInput = new StackPanel { Orientation = Orientation.Horizontal };
@@ -320,6 +328,7 @@ public sealed class PowerPage : UserControl
         body.Children.Add(figures);
         body.Children.Add(priceBox);
         body.Children.Add(standingBox);
+        body.Children.Add(CurrencyRow());
         body.Children.Add(WithMargin(_costNote, 0, 8, 0, 0));
         return Ui.Card(body, name: "Cost estimate");
     }
@@ -411,7 +420,7 @@ public sealed class PowerPage : UserControl
 
     void CommitStanding()
     {
-        if (double.TryParse(_standingBox.Text.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out var v) && v is >= 0 and <= 10)
+        if (double.TryParse(_standingBox.Text.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out var v) && v is >= 0 and <= 1000)
         {
             if (Math.Abs(v - _standing()) > 1e-9) _saveStanding(v);
             _dailyKey = _tableKey = null;
@@ -421,7 +430,7 @@ public sealed class PowerPage : UserControl
 
     void CommitPrice()
     {
-        if (double.TryParse(_priceBox.Text.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out var v) && v is >= 0 and <= 10)
+        if (double.TryParse(_priceBox.Text.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out var v) && v is >= 0 and <= 1000)
         {
             if (Math.Abs(v - _price()) > 1e-9) _savePrice(v);
             _dailyKey = _tableKey = null;
@@ -435,21 +444,21 @@ public sealed class PowerPage : UserControl
         var price = _price();
         var t = _ledger.Today(today);
         var typical = _ledger.Typical(today);
-        _costToday.Text = t.Seconds > 0 ? PowerCost.Format(PowerCost.Of(t.Kwh, price)) : "–";
+        _costToday.Text = t.Seconds > 0 ? Money(PowerCost.Of(t.Kwh, price)) : "–";
         _kwhToday.Text = t.Seconds > 0 ? $"{t.Kwh:0.00} kWh" : "No readings yet";
         var daily = typical.TotalKwh;
         var standing = _standing();
         var dayShare = DateTime.Now.TimeOfDay.TotalHours / 24;
-        if (t.Seconds > 0) _costToday.Text = PowerCost.Format(PowerCost.Of(t.Kwh, price) + standing * dayShare);
-        _costMonth.Text = daily > 0 ? PowerCost.Format(PowerCost.Of(daily * PowerCost.DaysPerMonth, price) + standing * PowerCost.DaysPerMonth) : "–";
+        if (t.Seconds > 0) _costToday.Text = Money(PowerCost.Of(t.Kwh, price) + standing * dayShare);
+        _costMonth.Text = daily > 0 ? Money(PowerCost.Of(daily * PowerCost.DaysPerMonth, price) + standing * PowerCost.DaysPerMonth) : "–";
         _kwhMonth.Text = daily > 0 ? $"{daily * PowerCost.DaysPerMonth:0} kWh" : "";
-        _costYear.Text = daily > 0 ? PowerCost.Format(PowerCost.Of(daily * PowerCost.DaysPerYear, price) + standing * PowerCost.DaysPerYear) : "–";
+        _costYear.Text = daily > 0 ? Money(PowerCost.Of(daily * PowerCost.DaysPerYear, price) + standing * PowerCost.DaysPerYear) : "–";
         _kwhYear.Text = daily > 0 ? $"{daily * PowerCost.DaysPerYear:#,0} kWh" : "";
         _costNote.Text = daily == 0 ? "The estimate appears once Ember has watched the PC for a few minutes."
             : _totalFromPlug ? "An estimate from your own use, measured at the wall. Not a bill."
             : "An estimate from the CPU and graphics card only. Link your PC's plug for the whole PC.";
 
-        _tip.Text = (PowerTip.For(typical, price) ?? "A saving tip appears once Ember has watched the PC for a while.") + " Plugs are read only.";
+        _tip.Text = (PowerTip.For(typical, price, null, _currency()) ?? "A saving tip appears once Ember has watched the PC for a while.") + " Plugs are read only.";
         DrawDaily();
         var key = $"{today}|{price}|{standing}|{typical}";
         if (key != _tableKey) { _tableKey = key; FillTable(typical, price); }
@@ -548,7 +557,7 @@ public sealed class PowerPage : UserControl
             }
             Cell($"{r.W:0} W", i + 1, 1, bold: r.Bold);
             Cell($"{r.Kwh:0.00}", i + 1, 2, bold: r.Bold);
-            var money = PowerCost.Format(PowerCost.Of(r.Kwh * PowerCost.DaysPerMonth, price));
+            var money = Money(PowerCost.Of(r.Kwh * PowerCost.DaysPerMonth, price));
             if (r.Bold) Cell(money, i + 1, 3, bold: true, brush: Application.Current.FindResource("AccentTextBrush") as Brush);
             else Cell(money, i + 1, 3);
         }
@@ -880,6 +889,45 @@ public sealed class PowerPage : UserControl
         _plugKey = null;
         _total = new PowerTrack(); _rest = new PowerTrack(); _other = new PowerTrack(); // what these add up has changed: count afresh
         _plugTracks.Clear();
+    }
+
+    /// <summary>The currency row of the cost card: a button that opens the list of currencies. Only the symbol changes; the price is the person's own.</summary>
+    FrameworkElement CurrencyRow()
+    {
+        var popup = new System.Windows.Controls.Primitives.Popup { PlacementTarget = _currencyButton, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom, StaysOpen = false, AllowsTransparency = true };
+        var wrap = new WrapPanel { MaxWidth = 360 };
+        void Pick(string code) { popup.IsOpen = false; _saveCurrency(code); ShowCurrency(); _dailyKey = _tableKey = null; }
+        wrap.Children.Add(LightsUi.Pill("Automatic", () => Pick(PowerCurrency.Auto), "Use the currency symbol of this PC's region"));
+        foreach (var (code, symbol, name) in PowerCurrency.All)
+            wrap.Children.Add(LightsUi.Pill($"{code} {symbol.Trim()}", () => Pick(code), name));
+        foreach (var b in wrap.Children.OfType<Button>()) b.Margin = new Thickness(0, 0, 6, 6);
+        popup.Child = new Border { Background = Res("PanelBrush"), BorderBrush = Res("PanelBorderBrush"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12), Padding = new Thickness(10, 10, 4, 4), Child = wrap };
+        _currencyButton.Click += (_, _) => popup.IsOpen = true;
+        _currencyButton.HorizontalAlignment = HorizontalAlignment.Left;
+        AutomationProperties.SetName(_currencyButton, "Currency of the estimate, choose from the list");
+        var export = LightsUi.Pill("Export CSV", ExportCsv, "Save the daily energy figures as a CSV file");
+        var both = new StackPanel { Orientation = Orientation.Horizontal };
+        both.Children.Add(_currencyButton);
+        export.Margin = new Thickness(8, 0, 0, 0);
+        both.Children.Add(export);
+        return MoneyRow("Currency", both, 8);
+    }
+
+    /// <summary>Saves the last two months of daily energy figures where the person chooses.</summary>
+    void ExportCsv()
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "CSV file (*.csv)|*.csv", FileName = "ember-power-" + DateTime.Now.ToString("yyyy-MM-dd") + ".csv", Title = "Export daily power use" };
+        if (dialog.ShowDialog() != true) return;
+        try { System.IO.File.WriteAllText(dialog.FileName, PowerExport.Csv(_ledger.Last(PowerLedger.KeepDays, DateOnly.FromDateTime(DateTime.Now)), _price(), _currency()), System.Text.Encoding.UTF8); }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { _costNote.Text = "Could not save the file: " + ex.Message; }
+    }
+
+    void ShowCurrency()
+    {
+        var code = _currency();
+        var symbol = PowerCurrency.Symbol(code).Trim();
+        foreach (var s in _symbols) s.Text = symbol;
+        _currencyButton.Content = code == PowerCurrency.Auto ? "Automatic " + symbol : $"{code} {symbol}";
     }
 
     static T WithMargin<T>(T e, double l, double t, double r, double b) where T : FrameworkElement { e.Margin = new Thickness(l, t, r, b); return e; }

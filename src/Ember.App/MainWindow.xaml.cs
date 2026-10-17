@@ -76,7 +76,7 @@ public partial class MainWindow : Window
             var plugs = new Ember.Lighting.Meross.PlugMonitor(MerossSession, new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http), () => Power.Links);
             var providers = AppData.Simulated ? [] : new Ember.Lighting.Meross.IPlugProvider[] { plugs, new Ember.Lighting.Tapo.TapoPlugMonitor(_tapo, () => Power.Links), new Ember.Lighting.Kasa.KasaPlugMonitor(_kasa, () => Power.Links), new Ember.Lighting.Shelly.ShellyPlugMonitor(new HttpClient(new HttpClientHandler { AllowAutoRedirect = false, UseProxy = false }) { Timeout = TimeSpan.FromSeconds(5) }, () => Power.Links) };
             Power.Attach(providers, new Ember.Lighting.Meross.PlugLinkStore(Ember.Lighting.Meross.PlugLinkStore.DefaultPath));
-            Power.AttachCost(PowerLedger.Load(PowerLedger.DefaultPath), () => _vm.Prefs.PricePerKwh, price => Remember(_vm.Prefs with { PricePerKwh = price }), () => _vm.Prefs.StandingCharge, charge => Remember(_vm.Prefs with { StandingCharge = charge }));
+            Power.AttachCost(PowerLedger.Load(PowerLedger.DefaultPath), () => _vm.Prefs.PricePerKwh, price => Remember(_vm.Prefs with { PricePerKwh = price }), () => _vm.Prefs.StandingCharge, charge => Remember(_vm.Prefs with { StandingCharge = charge }), () => _vm.Prefs.Currency, c => Remember(_vm.Prefs with { Currency = c }));
             _plugTimer = new DispatcherTimer(TimeSpan.FromSeconds(3), DispatcherPriority.Background, async (_, _) =>
             {
                 // In the tray the plugs are read less often: nobody is watching the live figure.
@@ -498,6 +498,16 @@ public partial class MainWindow : Window
             if (_history.Dirty && DateTimeOffset.UtcNow - _lastHistorySave > TimeSpan.FromMinutes(1)) { _history.TrySave(PlayHistory.DefaultPath); _lastHistorySave = DateTimeOffset.UtcNow; }
         }
         catch (Exception) { /* tracking must never take the window down */ }
+    }
+
+    /// <summary>The tooltip of the tray icon: the temperatures and the draw at the wall (or CPU plus GPU), whatever is known. Windows allows 63 characters.</summary>
+    string? TraySummary()
+    {
+        var parts = new List<string>();
+        if (_cpuTemp is { } c) parts.Add($"CPU {c:0} °C");
+        if (_gpuTemp is { } g) parts.Add($"GPU {g:0} °C");
+        if (Power.TotalWatts is { } w) parts.Add($"{w:0} W");
+        return parts.Count == 0 ? null : string.Join(", ", parts);
     }
 
     async void DetectGame()
@@ -1099,7 +1109,7 @@ public partial class MainWindow : Window
         if (_refresh.Interval != every) _refresh.Interval = every;
         if (Hidden)
         {
-            _tray.SetMode(_vm.FansPage.Mode, _cpuTemp is { } c ? $"CPU {c:0} °C" : null);
+            _tray.SetMode(_vm.FansPage.Mode, TraySummary());
             if (!_trimmed) { _trimmed = true; TrimMemory(); }
             return;
         }
@@ -1116,7 +1126,7 @@ public partial class MainWindow : Window
             Curve.SetState(_vm.FansPage.Mode, _vm.FansPage.Curves, _cpuTemp, _caseTemp);
             _ai.Refresh();
         }
-        _tray.SetMode(_vm.FansPage.Mode, _cpuTemp is { } t ? $"CPU {t:0} °C" : null);
+        _tray.SetMode(_vm.FansPage.Mode, TraySummary());
         if (_vm.ConnectionText != _announcedConnection)
         {
             _announcedConnection = _vm.ConnectionText;

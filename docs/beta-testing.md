@@ -19,7 +19,7 @@ The bottom of the left menu says **Beta build** when you are on one. Moving back
 
 ## What to try: the new look and the new features
 
-The beta draws every page again (icon sidebar, ring gauges, rounded cards). Look at each page at a small window size and at your usual one, in Dark, OLED black and Light, and tell us about anything cut off, overlapping or hard to read.
+Every build draws every page in the new look (icon sidebar, ring gauges, rounded cards). Look at each page at a small window size and at your usual one, in Dark, OLED black and Light, and tell us about anything cut off, overlapping or hard to read.
 
 - **Lights:** add an Aurora wave layer, drag its colour handles, and use **Applies to** and **Solo layer**. Rename a device on the Devices page and check the new name shows on the Lights page.
 - **Schedule and alerts** (Settings, Schedule and alerts): add a window that covers the current time, then check the fan mode and lights change and are put back when it ends. Send a test alert.
