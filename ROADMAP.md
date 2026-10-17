@@ -26,7 +26,6 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 - Stream Deck: show the GPU fan percentage when the card reports 0 RPM at idle
 - Corsair: say "update iCUE" when iCUE refuses the connection
 - Logitech: show the G keys device only on keyboards that have G keys, and keep OpenRGB from also listing a keyboard Ember already drives through G HUB (the G915 appeared twice)
-- Spectrum bars: stay see-through in silence on single-row lights, so a steady colour layer underneath is not blacked out
 
 ## Later (ideas, no promise)
 

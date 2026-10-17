@@ -62,7 +62,7 @@ public sealed record AudioBarsEffect(Color Low, Color High, double Sensitivity =
         var (px, py, rows) = ScopeHelper.Point(Scope, x, y, inputs);
         var band = Math.Clamp((int)Math.Floor(Math.Clamp(px, 0, 1) * a.Bands.Count), 0, a.Bands.Count - 1);
         var level = Math.Clamp(a.Bands[band] * Math.Clamp(Sensitivity, 0.1, 4), 0, 1);
-        if (rows <= 1) return Color.Lerp(Low, High, level).Scaled(level) with { A = 1 };
+        if (rows <= 1) return Color.Lerp(Low, High, level) with { A = level };   // brightness as see-through: silence leaves the layers below alone
         var height = 1 - Math.Clamp(py, 0, 1);                  // 0 at the bottom, 1 at the top
         var soft = (level - height) * rows + 0.5;               // a one-row-wide soft edge at the top of the bar
         return Color.Lerp(Low, High, height) with { A = Math.Clamp(soft, 0, 1) };

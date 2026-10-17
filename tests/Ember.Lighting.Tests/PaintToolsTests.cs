@@ -187,15 +187,15 @@ public class GridEffectsTests
     }
 
     [Fact]
-    public void Spectrum_bars_on_one_row_become_brightness_and_silence_is_dark()
+    public void Spectrum_bars_on_one_row_become_brightness_and_silence_is_see_through()
     {
         var e = new AudioBarsEffect(new Color(0, 1, 0), new Color(1, 0, 0));
         var one = new LedLocal(0.01, 0.5, 1);
         var loud = e.Sample(0, 0, At(0, Level(1.0), local: one));
         var quiet = e.Sample(0, 0, At(0, Level(0.2), local: one));
-        Assert.True(loud.R + loud.G > quiet.R + quiet.G);
+        Assert.True(loud.A > quiet.A);
         var silent = e.Sample(0, 0, At(0, null, local: one));
-        Assert.Equal(0, silent.R + silent.G + silent.B, 6);
+        Assert.True(silent.A < 0.01);   // see-through, so a steady colour layer underneath shows
         var grid = e.Sample(0, 0, At(0, null, local: new LedLocal(0.5, 0.9, 6)));
         Assert.True(grid.A < 0.01);
     }

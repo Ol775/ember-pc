@@ -489,7 +489,7 @@ public partial class MainWindow : Window
         try
         {
             if (GameLookup.ByExe(_library, GameDetectorWindows.Foreground().Exe) is { } game) _history.Played(game.Name, DateTimeOffset.Now, _playTimer!.Interval.TotalSeconds);
-            if (_history.Dirty && DateTimeOffset.UtcNow - _lastHistorySave > TimeSpan.FromMinutes(5)) { _history.TrySave(PlayHistory.DefaultPath); _lastHistorySave = DateTimeOffset.UtcNow; }
+            if (_history.Dirty && DateTimeOffset.UtcNow - _lastHistorySave > TimeSpan.FromMinutes(1)) { _history.TrySave(PlayHistory.DefaultPath); _lastHistorySave = DateTimeOffset.UtcNow; }
         }
         catch (Exception) { /* tracking must never take the window down */ }
     }
