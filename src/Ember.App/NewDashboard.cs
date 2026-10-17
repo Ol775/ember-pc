@@ -24,7 +24,7 @@ public sealed class NewDashboard : UserControl
     readonly TextBlock _bannerText = new() { TextWrapping = TextWrapping.Wrap };
 
     // CPU and GPU cards
-    readonly RingGauge _cpuRing = new() { Width = 120, Height = 120, Thickness = 11 }, _gpuRing = new() { Width = 120, Height = 120, Thickness = 11 };
+    readonly RingGauge _cpuRing = new() { Width = 104, Height = 104, Thickness = 10 }, _gpuRing = new() { Width = 104, Height = 104, Thickness = 10 };
     readonly TextBlock _cpuState = State(), _cpuNote = Note(), _gpuState = State(), _gpuNote = Note();
     readonly TextBlock[] _cpuStats = [Value(), Value(), Value()], _gpuStats = [Value(), Value(), Value()];
 
@@ -44,11 +44,11 @@ public sealed class NewDashboard : UserControl
     /// <summary>The chart changed size: the view model needs to know, to lay its lines out for it.</summary>
     public event Action<double, double>? ChartResized;
 
-    static TextBlock State() => Text("–", 20, "TextBrush", mono: true).WithOpacity(0.86);
+    static TextBlock State() { var t = Text("–", 15, "TextBrush", mono: true).WithOpacity(0.86); t.TextWrapping = TextWrapping.NoWrap; t.TextTrimming = TextTrimming.CharacterEllipsis; return t; }
     static TextBlock Note() => Muted("", 12.5);
     static TextBlock Value() => Text("–", 15, mono: true);
     static TextBlock TileTitle() => Text("–", 15, bold: true);
-    static TextBlock TileSub() => Muted("", 12.5);
+    static TextBlock TileSub() { var t = Muted("", 12.5); t.TextWrapping = TextWrapping.NoWrap; t.TextTrimming = TextTrimming.CharacterEllipsis; return t; }
 
     public NewDashboard()
     {
@@ -132,7 +132,7 @@ public sealed class NewDashboard : UserControl
         middle.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         middle.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         ring.VerticalAlignment = VerticalAlignment.Center;
-        var words = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(18, 0, 0, 0) };
+        var words = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0) };
         words.Children.Add(state);
         words.Children.Add(note);
         Grid.SetColumn(words, 1);
@@ -215,7 +215,10 @@ public sealed class NewDashboard : UserControl
 
     static FrameworkElement Tile(string icon, TextBlock title, TextBlock sub, string name)
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal };
+        // A grid, so the texts get what is left of the tile and trim there instead of running past its edge.
+        var row = new Grid();
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         var tile = IconTile(icon);
         tile.Margin = new Thickness(0, 0, 14, 0);
         row.Children.Add(tile);
@@ -223,6 +226,7 @@ public sealed class NewDashboard : UserControl
         title.TextWrapping = TextWrapping.NoWrap; title.TextTrimming = TextTrimming.CharacterEllipsis;
         texts.Children.Add(title);
         texts.Children.Add(sub);
+        Grid.SetColumn(texts, 1);
         row.Children.Add(texts);
         var card = Card(row, new Thickness(18, 15, 18, 15), name: name);
         card.Margin = new Thickness(8, 0, 8, 0);

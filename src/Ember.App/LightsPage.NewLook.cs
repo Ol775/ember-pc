@@ -249,10 +249,13 @@ public sealed partial class LightsPage
             p.Padding = new Thickness(label.Length == 1 ? 12 : 14, 5, label.Length == 1 ? 12 : 14, 5);
             actions.Children.Add(p);
         }
-        var head = new DockPanel { Margin = new Thickness(0, 0, 0, 6) };
-        DockPanel.SetDock(actions, Dock.Right);
+        // Name above, buttons below: side by side the buttons squeezed the name down to a few letters in the narrow editor.
+        var head = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
+        var title = Ui.Label(layer.Name, "AccentTextBrush");
+        title.TextTrimming = TextTrimming.CharacterEllipsis;
+        head.Children.Add(title);
+        actions.Margin = new Thickness(-6, 8, 0, 0);
         head.Children.Add(actions);
-        head.Children.Add(Ui.Label(layer.Name, "AccentTextBrush"));
         return head;
     }
 
