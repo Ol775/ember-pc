@@ -66,7 +66,8 @@ static class LightsUi
             rb.Click += (_, _) => picked(index);
             panel.Children.Add(rb);
         }
-        track.Child = panel;
+        // Scales down on a narrow card instead of running off it.
+        track.Child = new Viewbox { Child = panel, StretchDirection = StretchDirection.DownOnly, Stretch = Stretch.Uniform, HorizontalAlignment = HorizontalAlignment.Left };
         return track;
     }
 
@@ -74,7 +75,7 @@ static class LightsUi
     public static FrameworkElement Labelled(string name, double min, double max, double value, Func<double, string> format, Action<double> changed, double step = 0)
     {
         var grid = new Grid { Margin = new Thickness(0, 2, 0, 2) };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(112) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(84) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 60 });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(52) });
         var label = Text(name, muted: true);
@@ -107,7 +108,7 @@ static class LightsUi
     public static FrameworkElement ColorField(string name, LColor color, Action<LColor> changed)
     {
         var row = new Grid { Margin = new Thickness(0, 2, 0, 2) };
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(112) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(84) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var label = Text(name, muted: true);
@@ -121,7 +122,7 @@ static class LightsUi
             Template = SwatchTemplate(), Tag = swatchFill,
         };
         AutomationProperties.SetName(swatch, name + " colour, choose from palette");
-        var box = new TextBox { Text = color.ToHex(), Width = 100, Style = Sty("TextField"), Padding = new Thickness(8, 4, 8, 4) };
+        var box = new TextBox { Text = color.ToHex(), Width = 96, Style = Sty("TextField"), Padding = new Thickness(8, 4, 8, 4) };
         AutomationProperties.SetName(box, name + " as hex, for example #FF7A2F");
 
         void Apply(LColor c, bool setBox)

@@ -254,10 +254,11 @@ public sealed class DevicesPage : UserControl
         DockPanel.SetDock(logo, Dock.Left);
         head.Children.Add(logo);
         if (toggle is not null) { toggle.Margin = new Thickness(0); toggle.VerticalAlignment = VerticalAlignment.Center; DockPanel.SetDock(toggle, Dock.Right); head.Children.Add(toggle); }
-        var name = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-        name.Children.Add(Text(title, weight: FontWeights.SemiBold, size: 15));
-        if (BetaIntegrations.Contains(title)) name.Children.Add(BetaTag());
-        head.Children.Add(name);
+        var heading = Text(title, weight: FontWeights.SemiBold, size: 15);
+        heading.TextTrimming = TextTrimming.CharacterEllipsis;
+        heading.VerticalAlignment = VerticalAlignment.Center;
+        heading.Margin = new Thickness(0, 0, 8, 0);
+        head.Children.Add(heading);
 
         var chip = new Border
         {
@@ -269,7 +270,12 @@ public sealed class DevicesPage : UserControl
 
         var body = new StackPanel();
         body.Children.Add(head);
-        body.Children.Add(chip);
+        // The Beta tag sits with the status so the name keeps the whole header row, however narrow the card.
+        var tags = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0) };
+        chip.Margin = new Thickness(0, 0, 8, 0);
+        tags.Children.Add(chip);
+        if (BetaIntegrations.Contains(title)) tags.Children.Add(BetaTag());
+        body.Children.Add(tags);
         body.Children.Add(WithMargin(Text(blurb, muted: true, size: 12.5), 0, 8, 0, 0));
         if (detail.Length > 0) body.Children.Add(WithMargin(Text(detail, size: 12.5), 0, 4, 0, 0));
         if (actions is not null) body.Children.Add(WithMargin(actions, 0, 10, 0, 0));

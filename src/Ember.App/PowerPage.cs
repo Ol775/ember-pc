@@ -340,6 +340,11 @@ public sealed class PowerPage : UserControl
         DockPanel.SetDock(input, Dock.Right);
         row.Children.Add(input);
         row.Children.Add(Ui.Muted(label, 13));
+        return MoneyRow(row, top);
+    }
+
+    static FrameworkElement MoneyRow(UIElement row, double top)
+    {
         var box = new Border { CornerRadius = new CornerRadius(12), BorderThickness = new Thickness(1), Padding = new Thickness(14, 9, 14, 9), Margin = new Thickness(0, top, 0, 0), Child = row };
         box.SetResourceReference(Border.BackgroundProperty, "WindowBrush");
         box.SetResourceReference(Border.BorderBrushProperty, "PanelBorderBrush");
@@ -906,11 +911,16 @@ public sealed class PowerPage : UserControl
         _currencyButton.HorizontalAlignment = HorizontalAlignment.Left;
         AutomationProperties.SetName(_currencyButton, "Currency of the estimate, choose from the list");
         var export = LightsUi.Pill("Export CSV", ExportCsv, "Save the daily energy figures as a CSV file");
-        var both = new StackPanel { Orientation = Orientation.Horizontal };
+        // Wraps under the label when the card is narrow, instead of squeezing the label to a letter a line.
+        var both = new WrapPanel();
+        _currencyButton.Margin = new Thickness(0, 0, 8, 0);
         both.Children.Add(_currencyButton);
-        export.Margin = new Thickness(8, 0, 0, 0);
         both.Children.Add(export);
-        return MoneyRow("Currency", both, 8);
+        var stack = new StackPanel();
+        stack.Children.Add(Ui.Muted("Currency", 13));
+        both.Margin = new Thickness(0, 6, 0, 0);
+        stack.Children.Add(both);
+        return MoneyRow(stack, 8);
     }
 
     /// <summary>Saves the last two months of daily energy figures where the person chooses.</summary>

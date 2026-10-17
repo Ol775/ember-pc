@@ -93,7 +93,7 @@ public sealed partial class GamesPage
         AutomationProperties.SetName(sw, "Use a fan mode and a lighting scene for each game");
         DockPanel.SetDock(sw, Dock.Right);
         row.Children.Add(sw);
-        var text = new StackPanel();
+        var text = new StackPanel { Margin = new Thickness(0, 0, 16, 0) };
         text.Children.Add(Ui.Text("Per-game fan mode and lights", 15, bold: true));
         text.Children.Add(Ui.Muted(_profiles.Enabled
             ? "Give a game its own fan mode and lighting scene. They apply when the game starts and end with it."

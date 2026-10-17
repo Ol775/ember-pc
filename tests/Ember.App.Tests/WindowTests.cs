@@ -38,6 +38,23 @@ public class WindowTests
     }
 
     [UiFact]
+    public void Every_page_draws_at_other_window_sizes()
+    {
+        foreach (var (w, h) in new[] { (1040, 600), (1100, 700), (1500, 900), (1920, 1040) })
+        {
+            UiHost.Run(() => { UiHost.Window.Width = w; UiHost.Window.Height = h; });
+            foreach (var (name, _) in Pages)
+            {
+                if (name == "Specs" || (name == "Games" && !UiHost.Run(() => UiHost.Window.NavGames.IsVisible))) continue;
+                Open(name);
+                UiHost.Shot($"{name}-{w}x{h}");
+            }
+        }
+        UiHost.Run(() => { UiHost.Window.Width = 1280; UiHost.Window.Height = 800; });
+        UiHost.ThrowIfErrors();
+    }
+
+    [UiFact]
     public void Every_settings_section_opens()
     {
         Open("Settings");
