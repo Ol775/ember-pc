@@ -249,8 +249,9 @@ static class LightsUi
             if (stops.Count > 2)
             {
                 var remove = Pill("Remove stop", () => { stops.RemoveAt(selected); selected = Math.Min(selected, stops.Count - 1); Paint(); Layout(); Detail(); Notify(); }, "Remove the chosen colour stop");
-                remove.Margin = new Thickness(0);
-                DockPanel.SetDock(remove, Dock.Right);
+                remove.Margin = new Thickness(0, 4, 0, 0);
+                remove.HorizontalAlignment = HorizontalAlignment.Left;
+                DockPanel.SetDock(remove, Dock.Bottom);   // under the colour: beside it the narrow editor squeezed the hex box out
                 row.Children.Add(remove);
             }
             row.Children.Add(ColorField("Stop " + (selected + 1), stops[selected].Colour, c => { stops[selected] = stops[selected] with { Colour = c }; Paint(); Layout(); Notify(); }));

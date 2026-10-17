@@ -314,7 +314,9 @@ public sealed partial class LightsPage
     /// <summary>One chip per device on the canvas: the layer is drawn on the lit ones. All lit means every device, now and later.</summary>
     FrameworkElement AppliesTo(Layer layer, LightingState state)
     {
-        var devices = state.Current.Placements.Where(p => p.Enabled).Select(p => (p.DeviceId, Name: _m!.Devices.FirstOrDefault(d => d.Id == p.DeviceId)?.Name ?? p.DeviceId)).ToList();
+        // Only devices that are here now and switched on: the placements also remember devices that are gone, which would show up as raw ids.
+        var known = _m!.Devices.Where(d => !d.Disabled).ToDictionary(d => d.Id);
+        var devices = state.Current.Placements.Where(p => p.Enabled && known.ContainsKey(p.DeviceId)).Select(p => (p.DeviceId, Name: known[p.DeviceId].Name)).ToList();
         var box = new StackPanel { Margin = new Thickness(0, 8, 0, 0) };
         box.Children.Add(Text("Applies to", muted: true));
         if (devices.Count == 0) { box.Children.Add(Text("No devices are on the canvas yet.", muted: true, size: 12)); return box; }

@@ -2,7 +2,7 @@ using Ember.Lighting.OpenRgb;
 
 namespace Ember.Lighting;
 
-public sealed record DeviceInfo(string Id, string Name, string Kind, string Source, int LedCount, bool Realtime, int Columns = 0, bool Disabled = false);
+public sealed record DeviceInfo(string Id, string Name, string Kind, string Source, int LedCount, bool Realtime, int Columns = 0, bool Disabled = false, string? OriginalName = null);
 
 /// <summary>
 /// Owns the lighting state of the app: the scenes, the devices found by the sources, and the render loop (about 30 pictures
@@ -238,6 +238,20 @@ public sealed class LightingManager : IAsyncDisposable
         RefreshDevices();
     }
 
+    /// <summary>Gives a device a name of the owner's choosing everywhere in Ember; empty puts the device's own name back.</summary>
+    public void SetDeviceName(string deviceId, string? name)
+    {
+        name = name?.Trim();
+        if (name?.Length > LightingState.MaxDeviceName) name = name[..LightingState.MaxDeviceName];
+        Mutate(s =>
+        {
+            var map = (s.DeviceNames ?? new Dictionary<string, string>()).Where(kv => kv.Key != deviceId).ToDictionary(kv => kv.Key, kv => kv.Value);
+            if (!string.IsNullOrEmpty(name)) map[deviceId] = name;
+            return s with { DeviceNames = map.Count == 0 ? null : map };
+        });
+        RefreshDevices();
+    }
+
     List<IDeviceSink> _known = [];
     readonly HashSet<string> _identifying = [];
 
@@ -426,7 +440,8 @@ public sealed class LightingManager : IAsyncDisposable
         lock (_gate)
         {
             var off = _state.DisabledDevices is { } list ? list.ToHashSet() : [];
-            _devices = sinks.Select(s => new DeviceInfo(s.Id, s.Name, s.Kind, SourceOf(s), s.LedCount, s.Realtime, s.Columns, off.Contains(s.Id))).ToList();
+            var names = _state.DeviceNames;
+            _devices = sinks.Select(s => new DeviceInfo(s.Id, names is not null && names.TryGetValue(s.Id, out var own) ? own : s.Name, s.Kind, SourceOf(s), s.LedCount, s.Realtime, s.Columns, off.Contains(s.Id), s.Name)).ToList();
             Ember.Core.DiagLog.Changed("Lighting", "devices", string.Join(", ", _devices.Select(d => d.Id + (d.Disabled ? " (disabled)" : ""))));
             _known = sinks.ToList();
             sinks = sinks.Where(s => !off.Contains(s.Id)).ToList();

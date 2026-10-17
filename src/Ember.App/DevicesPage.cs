@@ -83,7 +83,18 @@ public sealed class DevicesPage : UserControl
             var useCell = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
             useCell.Children.Add(identify);
             useCell.Children.Add(use);
-            _rows.Children.Add(Row(d.Name, d.Source, "Lighting", d.Disabled ? "Disabled" : problem ?? (d.Realtime ? "Online" : "Online, slow (cloud)"), warn: d.Disabled || problem is not null || !d.Realtime, use: useCell));
+            // The name is a text box: type a new one and press Enter (or click away); clear it to get the device's own name back.
+            var original = d.OriginalName ?? d.Name;
+            var rename = new TextBox { Text = d.Name, MaxLength = LightingState.MaxDeviceName, Style = Sty("TextField"), Margin = new Thickness(0, -4, 12, -4), Padding = new Thickness(8, 3, 8, 3), FontSize = 12.5, ToolTip = "Rename this device. Clear it to use \"" + original + "\" again." };
+            System.Windows.Automation.AutomationProperties.SetName(rename, "Name of " + original);
+            void Commit() { var t = rename.Text.Trim(); if (t != d.Name && (t.Length > 0 || d.Name != original)) lights.SetDeviceName(id, t == original ? "" : t); }
+            rename.LostFocus += (_, _) => Commit();
+            rename.KeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Enter) { Commit(); System.Windows.Input.Keyboard.ClearFocus(); } };
+            var row = Row(d.Name, d.Source, "Lighting", d.Disabled ? "Disabled" : problem ?? (d.Realtime ? "Online" : "Online, slow (cloud)"), warn: d.Disabled || problem is not null || !d.Realtime, use: useCell);
+            var nameCell = ((Grid)row).Children.OfType<TextBlock>().First(t => Grid.GetColumn(t) == 0);
+            ((Grid)row).Children.Remove(nameCell);
+            ((Grid)row).Children.Add(rename);
+            _rows.Children.Add(row);
         }
         if (_rows.Children.Count == 1) _rows.Children.Add(Text("Nothing found yet", muted: true));
     }

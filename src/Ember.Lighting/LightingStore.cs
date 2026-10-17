@@ -7,7 +7,7 @@ namespace Ember.Lighting;
 public sealed record LightingState(
     bool On, string CurrentScene, IReadOnlyList<Scene> Scenes, string? OpenRgbPath = null, bool? StartOpenRgb = null,
     IReadOnlyDictionary<string, int>? Segments = null, IReadOnlyList<string>? DisabledDevices = null, bool LogitechOneColour = false,
-    IReadOnlyList<string>? DisabledSources = null)
+    IReadOnlyList<string>? DisabledSources = null, IReadOnlyDictionary<string, string>? DeviceNames = null)
 {
     /// <summary>Null means automatic: start OpenRGB when a program is known (the bundled one, or the chosen path). False turns that off.</summary>
     [JsonIgnore] public bool ShouldStartOpenRgb => StartOpenRgb != false;
@@ -30,8 +30,11 @@ public sealed record LightingState(
         if (s.DisabledSources is { } offSources && (offSources.Count > 20 || offSources.Any(d => string.IsNullOrEmpty(d) || d.Length > 40))) return false;
         if (s.DisabledDevices is { } off && (off.Count > 200 || off.Any(d => string.IsNullOrEmpty(d) || d.Length > 400))) return false;
         if (s.Segments is { } seg && (seg.Count > 100 || seg.Any(kv => kv.Key.Length is 0 or > 80 || kv.Value is < 1 or > GoveeRazerLimit))) return false;
+        if (s.DeviceNames is { } names && (names.Count > 200 || names.Any(kv => kv.Key.Length is 0 or > 400 || string.IsNullOrWhiteSpace(kv.Value) || kv.Value.Length > MaxDeviceName))) return false;
         return scenes.All(Valid);
     }
+
+    public const int MaxDeviceName = 60;
 
     static bool ValidGradient(GradientEffect g) =>
         g.Stops is { Count: >= 1 and <= 8 } stops && stops.All(st => double.IsFinite(st.At) && st.At is >= 0 and <= 1 && new[] { st.Colour.R, st.Colour.G, st.Colour.B, st.Colour.A }.All(double.IsFinite))

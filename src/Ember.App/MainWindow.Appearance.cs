@@ -53,7 +53,8 @@ public partial class MainWindow
         ThemeManager.ApplyChrome(this);
         var scale = UiSizes.Factor(_vm.Prefs.Size);
         Root.LayoutTransform = scale == 1.0 ? Transform.Identity : new ScaleTransform(scale, scale);
-        (MinWidth, MinHeight) = (820 * scale, 560 * scale);
+        // The redesign's pages are laid out for a wider window; narrower, the Dashboard rings and the Lights editor get cut off.
+        (MinWidth, MinHeight) = BuildFeatures.NewLook ? (1040 * scale, 600 * scale) : (820 * scale, 560 * scale);
         // A larger interface needs a wider window, or the dashboard cards clip: widen it when the size is raised (not at start-up, where the saved size wins).
         if (_scaleApplied && scale > _scale && WindowState == WindowState.Normal)
             Width = Math.Max(Width, Math.Min(1000 * scale, SystemParameters.WorkArea.Width));

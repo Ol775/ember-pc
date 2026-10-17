@@ -228,7 +228,7 @@ public sealed partial class LightsPage : UserControl
             RebuildDynamic(state);
         }
         // Devices come and go without the scene changing (a source reconnects, a send fails).
-        var key = string.Join("|", m.Devices.Select(d => d.Id + d.LedCount + d.Disabled)) + "#" + string.Join("|", m.Problems.Select(p => p.Key + p.Value));
+        var key = string.Join("|", m.Devices.Select(d => d.Id + d.Name + d.LedCount + d.Disabled)) + "#" + string.Join("|", m.Problems.Select(p => p.Key + p.Value));
         if (key != _deviceKey)
         {
             _deviceKey = key;

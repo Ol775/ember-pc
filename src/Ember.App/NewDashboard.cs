@@ -24,7 +24,7 @@ public sealed class NewDashboard : UserControl
     readonly TextBlock _bannerText = new() { TextWrapping = TextWrapping.Wrap };
 
     // CPU and GPU cards
-    readonly RingGauge _cpuRing = new() { Width = 104, Height = 104, Thickness = 10 }, _gpuRing = new() { Width = 104, Height = 104, Thickness = 10 };
+    readonly RingGauge _cpuRing = new() { Width = 92, Height = 92, Thickness = 9 }, _gpuRing = new() { Width = 92, Height = 92, Thickness = 9 };
     readonly TextBlock _cpuState = State(), _cpuNote = Note(), _gpuState = State(), _gpuNote = Note();
     readonly TextBlock[] _cpuStats = [Value(), Value(), Value()], _gpuStats = [Value(), Value(), Value()];
 
@@ -44,7 +44,7 @@ public sealed class NewDashboard : UserControl
     /// <summary>The chart changed size: the view model needs to know, to lay its lines out for it.</summary>
     public event Action<double, double>? ChartResized;
 
-    static TextBlock State() { var t = Text("–", 15, "TextBrush", mono: true).WithOpacity(0.86); t.TextWrapping = TextWrapping.NoWrap; t.TextTrimming = TextTrimming.CharacterEllipsis; return t; }
+    static TextBlock State() { var t = Text("–", 14, "TextBrush", mono: true).WithOpacity(0.86); t.TextWrapping = TextWrapping.NoWrap; t.TextTrimming = TextTrimming.CharacterEllipsis; return t; }
     static TextBlock Note() => Muted("", 12.5);
     static TextBlock Value() => Text("–", 15, mono: true);
     static TextBlock TileTitle() => Text("–", 15, bold: true);
