@@ -89,6 +89,7 @@ public class LightsPageTests
     [UiFact]
     public void The_lights_page_shows_the_gradient_editor_and_works_with_solo_and_targets()
     {
+        if (!Ember.Core.BuildFeatures.NewLook) return;   // solo and Applies to belong to the new look's editor
         _ = UiHost.Window;   // starts the simulation (the application and its styles)
         var dir = Path.Combine(UiHost.DataDir, "lights-test");
         Directory.CreateDirectory(dir);
