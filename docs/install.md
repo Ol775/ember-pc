@@ -13,8 +13,8 @@ Most people only need **Option 1**. Options 2 and 3 are for building Ember yours
 
 ## Which release?
 
-- **Production** (for example 1.2.0) holds what has been checked on real hardware: sensors and fans, the Power page, OpenRGB, Govee, Logitech, Philips Hue and Corsair. A few things in it are marked **Beta** because they are written and tested but not yet proven on enough real devices: Razer Chroma, Nanoleaf, Meross, Tapo and game detection.
-- **Beta builds** (for example 1.3.0-beta.1, marked as pre-releases on the [releases page](https://github.com/Ol775/ember-pc/releases)) add what is not in production yet: GPU fan control, the Stream Deck plugin and the roadmap page.
+- **Production** (for example 1.3.0) holds what has been checked on real hardware: sensors and fans, the Power page, OpenRGB, Govee, Logitech, Philips Hue and Corsair. A few things in it are marked **Beta** because they are written and tested but not yet proven on enough real devices: Razer Chroma, Nanoleaf, Meross, Tapo and game detection.
+- **Beta builds** (for example 1.4.0-beta.1, marked as pre-releases on the [releases page](https://github.com/Ol775/ember-pc/releases)) add what is not in production yet: the redesigned look, the Specs page, the schedule and alerts, GPU fan control, the Stream Deck plugin and the roadmap page.
 
 You can also switch from inside Ember: Settings, Updates, Release channel moves the installation to the newest Stable or Beta version after you confirm.
 

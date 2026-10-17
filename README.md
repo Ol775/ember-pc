@@ -77,19 +77,22 @@ The pictures on this page show the beta's new look. See the [changelog](CHANGELO
 
 <p align="center"><img src="docs/images/tour-fans.gif" alt="The Fans page: switching between Super quiet, Quiet, Normal and Performance, with the curve each mode follows" width="760"></p>
 
+### Light up your whole desk
+
+<p align="center"><img src="docs/images/tour-lights.gif" alt="Lights: switching scenes and adding effects while a live preview shows what every device will do" width="760"></p>
+
+### A fan mode for every game
+
+<p align="center"><img src="docs/images/tour-games.gif" alt="Games: the Steam, Epic, GOG, Ubisoft Connect and EA app libraries, with a fan mode for each game. The library shown is made up." width="760"></p>
+
+### Power at the wall
+
+<p align="center"><a href="docs/screenshots/3-power.png"><img src="docs/screenshots/3-power.png" alt="Power: whole PC draw measured at the wall, split into CPU, GPU and the rest, with a cost estimate" width="760"></a></p>
+
+
 ### Make it yours
 
 <p align="center"><img src="docs/images/tour-appearance.gif" alt="Settings, Appearance: switching between Dark, OLED black and light, and between a warm, neutral and cool tint" width="760"></p>
-
-### More pages
-
-<table>
-  <tr>
-    <td width="33%"><a href="docs/screenshots/3-power.png"><img src="docs/screenshots/3-power.png" alt="Power: whole PC draw measured at the wall, split into CPU, GPU and the rest"></a><br><sub><b>Power.</b> Wall draw split into CPU, GPU and the rest.</sub></td>
-    <td width="33%"><a href="docs/screenshots/4-lights.png"><img src="docs/screenshots/4-lights.png" alt="Lights: effect layers stacked with blend modes, across all your devices"></a><br><sub><b>Lights.</b> Effect layers across all your devices.</sub></td>
-    <td width="33%"><a href="docs/screenshots/5-games.png"><img src="docs/screenshots/5-games.png" alt="Games: the Steam, Epic, GOG, Ubisoft Connect and EA app libraries, with a fan mode for each game"></a><br><sub><b>Games.</b> A fan mode for each game. The library shown is made up.</sub></td>
-  </tr>
-</table>
 
 ## Install
 
