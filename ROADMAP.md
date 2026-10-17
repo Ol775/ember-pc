@@ -7,6 +7,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 - Nanoleaf, Razer Chroma, Meross and Tapo (marked Beta in every build): written and unit-tested, but not yet tried on enough real devices
 - Game detection (Beta, in the production build behind Experimental features) and GPU fan control (beta builds only): working on the test PC, to be tried on other PCs and graphics cards before they leave Experimental
 - Scheduled fan modes and scenes, and Windows alerts for a hot part or a stopped fan (beta builds only)
+- The new look, gradient layers, game covers and last played, and renaming devices: tried in a simulation and partly on the test PC, not yet on other PCs
 - Logitech G keys and badge (beta.3): the keyboard and G keys staying lit together after updating, and the badge on its own
 - Stream Deck plugin (beta builds only): hold actions, the readout keys, and Update and Remove from the Devices page
 - Per-key keyboard layouts and Govee segments on more keyboards and lamps

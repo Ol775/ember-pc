@@ -14,6 +14,8 @@ What is still open, and tips for problems that are not Ember's fault. Fixed prob
 - [ ] **Logitech G915 listed twice.** OpenRGB can also list a keyboard that Ember already drives through G HUB, so it appears as a second device. Switch the extra one off on the Devices page.
 - [ ] **Spectrum bars cover the layers below in silence.** On a single-row light the bars paint opaque black when nothing is playing, which hides a steady colour layer underneath.
 - [ ] **The new look is beta only.** The production build still has the classic window.
+- [ ] **The Games page header can say "No game running" while a game runs.** The Dashboard tile shows the game correctly; the pill on the Games page lags or misses it.
+- [ ] **Last played is saved late.** The play history file is written five minutes after the first play and when Ember closes, so a crash can lose the last few minutes.
 
 ## Troubleshooting
 

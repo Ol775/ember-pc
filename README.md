@@ -39,7 +39,7 @@ The pictures on this page show the beta's new look. See the [changelog](CHANGELO
 - **Five fan modes** from Super quiet to Extreme, or your own manual curves, with the safety limits enforced
 - **Power draw** for the whole PC, CPU and GPU, measured at the wall with a read-only smart plug
 - **RGB lighting** through OpenRGB, Govee, Logitech, Philips Hue and Corsair, with scenes, effects, music and screen sync
-- **Game detection** that switches the fans to your game mode (Beta)
+- **Game detection** that switches the fans to your game mode (Beta), with game covers and a last-played line on the Games page (beta look)
 - **Schedule and alerts** (beta): quiet fans at night, a notice when a part runs hot or a fan stops
 - **Dark, OLED black and light**, nine accent colours or your own
 - **No telemetry**: nothing is downloaded until you choose it
