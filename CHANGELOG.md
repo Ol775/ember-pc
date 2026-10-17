@@ -2,6 +2,18 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.4.0-beta.1 (2026-10-17)
+
+### Fixed
+
+- **The new look fits a small window.** The Dashboard rings and the "Healthy" and "Working" words no longer wrap or cut off, the four summary tiles trim long text instead of running past their edge, and the window cannot be made narrower than the pages are laid out for.
+- **The Lights layer editor fits its column.** The layer name sits above its Reset, move and Remove buttons, the sliders keep their track, the hex boxes show the whole colour, and Remove stop sits under the colour.
+- **Applies to shows device names.** The chips list only the devices that are here and switched on, by name, instead of raw ids of devices that are gone.
+
+### Changed
+
+- **Rename shows at once on the Lights page.** A device renamed on the Devices page changes on the canvas straight away.
+
 ## 1.3.0 (2026-10-17)
 
 ### Added
