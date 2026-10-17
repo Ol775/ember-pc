@@ -20,7 +20,6 @@ All notable changes to Ember. Newest first. Ember follows [semantic versioning](
 
 - **Rename any device.** On the Devices page every device name is a text box: type a new name and press Enter. The new name shows on the Lights page and everywhere else, and clearing the box brings the device's own name back.
 - **A gradient effect with colour stops.** The new Aurora wave rolls a row of up to six colours across the lights. Drag the handles on the colour bar, click the bar to add a stop, and set Speed and Softness. Scenes can now also limit a layer to chosen devices.
-- **A schedule for fan modes and lights, and alerts for a hot part or a stopped fan.** Settings, Schedule and alerts: pick a time window and a fan mode, scene or lights off for it, and switch on a Windows notification when the CPU or the graphics card stays too hot or a fan stops while the PC is warm.
 - **Logitech G keys and the LIGHTSPEED badge** show as a device on the Lights page on a keyboard that has them, so they can be painted and animated; the keyboard itself stays lit.
 
 ### Changed
