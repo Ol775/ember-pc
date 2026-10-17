@@ -2,15 +2,12 @@
   <img src="docs/images/header.png" alt="Ember: temperatures, fans, power and lights for Windows. Free and open source, local only, no telemetry." width="100%">
 </p>
 
-<p align="center">
-  <img src="docs/images/hero.gif" alt="Ember tour: the dashboard, fan modes, power draw, lights, game library and appearance settings" width="900">
-</p>
-
 <h1 align="center">Ember: temperatures, fans, power and lights for Windows</h1>
 
 <div align="center">
 
-[![Latest release](https://img.shields.io/github/v/release/Ol775/ember-pc?color=ff5a1f)](https://github.com/Ol775/ember-pc/releases/latest)
+[![Stable release](https://img.shields.io/github/v/release/Ol775/ember-pc?color=ff5a1f&label=stable)](https://github.com/Ol775/ember-pc/releases/latest)
+[![Beta release](https://img.shields.io/github/v/release/Ol775/ember-pc?include_prereleases&color=ff5a1f&label=beta)](https://github.com/Ol775/ember-pc/releases)
 [![MIT licence](https://img.shields.io/github/license/Ol775/ember-pc?color=ff5a1f)](LICENSE)
 ![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20%7C%2011-ff5a1f)
 ![.NET 8](https://img.shields.io/badge/.NET-8-ff5a1f)
@@ -25,6 +22,17 @@
 > [!TIP]
 > **Install:** download `Ember-Setup-<version>.exe` from the [latest release](https://github.com/Ol775/ember-pc/releases/latest) · [more options](docs/install.md) · builds marked **Pre-release** are betas
 
+## Two builds
+
+| | **Stable 1.3.0** | **Beta 1.4.0-beta.1** |
+|---|---|---|
+| **Look** | The classic window | **The new look**: icon sidebar, ring gauges, rounded cards, a live preview on Lights, and the tour below |
+| **Lights** | Rename any device, a gradient effect with colour stops, Logitech G keys | The same, plus a layer editor that fits small windows and *Applies to* chips |
+| **Also** | Power and Games pages, quieter redraws, a checked update installer | A Specs page with drive health, power cost estimate, schedule and alerts, Stream Deck plugin, GPU fan control |
+| **Get it** | [Latest release](https://github.com/Ol775/ember-pc/releases/latest) | [Pre-releases](https://github.com/Ol775/ember-pc/releases), or Settings, Updates, Release channel, Beta |
+
+The pictures on this page show the beta's new look. See the [changelog](CHANGELOG.md) for every change.
+
 ## Features
 
 - **Live dashboard** with CPU, GPU, motherboard and fan sensors and a 10-minute history
@@ -32,6 +40,7 @@
 - **Power draw** for the whole PC, CPU and GPU, measured at the wall with a read-only smart plug
 - **RGB lighting** through OpenRGB, Govee, Logitech, Philips Hue and Corsair, with scenes, effects, music and screen sync
 - **Game detection** that switches the fans to your game mode (Beta)
+- **Schedule and alerts** (beta): quiet fans at night, a notice when a part runs hot or a fan stops
 - **Dark, OLED black and light**, nine accent colours or your own
 - **No telemetry**: nothing is downloaded until you choose it
 
@@ -48,6 +57,8 @@
 - **Games.** Ember scans your **Steam, Epic Games, GOG, Ubisoft Connect and EA app** libraries (on start, when you open the page, and on **Scan now**) and switches the fans to your game mode when one of those games runs, even in a window. Give single games their own fan mode if you want to (off by default). Game detection is **Beta** and sits behind the Experimental switch.
 - **Lighting.** Drives PC devices through **OpenRGB** (bundled), **Govee** lamps over your LAN (or the Govee cloud with your own API key), **Logitech** G keyboards through G HUB, **Philips Hue** lights through the bridge on your network (no Hue account) and **Corsair** devices through iCUE. **Razer Chroma**, **Nanoleaf** panels, **Meross** bulbs and **Tapo** bulbs are marked **Beta**: written and tested in software but not yet tried on enough real devices.
 - **Scenes and effects.** Stack effects with blend modes, paint single LEDs, give any device its own colours, and save it all as scenes. Music-reactive lights and **screen sync** (read straight from the graphics card, including HDR desktops) are built in.
+- **Specs (beta).** Your processor, graphics card, memory, drives (with S.M.A.R.T. health), displays and Windows version on one page, with a button to copy them for a support request. It never includes the PC name or your user name.
+- **Schedule and alerts (beta).** Switch the fan mode or the lights for a time window, and get a Windows notice when the CPU or graphics card stays too hot or a fan stops while the PC is warm.
 - **Conflict detection.** Warns by name if NZXT CAM, MSI Center, Fan Control, iCUE or similar is running, and can close them for you.
 - **Make it yours.** Dark, **OLED black**, light or match Windows; a warm, neutral or cool colour scheme; nine accent colours or your own `#rrggbb`; interface size; and where the window opens.
 - **Updates.** Ember checks GitHub for a newer release and asks whether to update now, later, or skip that version. **Update now** downloads the installer, checks it against the release checksum and updates in place. Nothing is downloaded until you choose it.
