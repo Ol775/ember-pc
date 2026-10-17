@@ -29,6 +29,10 @@ public static class StreamDeckFaces
     public const int MaxValueChars = 12;
     public const double WarmFromC = 70, HotFromC = 85;
 
+    /// <summary>The GPU fan in RPM; a card that idles with its fans stopped reports 0 RPM, so the percentage the card is asked for is shown instead when it has one.</summary>
+    static string GpuFanText(Readouts r) =>
+        r.GpuFanRpm is null or 0 && r.GpuFanPercent is { } p and > 0 ? p.ToString("0", System.Globalization.CultureInfo.InvariantCulture) + "%" : StreamDeckLogic.FormatRpm(r.GpuFanRpm);
+
     public static KeyFace For(string action, IReadOnlyDictionary<string, string> settings, EmberState s)
     {
         string Setting(string key) => settings.TryGetValue(key, out var v) ? v : "";
@@ -66,7 +70,7 @@ public static class StreamDeckFaces
                     "cpuTemp" => new KeyFace("CPU", StreamDeckLogic.FormatTemp(r.CpuTemp), false, TempTint(r.CpuTemp), "thermometer"),
                     "gpuTemp" => new KeyFace("GPU", StreamDeckLogic.FormatTemp(r.GpuTemp), false, TempTint(r.GpuTemp), "thermometer"),
                     "cpuFan" => new KeyFace("CPU FAN", StreamDeckLogic.FormatRpm(r.CpuFanRpm), false, FaceTint.Normal, "fan"),
-                    "gpuFan" => new KeyFace("GPU FAN", StreamDeckLogic.FormatRpm(r.GpuFanRpm), false, FaceTint.Normal, "fan"),
+                    "gpuFan" => new KeyFace("GPU FAN", GpuFanText(r), false, FaceTint.Normal, "fan"),
                     _ => new KeyFace("Readout", "Choose", false, FaceTint.Dim, "thermometer"),
                 };
             default:

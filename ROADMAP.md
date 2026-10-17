@@ -17,13 +17,8 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 ## Next
 
 - Take Nanoleaf, Razer Chroma, Meross, Tapo and game detection out of Beta, and bring GPU fan control into the production build, once the hardware checks above are done
-- Nanoleaf panels placed on the Lights canvas where they really are, not in one row
-- Razer devices: only show the ones that are plugged in, once Synapse offers a way to tell
-- A lighting scene per game, next to the fan mode per game
-- Global hotkeys for scenes, lights on and off, and fan mode
-- Windows Dynamic Lighting (the built-in Windows lighting standard) as another source of devices
-- Stream Deck: show the GPU fan percentage when the card reports 0 RPM at idle
-- Logitech: show the G keys device only on keyboards that have G keys, and keep OpenRGB from also listing a keyboard Ember already drives through G HUB (the G915 appeared twice)
+- Razer devices: only show the ones that are plugged in, once Synapse offers a way to tell (waiting on Razer)
+- Windows Dynamic Lighting (the built-in Windows lighting standard) as another source of devices: waiting on Windows, which lets only the foreground app (or an app Windows lists for background control) drive the lamps, and a tray app is neither
 
 ## Later (ideas, no promise)
 
@@ -63,6 +58,7 @@ ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up i
 - Corsair devices through iCUE (keep iCUE up to date)
 - A Stream Deck plugin (beta): keys for scenes, lights, brightness, fan mode and live temperature and fan readouts
 - Philips Hue lights through the bridge, Nanoleaf light panels through the controller, Razer Chroma through Synapse, Meross and Tapo bulbs on the local network
+- A lighting scene per game next to the fan mode per game, global hotkeys (Ctrl+Alt+Shift with L, S and F), Nanoleaf panels laid out as they sit on the wall, the G keys device only on keyboards that have G keys, and no second listing of a keyboard G HUB already drives
 - WiZ, LIFX, Yeelight and Kasa bulbs, found on the local network with no account (beta)
 - Per-LED painting, gradients, rainbow, import and export, a paint library, and paint for several devices at once
 - Effects: spectrum bars, ripples, reactive keys, key highlight, fire, rain, and an effect per key group

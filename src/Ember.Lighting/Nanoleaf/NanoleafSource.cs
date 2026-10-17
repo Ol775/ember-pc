@@ -87,16 +87,23 @@ public static class NanoleafDiscovery
 public sealed class NanoleafSink(NanoleafClient client, NanoleafInfo info) : IDeviceSink
 {
     bool? _on;
+    readonly NanoleafGrid? _grid = NanoleafGrid.TryBuild(info.Panels);
+    /// <summary>The grid the panels form on the canvas, or null when they stay in a row.</summary>
+    public NanoleafGrid? Grid => _grid;
+    public NanoleafInfo Info => info;
 
     public string Id => "nanoleaf:" + (info.Serial.Length > 0 ? info.Serial : client.Host);
     public string Name => info.Name;
     public string Kind => "Light panels";
-    public int LedCount => info.Panels.Count;
+    public int LedCount => _grid?.Cells ?? info.Panels.Count;
+    public int Columns => _grid?.Columns ?? 0;
     public TimeSpan MinInterval => TimeSpan.FromMilliseconds(150);
     public bool Keepalive => false;
 
     public async Task SendAsync(IReadOnlyList<Color> leds, CancellationToken ct)
     {
+        // On a grid, each panel takes the colour of its own cell.
+        if (_grid is { } grid) leds = grid.CellOfPanel.Select(cell => cell < leds.Count ? leds[cell] : Color.Black).ToList();
         var dark = leds.All(c => c.ToBytes() == (0, 0, 0));
         if (dark)
         {
@@ -130,7 +137,7 @@ public sealed class NanoleafSource(Func<NanoleafClient?> client) : IDeviceSource
             var info = await c.GetInfoAsync(ct).ConfigureAwait(false);
             if (info.Panels.Count == 0) { Status = $"Connected to {c.Host}, but it reports no light panels."; return []; }
             // A new sink only when something changed, so a send to the old one is not cut off by a refresh.
-            if (!ReferenceEquals(c, _client) || _sink is null || _sink.LedCount != info.Panels.Count || _sink.Name != info.Name)
+            if (!ReferenceEquals(c, _client) || _sink is null || _sink.Name != info.Name || !_sink.Info.Panels.SequenceEqual(info.Panels))
             {
                 _sink = new NanoleafSink(c, info);
                 _client = c;

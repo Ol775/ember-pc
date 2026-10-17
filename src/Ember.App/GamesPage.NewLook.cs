@@ -81,23 +81,23 @@ public sealed partial class GamesPage
         if (_liveChip?.Child is StackPanel { Children: [System.Windows.Shapes.Ellipse e, ..] }) e.Fill = activeGame is null ? Ui.Res("MutedBrush") : ThemeManager.Good;
 
         if (library.ScannedAt != _logoScan) { _logoScan = library.ScannedAt; GameLogos.Forget(); }
-        var key = scanning + "|" + library.ScannedAt.Ticks + "|" + library.Games.Count + "|" + _history.Version + "|" + _profiles.Enabled + string.Join(";", _profiles.Modes.Select(kv => kv.Key + kv.Value));
+        var key = scanning + "|" + library.ScannedAt.Ticks + "|" + library.Games.Count + "|" + _history.Version + "|" + _profiles.Enabled + string.Join(";", _profiles.Modes.Select(kv => kv.Key + kv.Value)) + string.Join(";", (_profiles.Scenes ?? new Dictionary<string, string>()).Select(kv => kv.Key + "=" + kv.Value)) + "|" + string.Join(",", _sceneNames());
         if (key == _key) return;
         _key = key;
 
-        // "Per-game fan mode": the switch card.
+        // "Per-game fan mode and lights": the switch card.
         var row = new DockPanel();
         var sw = Switch("", _profiles.Enabled, on => Change(_profiles.WithEnabled(on)));
         sw.Margin = new Thickness(0);
         sw.VerticalAlignment = VerticalAlignment.Center;
-        AutomationProperties.SetName(sw, "Use a fan mode for each game");
+        AutomationProperties.SetName(sw, "Use a fan mode and a lighting scene for each game");
         DockPanel.SetDock(sw, Dock.Right);
         row.Children.Add(sw);
         var text = new StackPanel();
-        text.Children.Add(Ui.Text("Per-game fan mode", 15, bold: true));
+        text.Children.Add(Ui.Text("Per-game fan mode and lights", 15, bold: true));
         text.Children.Add(Ui.Muted(_profiles.Enabled
-            ? "Give a game its own mode. It applies when the game starts and ends with it."
-            : "Off. Every game uses the game mode from the Fans page. Switch on to give single games their own fan mode.", 13).WithMargin(0, 2, 0, 0));
+            ? "Give a game its own fan mode and lighting scene. They apply when the game starts and end with it."
+            : "Off. Every game uses the game mode from the Fans page. Switch on to give single games their own fan mode and lighting scene.", 13).WithMargin(0, 2, 0, 0));
         row.Children.Add(text);
         _modeCard.Child = row;
         _modeCard.CornerRadius = new CornerRadius(18);
@@ -162,6 +162,11 @@ public sealed partial class GamesPage
                 picker.VerticalAlignment = VerticalAlignment.Center;
                 DockPanel.SetDock(picker, Dock.Right);
                 row.Children.Add(picker);
+                var scenes = ScenePicker(g.Name);
+                scenes.Margin = new Thickness(10, 0, 0, 0);
+                scenes.VerticalAlignment = VerticalAlignment.Center;
+                DockPanel.SetDock(scenes, Dock.Right);
+                row.Children.Add(scenes);
             }
             var cover = CoverTile(g);
             DockPanel.SetDock(cover, Dock.Left);

@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     readonly Task _run;
     readonly GameDetection _detection = new([]);
     readonly DispatcherTimer _gameTimer, _screenTimer;
+    readonly GameScenes _gameScenes = new();
     DispatcherTimer? _plugTimer;
     readonly Ember.Lighting.Tapo.TapoDirectory _tapo;
     readonly Ember.Lighting.Kasa.KasaDirectory _kasa;
@@ -135,6 +136,7 @@ public partial class MainWindow : Window
             Games.Attach(ScanLibraryAsync, _profiles, p => { _profiles = p; _profileStore.TrySave(p); });
             _history = PlayHistory.Load(PlayHistory.DefaultPath);
             Games.AttachHistory(_history);
+            Games.AttachScenes(() => _lights.State.Scenes.Select(s => s.Name).ToList());
             _playTimer = new DispatcherTimer(TimeSpan.FromSeconds(30), DispatcherPriority.Background, (_, _) => TrackPlay(), Dispatcher);
             _playTimer.Start();
             if (!AppData.Simulated) _ = ScanLibraryAsync();   // and look again now
@@ -143,6 +145,7 @@ public partial class MainWindow : Window
         StartupSwitch.IsChecked = StartupRegistration.IsEnabled();
         TraySwitch.IsChecked = _vm.Prefs.KeepInTray;
         MinimisedSwitch.IsChecked = _vm.Prefs.StartMinimised;
+        HotkeysSwitch.IsChecked = _vm.Prefs.Hotkeys;
         HueHost.Text = _hueStore.Load()?.Host ?? "";
         NanoleafHost.Text = _nanoStore.Load()?.Host ?? "";
         RazerSwitch.IsChecked = _razerStore.Enabled;
@@ -218,6 +221,7 @@ public partial class MainWindow : Window
     {
         base.OnSourceInitialized(e);
         ThemeManager.ApplyChrome(this);
+        if (_vm.Prefs.Hotkeys) ApplyHotkeys();
     }
 
     // ---- appearance and updates ----
@@ -526,6 +530,18 @@ public partial class MainWindow : Window
             // A game with its own fan mode (off unless switched on on the Games page): picked as a game-time mode, so it ends with the game.
             if (message is GameStarted started && _profiles.ModeFor(GameLookup.ByExe(_library, started.Exe)?.Name) is { } own)
                 await ControlClient.SendAsync(new SetMode(own));
+            // A game with a lighting scene of its own: shown while it runs, and the earlier scene and on or off put back when it ends.
+            bool SceneExists(string n) => _lights.State.Scenes.Any(s => s.Name == n);
+            if (message is GameStarted begun && _gameScenes.Start(GameLookup.ByExe(_library, begun.Exe)?.Name, _profiles, _lights.State.CurrentScene, _lights.State.On, SceneExists) is { } scene)
+            {
+                _lights.SelectScene(scene);
+                _lights.SetOn(true);
+            }
+            else if (message is GameEnded && _gameScenes.End(_lights.State.CurrentScene, SceneExists) is { } back)
+            {
+                if (back.Scene is not null) _lights.SelectScene(back.Scene);
+                _lights.SetOn(back.On);
+            }
         }
         catch (Exception) { /* detection must never take the window down */ }
     }
@@ -970,6 +986,36 @@ public partial class MainWindow : Window
     void OnTrayToggled(object sender, RoutedEventArgs e) =>
         Remember(_vm.Prefs with { KeepInTray = TraySwitch.IsChecked == true });
 
+    GlobalHotkeys? _hotkeys;
+
+    void OnHotkeysToggled(object sender, RoutedEventArgs e)
+    {
+        var want = HotkeysSwitch.IsChecked == true;
+        Remember(_vm.Prefs with { Hotkeys = want });
+        ApplyHotkeys();
+    }
+
+    /// <summary>Registers the three keys (or lets them go). Not in the simulation: it must never touch the real keyboard.</summary>
+    void ApplyHotkeys()
+    {
+        if (AppData.Simulated) return;
+        _hotkeys ??= new GlobalHotkeys(this, OnHotkey);
+        if (!_vm.Prefs.Hotkeys) { _hotkeys.Disable(); return; }
+        if (_hotkeys.Enable() < 3) { ActionLabel.Text = "Some hotkeys could not be set: another program already uses them."; Announce(ActionLabel); }
+    }
+
+    void OnHotkey(GlobalHotkeys.Action action)
+    {
+        switch (action)
+        {
+            case GlobalHotkeys.Action.Lights: _lights.SetOn(!_lights.State.On); break;
+            case GlobalHotkeys.Action.Scene:
+                if (HotkeyActions.NextScene(_lights.State.Scenes.Select(s => s.Name).ToList(), _lights.State.CurrentScene) is { } next) _lights.SelectScene(next);
+                break;
+            case GlobalHotkeys.Action.FanMode: _ = SendAsync(new SetMode(HotkeyActions.NextFanMode(_vm.FansPage.Mode))); break;
+        }
+    }
+
     void OnMinimisedToggled(object sender, RoutedEventArgs e)
     {
         var want = MinimisedSwitch.IsChecked == true;
@@ -1163,6 +1209,7 @@ public partial class MainWindow : Window
         _scheduleTimer?.Stop();
         _thermalSave.Stop();
         SaveThermal();
+        _hotkeys?.Dispose();
         _tray.Dispose();
         _audio.Dispose();
         _keys.Dispose();

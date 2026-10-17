@@ -436,6 +436,7 @@ public sealed class LightingManager : IAsyncDisposable
             catch (Exception ex) when (ex is not OperationCanceledException) { Ember.Core.DiagLog.Warn("Lighting", source.Name + " refresh failed", ex); }
             Ember.Core.DiagLog.Changed("Lighting", source.Name, source.Status);
         }
+        sinks = WithoutDuplicates(sinks);
         _engine.Reset();
         lock (_gate)
         {
@@ -454,6 +455,18 @@ public sealed class LightingManager : IAsyncDisposable
             }
         }
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// A Logitech keyboard that Ember already drives through G HUB is left out when OpenRGB lists it too (the G915 showed up twice, and
+    /// two paths to one keyboard fight over its colours).
+    /// </summary>
+    public static List<IDeviceSink> WithoutDuplicates(List<IDeviceSink> sinks)
+    {
+        if (!sinks.Any(s => s.Id == "logitech:keyboard")) return sinks;
+        static bool IsLogitechKeyboard(IDeviceSink s) => s.Id.StartsWith("openrgb:", StringComparison.Ordinal) && s.Kind.Equals("Keyboard", StringComparison.OrdinalIgnoreCase)
+            && (s.Name.Contains("Logitech", StringComparison.OrdinalIgnoreCase) || (s.Name.Length >= 4 && s.Name[0] == 'G' && char.IsAsciiDigit(s.Name[1]) && char.IsAsciiDigit(s.Name[2]) && char.IsAsciiDigit(s.Name[3])));
+        return sinks.Where(s => !IsLogitechKeyboard(s)).ToList();
     }
 
     string SourceOf(IDeviceSink sink) => sink.Id.StartsWith("razer:", StringComparison.Ordinal) ? "Razer" : sink.Id.StartsWith("govee", StringComparison.Ordinal) ? "Govee" : sink.Id.StartsWith("logitech", StringComparison.Ordinal) ? "Logitech" : sink.Id.StartsWith("corsair:", StringComparison.Ordinal) ? "Corsair" : sink.Id.StartsWith("hue:", StringComparison.Ordinal) ? "Hue" : sink.Id.StartsWith("nanoleaf:", StringComparison.Ordinal) ? "Nanoleaf" : sink.Id.StartsWith("meross:", StringComparison.Ordinal) ? "Meross" : sink.Id.StartsWith("wiz:", StringComparison.Ordinal) ? "WiZ" : sink.Id.StartsWith("lifx:", StringComparison.Ordinal) ? "LIFX" : sink.Id.StartsWith("yeelight:", StringComparison.Ordinal) ? "Yeelight" : sink.Id.StartsWith("kasa:", StringComparison.Ordinal) ? "Kasa" : "OpenRGB";

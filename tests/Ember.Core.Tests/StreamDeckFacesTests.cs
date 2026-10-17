@@ -1,3 +1,5 @@
+using Ember.Core;
+using Xunit;
 namespace Ember.Core.Tests;
 
 public class StreamDeckFacesTests
@@ -127,5 +129,19 @@ public class StreamDeckFacesTests
     {
         var f = StreamDeckFaces.For(StreamDeckActions.Scene, new Dictionary<string, string> { ["scene"] = new string('x', 40) }, Online(lights: Lights with { Scenes = [new string('x', 40)] }));
         Assert.True(f.Value.Length <= 12);
+    }
+}
+
+public class GpuFanPercentTests
+{
+    static EmberState With(Readouts r) => new(true, r, FanMode.Normal, null);
+
+    [Fact]
+    public void A_stopped_GPU_fan_shows_the_percentage_when_there_is_one()
+    {
+        var settings = new Dictionary<string, string> { ["value"] = "gpuFan" };
+        Assert.Equal("39%", StreamDeckFaces.For(StreamDeckActions.Readout, settings, With(new Readouts(50, 900, 45, 0, 39))).Value);
+        Assert.Equal("1,200", StreamDeckFaces.For(StreamDeckActions.Readout, settings, With(new Readouts(50, 900, 45, 1200, 39))).Value);
+        Assert.Equal("0", StreamDeckFaces.For(StreamDeckActions.Readout, settings, With(new Readouts(50, 900, 45, 0, null))).Value);
     }
 }

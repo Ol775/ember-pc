@@ -130,3 +130,43 @@ public sealed class NanoleafClient(HttpClient http, string host, string? token)
         return new HttpRequestMessage(method, Url(host, token + (path.Length == 0 ? "" : "/" + path)));
     }
 }
+
+/// <summary>
+/// The panels laid out as a grid of cells, as they sit on the wall, so an effect on the Lights canvas sweeps across them the way
+/// it would across the real shape. Built from the controller's own positions: panels that line up share a column or a row.
+/// Null when the panels are in one line already, when two would land in one cell, or when the grid would be huge.
+/// </summary>
+public sealed record NanoleafGrid(int Columns, int Rows, IReadOnlyList<int> CellOfPanel)
+{
+    public int Cells => Columns * Rows;
+
+    public static NanoleafGrid? TryBuild(IReadOnlyList<NanoleafPanel> panels)
+    {
+        if (panels.Count < 2) return null;
+        var column = Cluster(panels.Select(p => p.X).ToList());
+        var row = Cluster(panels.Select(p => -p.Y).ToList());   // the controller counts y upwards; the canvas counts rows downwards
+        if (column is null || row is null) return null;
+        var (columns, rows) = (column.Max() + 1, row.Max() + 1);
+        if (columns < 2 || rows < 2 || columns * rows > 400) return null;
+        var cells = panels.Select((_, i) => row[i] * columns + column[i]).ToList();
+        return cells.Distinct().Count() == cells.Count ? new NanoleafGrid(columns, rows, cells) : null;
+    }
+
+    /// <summary>Numbers each value by its column: values closer than half the smallest gap between values share one.</summary>
+    static int[]? Cluster(IReadOnlyList<int> values)
+    {
+        var sorted = values.Distinct().Order().ToList();
+        if (sorted.Count < 2) return Enumerable.Repeat(0, values.Count).ToArray();
+        var gap = sorted.Zip(sorted.Skip(1), (a, b) => b - a).Min();
+        var tolerance = Math.Max(1, gap / 2.0);
+        var groupOf = new Dictionary<int, int>();
+        var group = 0;
+        var anchor = sorted[0];
+        foreach (var v in sorted)
+        {
+            if (v - anchor > tolerance) { group++; anchor = v; }
+            groupOf[v] = group;
+        }
+        return values.Select(v => groupOf[v]).ToArray();
+    }
+}

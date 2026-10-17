@@ -136,3 +136,61 @@ public class NanoleafTests
         Assert.StartsWith("nanoleaf:", sink.Id);
     }
 }
+
+public class NanoleafGridTests
+{
+    static NanoleafPanel P(int id, int x, int y) => new(id, x, y);
+
+    [Fact]
+    public void Panels_in_a_two_by_two_block_become_a_grid_with_the_top_row_first()
+    {
+        // The controller counts y upwards: panel 1 (y 100) is the top row.
+        var grid = NanoleafGrid.TryBuild([P(1, 0, 100), P(2, 100, 100), P(3, 0, 0), P(4, 100, 0)])!;
+        Assert.Equal(2, grid.Columns);
+        Assert.Equal(2, grid.Rows);
+        Assert.Equal([0, 1, 2, 3], grid.CellOfPanel);
+    }
+
+    [Fact]
+    public void A_staggered_shape_keeps_its_gaps_as_empty_cells()
+    {
+        var grid = NanoleafGrid.TryBuild([P(1, 0, 100), P(2, 100, 0), P(3, 200, 100)])!;
+        Assert.Equal(3, grid.Columns);
+        Assert.Equal(2, grid.Rows);
+        Assert.Equal([0, 4, 2], grid.CellOfPanel);   // top-left, bottom-middle, top-right
+        Assert.Equal(6, grid.Cells);
+    }
+
+    [Fact]
+    public void A_single_line_or_a_clash_stays_a_row()
+    {
+        Assert.Null(NanoleafGrid.TryBuild([P(1, 0, 0), P(2, 100, 0), P(3, 200, 0)]));
+        Assert.Null(NanoleafGrid.TryBuild([P(1, 0, 0)]));
+        Assert.Null(NanoleafGrid.TryBuild([P(1, 0, 0), P(2, 1, 1), P(3, 100, 100)]));   // two panels in one cell
+    }
+
+    [Fact]
+    public async Task A_grid_device_reports_its_cells_and_sends_each_panel_its_cells_colour()
+    {
+        var sent = new List<string>();
+        var handler = new RecordingHandler(sent);
+        var client = new NanoleafClient(new HttpClient(handler), "127.0.0.1", "tok");
+        var info = new NanoleafInfo("Shapes", "S1", [P(1, 0, 100), P(2, 100, 100), P(3, 0, 0), P(4, 100, 0)]);
+        var sink = new NanoleafSink(client, info);
+        Assert.Equal(4, sink.LedCount);
+        Assert.Equal(2, sink.Columns);
+        await sink.SendAsync([new Color(1, 0, 0), Color.Black, Color.Black, new Color(0, 0, 1)], default);
+        var payload = sent.First(s => s.Contains("animData"));
+        Assert.Contains("1 1 255 0 0", payload);   // panel 1 is cell 0: red
+        Assert.Contains("4 1 0 0 255", payload);   // panel 4 is cell 3: blue
+    }
+
+    sealed class RecordingHandler(List<string> sent) : HttpMessageHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            if (request.Content is not null) sent.Add(await request.Content.ReadAsStringAsync(ct));
+            return new HttpResponseMessage(System.Net.HttpStatusCode.NoContent);
+        }
+    }
+}

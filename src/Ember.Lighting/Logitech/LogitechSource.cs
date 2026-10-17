@@ -35,6 +35,21 @@ public sealed class LogitechContext(ILogitechLed api, TimeProvider? clock = null
         }
     }
 
+    /// <summary>
+    /// Whether the keyboard takes the G key names at all: a keyboard without G keys refuses every one. Asked once, with the keys set to black
+    /// (they are painted properly right after). If G HUB cannot be asked, the answer is yes, as before, so a G keys device is never hidden by a failed probe.
+    /// </summary>
+    public bool HasGKeys()
+    {
+        lock (_gate)
+        {
+            if (!_ready || !api.SetTargetDevice(LogitechTarget.PerKeyRgb)) return true;
+            var accepted = false;
+            foreach (var name in LogitechGKeysSink.KeyNames) accepted |= api.SetLightingForKeyName(name, 0, 0, 0);
+            return accepted;
+        }
+    }
+
     /// <summary>The G keys, one SDK call each. A key the keyboard does not have is refused, which is not a reason to drop the connection.</summary>
     public void GKeys(IReadOnlyList<(int R, int G, int B)> percents)
     {
@@ -165,7 +180,6 @@ public sealed class LogitechSource(Func<ILogitechLed?> open, Func<bool>? oneColo
                 _api = open();
                 if (_api is null) { Status = "Logitech G HUB is not installed (Ember uses its lighting engine)"; return Task.FromResult<IReadOnlyList<IDeviceSink>>([]); }
                 _context = new LogitechContext(_api);
-                _perKey = [new LogitechKeyboardSink(_context), new LogitechGKeysSink(_context)];
                 _oneColour = [new LogitechMouseSink(_context)];
             }
             // G HUB's engine cannot light the keyboard key by key and colour the mouse at the same time: one whole-device colour
@@ -175,6 +189,8 @@ public sealed class LogitechSource(Func<ILogitechLed?> open, Func<bool>? oneColo
             _lastOneColour = one;
             if (_context!.Start())
             {
+                // The G keys device only on a keyboard that has G keys (asked once, when G HUB first answers).
+                _perKey = _perKey.Length > 0 ? _perKey : _context.HasGKeys() ? [new LogitechKeyboardSink(_context), new LogitechGKeysSink(_context)] : [new LogitechKeyboardSink(_context)];
                 Status = one
                     ? "Connected through G HUB, every Logitech device takes one colour."
                     : "Connected through G HUB, keyboard and G keys lit key by key (the mouse stays with G HUB).";

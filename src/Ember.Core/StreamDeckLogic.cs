@@ -3,7 +3,7 @@ using System.Globalization;
 namespace Ember.Core;
 
 /// <summary>The four live values on the Stream Deck readout keys. A null is "no reading" and shows as a dash.</summary>
-public sealed record Readouts(double? CpuTemp, double? CpuFanRpm, double? GpuTemp, double? GpuFanRpm)
+public sealed record Readouts(double? CpuTemp, double? CpuFanRpm, double? GpuTemp, double? GpuFanRpm, double? GpuFanPercent = null)
 {
     public static readonly Readouts None = new(null, null, null, null);
 
@@ -25,7 +25,8 @@ public sealed record Readouts(double? CpuTemp, double? CpuFanRpm, double? GpuTem
             sum.CpuTemp,
             Highest(rpm.Where(r => r.Hardware != HardwareKind.Gpu && r.Name.Contains("CPU", StringComparison.OrdinalIgnoreCase))),
             sum.GpuTemp,
-            Highest(rpm.Where(r => r.Hardware == HardwareKind.Gpu)));
+            Highest(rpm.Where(r => r.Hardware == HardwareKind.Gpu)),
+            Highest(s.Readings.Where(r => r.Kind == SensorKind.FanPercent && r.Hardware == HardwareKind.Gpu)));
     }
 }
 

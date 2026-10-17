@@ -415,6 +415,8 @@
                                   Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
                         <CheckBox x:Name="MinimisedSwitch" Content="Start minimised, in the tray" Click="OnMinimisedToggled"
                                   Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
+                        <CheckBox x:Name="HotkeysSwitch" Content="Global hotkeys: Ctrl+Alt+Shift with L (lights), S (next scene), F (next fan mode)" Click="OnHotkeysToggled"
+                                  Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
                         <CheckBox x:Name="RememberWindowSwitch" Content="Open the window where I left it (size and position)" Click="OnRememberWindowToggled"
                                   Style="{StaticResource SwitchBox}" Margin="0,14,0,0" />
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0"

@@ -137,12 +137,14 @@ public partial class MainWindow
             var tray = Bare(TraySwitch);
             var minimised = Bare(MinimisedSwitch);
             var remember = Bare(RememberWindowSwitch);
+            var hotkeys = Bare(HotkeysSwitch);
             var card = SettingsCard("general",
                 SettingRow("Start page", "The page Ember opens on.", startTrack, first: true),
                 SettingRow("Open the window where I left it", "Remembers the size and position, including after a monitor change.", remember),
                 SettingRow("Keep running in the tray", "Closing the window keeps Ember controlling fans and lights.", tray),
                 SettingRow("Start with Windows", "Opens Ember when you sign in.", startup),
-                SettingRow("Start minimised, in the tray", "The window stays closed until you open it from the tray.", minimised));
+                SettingRow("Start minimised, in the tray", "The window stays closed until you open it from the tray.", minimised),
+                SettingRow("Global hotkeys", "Ctrl+Alt+Shift with L switches the lights, S the next scene and F the next fan mode, even while a game has the focus.", hotkeys));
             foreach (var box in generalBoxes) sections.Children.Remove(box);
             sections.Children.Insert(Math.Min(at, sections.Children.Count), card);
             var note = Ui.Muted("This only opens the window. Fan control runs in the Ember service, which starts with Windows whether or not the window is open.", 12.5);

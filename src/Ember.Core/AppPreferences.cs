@@ -12,7 +12,7 @@ public sealed record AppPreferences(TemperatureUnit Unit, StartPage StartPage, T
     AccentChoice Accent = AccentChoice.Orange, UpdateChannel Channel = UpdateChannel.Stable, bool AutoCheckUpdates = true, int AcceptedTerms = 0,
     bool KeepInTray = false, bool StartMinimised = false, bool AiLearning = false, double AiPreference = 0.35,
     SurfaceTone Tone = SurfaceTone.Warm, HighlightStrength Highlight = HighlightStrength.Normal, string CustomAccent = ThemePalette.DefaultCustomAccent,
-    string SkippedVersion = "", UiSize Size = UiSize.Normal, string GpuColour = "Auto", bool RememberWindow = false, string Window = "", double PricePerKwh = 0.28, double StandingCharge = 0, string Currency = "Auto")
+    string SkippedVersion = "", UiSize Size = UiSize.Normal, string GpuColour = "Auto", bool RememberWindow = false, string Window = "", double PricePerKwh = 0.28, double StandingCharge = 0, string Currency = "Auto", bool Hotkeys = false)
 {
     public static readonly AppPreferences Default = new(TemperatureUnit.Celsius, StartPage.Dashboard);
 
@@ -64,7 +64,8 @@ public sealed class PreferencesStore(string path)
                 WindowText(Field(doc.RootElement, "Window", AppPreferences.Default.Window)),
                 Price(Field(doc.RootElement, "PricePerKwh", AppPreferences.Default.PricePerKwh)),
                 Standing(Field(doc.RootElement, "StandingCharge", AppPreferences.Default.StandingCharge)),
-                PowerCurrency.IsValid(Field(doc.RootElement, "Currency", AppPreferences.Default.Currency)) ? Field(doc.RootElement, "Currency", AppPreferences.Default.Currency) : PowerCurrency.Auto);
+                PowerCurrency.IsValid(Field(doc.RootElement, "Currency", AppPreferences.Default.Currency)) ? Field(doc.RootElement, "Currency", AppPreferences.Default.Currency) : PowerCurrency.Auto,
+                Field(doc.RootElement, "Hotkeys", AppPreferences.Default.Hotkeys));
         }
         catch (Exception)
         {

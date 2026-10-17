@@ -80,6 +80,42 @@ public sealed partial class GamesPage : UserControl
         _key = null;
     }
 
+    Func<IReadOnlyList<string>> _sceneNames = () => [];
+
+    /// <summary>Where the page finds the names of the lighting scenes (for the scene a game can have of its own).</summary>
+    public void AttachScenes(Func<IReadOnlyList<string>> names) => _sceneNames = names;
+
+    /// <summary>A button showing the lighting scene a game switches the lights to; it opens a small list to change it.</summary>
+    Button ScenePicker(string game)
+    {
+        var current = _profiles.SceneFor(game) ?? (_profiles.Scenes is not null && _profiles.Scenes.TryGetValue(game, out var s) ? s : null);
+        Button btn = null!;
+        btn = Pill("", () =>
+        {
+            var box = new StackPanel();
+            var pop = new System.Windows.Controls.Primitives.Popup { PlacementTarget = btn, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom, StaysOpen = false, AllowsTransparency = true };
+            void Option(string label, string? scene)
+            {
+                var o = Pill(label, () => { pop.IsOpen = false; Change(_profiles.WithScene(game, scene)); }, label + " for " + game);
+                o.Margin = new Thickness(0, 0, 0, 4);
+                box.Children.Add(o);
+            }
+            Option("No scene (leave the lights)", null);
+            foreach (var name in _sceneNames()) Option(name, name);
+            var frame = new Border { Padding = new Thickness(8, 8, 8, 4), CornerRadius = new CornerRadius(10), BorderThickness = new Thickness(1), Child = box, Margin = new Thickness(0, 4, 0, 0) };
+            frame.SetResourceReference(Border.BackgroundProperty, "PanelBrush");
+            frame.SetResourceReference(Border.BorderBrushProperty, "PanelBorderBrush");
+            pop.Child = frame;
+            pop.IsOpen = true;
+        }, "Lighting scene for " + game);
+        btn.Content = new StackPanel { Orientation = Orientation.Horizontal, Children = { new TextBlock { Text = current ?? "No scene", Width = 86, TextTrimming = TextTrimming.CharacterEllipsis }, new TextBlock { Text = "▾", FontSize = 10, VerticalAlignment = VerticalAlignment.Center } } };
+        btn.Padding = new Thickness(14, 6, 12, 6);
+        if (current is not null) { btn.SetResourceReference(Control.ForegroundProperty, "AccentTextBrush"); btn.SetResourceReference(Control.BackgroundProperty, "AccentSoftBrush"); }
+        btn.Margin = new Thickness(0, 0, 10, 0);
+        btn.ToolTip = "The lighting scene Ember switches to while this game runs, and puts back when it ends.";
+        return btn;
+    }
+
     static readonly FanMode[] Pickable = [FanMode.SuperQuiet, FanMode.Quiet, FanMode.Normal, FanMode.Performance, FanMode.Extreme, FanMode.Manual];
 
     /// <summary>A button showing the game's own fan mode; it opens a small list to change it.</summary>
