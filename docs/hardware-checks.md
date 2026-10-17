@@ -217,3 +217,13 @@ An unsigned plugin was installed by Stream Deck 7.6 and its program registered w
 - [ ] Devices: rename a device by typing in its name box and pressing Enter; the new name shows on the Lights page and in Applies to, and clearing the box brings back the device's own name. Seen: _
 - [ ] Window: make the window as small as it goes (1040 by 600 in the new look): the Dashboard rings and words, the Lights editor and the Devices rows are not cut off. Seen: _
 - [ ] Lights: Spectrum bars on a single-row light (the Govee lamp or a strip) with a steady colour layer underneath: in silence the colour shows, with sound the bars add brightness. Seen: _
+
+## WiZ, LIFX, Yeelight, Kasa and Shelly (written from each maker's local protocol and tested against simulated devices only; nobody has tried them on real hardware)
+
+- [ ] WiZ: a bulb on the same Wi-Fi (local communication on in the WiZ app) appears on Devices as "WiZ light xxxx", follows a scene's colours and brightness, and goes off when the lights go off. Seen: _
+- [ ] LIFX: a light appears with its own name, follows colours and goes off. Seen: _
+- [ ] Yeelight: with LAN Control on, a colour bulb appears, follows slow colour changes (about every 1.5 seconds) and goes off. Seen: _
+- [ ] Kasa: a colour bulb (KL130 and similar) appears and follows colours; a plug with energy monitoring (KP115, HS110) appears on Power, can be linked, and shows its watts. Newer Kasa firmware that needs a TP-Link sign-in is expected not to be found. Seen: _
+- [ ] Shelly: a plug or relay with a power meter appears on Power after a minute or so (the network scan runs about every five minutes), can be linked and shows its watts. A device with a password on its web page says so. Seen: _
+- [ ] None of these ever switches a plug or relay: the plug is only read. Seen: _
+- [ ] Task Manager while all of them are on: no steady network traffic beyond a scan every few minutes, and no rise in processor use. Seen: _

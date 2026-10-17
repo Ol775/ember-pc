@@ -64,6 +64,10 @@ public sealed class DevicesPage : UserControl
         _cards.Children.Add(Source("Corsair", "Corsair keyboards, mice, fans and more, through iCUE on this PC", devices, status, lights));
         _cards.Children.Add(Source("Meross", "Meross bulbs and light strips, found on your network", devices, status, lights));
         _cards.Children.Add(Source("Tapo", "Tapo bulbs and light strips, found on your network", devices, status, lights));
+        _cards.Children.Add(Source("Kasa", "TP-Link Kasa colour bulbs, found on your network (plugs are read on the Power page)", devices, status, lights));
+        _cards.Children.Add(Source("WiZ", "WiZ bulbs, found on your network", devices, status, lights));
+        _cards.Children.Add(Source("LIFX", "LIFX lights, found on your network", devices, status, lights));
+        _cards.Children.Add(Source("Yeelight", "Yeelight colour bulbs, found on your network (LAN Control on)", devices, status, lights));
         if (streamDeck is not null) _cards.Children.Add(StreamDeckCard(streamDeck));
 
         LayOutCards();
@@ -156,7 +160,7 @@ public sealed class DevicesPage : UserControl
     }
 
     /// <summary>Integrations written and unit-tested but not yet tried on real devices: every build marks them Beta.</summary>
-    static readonly HashSet<string> BetaIntegrations = ["Nanoleaf", "Razer", "Stream Deck", "Meross", "Tapo"];
+    static readonly HashSet<string> BetaIntegrations = ["Nanoleaf", "Razer", "Stream Deck", "Meross", "Tapo", "Kasa", "WiZ", "LIFX", "Yeelight"];
 
     string _streamDeckNote = "";
     StreamDeckState? _streamDeckNoteState; // the card state the note was written in; the note goes away when the state moves on

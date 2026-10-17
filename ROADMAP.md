@@ -4,6 +4,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 
 ## Being checked on real hardware
 
+- WiZ, LIFX, Yeelight, Kasa and Shelly (new, marked Beta): written from the makers' documented local protocols and tested against simulated devices only; no one has tried them on real hardware yet
 - Nanoleaf, Razer Chroma, Meross and Tapo (marked Beta in every build): written and unit-tested, but not yet tried on enough real devices
 - Game detection (Beta, in the production build behind Experimental features) and GPU fan control (beta builds only): working on the test PC, to be tried on other PCs and graphics cards before they leave Experimental
 - Scheduled fan modes and scenes, and Windows alerts for a hot part or a stopped fan (beta builds only)
@@ -21,6 +22,7 @@ Where Ember is and where it is going. Done work is folded away at the bottom. Se
 - A lighting scene per game, next to the fan mode per game
 - Global hotkeys for scenes, lights on and off, and fan mode
 - Export sensor history to a file
+- Power page: other currencies (a currency choice next to the price per kWh, with the symbol and format of the chosen one), not only pounds
 - Windows Dynamic Lighting (the built-in Windows lighting standard) as another source of devices
 - A tray tooltip with the current temperatures and power draw
 - Stream Deck: show the GPU fan percentage when the card reports 0 RPM at idle

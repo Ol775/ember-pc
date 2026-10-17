@@ -45,13 +45,15 @@ static class BrandLogos
     public const string Lamp = "M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2zM9 19.5h6a1 1 0 0 1 0 2H9a1 1 0 0 1 0-2z";
     /// <summary>Three panels, for Nanoleaf.</summary>
     public const string Panels = "M12 2.5l5.2 9H6.8zM6 12.8l5.2 9H.8zM18 12.8l5.2 9H12.8z";
+    /// <summary>A bulb with a screw cap, for WiZ, LIFX and Yeelight (their makers publish no free mark).</summary>
+    public const string Bulb = "M12 2a7 7 0 0 0-4.3 12.5c.8.7 1.3 1.5 1.3 2.5v.5h6V17c0-1 .5-1.8 1.3-2.5A7 7 0 0 0 12 2zM9.5 19h5v1.5a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1zM9.5 18.2h5v.6h-5z";
     /// <summary>A wall socket, for Meross.</summary>
     public const string Socket = "M6 2h12a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3zm3 5v3h2V7zm4 0v3h2V7zm-3 6a2 2 0 0 0 4 0z";
 
     /// <summary>The path for a card title, or null when there is no mark for it (a lettered tile is drawn instead).</summary>
     public static string? For(string name) => name switch
     {
-        "Logitech" => Logitech, "Corsair" => Corsair, "Razer" => Razer, "Hue" => Hue, "Stream Deck" => StreamDeck, "Tapo" => TpLink,
+        "Logitech" => Logitech, "Corsair" => Corsair, "Razer" => Razer, "Hue" => Hue, "Stream Deck" => StreamDeck, "Tapo" => TpLink, "Kasa" => TpLink, "WiZ" => Bulb, "LIFX" => Bulb, "Yeelight" => Bulb,
         "Sensors and fans" => Ember, "OpenRGB" => RgbRing, "Govee" => Lamp, "Nanoleaf" => Panels, "Meross" => Socket,
         "Steam" => Steam, "Epic Games" => EpicGames, "GOG" => Gog, "Ubisoft Connect" => Ubisoft, "EA app" => Ea,
         _ => null,

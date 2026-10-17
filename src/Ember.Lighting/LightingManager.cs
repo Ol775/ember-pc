@@ -456,7 +456,7 @@ public sealed class LightingManager : IAsyncDisposable
         Changed?.Invoke();
     }
 
-    string SourceOf(IDeviceSink sink) => sink.Id.StartsWith("razer:", StringComparison.Ordinal) ? "Razer" : sink.Id.StartsWith("govee", StringComparison.Ordinal) ? "Govee" : sink.Id.StartsWith("logitech", StringComparison.Ordinal) ? "Logitech" : sink.Id.StartsWith("corsair:", StringComparison.Ordinal) ? "Corsair" : sink.Id.StartsWith("hue:", StringComparison.Ordinal) ? "Hue" : sink.Id.StartsWith("nanoleaf:", StringComparison.Ordinal) ? "Nanoleaf" : sink.Id.StartsWith("meross:", StringComparison.Ordinal) ? "Meross" : "OpenRGB";
+    string SourceOf(IDeviceSink sink) => sink.Id.StartsWith("razer:", StringComparison.Ordinal) ? "Razer" : sink.Id.StartsWith("govee", StringComparison.Ordinal) ? "Govee" : sink.Id.StartsWith("logitech", StringComparison.Ordinal) ? "Logitech" : sink.Id.StartsWith("corsair:", StringComparison.Ordinal) ? "Corsair" : sink.Id.StartsWith("hue:", StringComparison.Ordinal) ? "Hue" : sink.Id.StartsWith("nanoleaf:", StringComparison.Ordinal) ? "Nanoleaf" : sink.Id.StartsWith("meross:", StringComparison.Ordinal) ? "Meross" : sink.Id.StartsWith("wiz:", StringComparison.Ordinal) ? "WiZ" : sink.Id.StartsWith("lifx:", StringComparison.Ordinal) ? "LIFX" : sink.Id.StartsWith("yeelight:", StringComparison.Ordinal) ? "Yeelight" : sink.Id.StartsWith("kasa:", StringComparison.Ordinal) ? "Kasa" : "OpenRGB";
 
     /// <summary>Gives every new device a row on the canvas of the current scene, so it can be seen and moved.</summary>
     public static LightingState Placed(LightingState state, IReadOnlyList<IDeviceSink> sinks)

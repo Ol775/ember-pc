@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     readonly DispatcherTimer _gameTimer, _screenTimer;
     DispatcherTimer? _plugTimer;
     readonly Ember.Lighting.Tapo.TapoDirectory _tapo;
+    readonly Ember.Lighting.Kasa.KasaDirectory _kasa;
     readonly AudioCapture _audio;
     readonly KeyWatcher _keys;
     readonly DxgiGrabber _dxgi = new();
@@ -51,6 +52,7 @@ public partial class MainWindow : Window
 
         LightingManager? lights = null;
         // Tapo devices keep their own session cookie per device, so they get a client that does not pool cookies.
+        _kasa = new Ember.Lighting.Kasa.KasaDirectory();
         _tapo = new Ember.Lighting.Tapo.TapoDirectory(TapoSession, new HttpClient(new HttpClientHandler { UseCookies = false }) { Timeout = TimeSpan.FromSeconds(8) });
         IReadOnlyList<IDeviceSource> sources = AppData.Simulated ? [] :
             [new OpenRgbSource(() => string.IsNullOrWhiteSpace(lights?.State.OpenRgbPath) ? BundledOpenRgb : lights!.State.OpenRgbPath, () => lights?.State.ShouldStartOpenRgb ?? true),
@@ -61,14 +63,18 @@ public partial class MainWindow : Window
              new Ember.Lighting.Razer.RazerSource(() => _razerStore.Enabled, new Ember.Lighting.Razer.RazerChroma(_razerHttp)),
              new Ember.Lighting.Corsair.CorsairSource(Ember.Lighting.Corsair.CorsairApiChain.Open),
              new Ember.Lighting.Meross.MerossSource(MerossSession, new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http)),
-             new Ember.Lighting.Tapo.TapoSource(_tapo)];
+             new Ember.Lighting.Tapo.TapoSource(_tapo),
+             new Ember.Lighting.Kasa.KasaSource(_kasa),
+             new Ember.Lighting.Wiz.WizSource(),
+             new Ember.Lighting.Lifx.LifxSource(),
+             new Ember.Lighting.Yeelight.YeelightSource()];
         _lights = lights = new LightingManager(new LightingStore(LightingStore.DefaultPath), TimeProvider.System, sources);
         Lights.Attach(_lights);
         _lights.Start();
         // Power page: linked Meross and Tapo plugs are read (never switched) every few seconds.
         {
             var plugs = new Ember.Lighting.Meross.PlugMonitor(MerossSession, new Ember.Lighting.Meross.MerossCloudClient(_http), new Ember.Lighting.Meross.MerossLocalClient(_http), () => Power.Links);
-            var providers = AppData.Simulated ? [] : new Ember.Lighting.Meross.IPlugProvider[] { plugs, new Ember.Lighting.Tapo.TapoPlugMonitor(_tapo, () => Power.Links) };
+            var providers = AppData.Simulated ? [] : new Ember.Lighting.Meross.IPlugProvider[] { plugs, new Ember.Lighting.Tapo.TapoPlugMonitor(_tapo, () => Power.Links), new Ember.Lighting.Kasa.KasaPlugMonitor(_kasa, () => Power.Links), new Ember.Lighting.Shelly.ShellyPlugMonitor(new HttpClient(new HttpClientHandler { AllowAutoRedirect = false, UseProxy = false }) { Timeout = TimeSpan.FromSeconds(5) }, () => Power.Links) };
             Power.Attach(providers, new Ember.Lighting.Meross.PlugLinkStore(Ember.Lighting.Meross.PlugLinkStore.DefaultPath));
             Power.AttachCost(PowerLedger.Load(PowerLedger.DefaultPath), () => _vm.Prefs.PricePerKwh, price => Remember(_vm.Prefs with { PricePerKwh = price }), () => _vm.Prefs.StandingCharge, charge => Remember(_vm.Prefs with { StandingCharge = charge }));
             _plugTimer = new DispatcherTimer(TimeSpan.FromSeconds(3), DispatcherPriority.Background, async (_, _) =>
