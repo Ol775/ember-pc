@@ -2,9 +2,7 @@
 
 <sub>[← All docs](README.md)</sub>
 
-Phase 1 was written and unit-tested on macOS. The app, the service's hardware code, the pipe ACL and the install
-scripts can only be verified on Windows. Run these checks on the Windows PC and fill in the **Result** column
-(pass / fail) and **Notes**. Nothing in this table has been run yet.
+The app, the service's hardware code, the pipe ACL and the install scripts can only be verified on Windows. Run these checks on the Windows PC and fill in the **Result** column (pass / fail) and **Notes**. The phase 1 table below is the script for a fresh Windows PC and has not been filled in; the phase 2 fan control table further down holds the results seen on the author's PC.
 
 Phase 1 is read-only. During every step, watch that no fan speed changes (check l).
 
@@ -35,7 +33,7 @@ Phase 1 is read-only. During every step, watch that no fan speed changes (check 
 | **c1.** Start `publish\app\Ember.App.exe` as a normal (non-admin) user, not elevated | Window titled "Ember"; the app connects and the sidebar shows "Service running" with a green dot. No UAC prompt. | | The connector trusts the pipe only if its server PID equals the PID the Service Control Manager reports for EmberService; a normal user must be able to do this. |
 | **c2.** Compare CPU, GPU, Motherboard and Fans (average) with HWiNFO or Task Manager | Values agree within a few degrees / a few percent of RPM. Missing sensors show "—", never 0. | | |
 | **c3.** On a machine with two GPUs (or an iGPU plus a dGPU) | The GPU card shows the hottest GPU. | | |
-| **c4.** Leave the app running 2 minutes | History chart draws CPU (orange) and GPU (blue) lines that move left over time; values stay within 20 to 100 Â°C. | | |
+| **c4.** Leave the app running 2 minutes | History chart draws CPU and GPU lines that move left over time; values stay within 20 to 100 °C. | | |
 | **d1.** Elevated: `Stop-Service EmberService` with the app open | Within 2 s the app shows "Service not running"; cards show "—", the fan list is empty; the app does not crash. | | |
 | **d2.** `Start-Service EmberService` | The app reconnects by itself within 6 s and shows live values again. | | |
 | **e1.** Stop the service, close and restart the app, then start the service | The app shows "Service not running", then "Service running" once the service is up, without user action. | | |

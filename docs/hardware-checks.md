@@ -40,7 +40,7 @@ reach the tray): the menu, double-click to open, and Quit.
 ## Appearance and the settings pages
 
 - [x] Settings, Appearance: Dark, OLED black, Light and Match Windows switch at once; OLED black is pure black behind everything (checked on the PC, with the Cool scheme and Vivid highlights).
-- [ ] Production build (1.1.0): no Roadmap page, What's new lists only production releases, no Experimental switch; every integration is there, with Nanoleaf and Razer marked Beta; the release channel choice is there and Beta offers to switch to the newest beta.
+- [ ] Production build: no Roadmap page, What's new lists only production releases, no Experimental switch; every integration is there, with Nanoleaf and Razer marked Beta; the release channel choice is there and Beta offers to switch to the newest beta.
 - [ ] Colour scheme Warm, Neutral and Cool, and each accent colour including Red, Teal and Gold, look right on Dark, OLED black and Light.
 - [ ] A custom colour typed as `#rrggbb` is applied as you type, a wrong one is refused with a note, and a very dark or very light colour stays readable.
 - [ ] Subtle, Normal and Vivid change the selected menu item and banner fill, and the preview under Highlights matches.

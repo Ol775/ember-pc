@@ -11,6 +11,9 @@ What is still open, and tips for problems that are not Ember's fault. Fixed prob
       sleep setting, or the device's power saving) rather than Ember's frames; find out whether Ember can keep it awake (for
       example by re-sending the colour on a slower keepalive, or by switching the sleep timer off through G HUB's SDK), and if
       not, say so in the app next to the Logitech status. Seen 2026-10-13 during the first lighting test.
+- [ ] **Logitech G915 listed twice.** OpenRGB can also list a keyboard that Ember already drives through G HUB, so it appears as a second device. Switch the extra one off on the Devices page.
+- [ ] **Spectrum bars cover the layers below in silence.** On a single-row light the bars paint opaque black when nothing is playing, which hides a steady colour layer underneath.
+- [ ] **The new look is beta only.** The production build still has the classic window.
 
 ## Troubleshooting
 

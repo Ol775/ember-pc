@@ -14,7 +14,7 @@ dotnet build Ember.sln
 dotnet test
 ```
 
-The WPF app and the service's hardware, pipe-security and install code can only be verified on Windows, by hand: see [docs/hardware-checks.md](docs/hardware-checks.md). How the projects fit together: [docs/architecture.md](docs/architecture.md). Installing a build you made: [docs/install.md](docs/install.md).
+The window itself runs as a simulation in `tests/Ember.App.Tests` (no devices, network or service; set `EMBER_UI_TESTS=1`). The service's hardware, pipe-security and install code can only be verified on Windows, by hand: see [docs/hardware-checks.md](docs/hardware-checks.md). How the projects fit together: [docs/architecture.md](docs/architecture.md). Installing a build you made: [docs/install.md](docs/install.md).
 
 ## Pull requests
 
