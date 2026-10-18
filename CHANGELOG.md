@@ -2,6 +2,13 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.6.0-beta.2 (2026-10-18)
+
+### Fixed
+
+- **Lights off now switches off every device**, including one Ember never lit since it started, such as NZXT lights left in their own effect. It sends a few black frames to each enabled device.
+- **Layouts at small window sizes.** Power: the Currency and Export CSV buttons wrap under their label instead of overlapping text. Lights: the colour box and the Blend row fit a narrow card. Devices: the Beta tag no longer splits a name or covers the switch. Games: the per-game switch keeps clear of its text.
+
 ## 1.6.0-beta.1 (2026-10-17)
 
 ### Added
