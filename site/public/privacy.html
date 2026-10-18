@@ -4,12 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Privacy and cookies · Ember</title>
-<meta name="description" content="Privacy and cookies for emberpc.uk. No cookies, no analytics, no tracking.">
+<meta name="description" content="Privacy and cookies for emberpc.uk. No cookies, no ads, and cookieless visit counts you can switch off with Do Not Track.">
 <link rel="canonical" href="https://emberpc.uk/privacy">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#120d0b">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Ember">
-<meta property="og:title" content="Privacy and cookies · Ember"><meta property="og:description" content="Privacy and cookies for emberpc.uk. No cookies, no analytics, no tracking."><meta property="og:url" content="https://emberpc.uk/privacy">
+<meta property="og:title" content="Privacy and cookies · Ember"><meta property="og:description" content="Privacy and cookies for emberpc.uk. No cookies, no ads, and cookieless visit counts you can switch off with Do Not Track."><meta property="og:url" content="https://emberpc.uk/privacy">
+<meta property="og:image" content="https://emberpc.uk/img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Ember dashboard showing CPU and GPU temperatures, fan mode and fan speeds"><meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Privacy and cookies · Ember"><meta name="twitter:description" content="Privacy and cookies for emberpc.uk. No cookies, no ads, and cookieless visit counts you can switch off with Do Not Track."><meta name="twitter:image" content="https://emberpc.uk/img/og.png">
 <link rel="preload" href="/fonts/geist-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/fonts/fonts.css">
 <script id="ember-theme">
@@ -19,7 +21,9 @@
       orig=root.getAttribute("data-theme"),def={mode:"system",tint:"warm",accent:null},touched=false;
   function consent(){try{return localStorage.getItem(CK)}catch(e){return null}}
   // choices persist on this device only after the visitor agrees; until then they last for the page view
-  function load(){var base=Object.assign({},def);try{if(consent()==="yes"){var v=JSON.parse(localStorage.getItem(K));if(v)return Object.assign(base,v)}}catch(e){}return Object.assign(base,mem||{})}
+  var MODES=["system","dark","oled","light"],TINTS=["warm","neutral","cool"];
+  function clean(v){v=v&&typeof v==="object"?v:{};var o={};if(MODES.indexOf(v.mode)>-1)o.mode=v.mode;if(TINTS.indexOf(v.tint)>-1)o.tint=v.tint;o.accent=typeof v.accent==="string"&&/^#[0-9a-f]{6}$/i.test(v.accent)?v.accent:null;return o}
+  function load(){var base=Object.assign({},def);try{if(consent()==="yes"){var v=JSON.parse(localStorage.getItem(K));if(v)return Object.assign(base,clean(v))}}catch(e){}return Object.assign(base,clean(mem))}
   function save(s){mem=s;try{if(consent()==="yes")localStorage.setItem(K,JSON.stringify(s))}catch(e){}}
   var H={warm:20,neutral:0,cool:215},S={warm:28,neutral:3,cool:26};
   var PAL=["--bg","--bg2","--card","--fg","--mute","--line","--glass"],ACC=["--ember","--ember-hi","--glow","--on-ember"];
@@ -52,7 +56,7 @@
     }else ACC.forEach(function(v){st.removeProperty(v)});
   }
   var api=window.emberTheme={def:def,get:load,
-    set:function(p){var s=Object.assign(load(),p);save(s);apply(s);return s},
+    set:function(p){var s=Object.assign(load(),clean(Object.assign({},load(),p)));save(s);apply(s);return s},
     reset:function(){save(Object.assign({},def));apply(Object.assign({},def));return Object.assign({},def)}};
   window.emberConsent={get:consent,set:function(v){try{localStorage.setItem(CK,v)}catch(e){}
     if(v==="yes")save(load());else{try{localStorage.removeItem(K)}catch(e){}}
@@ -89,7 +93,7 @@ nav.open .navbtn{color:var(--ember)}nav.open .navbtn .nb{transform:scaleY(.4)}
   nav .navbtn{display:grid;margin-left:auto}
   nav .bar>.btn{padding:.5rem 1rem!important}
   nav .links{position:absolute;top:calc(100% + .5rem);left:0;right:0;margin:0;padding:.5rem;flex-direction:column;gap:.125rem;border:1px solid var(--line);border-radius:1.25rem;
-    background:color-mix(in srgb,var(--bg) 96%,transparent);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);
+    background:var(--bg2);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);
     opacity:0;transform:translateY(-.5rem) scale(.98);pointer-events:none;transition:opacity .25s,transform .45s var(--spring,cubic-bezier(.34,1.45,.5,1))}
   nav.open .links{opacity:1;transform:none;pointer-events:auto}
   nav .links a{display:block!important;padding:.8rem 1rem!important;font-size:1rem!important}
@@ -104,7 +108,47 @@ nav.open .navbtn{color:var(--ember)}nav.open .navbtn .nb{transform:scaleY(.4)}
   nav .brand{min-height:2.75rem}
 }
 .cb{background:color-mix(in srgb,var(--bg) 95%,transparent)!important}
+/* cookie banner */
+.cb{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:60;width:min(26rem,calc(100vw - 32px));padding:1.25rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:1.25rem;color:var(--fg,#fbece3);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);font:400 .875rem/1.5 var(--display,system-ui,sans-serif);display:grid;gap:.75rem;transform:translateY(1.5rem);opacity:0;pointer-events:none;transition:opacity .35s,transform .6s cubic-bezier(.34,1.45,.5,1)}
+.cb.on{transform:none;opacity:1;pointer-events:auto}
+.cb h2{margin:0;font-size:1rem;letter-spacing:-.01em}.cb p{margin:0;color:var(--mute,#b49a8c)}.cb a{color:var(--fg,#fbece3);text-underline-offset:.15em}
+.cb .row{display:flex;gap:.5rem;flex-wrap:wrap}.cb button{flex:1 1 9rem;padding:.65rem 1rem;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.2));background:var(--card,#1d1512);color:var(--fg,#fbece3);font:600 .875rem var(--display,system-ui,sans-serif);cursor:pointer;touch-action:manipulation;transition:transform .45s cubic-bezier(.34,1.45,.5,1)}
+.cb button:active{transform:scale(.95);transition-duration:.08s}.cb button:focus-visible{outline:2px solid var(--ember,#ff5a1f);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.cb{transition:none}}
+/* smooth scroll (Lenis), reading progress, spotlight cards, shiny headline, word reveal */
+html.lenis-on,html.lenis-on body{height:auto}
+html.lenis-on{scroll-behavior:auto!important}
+.lenis-on [data-lenis-prevent]{overscroll-behavior:contain}
+.prog{position:fixed;left:0;top:0;right:0;height:2px;z-index:60;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--ember),var(--ember-hi));pointer-events:none}
+.spl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s;background:radial-gradient(16rem circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--ember) 15%,transparent),transparent 65%)}
+*:hover>.spl{opacity:1}
+.shiny{background:linear-gradient(110deg,var(--fg) 42%,var(--ember-hi) 50%,var(--fg) 58%) 100% 0/250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shiny 5s linear infinite}
+@keyframes shiny{to{background-position:-100% 0}}
+.wd{display:inline-block;will-change:transform}
+@media (prefers-reduced-motion:reduce){.shiny{animation:none;background:none;color:inherit}.prog{display:none}}
+.skip{position:fixed;left:1rem;top:-4rem;z-index:80;padding:.7rem 1.1rem;border-radius:999px;background:var(--ember);color:var(--on-ember,#1a0c06);font:600 .9375rem var(--display,sans-serif);text-decoration:none;transition:top .2s}.skip:focus{top:max(1rem,env(safe-area-inset-top,0px))}
+#main:focus{outline:none}
+/* ember atmosphere on every page: a slow glow and sparks rising behind the content */
+html.embers-on{background:var(--bg)}html.embers-on body{background:transparent}
+.emb{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.emb .gl{position:absolute;left:50%;top:-14rem;width:70rem;max-width:140vw;height:34rem;transform:translateX(-50%);background:radial-gradient(closest-side,var(--glow),transparent 72%);animation:embglow 8s ease-in-out infinite}
+@keyframes embglow{50%{opacity:.5;transform:translateX(-50%) scale(1.1)}}
+.emb i{position:absolute;bottom:-1rem;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#ffd9a0,var(--ember) 60%,transparent 72%);opacity:0;animation:embrise var(--t) linear var(--d) infinite}
+@keyframes embrise{0%{opacity:0;transform:translate(0,0) scale(1)}10%{opacity:.7}85%{opacity:.25}100%{opacity:0;transform:translate(var(--dx),-108vh) scale(.2)}}
+.brand svg{filter:drop-shadow(0 0 .45rem var(--glow));animation:brandglow 4.5s ease-in-out infinite}
+@keyframes brandglow{50%{filter:drop-shadow(0 0 .9rem var(--glow))}}
+@media (prefers-reduced-motion:reduce){.emb{display:none}.brand svg{animation:none}}
+
+/* fans */
+.fan{display:block;color:var(--ember);fill:currentColor;will-change:transform}.fan.t{color:var(--teal)}
+.fanwall{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
+.fw{display:grid;justify-items:center;gap:.45rem;font:500 .6875rem var(--mono);color:var(--mute);text-align:center}
+.fw .fan{width:min(5.2rem,100%);height:auto;aspect-ratio:1;filter:drop-shadow(0 0 1rem var(--glow))}
+.fw b{color:var(--fg);font-weight:600;font-size:.8125rem}
+.fan-sm{width:1.15rem;height:1.15rem;flex:none}
+@media (max-width:560px){.fanwall{gap:.5rem}.fw{font-size:.5625rem}.fw b{font-size:.6875rem}}
 .legal-links{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;margin-top:1rem;font-size:.8125rem}.legal-links a{color:var(--mute);text-underline-offset:.18em}.legal-links a:hover{color:var(--fg)}
+.prose ul,.prose ol{margin:.8rem 0 0;padding-left:1.25rem;color:var(--mute)}.prose li{margin-top:.45rem;text-wrap:pretty}.prose li b{color:var(--fg)}.prose h3{font-size:1.0625rem;margin-top:1.75rem;letter-spacing:-.01em}.prose pre{margin-top:1rem;padding:1rem;overflow-x:auto;background:var(--bg2);border:1px solid var(--line);border-radius:1rem;font-size:.8125rem}.prose pre code{background:none;padding:0}.prose details{margin-top:1rem;border:1px solid var(--line);border-radius:1rem;padding:.75rem 1rem}.prose summary{cursor:pointer;color:var(--fg)}.prose h2[id],.prose h3[id]{scroll-margin-top:5rem}
 </style>
 
 <style>
@@ -187,10 +231,12 @@ h1{font-size:clamp(2.6rem,8vw,5.5rem);line-height:1;letter-spacing:-.045em;font-
 .note{margin-top:2rem;font-size:.8125rem;color:var(--mute);max-width:46rem}
 footer{border-top:1px solid var(--line);margin-top:4rem;padding-block:2rem 3rem;color:var(--mute);font-size:.875rem}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
-.prose{max-width:46rem;padding-block:clamp(3rem,8vw,5rem) 2rem}.prose h1{font-size:clamp(2.2rem,6vw,3.4rem);letter-spacing:-.04em;margin-top:.75rem}.prose h2{font-size:1.35rem;letter-spacing:-.02em;margin-top:2.25rem}.prose p{margin-top:.8rem;color:var(--mute);text-wrap:pretty}.prose p b{color:var(--fg)}.prose a{color:var(--fg);text-underline-offset:.18em;text-decoration-color:var(--ember)}.prose .lede{color:var(--fg);font-size:1.1875rem;max-width:none;margin-top:1.25rem}.upd{margin-top:.6rem;font:500 .75rem var(--mono);color:var(--mute);letter-spacing:.04em}.tbl{overflow-x:auto;margin-top:1rem;border:1px solid var(--line);border-radius:1rem}table{border-collapse:collapse;width:100%;min-width:38rem;font-size:.875rem}th,td{text-align:left;padding:.75rem 1rem;vertical-align:top;border-bottom:1px solid var(--line);color:var(--mute)}th{font:500 .6875rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}tr:last-child td{border-bottom:0}code{font:500 .85em var(--mono);color:var(--fg);background:var(--bg2);padding:.1em .4em;border-radius:.4em}
+.prose{max-width:46rem;overflow-wrap:anywhere;padding-block:clamp(3rem,8vw,5rem) 2rem}.prose h1{font-size:clamp(2.2rem,6vw,3.4rem);letter-spacing:-.04em;margin-top:.75rem}.prose h2{font-size:1.35rem;letter-spacing:-.02em;margin-top:2.25rem}.prose p{margin-top:.8rem;color:var(--mute);text-wrap:pretty}.prose p b{color:var(--fg)}.prose a{color:var(--fg);text-underline-offset:.18em;text-decoration-color:var(--ember)}.prose .lede{color:var(--fg);font-size:1.1875rem;max-width:none;margin-top:1.25rem}.upd{margin-top:.6rem;font:500 .75rem var(--mono);color:var(--mute);letter-spacing:.04em}.tbl{overflow-x:auto;margin-top:1rem;border:1px solid var(--line);border-radius:1rem}table{border-collapse:collapse;width:100%;min-width:38rem;font-size:.875rem}th,td{text-align:left;padding:.75rem 1rem;vertical-align:top;border-bottom:1px solid var(--line);color:var(--mute)}th{font:500 .6875rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}tr:last-child td{border-bottom:0}code{font:500 .85em var(--mono);color:var(--fg);background:var(--bg2);padding:.1em .4em;border-radius:.4em}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fan" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" stroke-width="3" opacity=".55"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(0.00 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(51.43 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(102.86 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(154.29 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(205.71 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(257.14 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(308.57 50 50)"/><circle cx="50" cy="50" r="11" fill="var(--bg2,#17100d)"/><circle cx="50" cy="50" r="5" fill="currentColor"/></symbol></svg>
+<a class="skip" href="#main">Skip to content</a>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff4d12"/><stop offset="1" stop-color="#ffb347"/></linearGradient>
   <linearGradient id="core" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffc15a"/><stop offset="1" stop-color="#fff1c9"/></linearGradient>
@@ -206,17 +252,20 @@ footer{border-top:1px solid var(--line);margin-top:4rem;padding-block:2rem 3rem;
     <a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download</a>
   </div></nav>
 
-  <main class="prose">
+  <main id="main" tabindex="-1" class="prose">
 <p class="eyebrow">Legal</p>
 <h1>Privacy and cookies</h1>
 <p class="upd">Last updated 17 October 2026</p>
-<p class="lede">This page covers this website, emberpc.uk. It does not cover the Ember app, which has its own <a href="https://github.com/Ol775/ember-pc/blob/main/PRIVACY.md">privacy notice</a>. The short version: the site has no accounts, no analytics, no advertising and no tracking, and sets no cookies.</p>
+<p class="lede">This page covers this website, emberpc.uk. It does not cover the Ember app, which has its own <a href="/privacy#app">privacy notice</a>. The short version: the site has no accounts, no advertising and no tracking across sites, and sets no cookies. It counts visits with Cloudflare Web Analytics, which is skipped if your browser sends Do Not Track or Global Privacy Control.</p>
 
 <h2>Who is responsible</h2>
-<p>The site is run by <b>Ol775</b>, an individual, as part of the free and open source Ember project at <a href="https://github.com/Ol775/ember-pc">github.com/Ol775/ember-pc</a>. Ol775 is the controller of any personal data described here. To ask a question or use your rights, open an issue on that repository (please do not put personal data in it). To report a security problem privately, follow <a href="https://github.com/Ol775/ember-pc/blob/main/SECURITY.md">SECURITY.md</a>.</p>
+<p>The site is run by <b>Ol775</b>, an individual, as part of the free and open source Ember project at <a href="https://github.com/Ol775/ember-pc">github.com/Ol775/ember-pc</a>. Ol775 is the controller of any personal data described here. To ask a question or use your rights, open an issue on that repository (please do not put personal data in it). To report a security problem privately, follow <a href="/security">SECURITY.md</a>.</p>
 
 <h2>What we collect</h2>
-<p>We do not ask you for any personal data, and the site has no forms, accounts or comments. We do not run analytics, advertising or tracking tools, and we do not use any third party scripts, fonts or embeds. The fonts are served from this site.</p>
+<p>We do not ask you for any personal data, and the site has no forms, accounts or comments. We do not run advertising or tracking tools. The one third party script is Cloudflare Web Analytics, described below. The fonts are served from this site.</p>
+<h2>Visit counts</h2>
+<p>To see which pages are useful and whether they load quickly, the live site uses <b>Cloudflare Web Analytics</b>. When a page loads, a small script from Cloudflare sends the page address (without any query string), the site you came from, your browser and operating system type, your country, and page speed timings. Cloudflare says the service does not use cookies or local storage and does not build profiles of individual visitors. We checked this on this site: it sets no cookies and stores nothing on your device. We only see totals and trends, never who you are. Cloudflare handles the data under <a href="https://www.cloudflare.com/privacypolicy/">its own privacy policy</a>.</p>
+<p>The script is not loaded at all if your browser sends <b>Do Not Track</b> or <b>Global Privacy Control</b>. A content blocker also stops it, and the site works the same either way. Our reason for counting visits is our legitimate interest in keeping the site useful and fast.</p>
 <p>The site is hosted on <b>Cloudflare</b>. Like any web host, Cloudflare receives technical details of each request, such as your IP address, the page you asked for, the time, and your browser and device type. It uses them to deliver the site, keep it secure and defend it against attacks. We do not use these details to identify you and we do not combine them with anything else. Our legal basis is our legitimate interest in running a secure website (UK GDPR and EU GDPR, Article 6(1)(f)). Cloudflare may process data outside the UK and the European Economic Area, under the safeguards described in its <a href="https://www.cloudflare.com/privacypolicy/">privacy policy</a>.</p>
 <p>Links to GitHub, where the downloads, source code and issues live, leave this site. GitHub then acts under its own <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">privacy statement</a>.</p>
 
@@ -238,10 +287,50 @@ footer{border-top:1px solid var(--line);margin-top:4rem;padding-block:2rem 3rem;
 <p>The site is not aimed at children and does not knowingly collect anything from them.</p>
 
 <h2>Changes</h2>
-<p>If this changes, for example if analytics were ever added, this page will be updated first and the banner will ask you again before anything optional is stored. The history of the page is in the public repository.</p>
+<p>If this changes, for example if more tools were ever added, this page will be updated first and the banner will ask you again before anything optional is stored. The history of the page is in the public repository.</p>
+<h2 id="app">The Ember app</h2>
+<p>Ember keeps everything on your PC. It has no telemetry, no accounts of its own and no ads, and it sells or shares nothing.</p>
+<h3 id="what-leaves-your-pc">What leaves your PC</h3>
+<p>Only what you switch on, and only to the places named here.</p>
+<ul>
+<li><b>Update check.</b> When you press "Check now", and automatically at start and every few hours unless you turn off "Check for updates automatically" in Settings, Updates (it is on by default), the app asks <code>api.github.com</code> (or, when GitHub limits that, the public releases feed on <code>github.com</code>) for the list of Ember releases. Nothing about your PC is sent; GitHub sees an ordinary request from your IP address, as for any web page. When a newer version is found Ember asks whether to update, and nothing is downloaded unless you choose Update now. That fetches the release's installer and its checksum from <code>github.com</code>, checks the file against the checksum and starts it.</li>
+<li><b>Govee.</b> LAN control talks to lamps on your local network (UDP). Govee cloud control is used only if you enter your own API key; it then calls Govee's servers for your devices.</li>
+<li><b>Philips Hue.</b> Ember talks to your Hue bridge directly over your home network (HTTPS to the bridge, with its certificate remembered when you link it). "Find bridge" is the one call that leaves your network: it asks Signify's discovery service (<code>discovery.meethue.com</code>) which bridges share your public address, and only when you press it. You can type the bridge address instead.</li>
+<li><b>Meross.</b> You sign in once so Ember can list your devices and learn the key they check commands against. Your email and a hash of your password (MD5, the way the Meross app sends it) go to Meross's account servers for that, and your password is never saved. Only the sign-in Meross hands back is kept. After that Ember talks to your bulbs and plugs directly on your home network.</li>
+<li><b>Tapo (TP-Link).</b> You save your Tapo email and password in Windows Credential Manager. Ember uses them only to sign in to your Tapo devices on your home network, directly; they are never sent to TP-Link or any cloud.</li>
+<li><b>WiZ, LIFX, Yeelight and Kasa lights.</b> No account, no cloud. Ember sends a broadcast (or multicast) message on your home network to find them, then talks to the ones that answer, directly. Kasa also finds plugs this way.</li>
+<li><b>Shelly plugs.</b> No account, no cloud. Ember asks each address on your home network (a /24 range) one web request, "who are you", and only reads the power of the ones that are Shelly plugs you linked.</li>
+<li><b>Global hotkeys</b> (off until you switch them on): Windows tells Ember when Ctrl+Alt+Shift with L, S or F is pressed. Ember does not read any other key.</li>
+<li><b>Smart plugs</b> (Meross, Tapo, Kasa or Shelly) are only read, to show the Power page what they draw. Ember never switches a plug.</li>
+<li><b>On this PC only:</b> OpenRGB (localhost), Logitech G HUB, Corsair iCUE, Razer Synapse (its local Chroma SDK) and the Stream Deck plugin (a local named pipe) are reached on this PC, and nothing is sent to their makers by Ember.</li>
+<li><b>Nanoleaf.</b> Ember talks to your Nanoleaf controller directly over your home network (plain HTTP on port 16021, as the controller offers). Finding it sends a search on your local network only. Nothing goes to Nanoleaf or any cloud.</li>
+</ul>
+<h3 id="what-ember-reads-on-your-pc">What Ember reads on your PC</h3>
+<ul>
+<li><b>Sensors.</b> The Ember service reads temperatures, fan speeds, loads and power from your hardware, and writes fan speeds. Sensor data moves over a local named pipe.</li>
+<li><b>Game libraries.</b> The Games page reads the install records of Steam, Epic Games, GOG, Ubisoft Connect and the EA app (and looks inside the game folders for program names) to know which programs are games. It only reads; nothing is changed or sent. It also shows the cover Steam keeps in its own local picture cache, or the icon of the game program, and notes when a library game was last in front of you (half-minute checks of the foreground program, kept in <code>play-history.json</code>). Folders on other PCs on the network are never read.</li>
+<li><b>Game detection</b> (off until you switch on Experimental features) looks at which program is in the foreground and whether it fills the screen, to switch the fan mode. It keeps only the program names you mark as "not a game".</li>
+<li><b>Music effects</b> listen to the sound your PC is playing (not a microphone) while a music layer is on, only to measure how loud each pitch is. Nothing is recorded, saved or sent.</li>
+<li><b>Reactive keys</b> (an effect you add yourself) notices when a key goes down, only while that layer is on, to flash the keyboard lights where the key is. It keeps no text and no history: each press is reduced to a position on the keyboard and forgotten after a few seconds.</li>
+<li><b>Screen sync</b> reads a very small, low-resolution copy of your screen in memory to work out colours. Nothing is saved or sent.</li>
+<li><b>AI assist</b> (off until you switch on "Learn from my temperatures") keeps a count of how often your CPU and case were at each whole degree, and when it first and last looked, in <code>%AppData%\Ember\thermal.json</code>. It never records what you were doing. "Forget what it learned" deletes it.</li>
+</ul>
+<h3 id="what-ember-stores">What Ember stores</h3>
+<ul>
+<li><code>%ProgramData%\Ember</code>: fan settings (writable only by administrators).</li>
+<li><code>%AppData%\Ember</code>: preferences, lighting scenes, the saved paint library (<code>paints</code>), the game library from the last scan (<code>games.json</code>), when each game was last played (<code>play-history.json</code>), the energy your PC used each day (<code>power-days.json</code>), fan modes you give single games (<code>game-profiles.json</code>), which smart plugs you linked (<code>power-plugs.json</code>), the Nanoleaf address (<code>nanoleaf.json</code>) and the diagnostic log.</li>
+<li><b>Windows Credential Manager:</b> your Govee key, the Hue key, the Nanoleaf token, the Meross sign-in and your Tapo account. They are never kept in a settings file.</li>
+<li>Delete these folders and entries to remove everything.</li>
+</ul>
+<h3 id="diagnostic-log">Diagnostic log</h3>
+<p>Ember keeps a plain text log of what it did and why a device or integration failed (start-up, integration status changes, errors, update steps) in <code>%AppData%\Ember\logs</code>, one file per day, deleted after 7 days. It is never sent anywhere: "Copy diagnostic report" in Settings, About puts it on your clipboard only when you press it, so you can paste it into a problem report if you choose. Keys, tokens and passwords are blanked before anything is written, and the log holds no colours, key presses or screen content. The report does list device names.</p>
+<h3 id="downloads">Downloads</h3>
+<p>The Ember installer carries everything it needs except the PawnIO driver, which it downloads from the publisher's official GitHub release and checks against a pinned SHA-256 and signature before running it. Only the build scripts download OpenRGB, the Corsair SDK and the Microsoft runtimes, for the people who make a release. A setup that is run without internet access simply skips the PawnIO step and says so.</p>
+<h3 id="your-agreement">Your agreement</h3>
+<p>Accepting the Terms of Use is recorded on your PC only (a registry value, and a setting in your app preferences).</p>
   </main>
 
-  <footer>Ember is free and open source under the MIT licence. <a href="https://github.com/Ol775/ember-pc">GitHub</a><div class="legal-links"><a href="/privacy">Privacy and cookies</a><a href="/terms">Terms and legal notices</a><a href="#" data-cookie-settings>Cookie settings</a></div></footer>
+  <footer>Ember is free and open source under the MIT licence.<div class="legal-links"><a href="/changelog">Changelog</a><a href="/roadmap">Roadmap</a><a href="/install">Install guide</a><a href="/known-issues">Known issues</a><a href="https://github.com/Ol775/ember-pc/issues/new/choose">Report a bug</a><a href="/security">Security</a><a href="/licences">Open source licences</a><a href="/privacy">Privacy and cookies</a><a href="/terms">Terms and legal notices</a><a href="#" data-cookie-settings>Cookie settings</a></div></footer>
 </div>
 
 <script id="ember-fx">
@@ -305,24 +394,13 @@ footer{border-top:1px solid var(--line);margin-top:4rem;padding-block:2rem 3rem;
 </script>
 <script id="ember-consent">
 (function(){
-  // The site sets no cookies and runs no analytics or ads. The only optional storage is the visitor's own look settings.
+  // The site sets no cookies and runs no ads; visit counts use Cloudflare Web Analytics, which stores nothing on the device. The only optional storage is the visitor's own look settings.
+  // Cloudflare Web Analytics counts visits on the live site, and is skipped when the browser sends Do Not Track or Global Privacy Control.
+  if(navigator.doNotTrack!=="1"&&!navigator.globalPrivacyControl&&location.hostname==="emberpc.uk"){var cf=document.createElement("script");cf.defer=true;cf.src="https://static.cloudflareinsights.com/beacon.min.js";cf.setAttribute("data-cf-beacon",'{"token":"371f2343903a48ae8068264cb793c71a"}');document.head.appendChild(cf)}
   var C=window.emberConsent;if(!C)return;
-  var st=document.createElement("style");
-  st.textContent=".cb{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:60;width:min(26rem,calc(100vw - 32px));"+
-    "padding:1.25rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:1.25rem;background:var(--glass,rgba(18,13,11,.86));color:var(--fg,#fbece3);"+
-    "-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);"+
-    "font:400 .875rem/1.5 var(--display,system-ui,sans-serif);display:grid;gap:.75rem;transform:translateY(1.5rem);opacity:0;pointer-events:none;"+
-    "transition:opacity .35s,transform .6s cubic-bezier(.34,1.45,.5,1)}"+
-    ".cb.on{transform:none;opacity:1;pointer-events:auto}"+
-    ".cb h2{margin:0;font-size:1rem;letter-spacing:-.01em}.cb p{margin:0;color:var(--mute,#b49a8c)}.cb a{color:var(--fg,#fbece3);text-underline-offset:.15em}"+
-    ".cb .row{display:flex;gap:.5rem;flex-wrap:wrap}.cb button{flex:1 1 9rem;padding:.65rem 1rem;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.2));background:var(--card,#1d1512);color:var(--fg,#fbece3);"+
-    "font:600 .875rem var(--display,system-ui,sans-serif);cursor:pointer;touch-action:manipulation;transition:transform .45s cubic-bezier(.34,1.45,.5,1)}"+
-    ".cb button:active{transform:scale(.95);transition-duration:.08s}.cb button:focus-visible{outline:2px solid var(--ember,#ff5a1f);outline-offset:2px}"+
-    "@media (prefers-reduced-motion:reduce){.cb{transition:none}}";
-  document.head.appendChild(st);
   var b=document.createElement("div");b.className="cb";b.setAttribute("role","dialog");b.setAttribute("aria-labelledby","cbt");b.setAttribute("aria-live","polite");
   b.innerHTML='<h2 id="cbt">Your settings, your device</h2>'+
-    '<p>This site sets no cookies and has no analytics, ads or tracking. If you personalise the look, we can remember your choices on your device so they are still there next time. That is optional.</p>'+
+    '<p>This site sets no cookies and has no ads. It counts visits with Cloudflare Web Analytics, which stores nothing on your device and is skipped if your browser sends Do Not Track. If you personalise the look, we can remember your choices on your device so they are still there next time. That is optional.</p>'+
     '<p><a href="/privacy">Privacy and cookies</a></p>'+
     '<div class="row"><button type="button" data-v="no">No thanks</button><button type="button" data-v="yes">Remember my choices</button></div>';
   document.body.appendChild(b);
@@ -333,5 +411,10 @@ footer{border-top:1px solid var(--line);margin-top:4rem;padding-block:2rem 3rem;
   if(!C.get())setTimeout(function(){show(true)},700);
 })();
 </script>
+<script src="/js/gsap-3.15.0.min.js" defer></script>
+<script src="/js/ScrollTrigger-3.15.0.min.js" defer></script>
+<script src="/js/lenis-1.3.27.min.js" defer></script>
+<script src="/js/fans.8fd389d969.js" defer></script>
+<script src="/js/motion.e834c67a41.js" defer></script>
 </body>
 </html>

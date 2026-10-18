@@ -1,0 +1,63 @@
+# Instructions for AI coding agents
+
+Ember is a free, open source Windows app that shows PC temperatures and power draw, runs fans on quiet-to-extreme curves, and lights RGB gear. It controls real fans, so the bar for changes is high. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/architecture.md](docs/architecture.md) first; this file only adds what an agent needs on top.
+
+## Layout
+
+| Path | What it is |
+|---|---|
+| `src/Ember.Core` | Shared logic with no Windows or hardware code: protocol, fan curves, safety rules, game detection, power tracking. Most tests live here. |
+| `src/Ember.Service`, `src/Ember.Watchdog` | The Windows services. Only the service writes fan speeds. |
+| `src/Ember.App` | The WPF app. It only displays and asks. |
+| `src/Ember.Lighting`, `src/Ember.StreamDeck`, `src/Ember.Setup` | Lighting engine and integrations, the Stream Deck plugin, the installer. |
+| `tests/` | Unit tests, and `Ember.App.Tests`, which runs the real window as a simulation. |
+| `docs/` | User and developer docs. `CHANGELOG.md`, `ROADMAP.md`, `PRIVACY.md`, `TERMS.md`, `SECURITY.md` live at the root. |
+| `site/` | The emberpc.uk website (see below). |
+
+## Build and test
+
+```powershell
+scripts\fetch-openrgb.ps1      # once
+dotnet build Ember.sln
+dotnet test                    # set EMBER_UI_TESTS=1 for the window tests
+```
+
+The window tests need no devices, network or service. Anything that touches real hardware, the installer or the service's pipes can only be checked by hand on Windows: see [docs/hardware-checks.md](docs/hardware-checks.md). Say what you tested and what you could not.
+
+## Rules that must not be broken
+
+- **Fan safety.** Anything that writes a fan keeps the service's rules: 90 °C override to 100% on any sensor, speed floors, the CPU guard and the blind-sensor rule. Never weaken them, and never call the library's `SetDefault` or `Close` on fan controllers.
+- **Smart plugs are read only.** Never add a way to switch one.
+- **Nothing leaves the PC on its own.** No telemetry, no accounts. Any new network request, stored value or third-party service must be added to `PRIVACY.md` first.
+- **Do not install or update the app on someone's PC unasked.**
+- **Public repo hygiene.** No personal details, device names, PC specs or private paths in commits, docs, screenshots or tests. Screenshots use the default theme (orange accent, dark) and a made-up game library.
+
+## Style
+
+- British spelling in text. No emojis.
+- Match the code around your change and `.editorconfig`.
+- User-facing changes get a `CHANGELOG.md` entry with a bold lead; update the docs if behaviour changed.
+- The UI is calm and macOS-like: pill buttons, segmented controls, switches, thin scroll bars. Check pages by screenshot, not by code alone.
+
+## The website (`site/`)
+
+A free Cloudflare Worker with static assets, served at https://emberpc.uk. The deployed files are in `site/public/`, and they are generated: edit `site/src/`, never `site/public/` by hand.
+
+```powershell
+node site/src/build-site.js      # builds site/public from site/src and the repo's .md files
+cd site; cf deploy               # needs `cf auth login`
+```
+
+- `build-site.js` makes every page, the sitemap, `robots.txt` and `_headers`. The Content Security Policy is built per page from sha256 hashes of the inline scripts and styles, so any new inline script or style needs a rebuild and nothing may create a `<style>` at runtime.
+- Docs pages (`/changelog`, `/roadmap`, `/install`, `/security`, `/known-issues`, `/licences`, and the app sections of `/privacy` and `/terms`) come from the repo's markdown through `site/src/md.js`. Rebuild after changing a doc.
+- Scripts are self-hosted in `site/src/vendor` (GSAP, Lenis) plus `motion.js` and `fans.js`. Do not load code or fonts from a CDN.
+- The only third-party script is Cloudflare Web Analytics, loaded from `consent.js` on the live host and skipped when the browser sends Do Not Track or Global Privacy Control. Anything new that stores or sends data must be added to the site's privacy page first.
+- Motion respects `prefers-reduced-motion` everywhere. Keep it that way, and keep every page free of horizontal scroll from 360 px to 1920 px wide.
+- Integration logos: `site/src/icons` (Simple Icons paths, Arcticons for brands Simple Icons lacks, credited on the licences page).
+- Keep it free: static assets only, no paid Cloudflare features.
+
+## Releases and git
+
+- Betas are pre-releases. A production release is a normal "Latest" release and only happens on request.
+- Commit with the project's public identity (`Ol775`, GitHub no-reply address) and no tool-generated trailers.
+- Do not force-push, rewrite history or change repository settings.

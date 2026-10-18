@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Changelog · Ember</title>
+<meta name="description" content="Every Ember release, newest first, with what was added, changed and fixed.">
+<link rel="canonical" href="https://emberpc.uk/changelog">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#120d0b">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Ember">
+<meta property="og:title" content="Changelog · Ember"><meta property="og:description" content="Every Ember release, newest first, with what was added, changed and fixed."><meta property="og:url" content="https://emberpc.uk/changelog">
+<meta property="og:image" content="https://emberpc.uk/img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Ember dashboard showing CPU and GPU temperatures, fan mode and fan speeds"><meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Changelog · Ember"><meta name="twitter:description" content="Every Ember release, newest first, with what was added, changed and fixed."><meta name="twitter:image" content="https://emberpc.uk/img/og.png">
+<link rel="preload" href="/fonts/geist-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script id="ember-theme">
+(function(){
+  // Site-wide look: theme, tint and accent chosen on the page are kept for every page of the site.
+  var K="ember-site-theme",CK="ember-consent",mem=null,root=document.documentElement,mq=matchMedia("(prefers-color-scheme:dark)"),
+      orig=root.getAttribute("data-theme"),def={mode:"system",tint:"warm",accent:null},touched=false;
+  function consent(){try{return localStorage.getItem(CK)}catch(e){return null}}
+  // choices persist on this device only after the visitor agrees; until then they last for the page view
+  var MODES=["system","dark","oled","light"],TINTS=["warm","neutral","cool"];
+  function clean(v){v=v&&typeof v==="object"?v:{};var o={};if(MODES.indexOf(v.mode)>-1)o.mode=v.mode;if(TINTS.indexOf(v.tint)>-1)o.tint=v.tint;o.accent=typeof v.accent==="string"&&/^#[0-9a-f]{6}$/i.test(v.accent)?v.accent:null;return o}
+  function load(){var base=Object.assign({},def);try{if(consent()==="yes"){var v=JSON.parse(localStorage.getItem(K));if(v)return Object.assign(base,clean(v))}}catch(e){}return Object.assign(base,clean(mem))}
+  function save(s){mem=s;try{if(consent()==="yes")localStorage.setItem(K,JSON.stringify(s))}catch(e){}}
+  var H={warm:20,neutral:0,cool:215},S={warm:28,neutral:3,cool:26};
+  var PAL=["--bg","--bg2","--card","--fg","--mute","--line","--glass"],ACC=["--ember","--ember-hi","--glow","--on-ember"];
+  function lum(hex){var m=/^#?([0-9a-f]{6})$/i.exec(hex);if(!m)return 0;var n=parseInt(m[1],16);return(.2126*(n>>16)+.7152*(n>>8&255)+.0722*(n&255))/255}
+  function apply(s){
+    var isDef=s.mode===def.mode&&s.tint===def.tint&&!s.accent;
+    if(isDef&&!touched)return;
+    touched=true;
+    if(root.hasAttribute("data-accent-only")){accent(s);return}
+    var dark=s.mode==="dark"||s.mode==="oled"||(s.mode==="system"&&(orig?orig==="dark":mq.matches));
+    if(s.mode==="system"){orig?root.setAttribute("data-theme",orig):root.removeAttribute("data-theme")}
+    else root.setAttribute("data-theme",dark?"dark":"light");
+    var st=root.style,h=H[s.tint]||20,sat=S[s.tint]||28,oled=s.mode==="oled";
+    if(s.tint==="warm"&&!oled){PAL.forEach(function(v){st.removeProperty(v)})}
+    else{
+      var bg,bg2,card;
+      if(dark){bg=oled?"#000":"hsl("+h+" "+sat+"% 6%)";bg2=oled?"#0d0d0d":"hsl("+h+" "+sat+"% 9%)";card=oled?"#121212":"hsl("+h+" "+sat+"% 11%)";
+        st.setProperty("--fg","hsl("+h+" "+Math.min(55,sat*2)+"% 95%)");st.setProperty("--mute","hsl("+h+" "+Math.min(18,sat)+"% 66%)");st.setProperty("--line","hsl("+h+" 40% 85% / .12)")}
+      else{bg="hsl("+h+" "+Math.round(sat*.9)+"% 95%)";bg2="hsl("+h+" "+Math.round(sat*.8)+"% 91%)";card="#fff";
+        st.setProperty("--fg","hsl("+h+" "+(sat+10)+"% 10%)");st.setProperty("--mute","hsl("+h+" 10% 40%)");st.setProperty("--line","hsl("+h+" 40% 15% / .12)")}
+      st.setProperty("--bg",bg);st.setProperty("--bg2",bg2);st.setProperty("--card",card);
+      st.setProperty("--glass",bg.charAt(0)==="#"?"rgba(0,0,0,.72)":bg.replace(")"," / .72)"));
+    }
+    accent(s);
+  }
+  function accent(s){var st=root.style;
+    if(s.accent){var a=s.accent;
+      st.setProperty("--ember",a);st.setProperty("--ember-hi","color-mix(in srgb,"+a+" 62%,#fff)");
+      st.setProperty("--glow","color-mix(in srgb,"+a+" 24%,transparent)");st.setProperty("--on-ember",lum(a)>.62?"#1a0c06":"#fff");
+    }else ACC.forEach(function(v){st.removeProperty(v)});
+  }
+  var api=window.emberTheme={def:def,get:load,
+    set:function(p){var s=Object.assign(load(),clean(Object.assign({},load(),p)));save(s);apply(s);return s},
+    reset:function(){save(Object.assign({},def));apply(Object.assign({},def));return Object.assign({},def)}};
+  window.emberConsent={get:consent,set:function(v){try{localStorage.setItem(CK,v)}catch(e){}
+    if(v==="yes")save(load());else{try{localStorage.removeItem(K)}catch(e){}}
+    document.dispatchEvent(new Event("ember-consent"))}};
+  mq.addEventListener&&mq.addEventListener("change",function(){var s=load();if(s.mode==="system")apply(s)});
+  apply(load());
+})();
+</script>
+<style id="ember-fx-css">
+/* motion shared by every page: all of it starts from a visible resting state */
+@keyframes fxUp{from{opacity:0;transform:translateY(1.4rem)}}
+@keyframes fxFade{from{opacity:0}}
+@keyframes fxDraw{from{stroke-dashoffset:1}}
+.fx-in{animation:fxUp .9s var(--spring,cubic-bezier(.34,1.45,.5,1)) both;animation-delay:calc(var(--d,0)*90ms)}
+.fx-hide{opacity:0;transform:translateY(1.4rem)}
+.fx-rv{transition:opacity .7s ease,transform .9s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+.fx-show{opacity:1!important;transform:none!important}
+nav .bar,nav>.bar{transition:box-shadow .35s,background .35s,border-color .35s}
+nav.scrolled .bar{box-shadow:0 1rem 2.5rem -1rem rgba(0,0,0,.6);border-color:color-mix(in srgb,var(--ember) 22%,var(--line,rgba(255,255,255,.12)))}
+.fx-draw{stroke-dasharray:1;stroke-dashoffset:0;animation:fxDraw 1.6s cubic-bezier(.4,0,.2,1) both}
+.fx-grow{transform-origin:left;animation:fxGrow 1.1s var(--spring,cubic-bezier(.34,1.45,.5,1)) both}
+@keyframes fxGrow{from{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.fx-in,.fx-draw,.fx-grow{animation:none!important}.fx-hide{opacity:1;transform:none}}
+/* phones: never scroll sideways, and the bar keeps to what fits */
+html{overflow-x:hidden}
+body{overflow-x:clip}
+.navbtn{display:none;flex:none;width:2.5rem;height:2.5rem;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;place-items:center;touch-action:manipulation;transition:transform .45s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+.navbtn:active{transform:scale(.9);transition-duration:.08s}
+.navbtn .nb{display:block;width:1rem;height:.5rem;background:linear-gradient(currentColor,currentColor) 0 0/100% 2px no-repeat,linear-gradient(currentColor,currentColor) 0 100%/100% 2px no-repeat;transition:transform .4s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+nav.open .navbtn{color:var(--ember)}nav.open .navbtn .nb{transform:scaleY(.4)}
+@media (max-width:560px){
+  nav .bar{gap:.5rem!important;padding:0 .5rem 0 1rem!important}
+  nav .brand{font-size:1rem}
+  nav .navbtn{display:grid;margin-left:auto}
+  nav .bar>.btn{padding:.5rem 1rem!important}
+  nav .links{position:absolute;top:calc(100% + .5rem);left:0;right:0;margin:0;padding:.5rem;flex-direction:column;gap:.125rem;border:1px solid var(--line);border-radius:1.25rem;
+    background:var(--bg2);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);
+    opacity:0;transform:translateY(-.5rem) scale(.98);pointer-events:none;transition:opacity .25s,transform .45s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+  nav.open .links{opacity:1;transform:none;pointer-events:auto}
+  nav .links a{display:block!important;padding:.8rem 1rem!important;font-size:1rem!important}
+  .cb{padding:.9rem!important;font-size:.78rem!important;gap:.4rem!important;border-radius:1rem!important}.cb h2{font-size:.9rem!important}.cb button{padding:.5rem .75rem!important;font-size:.8125rem!important;flex-basis:7rem!important}
+}
+.tabs{scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+@media (max-width:560px){.tabs{flex-wrap:wrap!important;width:auto!important;border-radius:1.25rem!important}.tabs button{padding:.45rem .85rem!important}}
+/* comfortable tap targets on touch screens */
+@media (pointer:coarse),(max-width:560px){
+  footer a,.legal-links a{display:inline-flex;align-items:center;min-height:2.75rem}
+  summary{min-height:2.75rem;align-items:center}
+  nav .brand{min-height:2.75rem}
+}
+.cb{background:color-mix(in srgb,var(--bg) 95%,transparent)!important}
+/* cookie banner */
+.cb{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:60;width:min(26rem,calc(100vw - 32px));padding:1.25rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:1.25rem;color:var(--fg,#fbece3);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);font:400 .875rem/1.5 var(--display,system-ui,sans-serif);display:grid;gap:.75rem;transform:translateY(1.5rem);opacity:0;pointer-events:none;transition:opacity .35s,transform .6s cubic-bezier(.34,1.45,.5,1)}
+.cb.on{transform:none;opacity:1;pointer-events:auto}
+.cb h2{margin:0;font-size:1rem;letter-spacing:-.01em}.cb p{margin:0;color:var(--mute,#b49a8c)}.cb a{color:var(--fg,#fbece3);text-underline-offset:.15em}
+.cb .row{display:flex;gap:.5rem;flex-wrap:wrap}.cb button{flex:1 1 9rem;padding:.65rem 1rem;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.2));background:var(--card,#1d1512);color:var(--fg,#fbece3);font:600 .875rem var(--display,system-ui,sans-serif);cursor:pointer;touch-action:manipulation;transition:transform .45s cubic-bezier(.34,1.45,.5,1)}
+.cb button:active{transform:scale(.95);transition-duration:.08s}.cb button:focus-visible{outline:2px solid var(--ember,#ff5a1f);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.cb{transition:none}}
+/* smooth scroll (Lenis), reading progress, spotlight cards, shiny headline, word reveal */
+html.lenis-on,html.lenis-on body{height:auto}
+html.lenis-on{scroll-behavior:auto!important}
+.lenis-on [data-lenis-prevent]{overscroll-behavior:contain}
+.prog{position:fixed;left:0;top:0;right:0;height:2px;z-index:60;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--ember),var(--ember-hi));pointer-events:none}
+.spl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s;background:radial-gradient(16rem circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--ember) 15%,transparent),transparent 65%)}
+*:hover>.spl{opacity:1}
+.shiny{background:linear-gradient(110deg,var(--fg) 42%,var(--ember-hi) 50%,var(--fg) 58%) 100% 0/250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shiny 5s linear infinite}
+@keyframes shiny{to{background-position:-100% 0}}
+.wd{display:inline-block;will-change:transform}
+@media (prefers-reduced-motion:reduce){.shiny{animation:none;background:none;color:inherit}.prog{display:none}}
+.skip{position:fixed;left:1rem;top:-4rem;z-index:80;padding:.7rem 1.1rem;border-radius:999px;background:var(--ember);color:var(--on-ember,#1a0c06);font:600 .9375rem var(--display,sans-serif);text-decoration:none;transition:top .2s}.skip:focus{top:max(1rem,env(safe-area-inset-top,0px))}
+#main:focus{outline:none}
+/* ember atmosphere on every page: a slow glow and sparks rising behind the content */
+html.embers-on{background:var(--bg)}html.embers-on body{background:transparent}
+.emb{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.emb .gl{position:absolute;left:50%;top:-14rem;width:70rem;max-width:140vw;height:34rem;transform:translateX(-50%);background:radial-gradient(closest-side,var(--glow),transparent 72%);animation:embglow 8s ease-in-out infinite}
+@keyframes embglow{50%{opacity:.5;transform:translateX(-50%) scale(1.1)}}
+.emb i{position:absolute;bottom:-1rem;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#ffd9a0,var(--ember) 60%,transparent 72%);opacity:0;animation:embrise var(--t) linear var(--d) infinite}
+@keyframes embrise{0%{opacity:0;transform:translate(0,0) scale(1)}10%{opacity:.7}85%{opacity:.25}100%{opacity:0;transform:translate(var(--dx),-108vh) scale(.2)}}
+.brand svg{filter:drop-shadow(0 0 .45rem var(--glow));animation:brandglow 4.5s ease-in-out infinite}
+@keyframes brandglow{50%{filter:drop-shadow(0 0 .9rem var(--glow))}}
+@media (prefers-reduced-motion:reduce){.emb{display:none}.brand svg{animation:none}}
+
+/* fans */
+.fan{display:block;color:var(--ember);fill:currentColor;will-change:transform}.fan.t{color:var(--teal)}
+.fanwall{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
+.fw{display:grid;justify-items:center;gap:.45rem;font:500 .6875rem var(--mono);color:var(--mute);text-align:center}
+.fw .fan{width:min(5.2rem,100%);height:auto;aspect-ratio:1;filter:drop-shadow(0 0 1rem var(--glow))}
+.fw b{color:var(--fg);font-weight:600;font-size:.8125rem}
+.fan-sm{width:1.15rem;height:1.15rem;flex:none}
+@media (max-width:560px){.fanwall{gap:.5rem}.fw{font-size:.5625rem}.fw b{font-size:.6875rem}}
+.legal-links{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;margin-top:1rem;font-size:.8125rem}.legal-links a{color:var(--mute);text-underline-offset:.18em}.legal-links a:hover{color:var(--fg)}
+.prose ul,.prose ol{margin:.8rem 0 0;padding-left:1.25rem;color:var(--mute)}.prose li{margin-top:.45rem;text-wrap:pretty}.prose li b{color:var(--fg)}.prose h3{font-size:1.0625rem;margin-top:1.75rem;letter-spacing:-.01em}.prose pre{margin-top:1rem;padding:1rem;overflow-x:auto;background:var(--bg2);border:1px solid var(--line);border-radius:1rem;font-size:.8125rem}.prose pre code{background:none;padding:0}.prose details{margin-top:1rem;border:1px solid var(--line);border-radius:1rem;padding:.75rem 1rem}.prose summary{cursor:pointer;color:var(--fg)}.prose h2[id],.prose h3[id]{scroll-margin-top:5rem}
+</style>
+
+<style>
+/* Layout: one readable column. Same tokens as the main page. */
+:root{
+  --bg:#f6f1ee; --bg2:#ece4df; --card:#ffffff; --fg:#1d1411; --mute:#6d5f58; --line:rgba(40,20,10,.12);
+  --ember:#e8470f; --ember-hi:#ff7a3d; --on-ember:#fff; --teal:#12a39a; --glow:rgba(255,90,31,.16); --glass:rgba(246,241,238,.72);
+  --display:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --spring:cubic-bezier(.34,1.45,.5,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#120d0b; --bg2:#1a1210; --card:#1d1512; --fg:#fbece3; --mute:#b49a8c; --line:rgba(255,200,170,.12);
+  --ember:#ff5a1f; --ember-hi:#ffb347; --on-ember:#1a0c06; --teal:#3dd6c8; --glow:rgba(255,90,31,.22); --glass:rgba(18,13,11,.72); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#120d0b; --bg2:#1a1210; --card:#1d1512; --fg:#fbece3; --mute:#b49a8c; --line:rgba(255,200,170,.12);
+  --ember:#ff5a1f; --ember-hi:#ffb347; --on-ember:#1a0c06; --teal:#3dd6c8; --glow:rgba(255,90,31,.22); --glass:rgba(18,13,11,.72); color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 1.0625rem/1.55 var(--display);-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:25;background:var(--bg)}
+a{color:inherit}
+h1,h2,h3,p{margin:0;text-wrap:balance}
+.wrap{max-width:68rem;margin-inline:auto}
+.eyebrow{font:500 .75rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ember)}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;max-width:58rem;margin:1rem auto 0}
+nav .bar{display:flex;align-items:center;gap:1.5rem;height:3.5rem;padding:0 .5rem 0 1.25rem;border:1px solid var(--line);border-radius:999px;white-space:nowrap;
+  background:var(--glass);-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);box-shadow:0 .75rem 2rem -1rem rgba(0,0,0,.45)}
+.brand{display:flex;align-items:center;gap:.55rem;font-weight:650;letter-spacing:-.02em;text-decoration:none;flex:none}
+.brand svg{width:1.5rem;height:1.5rem}
+.links{display:flex;gap:.125rem;margin-inline:auto;font-size:.875rem;font-weight:500;color:var(--mute)}
+.links a{text-decoration:none;padding:.45rem .8rem;border-radius:999px;transition:color .2s,background .3s}
+.links a:hover{color:var(--fg)}
+.links a.cur{color:var(--fg);background:var(--bg2)}
+@media (max-width:640px){.links a:not(.keep){display:none}}
+.btn{display:inline-flex;align-items:center;padding:.55rem 1.15rem;border-radius:999px;border:1px solid var(--line);font:600 .875rem/1.2 var(--display);text-decoration:none;color:var(--fg);background:var(--card);
+  transition:transform .45s var(--spring);touch-action:manipulation;flex:none}
+.btn:active{transform:scale(.95);transition-duration:.08s}
+.btn.pri{background:linear-gradient(180deg,var(--ember-hi),var(--ember));color:var(--on-ember);border-color:transparent;box-shadow:0 .5rem 1.6rem -.4rem var(--glow),inset 0 1px 0 rgba(255,255,255,.35)}
+:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:.5rem}
+
+header.top{position:relative;padding-block:clamp(3.5rem,9vw,6.5rem) 2rem}
+header.top::before{content:"";position:absolute;inset:-5rem -50vw auto;height:34rem;z-index:-1;background:radial-gradient(36rem 20rem at 30% 20%,var(--glow),transparent 70%)}
+h1{font-size:clamp(2.6rem,8vw,5.5rem);line-height:1;letter-spacing:-.045em;font-weight:700;margin-top:1rem}
+.lede{font-size:clamp(1.1rem,2.2vw,1.4rem);color:var(--mute);max-width:38rem;margin-top:1.25rem;letter-spacing:-.012em}
+.stats{display:flex;flex-wrap:wrap;gap:2rem 3rem;margin-top:2rem}
+.stats div{display:grid}
+.stats b{font:500 2.4rem/1 var(--mono);letter-spacing:-.05em;color:var(--ember)}
+.stats small{font:500 .6875rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-top:.4rem}
+
+.tabs{display:flex;gap:.25rem;padding:.25rem;border-radius:999px;background:var(--bg2);border:1px solid var(--line);width:max-content;max-width:100%;overflow-x:auto;margin-top:2.5rem}
+.tabs button{border:0;background:none;color:var(--mute);font:500 .875rem var(--display);padding:.5rem 1rem;border-radius:999px;cursor:pointer;white-space:nowrap;touch-action:manipulation;transition:color .2s,background .35s var(--spring)}
+.tabs button span{font:500 .6875rem var(--mono);opacity:.7;margin-left:.3rem}
+.tabs button[aria-selected="true"]{background:linear-gradient(180deg,var(--ember-hi),var(--ember));color:var(--on-ember)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:1rem;margin-top:1.5rem}
+@keyframes in{from{opacity:0;transform:translateY(.8rem) scale(.98)}}
+.card{position:relative;display:grid;gap:.5rem;align-content:start;padding:1.35rem;border:1px solid var(--line);border-radius:1.4rem;background:var(--card);
+  animation:in .6s var(--spring) both;animation-delay:calc(var(--k)*24ms);transition:transform .45s var(--spring),border-color .3s,box-shadow .3s}
+.card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--ember) 45%,var(--line));box-shadow:0 1.5rem 3rem -1.5rem var(--glow)}
+.card.hide{display:none}
+.logo{width:3.5rem;height:3.5rem;border-radius:1rem;display:grid;place-items:center;color:var(--fg);
+  background:linear-gradient(145deg,color-mix(in srgb,var(--ember) 14%,var(--bg2)),var(--bg2));border:1px solid var(--line)}
+.logo svg{width:1.7rem;height:1.7rem;fill:currentColor}
+.logo b{font:600 1.05rem var(--mono);letter-spacing:-.03em;color:var(--ember)}
+.meta{display:flex;align-items:center;gap:.5rem;margin-top:.6rem}
+.kind{font:500 .625rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.meta em{font:500 .5938rem var(--mono);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--ember);border:1px solid color-mix(in srgb,var(--ember) 35%,var(--line));border-radius:999px;padding:.1rem .45rem}
+.meta em.ro{color:var(--teal);border-color:color-mix(in srgb,var(--teal) 35%,var(--line))}
+.card h3{font-size:1.25rem;letter-spacing:-.02em}
+.card p{color:var(--mute);font-size:.9375rem;line-height:1.45}
+.acct{margin-top:.4rem;padding-top:.75rem;border-top:1px solid var(--line);font:500 .75rem var(--mono);color:var(--mute)}
+.acct::before{content:"";display:inline-block;width:.45rem;height:.45rem;border-radius:50%;background:var(--teal);margin-right:.5rem}
+
+.more{margin-top:3rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media (max-width:760px){.more{grid-template-columns:1fr}}
+.panel{border:1px solid var(--line);border-radius:1.4rem;background:var(--card);padding:1.5rem;display:grid;gap:.6rem;align-content:start}
+.panel p{color:var(--mute)}
+.panel h2{font-size:1.5rem;letter-spacing:-.03em}
+.note{margin-top:2rem;font-size:.8125rem;color:var(--mute);max-width:46rem}
+footer{border-top:1px solid var(--line);margin-top:4rem;padding-block:2rem 3rem;color:var(--mute);font-size:.875rem}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+.prose{max-width:46rem;overflow-wrap:anywhere;padding-block:clamp(3rem,8vw,5rem) 2rem}.prose h1{font-size:clamp(2.2rem,6vw,3.4rem);letter-spacing:-.04em;margin-top:.75rem}.prose h2{font-size:1.35rem;letter-spacing:-.02em;margin-top:2.25rem}.prose p{margin-top:.8rem;color:var(--mute);text-wrap:pretty}.prose p b{color:var(--fg)}.prose a{color:var(--fg);text-underline-offset:.18em;text-decoration-color:var(--ember)}.prose .lede{color:var(--fg);font-size:1.1875rem;max-width:none;margin-top:1.25rem}.upd{margin-top:.6rem;font:500 .75rem var(--mono);color:var(--mute);letter-spacing:.04em}.tbl{overflow-x:auto;margin-top:1rem;border:1px solid var(--line);border-radius:1rem}table{border-collapse:collapse;width:100%;min-width:38rem;font-size:.875rem}th,td{text-align:left;padding:.75rem 1rem;vertical-align:top;border-bottom:1px solid var(--line);color:var(--mute)}th{font:500 .6875rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}tr:last-child td{border-bottom:0}code{font:500 .85em var(--mono);color:var(--fg);background:var(--bg2);padding:.1em .4em;border-radius:.4em}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fan" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" stroke-width="3" opacity=".55"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(0.00 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(51.43 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(102.86 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(154.29 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(205.71 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(257.14 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(308.57 50 50)"/><circle cx="50" cy="50" r="11" fill="var(--bg2,#17100d)"/><circle cx="50" cy="50" r="5" fill="currentColor"/></symbol></svg>
+<a class="skip" href="#main">Skip to content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff4d12"/><stop offset="1" stop-color="#ffb347"/></linearGradient>
+  <linearGradient id="core" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffc15a"/><stop offset="1" stop-color="#fff1c9"/></linearGradient>
+  <symbol id="mark" viewBox="0 0 256 256">
+    <path d="M128 30 C152 66 198 90 198 148 C198 190 167 222 128 222 C89 222 58 190 58 148 C58 120 73 100 88 85 C92 106 102 119 115 123 C104 86 116 58 128 30 Z" fill="url(#flame)"/>
+    <path d="M128 116 C141 138 166 149 166 178 C166 199 149 212 128 212 C107 212 90 199 90 178 C90 163 99 153 108 144 C112 155 118 160 125 160 C120 143 122 130 128 116 Z" fill="url(#core)"/>
+  </symbol></defs></svg>
+
+<div class="wrap">
+  <nav><div class="bar">
+    <a class="brand" href="/"><svg><use href="#mark"/></svg>Ember</a>
+    <div class="links"><a href="/">Home</a><a class="keep" href="/demo">Demo</a><a class="keep" href="/integrations">Integrations</a><a href="/#roadmap">Roadmap</a><a class="keep" href="/#install">Install</a></div>
+    <a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download</a>
+  </div></nav>
+
+  <main id="main" tabindex="-1" class="prose">
+<p class="eyebrow">Docs</p>
+<h1>Changelog</h1>
+<p class="lede">Every Ember release, newest first.</p>
+<p>All notable changes to Ember. Newest first. Ember follows <a href="https://semver.org">semantic versioning</a>; versions with a label such as <code>beta.1</code> are pre-releases.</p>
+<h2 id="1-6-0-beta-2-2026-10-18">1.6.0-beta.2 (2026-10-18)</h2>
+<h3 id="fixed">Fixed</h3>
+<ul>
+<li><b>Lights off now switches off every device</b>, including one Ember never lit since it started, such as NZXT lights left in their own effect. It sends a few black frames to each enabled device.</li>
+<li><b>Layouts at small window sizes.</b> Power: the Currency and Export CSV buttons wrap under their label instead of overlapping text. Lights: the colour box and the Blend row fit a narrow card. Devices: the Beta tag no longer splits a name or covers the switch. Games: the per-game switch keeps clear of its text.</li>
+</ul>
+<h2 id="1-6-0-beta-1-2026-10-17">1.6.0-beta.1 (2026-10-17)</h2>
+<h3 id="added">Added</h3>
+<ul>
+<li><b>GPU fan on the Stream Deck shows a percentage</b> when the card idles with its fans stopped (0 RPM), instead of a bare 0.</li>
+</ul>
+<h2 id="1-5-0-2026-10-17">1.5.0 (2026-10-17)</h2>
+<h3 id="added-2">Added</h3>
+<ul>
+<li><b>A lighting scene for each game.</b> On the Games page, with the per-game switch on, a game can have a scene of its own next to its fan mode. The scene (and lights on) show while the game runs, and the earlier scene and on or off come back when it ends, unless you chose another scene in between.</li>
+<li><b>Global hotkeys.</b> Settings, General: with them on, Ctrl+Alt+Shift with L switches the lights, S goes to the next scene and F to the next fan mode, even while a game has the focus. A combination another program already holds is skipped.</li>
+<li><b>Share scenes and fan curves as files.</b> On Lights, Export saves the chosen scene (with no device names in it) and Import adds one from a file; on Fans, Export curves and Import curves do the same for your two manual curves, and an imported curve is checked against the safety rules before it is used.</li>
+<li><b>A compact view.</b> The Compact view button on the Dashboard (and the tray menu) opens a small window that stays on top with the temperatures, fan mode and power draw. Drag it anywhere; double-click or press Escape to close it.</li>
+</ul>
+<h3 id="changed">Changed</h3>
+<ul>
+<li><b>Nanoleaf panels sit on the Lights canvas as they hang on the wall</b> (a grid built from the controller's own layout) instead of in one row, so effects sweep across the real shape.</li>
+<li><b>The G keys device appears only on a Logitech keyboard that has G keys</b>, and a keyboard Ember already drives through G HUB is no longer listed a second time from OpenRGB.</li>
+</ul>
+<h2 id="1-5-0-beta-1-2026-10-17">1.5.0-beta.1 (2026-10-17)</h2>
+<h3 id="added-3">Added</h3>
+<ul>
+<li><b>WiZ, LIFX, Yeelight and Kasa lights, and Kasa and Shelly plugs (beta).</b> Ember finds them on your home network with no account and no cloud, shows them on the Devices page, and lights them like any other device. Kasa and Shelly plugs with a power meter can be linked on the Power page; plugs are only ever read, never switched. Turn LAN Control on for Yeelight, local communication on for WiZ, and know that newer Kasa firmware that needs a TP-Link sign-in is not found.</li>
+<li><b>Currencies on the Power page.</b> Pick any of 17 currencies next to the price per kWh; only the symbol changes, the price is your own.</li>
+<li><b>Export the daily power figures as a CSV file</b> from the Power page's cost card.</li>
+<li><b>A tray tooltip with the temperatures and the draw.</b> Hover the tray icon for the fan mode, CPU and GPU temperature and the watts.</li>
+</ul>
+<h3 id="changed-2">Changed</h3>
+<ul>
+<li><b>Single-row Spectrum bars are see-through in silence</b>, so a steady colour layer underneath shows instead of being blacked out.</li>
+<li><b>Last played is saved every minute</b> instead of every five.</li>
+</ul>
+<h2 id="1-4-0-2026-10-17">1.4.0 (2026-10-17)</h2>
+<h3 id="changed-3">Changed</h3>
+<ul>
+<li><b>The new look is in the stable build.</b> Every page is drawn again: an icon sidebar with a status card, Instrument Sans and JetBrains Mono type, rounded cards with small capital headings, ring gauges on the Dashboard, the fan curve beside the fan headers, a live preview on Lights, and Settings as rows. The window can be made as small as 1040 by 600.</li>
+</ul>
+<h3 id="added-4">Added</h3>
+<ul>
+<li><b>Lights: more control.</b> The Aurora wave takes up to six colours with a draggable stop bar, Speed, Softness and Direction. Each layer has <i>Applies to</i> chips to choose the devices it lights, a <i>Solo layer</i> button to play one layer alone, and Reset. Spectrum bars on a single-row light are see-through in silence.</li>
+<li><b>Rename any device</b> on the Devices page: type a new name and press Enter; clear it to get the device's own name back.</li>
+<li><b>Power: standing charge, more ranges and a saving tip.</b> Add your daily standing charge to the cost estimate, switch the chart between 10 minutes, 1 hour, today and 7 days, see a plain tip about the part that uses the most, show the cost in one of 17 currencies and export the daily figures as a CSV file.</li>
+<li><b>Games: covers and last played.</b> Each game shows its Steam cover (from Steam's own picture cache) or its program icon, and a "Last played" line learned from the games that are in front of you. The dates stay on this PC.</li>
+<li><b>Logos for every launcher and device.</b> The Steam, Epic Games, GOG, Ubisoft Connect and EA app marks head the Games cards; Ember, OpenRGB, Govee, Meross and Nanoleaf have plain marks of their own on the Devices page.</li>
+<li><b>WiZ, LIFX, Yeelight and Kasa lights, and Kasa and Shelly plugs (beta).</b> Found on your home network with no account and no cloud; plugs are only read, never switched.</li>
+<li><b>A tray tooltip with the temperatures and the draw.</b></li>
+</ul>
+<h3 id="fixed-2">Fixed</h3>
+<ul>
+<li><b>The Dashboard and Lights fit a small window.</b> Status words and tiles trim instead of wrapping, the layer editor fits its column, and Applies to lists devices by name.</li>
+<li><b>Quieter on the PC.</b> The Dashboard, Fans and Power pages no longer measure unchanged text again every half second, so the window uses a few per cent of one core at most.</li>
+</ul>
+<h2 id="1-4-0-beta-1-2026-10-17">1.4.0-beta.1 (2026-10-17)</h2>
+<h3 id="fixed-3">Fixed</h3>
+<ul>
+<li><b>The new look fits a small window.</b> The Dashboard rings and the "Healthy" and "Working" words no longer wrap or cut off, the four summary tiles trim long text instead of running past their edge, and the window cannot be made narrower than the pages are laid out for.</li>
+<li><b>The Lights layer editor fits its column.</b> The layer name sits above its Reset, move and Remove buttons, the sliders keep their track, the hex boxes show the whole colour, and Remove stop sits under the colour.</li>
+<li><b>Applies to shows device names.</b> The chips list only the devices that are here and switched on, by name, instead of raw ids of devices that are gone.</li>
+</ul>
+<h3 id="changed-4">Changed</h3>
+<ul>
+<li><b>Rename shows at once on the Lights page.</b> A device renamed on the Devices page changes on the canvas straight away.</li>
+</ul>
+<h2 id="1-3-0-2026-10-17">1.3.0 (2026-10-17)</h2>
+<h3 id="added-5">Added</h3>
+<ul>
+<li><b>Rename any device.</b> On the Devices page every device name is a text box: type a new name and press Enter. The new name shows on the Lights page and everywhere else, and clearing the box brings the device's own name back.</li>
+<li><b>A gradient effect with colour stops.</b> The new Aurora wave rolls a row of up to six colours across the lights. Drag the handles on the colour bar, click the bar to add a stop, and set Speed and Softness. Scenes can now also limit a layer to chosen devices.</li>
+<li><b>Logitech G keys and the LIGHTSPEED badge</b> show as a device on the Lights page on a keyboard that has them, so they can be painted and animated; the keyboard itself stays lit.</li>
+</ul>
+<h3 id="changed-5">Changed</h3>
+<ul>
+<li><b>Quieter on the PC.</b> The Dashboard, Fans and Power pages no longer measure unchanged text again every half second and long chart lines use fewer curve segments, so the window uses less processor time.</li>
+<li><b>Friendlier messages.</b> "Asking Govee…" reads properly and the privacy notice lists Meross, Tapo, smart plugs and game library scanning.</li>
+</ul>
+<h3 id="fixed-4">Fixed</h3>
+<ul>
+<li><b>The update installer cannot be swapped.</b> Update now holds the downloaded setup program and checks its checksum once more right before it starts, so a file that changed in between is refused.</li>
+<li><b>Network folders are never read.</b> A game folder that points at another PC on the network is ignored.</li>
+</ul>
+<h2 id="1-3-0-beta-5-2026-10-17">1.3.0-beta.5 (2026-10-17)</h2>
+<h3 id="added-6">Added</h3>
+<ul>
+<li><b>Gradient layers with colour stops.</b> A new Aurora wave effect rolls any row of up to six colours across the lights. Drag the handles on the colour bar to move a stop, click the bar to add one, and set Speed, Softness and the Direction (right, left, up, down or out from the middle).</li>
+<li><b>Choose which devices a layer lights.</b> Every layer has Applies to chips, one for each device on the canvas, so a layer can paint the keyboard only, or everything but the fans.</li>
+<li><b>Solo layer.</b> Play one layer alone, on the lights and in the preview, to see what it does by itself. Reset puts a layer's effect back to its starting look.</li>
+<li><b>Power: standing charge, more ranges and a tip.</b> Add your daily standing charge to the cost estimate, switch the chart between 10 minutes, 1 hour, today and 7 days, and read a plain tip about the part of the PC that uses the most.</li>
+<li><b>Games: covers and last played.</b> Each game shows its Steam cover (from Steam's own picture cache) or its program icon, and a line such as "Last played 2 days ago", learned from the games that are in front of you. The dates stay on this PC (play-history.json in your Ember folder).</li>
+<li><b>Logos for every launcher and device.</b> The Steam, Epic Games, GOG, Ubisoft Connect and EA app marks head the Games cards, and Ember, OpenRGB, Govee, Meross and Nanoleaf have plain marks of their own on the Devices page.</li>
+</ul>
+<h3 id="changed-6">Changed</h3>
+<ul>
+<li><b>Settings as rows.</b> Fan control, Experimental and Updates are laid out like General and Appearance: the name and a sentence on the left, the control on the right.</li>
+<li><b>Quieter on the PC.</b> The Dashboard, Fans and Power pages no longer measure unchanged text again every half second, the hidden classic chart is no longer drawn, and long chart lines use fewer curve segments, so the window uses less processor time and makes less garbage.</li>
+</ul>
+<h3 id="fixed-5">Fixed</h3>
+<ul>
+<li><b>The update installer cannot be swapped.</b> Update now holds the downloaded setup program and checks its checksum once more right before it starts, so a file that changed in between is refused.</li>
+<li><b>Network folders are never read.</b> A game folder that points at another PC on the network is ignored, so a bad entry cannot make Ember contact it.</li>
+</ul>
+<h2 id="1-3-0-beta-4-2026-10-16">1.3.0-beta.4 (2026-10-16)</h2>
+<h3 id="changed-7">Changed</h3>
+<ul>
+<li><b>A new look (beta).</b> Every page is redrawn: a sidebar with icons and a status card, Instrument Sans and JetBrains Mono type, rounded cards with small capital headings, and the Dashboard with ring gauges, a fan mode list, a smooth ten-minute chart and four summary tiles. Fans has the curve beside the fan headers and the AI assist; Lights has scene chips, a live preview, an effect gallery and a layer list; Devices shows each integration with its logo; Games shows a card for each launcher with a mode picker per game; Settings lists every option as a row. Only the beta build has it; the stable build looks as before.</li>
+<li><b>Lighter in the tray.</b> With the window hidden or minimised, Ember redraws and reads the smart plugs far less often and hands unused memory back to Windows, so it idles at a fraction of the CPU and RAM.</li>
+</ul>
+<h3 id="added-7">Added</h3>
+<ul>
+<li><b>A Specs page.</b> Your processor, graphics card, memory, motherboard, drives, displays and Windows version in one place, with a button to copy them for a support request. It never includes the PC name or your user name.</li>
+<li><b>Drive health on the Specs page.</b> Each drive shows its S.M.A.R.T. status, temperature, hours powered on and, for SSDs, wear. Drives that are nearly full are flagged.</li>
+<li><b>Power cost estimate and daily use.</b> The Power page shows what today, a month and a year of use cost at your own price per kWh, how the draw splits between the CPU, the graphics card and the rest of the PC, and the last seven days as bars. Ember keeps the daily energy figures on this PC (the file power-days.json in your Ember folder).</li>
+</ul>
+<h3 id="fixed-6">Fixed</h3>
+<ul>
+<li><b>A failed click or timer no longer closes the window.</b> Errors are logged and Ember carries on; only running out of memory ends it.</li>
+</ul>
+<h2 id="1-3-0-beta-3-2026-10-16">1.3.0-beta.3 (2026-10-16)</h2>
+<h3 id="fixed-7">Fixed</h3>
+<ul>
+<li><b>The Logitech keyboard stays lit with the G keys.</b> In beta.2 the new G keys device sent its colours so often that the keyboard itself went dark. The G keys are now sent only when their colour changes, with a refresh every couple of seconds.</li>
+</ul>
+<h3 id="added-8">Added</h3>
+<ul>
+<li><b>The LIGHTSPEED badge</b> on a Logitech G915 can be lit like the G keys: the device is now called "Logitech G keys and badge" and has ten lights (G1 to G9, then the badge).</li>
+</ul>
+<h2 id="1-3-0-beta-2-2026-10-16">1.3.0-beta.2 (2026-10-16)</h2>
+<h3 id="added-9">Added</h3>
+<ul>
+<li><b>A schedule for fan modes and lights (beta).</b> Settings, Schedule and alerts: add a time window, such as 22:00 to 07:00 on the days you choose, and pick a fan mode, a lighting scene or lights off for it. The mode and scene go back to what they were when the window ends, unless you changed them yourself in between. Nothing changes while a game is running.</li>
+<li><b>Alerts for a hot part or a stopped fan (beta).</b> Switch them on in Settings, Schedule and alerts. Ember sends a Windows notification when the CPU or the graphics card stays over your limit, or when a fan that was turning stops while the PC is warm. Each alert is sent once, with a reminder after ten minutes.</li>
+<li><b>Logitech G keys.</b> On a Logitech keyboard with G keys (G1 to G9) the Lights page now shows a "Logitech G keys" device, so you can paint and animate them like any other light.</li>
+</ul>
+<h3 id="fixed-8">Fixed</h3>
+<ul>
+<li><b>Asking Govee</b> now shows a plain "Asking Govee…" instead of garbled characters.</li>
+<li><b>The privacy notice</b> now lists Meross, Tapo, smart plugs and game library scanning.</li>
+</ul>
+<h2 id="1-3-0-beta-1-2026-10-15">1.3.0-beta.1 (2026-10-15)</h2>
+<h3 id="changed-8">Changed</h3>
+<ul>
+<li><b>The beta line continues after 1.2.0.</b> This build has everything in 1.2.0 plus what is still being proven: GPU fan control (Experimental), the Stream Deck plugin and the roadmap page. Use Settings, Updates, Release channel to move between this beta and the Stable build.</li>
+</ul>
+<h2 id="1-2-0-2026-10-15">1.2.0 (2026-10-15)</h2>
+<p>The production release. It adds the Power page, a Games page with better game detection, and Meross and Tapo lights, with the personalisation and fixes from the beta line.</p>
+<h3 id="added-10">Added</h3>
+<ul>
+<li><b>A Power page.</b> Shows what your PC draws: the whole PC, the CPU, the graphics card, the motherboard and the rest, and any other plugs, each with the live watts, a small graph, the average, the peak and the energy used since Ember started, plus a large graph and a bar showing where the power goes. CPU and GPU come from their own sensors. No motherboard reports its own power, so the motherboard, memory, drives, fans and power supply losses are measured as the difference between the wall draw and the CPU and GPU: link a smart plug that measures energy (Meross MSS310 or MSS315, Tapo P110 or P115) and mark it as your PC's plug. Other linked plugs are listed with their own watts. Plugs are read only: Ember asks what they draw and never switches them. Figures are kept for the session only.</li>
+<li><b>A Games page and better game detection (Beta).</b> Ember reads your Steam, Epic Games, GOG, Ubisoft Connect and EA app libraries and lists the games it finds. It scans when Ember starts, when you open the page and when you press <b>Scan now</b>, and only reads folders and files. A game from your libraries switches the fans to game mode after 4 seconds, needs only 20% GPU load, and is found even in a window; other programs are found the old way (full screen and a busy graphics card). Game detection is behind Settings, Fan control, Experimental features, and is off until you turn it on.</li>
+<li><b>A fan mode for each game (Beta, off unless you switch it on).</b> On the Games page, switch on "Use a fan mode for each game" and pick a mode on any game. A game with no pick keeps using the game mode from the Fans page. The safety rules (90 °C override, early CPU ramp, speed floors) still apply.</li>
+<li><b>Meross and Tapo / TP-Link lights (Beta).</b> Settings, Meross: sign in with your Meross account once (two-step codes are supported, and your password is never saved). Settings, Tapo: save your Tapo account email and password (kept in Windows Credential Manager, used only to sign in to your devices on this network). Ember finds your bulbs and light strips on the network and lights them with the scene, one colour at a time. Plugs, hubs and thermostats are never switched. Both are written and tested in software but not yet tried on enough real devices; for Tapo, switch on Third-Party Compatibility for the devices in the Tapo app if they are not found.</li>
+<li><b>Restart services.</b> A button on the Devices page, on the Sensors and fans card, restarts the Ember service and watchdog without closing the app, which reconnects by itself. Windows asks for permission unless Ember runs as administrator. The fans go back to the board for a moment while it restarts.</li>
+<li><b>More ways to make Ember your own.</b> Settings, Appearance has <b>Interface size</b> (Small, Normal or Large: the whole window, text and spacing together) and <b>GPU colour</b> (Auto, or any of the accent colours, for the GPU number and its line on the chart). Settings, General lets Ember <b>open on Lights or Devices</b> as well as Dashboard or Fans, and <b>open the window where you left it</b> (size and position, moved back onto the screen if that monitor is gone).</li>
+</ul>
+<h3 id="fixed-9">Fixed</h3>
+<ul>
+<li><b>The GPU colour now matches your accent and theme.</b> With a Blue, Purple or Teal accent (and Green in the light theme) the GPU temperature and chart line fell back to a fixed bright orange. It is now a partner colour worked out from your accent and adjusted for the light or dark theme.</li>
+</ul>
+<h2 id="1-2-0-beta-8-2026-10-15">1.2.0-beta.8 (2026-10-15)</h2>
+<h3 id="added-11">Added</h3>
+<ul>
+<li><b>A Games page.</b> Ember reads your Steam, Epic Games, GOG, Ubisoft Connect and EA app libraries and lists the games it finds, grouped by launcher. It scans when Ember starts, when you open the page (if the last scan is more than five minutes old) and when you press <b>Scan now</b>. It only reads folders and files; nothing is changed or sent anywhere.</li>
+<li><b>Better game detection.</b> A game from your libraries switches the fans to game mode after 4 seconds instead of 10, needs only 20% GPU load instead of 50%, and is found even when it runs in a window. Programs that are not in a library are found the old way (full screen and a busy graphics card).</li>
+<li><b>A fan mode for each game (off unless you switch it on).</b> On the Games page, switch on "Use a fan mode for each game" and pick a mode on any game. A game with no pick keeps using the game mode from the Fans page. The safety rules (90 °C override, early CPU ramp, speed floors) still apply.</li>
+</ul>
+<h2 id="1-2-0-beta-7-2026-10-15">1.2.0-beta.7 (2026-10-15)</h2>
+<h3 id="added-12">Added</h3>
+<ul>
+<li><b>Tapo / TP-Link lights and plugs (beta builds only, not yet tried on real devices).</b> Settings, Tapo: save the email and password of your Tapo account (kept in Windows Credential Manager, used only to sign in to your devices on this network, never sent to the cloud). Ember finds Tapo bulbs and light strips and lights them with the scene, one colour at a time. Tapo plugs appear on the Power page and are only read, never switched. If devices are not found, switch on Third-Party Compatibility for them in the Tapo app.</li>
+<li><b>A Power page (beta builds only).</b> Shows what your PC draws: the whole PC, the CPU, the graphics card, the motherboard and the rest, and any other plugs, each with the current watts, a small graph, the average, the peak and the energy used since Ember started, plus a large graph and a bar showing where the power goes. CPU and GPU come from their own sensors. No motherboard has a sensor for its own power, so the motherboard, memory, drives, fans and power supply losses are measured as the difference between the wall draw and the CPU and GPU: link a smart plug with energy monitoring (Meross MSS310 or MSS315, Tapo P110 or P115) and mark it as your PC's plug. Other linked plugs are listed with their own watts. Plugs are read only: Ember asks what they draw and never switches them. Figures are kept for the session only.</li>
+<li><b>Restart services.</b> A button on the Devices page, on the Sensors and fans card, restarts the Ember service and watchdog without closing the app, which reconnects by itself. Windows asks for permission unless Ember runs as administrator. The fans go back to the board for a moment while it restarts.</li>
+</ul>
+<h3 id="changed-9">Changed</h3>
+<ul>
+<li><b>Meross is for bulbs and light strips only.</b> Plugs, hubs and thermostats are never switched; Meross plugs are only read, on the Power page.</li>
+</ul>
+<h3 id="fixed-10">Fixed</h3>
+<ul>
+<li><b>A second Meross light was not found.</b> Devices on Wi-Fi power-save can take a couple of seconds to answer, more than Ember waited, so they were missed. Ember now waits four seconds, and the status line names any light it could not find.</li>
+</ul>
+<h2 id="1-2-0-beta-6-2026-10-15">1.2.0-beta.6 (2026-10-15)</h2>
+<h3 id="added-13">Added</h3>
+<ul>
+<li><b>Meross bulbs and plugs (beta builds only).</b> Settings, Meross: sign in with your Meross account once (two-step codes are supported, and your password is never saved) and Ember finds your bulbs and plugs on your network and controls them directly. Bulbs follow the scene as one colour; a plug switches on while its lights show a colour and off when they go dark. Not yet tried on real devices.</li>
+</ul>
+<h2 id="1-2-0-beta-5-2026-10-15">1.2.0-beta.5 (2026-10-15)</h2>
+<h3 id="added-14">Added</h3>
+<ul>
+<li><b>More ways to make Ember your own.</b> Settings, Appearance has <b>Interface size</b> (Small, Normal or Large: the whole window, text and spacing together) and <b>GPU colour</b> (Auto, or any of the accent colours, for the GPU number and its line on the chart). Settings, General lets Ember <b>open on Lights or Devices</b> as well as Dashboard or Fans, and <b>open the window where you left it</b> (size and position, moved back onto the screen if that monitor is gone). The Fans page is unchanged.</li>
+</ul>
+<h2 id="1-2-0-beta-4-2026-10-14">1.2.0-beta.4 (2026-10-14)</h2>
+<h3 id="fixed-11">Fixed</h3>
+<ul>
+<li><b>The GPU colour now matches your accent and theme.</b> With a Blue, Purple or Teal accent (and Green in the light theme) the GPU temperature and chart line fell back to a fixed bright orange. It is now a partner colour worked out from your accent and adjusted for the light or dark theme, so a Blue accent gets a pink GPU line. The default orange accent keeps its blue GPU line.</li>
+</ul>
+<h2 id="1-2-0-beta-3-2026-10-14">1.2.0-beta.3 (2026-10-14)</h2>
+<h3 id="fixed-12">Fixed</h3>
+<ul>
+<li><b>The Stream Deck card no longer covers its own title.</b> The Install, Update and Remove buttons now sit under the text instead of over the heading, and the note after an install goes away once the card changes state.</li>
+<li><b>Letting go of a held Stream Deck key no longer flashes a false warning.</b> Holding Brightness, Cycle fan mode or a Scene key and releasing while the action was still being sent cancelled it half way.</li>
+<li><b>The Stream Deck keys keep updating after a hiccup.</b> One failed refresh used to freeze every key until Stream Deck was restarted, and two redraws could leave an older picture on a key.</li>
+</ul>
+<h2 id="1-2-0-beta-2-2026-10-14">1.2.0-beta.2 (2026-10-14)</h2>
+<h3 id="added-15">Added</h3>
+<ul>
+<li><b>Stream Deck plugin (beta).</b> Settings, Devices has a new Stream Deck card with an Install button that adds an "Ember (beta)" group of keys to the Stream Deck app: switch lighting scene (hold to step to the next scene), lights on or off, brighter and dimmer (hold to keep going), set a fan mode, one key that steps to the next fan mode (hold to go back), open Ember (or start it when it is closed), and live CPU and GPU temperature and fan speed on the key faces, each with its own picture in Ember's orange. The scene, lights and brightness keys say "offline" while the Ember app is not running, and the readouts show a dash when the service stops reporting. The card also updates and removes the plugin. Beta builds only.</li>
+</ul>
+<h2 id="1-2-0-beta-1-2026-10-14">1.2.0-beta.1 (2026-10-14)</h2>
+<h3 id="changed-10">Changed</h3>
+<ul>
+<li><b>The beta line continues after 1.1.0.</b> This build has everything in 1.1.0 plus what is still being proven: game detection and GPU fan control (Experimental) and the roadmap page. Use Settings, Updates, Release channel to move between this beta and the Stable build.</li>
+</ul>
+<h2 id="1-1-0-2026-10-14">1.1.0 (2026-10-14)</h2>
+<p>The production release. It adds the lighting that has now been checked on real PCs, and everything from the beta line that is ready.</p>
+<h3 id="added-16">Added</h3>
+<ul>
+<li><b>Philips Hue and Corsair iCUE lighting are in the production build.</b> Both are confirmed working on real PCs. Corsair works through iCUE with Enable SDK switched on, and falls back to Corsair's older SDK when a newer one is refused.</li>
+<li><b>Nanoleaf and Razer Chroma are in the production build, marked Beta.</b> They are written and tested in software but not yet tried on real devices.</li>
+<li><b>Automatic update checks, with a prompt.</b> Ember looks for a newer version at start and every few hours, and asks whether to update now, later, or skip that version (a tray notification when Ember is hidden). Turn it off in Settings, Updates.</li>
+<li><b>The release channel switch moves you to that version.</b> Choosing Beta offers the newest beta, and choosing Stable on a beta build offers the newest stable release. Your settings are kept.</li>
+<li><b>A switch for every integration</b> on the Devices page, and an <b>Identify</b> button that flashes one device so you can tell which it is.</li>
+<li><b>Screen sync can follow a chosen screen</b>, kept per scene.</li>
+<li><b>A diagnostic log and report</b> in Settings, About, with keys and passwords left out, for problem reports.</li>
+<li><b>Temperature history and fan curve markers:</b> gridlines and a labelled dot for the temperature now.</li>
+<li><b>A "What Ember needs" check at the end of install.</b></li>
+</ul>
+<h3 id="changed-11">Changed</h3>
+<ul>
+<li><b>Updating works from shared and VPN networks.</b> If GitHub limits the usual request, Ember reads the public releases feed instead.</li>
+<li><b>Install no longer fails</b> when the PawnIO driver is already installed or OpenRGB is running.</li>
+<li><b>OpenRGB starts without a window</b>, so its "Zone Initialization" question no longer pops up.</li>
+<li><b>A tidier Lights and Devices page,</b> friendlier status lines, hints in empty boxes, and consistent Settings cards.</li>
+<li><b>The Elgato Stream Deck is no longer treated as a light.</b></li>
+<li><b>AI assist suggestions</b> never show a fan slower than Ember will run it.</li>
+</ul>
+<h3 id="fixed-13">Fixed</h3>
+<ul>
+<li>Logitech not being found when a second copy of Ember was running: Ember now runs once.</li>
+</ul>
+<h2 id="1-1-0-beta-7-2026-10-14">1.1.0-beta.7 (2026-10-14)</h2>
+<h3 id="added-17">Added</h3>
+<ul>
+<li><b>Automatic update checks, with a prompt.</b> Ember looks for a newer version when it starts and every few hours, and asks whether to update now, later, or skip that version. When Ember is in the tray, a notification tells you instead. It is on by default; turn it off in Settings, Updates. Nothing is downloaded until you choose Update now.</li>
+</ul>
+<h3 id="changed-12">Changed</h3>
+<ul>
+<li><b>Tidier Lights page.</b> The list of integrations is one line each, with a green dot when it is working. Technical details (version numbers and the like) now go to the diagnostic log, and the status lines say plainly what to do.</li>
+<li><b>Devices page cards fit their content</b> instead of all being as tall as the biggest one, and OpenRGB says "Starting up, looking for devices" for its first 20 seconds.</li>
+<li><b>Empty text boxes now say what goes in them</b> (scene name, picture name, OpenRGB path, Hue bridge, Nanoleaf controller), and the Govee key box matches the rest of the look.</li>
+<li><b>Settings cards are all the same width</b>, and the "Restart as admin" button is no longer cut off.</li>
+<li>Layers no longer read "Wave · Wave" when the name matches the effect.</li>
+<li>If iCUE refuses Ember, the message now also suggests updating iCUE.</li>
+</ul>
+<h3 id="fixed-14">Fixed</h3>
+<ul>
+<li><b>AI assist suggestions never show a fan slower than Ember will actually run it.</b> Ember keeps the CPU fan at 30% or more and system fans at 20% or more, but a suggestion could show 20 to 24% for the CPU fan.</li>
+</ul>
+<h2 id="1-1-0-beta-6-2026-10-14">1.1.0-beta.6 (2026-10-14)</h2>
+<h3 id="added-18">Added</h3>
+<ul>
+<li><b>Corsair: falls back to Corsair's older CUE SDK.</b> Some iCUE installs refuse the newer iCUE SDK even with Enable SDK switched on. Ember now tries the newer SDK first and, when iCUE refuses it or does not answer, uses the older one, which both ship in the <code>iCUE</code> folder. The Devices page and the diagnostic log say which one is in use and what each answered. Devices on Corsair's fan and LED controllers (Commander, Lighting Node) may not light through the older SDK.</li>
+<li><b><code>scripts/test-icue.ps1</code></b> asks iCUE directly whether it lets a program connect, for tracking down a refusal.</li>
+</ul>
+<h2 id="1-1-0-beta-5-2026-10-14">1.1.0-beta.5 (2026-10-14)</h2>
+<h3 id="added-19">Added</h3>
+<ul>
+<li><b>A "What Ember needs" check at the end of install.</b> Setup lists whether the app and services, OpenRGB, the Corsair iCUE library, the PawnIO driver and the Visual C++ runtime are in place, and warns with a fix for anything that is not. Programs made by other companies (G HUB, iCUE, Razer Synapse, the Govee and Hue apps) are listed as optional.</li>
+<li><b>Temperature history chart.</b> Gridlines every 20 degrees in your unit, minute marks, and a dot with a label at the end of each line showing the temperature now.</li>
+<li><b>Fan curve marker.</b> A dot on the curve at the current temperature, with guides to both axes and a label such as "53 °C · 22%".</li>
+</ul>
+<h3 id="fixed-15">Fixed</h3>
+<ul>
+<li><b>Install no longer fails when the PawnIO driver is already installed.</b> Setup skips it when the installed version is current, and closes OpenRGB for a moment to update an older one. A PawnIO setup that reports an error but leaves the driver in place no longer stops the install.</li>
+<li><b>Install no longer fails when OpenRGB is running.</b> Setup closes programs running from Ember's own folder (the OpenRGB that Ember starts) and retries locked files. An OpenRGB you run from somewhere else is left alone.</li>
+<li><b>OpenRGB's "Zone Initialization" window no longer pops up.</b> Ember starts OpenRGB as a server without a window.</li>
+<li><b>Corsair: a clear message when iCUE refuses Ember.</b> It says to switch on Enable SDK in iCUE (Settings, Software and Games), restart iCUE, and try Ember without Run as administrator. The log records each iCUE session outcome once.</li>
+</ul>
+<h2 id="1-1-0-beta-4-2026-10-14">1.1.0-beta.4 (2026-10-14)</h2>
+<h3 id="fixed-16">Fixed</h3>
+<ul>
+<li><b>Updating no longer fails with 403 on shared or VPN addresses.</b> GitHub allows only 60 anonymous API requests an hour per address, so an office, school, VPN or shared connection could be refused. When the API says 403 or 429, Ember now reads the public releases feed instead (same releases, no such limit), with the same download and checksum checks. If both fail, the message explains the limit.</li>
+<li><b>Update problems are logged.</b> The update check and the installer download write what GitHub answered to the diagnostic log.</li>
+<li><b>The iCUE log is quieter.</b> With iCUE not running, the SDK's "connecting" and "timed out" cycle is logged once instead of every second.</li>
+</ul>
+<h2 id="1-1-0-beta-3-2026-10-14">1.1.0-beta.3 (2026-10-14)</h2>
+<h3 id="added-20">Added</h3>
+<ul>
+<li><b>A switch for every integration.</b> On the Devices page each card (OpenRGB, Govee, Logitech, Hue, Nanoleaf, Razer, Corsair) can be switched off and on. While off, Ember does not look for its devices or send to them, and lets go of G HUB, iCUE or OpenRGB.</li>
+<li><b>Identify button.</b> Each device row on the Devices page has an Identify button that flashes that device white three times, so you can tell which physical device it is.</li>
+<li><b>Choose the screen for screen sync, per scene.</b> With more than one screen, the Screen sync layer offers which screen to follow. Each scene keeps its own choice.</li>
+<li><b>Diagnostic log and report.</b> A plain log of what Ember did and why something failed is kept in <code>%AppData%\Ember\logs</code> for a week and never leaves the PC. In Settings, About, <b>Copy diagnostic report</b> puts versions, integration status, devices and the recent log on the clipboard (keys and passwords are blanked), and <b>Open log folder</b> opens the folder.</li>
+</ul>
+<h3 id="changed-13">Changed</h3>
+<ul>
+<li><b>Corsair iCUE is more patient and more talkative.</b> A refused or lost iCUE connection is retried after 15 seconds instead of on every look, and the Corsair card and the log now say what iCUE answered.</li>
+</ul>
+<h2 id="1-1-0-beta-2-2026-10-14">1.1.0-beta.2 (2026-10-14)</h2>
+<h3 id="added-21">Added</h3>
+<ul>
+<li><b>Corsair iCUE support (beta, not yet tried on real Corsair hardware).</b> Keyboards, mice, headsets, fans, coolers, memory and LED controllers show up through Corsair's iCUE SDK, which Ember ships in an <code>iCUE</code> folder. iCUE has to be running with Enable SDK switched on (Settings, Software and Games). Ember lights the devices alongside iCUE and hands them back when it closes.</li>
+</ul>
+<h3 id="fixed-17">Fixed</h3>
+<ul>
+<li><b>Elgato Stream Deck and Steam Deck no longer appear as lights.</b> OpenRGB lists them with key "LEDs"; Ember now leaves them out.</li>
+<li><b>Logitech was not found when a second copy of Ember was running.</b> A leftover hidden copy (left behind by an update relaunch) kept G HUB's lighting session, so the visible Ember said "G HUB is installed but not answering". Ember now runs once per sign-in: starting it again brings the open window forward.</li>
+</ul>
+<h2 id="1-1-0-beta-1-2026-10-13">1.1.0-beta.1 (2026-10-13)</h2>
+<h3 id="changed-14">Changed</h3>
+<ul>
+<li><b>The beta line continues after the first production release.</b> This build has everything in 1.0.0 plus what is still being checked: game detection and GPU fan control (Experimental), Philips Hue, Nanoleaf and Razer Chroma lighting, the roadmap page and the Beta update channel. Production builds hide these.</li>
+</ul>
+<h2 id="1-0-0-2026-10-13">1.0.0 (2026-10-13)</h2>
+<p>The first production release. It holds what has been checked on real hardware; the newer, less-tested parts stay in the beta builds.</p>
+<h3 id="added-22">Added</h3>
+<ul>
+<li><b>Monitoring.</b> A live dashboard of CPU, GPU, motherboard and fan sensors with a ten-minute history, in Celsius or Fahrenheit.</li>
+<li><b>Fan control.</b> Super quiet, Quiet, Normal, Performance and Extreme modes, manual curves with an editor, and header tests before anything is written. Safety rules stay on: every controlled fan goes to full speed at 90 °C or when a sensor is lost, a watchdog service restores safe speeds, and fans that stall at low speed are kicked back to life. Ember warns when NZXT CAM, MSI Center, Fan Control or iCUE is running.</li>
+<li><b>AI assist.</b> Off by default. Learns how hot your PC runs and suggests curves; nothing changes until you press Apply.</li>
+<li><b>Lighting.</b> Devices through OpenRGB, Govee lamps (LAN, cloud and segments, also over a VPN) and Logitech G keyboards and mice, key by key. Layered effects, scenes, painting single LEDs with a library, own lighting for one device, screen sync (HDR too) and music-reactive effects.</li>
+<li><b>Make it yours.</b> Dark, OLED black, light or match Windows; warm, neutral or cool surfaces; nine accent colours or your own; Subtle, Normal or Vivid highlights. A tray icon, keep running in the tray and start minimised.</li>
+<li><b>Updates.</b> Check for updates on request or at start; Update now downloads the installer, checks it against the release checksum, updates and opens Ember again.</li>
+<li><b>Install.</b> An installer with the Terms of Use, runtimes included, upgrade in place and uninstall from Windows.</li>
+<li><b>Private.</b> No accounts and no telemetry; the only network use is what you switch on.</li>
+</ul>
+<h3 id="only-in-the-beta-builds">Only in the beta builds</h3>
+<p>Game detection and GPU fan control (Experimental), Philips Hue, Nanoleaf and Razer Chroma lighting, and the roadmap page. They arrive in the production build when they have been checked on real hardware.</p>
+<h2 id="0-1-0-beta-10-2026-10-13">0.1.0-beta.10 (2026-10-13)</h2>
+<h3 id="added-23">Added</h3>
+<ul>
+<li><b>OLED black theme.</b> Settings, Appearance has a fourth theme with a pure black background for OLED screens, next to Dark, Light and Match Windows.</li>
+<li><b>Colour scheme.</b> Warm (the original), Neutral grey or Cool blue-grey surfaces, for every theme.</li>
+<li><b>More accent colours.</b> Red, Teal and Gold join the five from before, and a Custom colour takes any <code>#rrggbb</code>. A colour that would be hard to read is lightened or darkened a little.</li>
+<li><b>Highlight strength.</b> Subtle, Normal or Vivid for how strongly the accent tints the selected menu item and banners, with a preview.</li>
+</ul>
+<h3 id="changed-15">Changed</h3>
+<ul>
+<li><b>Updates look tidier.</b> The version and its status sit together with a coloured dot, a newer release shows in a card with its notes and the Update now button, and the options are grouped below.</li>
+<li><b>Roadmap</b> is grouped (being checked, next, later, not planned) with the finished work folded away, and <b>Legal</b> opens with a short plain summary, folds the terms into sections and links to the full text on GitHub. <b>About</b> shows the version, links, a button that copies version details for a problem report, and what Ember is built on.</li>
+</ul>
+<h2 id="0-1-0-beta-9-2026-10-13">0.1.0-beta.9 (2026-10-13)</h2>
+<h3 id="added-24">Added</h3>
+<ul>
+<li><b>Razer Chroma.</b> Settings has a Razer Chroma switch. On, Ember lights Razer keyboards, keypads, mousepads, headsets and Chroma Link strips through Razer Synapse on this PC (its local Chroma SDK, so Synapse must be running with Chroma Connect on). Mice are not used. Ember cannot tell which Razer devices are plugged in, so switch off the ones you do not have on the Devices page. Not yet tried on real Razer hardware.</li>
+</ul>
+<h3 id="changed-16">Changed</h3>
+<ul>
+<li><b>Update now skips the wizard.</b> If you have already accepted the Terms of Use, the installer updates quietly and Ember opens again by itself. If the terms changed, the wizard still asks first.</li>
+</ul>
+<h2 id="0-1-0-beta-8-2026-10-13">0.1.0-beta.8 (2026-10-13)</h2>
+<h3 id="changed-17">Changed</h3>
+<ul>
+<li>A version to try Update now on: nothing else is different from beta.7.</li>
+</ul>
+<h2 id="0-1-0-beta-7-2026-10-13">0.1.0-beta.7 (2026-10-13)</h2>
+<h3 id="added-25">Added</h3>
+<ul>
+<li><b>Update now.</b> When a newer release exists, Settings, Updates has an "Update now" button: it downloads the installer from the release, checks it against the checksum published with the release, then starts it (Windows asks for permission, Ember closes and the installer upgrades it). Nothing is downloaded until you press the button. Needs a release that carries the installer and its checksum file, as beta.6 and later do.</li>
+<li><b>Nanoleaf.</b> Settings has a Nanoleaf section: find or type the controller address, hold its power button for 5 to 7 seconds and press Link. The panels then appear as one device on the Lights page, one light per panel from left to right, over the controller's local API (no account, no cloud). Not yet tried on real panels.</li>
+</ul>
+<h2 id="0-1-0-beta-6-2026-10-13">0.1.0-beta.6 (2026-10-13)</h2>
+<h3 id="fixed-18">Fixed</h3>
+<ul>
+<li><b>Screen sync no longer goes black on an HDR desktop.</b> Windows sends capture frames that only report the mouse pointer or metadata, with an empty picture, and Ember was reading those as a black screen. They are now skipped.</li>
+<li><b>GPU fan control now suits a graphics card.</b> The fan is driven only at 60% or more (below that a card fan stops and starts) and is handed back to the card's own silent idle when the curve asks for less; the header test fits a card that is stopped at idle; and switching GPU control off really gives the fan back to the card. Still Experimental.</li>
+</ul>
+<h2 id="0-1-0-beta-5-2026-10-13">0.1.0-beta.5 (2026-10-13)</h2>
+<h3 id="added-26">Added</h3>
+<ul>
+<li><b>Tray icon.</b> Ember now has an icon in the notification area. Double-click it to open the window; its menu changes the fan mode or quits Ember. Settings has two new switches: "Keep running in the tray when I close the window" and "Start minimised, in the tray" (used when Ember starts with Windows). Both are off by default.</li>
+<li><b>AI assist</b> (Fans page). If you switch on "Learn from my temperatures", Ember keeps a count of how hot your CPU and case run, one count per degree, in a small file on your PC. After about two hours it can suggest fan curves that stay low through your usual range and only climb above it, tilted towards quiet or cool with a slider. It only suggests: nothing changes until you press Apply, and the safety rules (full speed at 90 °C) and the service's own curve checks still apply.</li>
+<li><b>More effects.</b> "Fire" (flames that are hot at the bottom and flicker upwards), "Rain" (drops that fall down a keyboard or run along a strip) and "Key group" (any of Colour, Wave, Breathing, Fire or Rain on just the function row, number row, letters, space bar row, arrows and navigation, or number pad).</li>
+<li><b>Paint several devices at once.</b> A switch on the Lights page applies fills to every device on the canvas, and a gradient or rainbow then runs across the whole canvas so devices side by side share one picture.</li>
+<li><b>Paint library.</b> Save the painted LEDs of a device under a name, and use a saved picture on the selected device or on all of them. Rename and delete are there too. The pictures are plain files in your Ember folder that you can copy to another PC.</li>
+<li><b>Continuous integration.</b> The repository builds and tests itself on GitHub for every push, and a release workflow builds the zip and the installer.</li>
+<li><b>Signing.</b> The release build signs Ember's programs and the installer when a code-signing certificate is provided (see docs/signing.md). Until one is, Windows still shows "Unknown publisher".</li>
+</ul>
+<ul>
+<li><b>Own lighting for one device.</b> "Give it its own lighting" (Lights page, device list) makes a copy of the layers just for that device, so a keyboard can show a different look from the Govee lamps and fans. The layer editor then works on that device alone until you press "Back to the whole scene".</li>
+<li><b>Switch off a device.</b> Each device on the Devices page has a "Use" switch. Off, Ember leaves it out of every scene and stops sending to it; the choice is remembered.</li>
+<li><b>Arrange devices.</b> Lamps found later (for example more Govee lights) get room on the canvas instead of overlapping, and a button tidies the canvas into one row per device.</li>
+</ul>
+<h3 id="fixed-19">Fixed</h3>
+<ul>
+<li><b>Key groups follow the real keys.</b> The number pad, the arrows and navigation block and the function row now line up with the keys on a Logitech G915 (checked with a colour per column): Print Screen belongs to the navigation block, the Right arrow to it and not the number pad, and Right Ctrl to the bottom row.</li>
+<li><b>Switching a device off now works for the motherboard and NZXT too.</b> Their long OpenRGB ids were being refused when saved.</li>
+<li><b>Philips Hue.</b> Settings has a Philips Hue section: find or type your bridge address, press the bridge button and Link. Each colour light then shows up on the Lights page and follows the scene as one colour, over the bridge's local API (no Hue account, no cloud). Not yet tried on a real bridge.</li>
+<li><b>A save at the moment Ember closes can no longer be lost.</b> A delayed save still writing the lighting file and the closing save now take turns.</li>
+<li><b>The update check knew which version it was.</b> A build id after the version number made Ember read its own version as beta.1, so beta-channel users would have been offered an update they already had.</li>
+<li><b>Key highlight.</b> A layer that lights chosen letter and number keys (W A S D by default) in one colour and leaves the other keys to the layers below, for gaming. Type any letters or numbers to light; the bottom letter row (Z to M) has not been checked against a real keyboard.</li>
+<li><b>Logitech keyboard shows per-key effects again.</b> The mouse's single colour used to overwrite the whole keyboard every frame (G HUB cannot do both at once). The keyboard is now lit key by key and the mouse is left to G HUB; a switch on the Lights page makes every Logitech device take one colour instead.</li>
+<li><b>Govee lamps did not change colour when a VPN covered the home network.</b> Ember found the lamp but sent its colours into the VPN (for example a Tailscale subnet route for 192.168.1.0/24). Commands now go out from the PC's own address on the lamp's network.</li>
+</ul>
+<h3 id="changed-18">Changed</h3>
+<ul>
+<li>What's new in Settings folds each release: the newest is open, older ones open with a click, and long entries show two lines with "Show more".</li>
+</ul>
+<ul>
+<li>The AI chip in the mode list now points to the AI assist panel instead of saying "coming later". It is not a mode the service runs.</li>
+</ul>
+<h2 id="0-1-0-beta-4-2026-10-13">0.1.0-beta.4 (2026-10-13)</h2>
+<h3 id="added-27">Added</h3>
+<ul>
+<li><b>An installer.</b> <code>Ember-Setup-&lt;version&gt;.exe</code> is a normal Windows installer: a welcome page, the Terms of Use to accept, a choice of folder and shortcuts, a progress page with a log, and an Open Ember button at the end. It carries everything Ember needs, including Microsoft's own installers for the .NET 8 Desktop Runtime and the Visual C++ runtime (used by OpenRGB), and only runs them when the PC does not have them. The one thing it downloads is the PawnIO driver, checked against a pinned checksum and signature. It can also run silently for scripted installs.</li>
+<li><b>Uninstall from Windows.</b> Ember now appears under Installed apps, with its version, and removes itself from there. It asks whether to keep your settings.</li>
+<li><b>Legal pages.</b> Terms of Use, Privacy, Third-party notices and the Licence are in Settings, Legal. Ember asks you to accept the Terms the first time it opens if the installer did not already ask, and again if they change.</li>
+<li><b>Per-LED painting, further.</b> Drag over LEDs to paint them like a brush. Fill a device with one colour, a gradient at any angle, or a rainbow; flip a picture left to right; export it to a file and import it again, fitted to the LEDs of another device.</li>
+<li><b>Govee segment detection.</b> A "Detect segments" button asks Govee (through your API key) how many parts a lamp can light separately, and knows the H6056 light bars have 12.</li>
+<li><b>More effects.</b> "Spectrum bars" rise up a keyboard (or become brightness on a strip), "Ripples" spread rings across the canvas or each device, and "Reactive keys" flash the keyboard where you press a key. Reactive keys only notice that a key went down, only while the layer is on, and keep no text.</li>
+<li>A logo and an app icon.</li>
+</ul>
+<h3 id="changed-19">Changed</h3>
+<ul>
+<li>Effects can now be drawn on each device separately, so a keyboard shows the whole picture wherever it sits on the canvas.</li>
+</ul>
+<h2 id="0-1-0-beta-3-2026-10-13">0.1.0-beta.3 (2026-10-13)</h2>
+<h3 id="added-28">Added</h3>
+<ul>
+<li><b>Music effects.</b> "Music pulse" (one colour that follows the bass, middle, treble or overall sound) and "Music spectrum" (low pitches on the left, high on the right). Ember listens to what the PC is playing, only while a music layer is on, and keeps nothing.</li>
+<li><b>Faster screen sync.</b> The screen is read through DXGI desktop duplication, straight from the graphics card, and works with HDR desktops. If it cannot, Ember falls back to the older method.</li>
+<li><b>Per-LED painting.</b> Select a device on the Lights canvas, switch on "Paint single LEDs" and click LEDs to give them a fixed colour; right-click gives one back to the effects.</li>
+<li><b>Per-key Logitech keyboard.</b> The keyboard is now a grid of 126 keys (21 by 6), so effects run across and down it, not just along it.</li>
+<li><b>Govee segments (experimental).</b> For lamps that accept per-segment colours, choose how many segments to drive from the device list on the Lights page. One segment is the whole lamp, as before.</li>
+<li>Devices with a grid of LEDs are drawn as a grid on the canvas.</li>
+</ul>
+<h3 id="fixed-20">Fixed</h3>
+<ul>
+<li>The changelog and roadmap in Settings showed "Nothing to show" in beta 2 because the files were not packed into the app.</li>
+</ul>
+<h2 id="0-1-0-beta-2-2026-10-13">0.1.0-beta.2 (2026-10-13)</h2>
+<h3 id="added-29">Added</h3>
+<ul>
+<li><b>Logitech G lighting.</b> Keyboards and mice are driven through G HUB's own lighting engine, which Ember loads from your G HUB install (nothing from Logitech is copied or shipped). The keyboard is lit per key column, the mouse as one lamp.</li>
+<li><b>Light profiles per device.</b> Any device on the Lights page can show a different saved scene from the rest, for example a keyboard with its own look while the fans and strips follow the main scene.</li>
+<li><b>Changelog and roadmap</b> in Settings, and as <code>CHANGELOG.md</code> and <code>ROADMAP.md</code> on GitHub.</li>
+<li><b>Devices page</b> now carries the fan header tests, so the Fans page is only modes and curves.</li>
+</ul>
+<h3 id="fixed-21">Fixed</h3>
+<ul>
+<li>The update checker now says plainly that a private repository hides its releases, instead of "no releases yet".</li>
+</ul>
+<h2 id="0-1-0-beta-1-2026-10-13">0.1.0-beta.1 (2026-10-13)</h2>
+<p>First beta.</p>
+<h3 id="added-30">Added</h3>
+<ul>
+<li><b>Dashboard</b> with live CPU, GPU and motherboard temperatures, load and clock lines, a 10-minute history chart and fan speeds.</li>
+<li><b>Fan control</b> with Super quiet, Quiet, Normal, Performance and Extreme curves, and Manual mode with a curve graph and editor for the CPU fan and the system fans.</li>
+<li><b>Safety rules</b> enforced in the service: 90 °C override, early CPU fan ramp, speed floors, blind-sensor rule, and a watchdog service that restores safe speeds if Ember stops responding.</li>
+<li><b>Stall recovery.</b> A fan that stops turning at a low speed is spun up at 100% for a few seconds, and that fan keeps a slightly higher minimum afterwards.</li>
+<li><b>Fan headers</b> are tested and enabled one at a time; headers with no fan attached are hidden; competing fan programs are detected by name and can be closed from the app.</li>
+<li><b>Lighting</b> through OpenRGB (bundled, started on localhost only) and Govee (LAN, or cloud with your own key stored in Windows Credential Manager), with layered effects, blend modes, scenes and screen sync.</li>
+<li><b>Devices page</b> with the state of each integration and every device, plus the fan header tests.</li>
+<li><b>Settings</b> for temperature unit, start page and start with Windows, theme (dark, light or match Windows), accent colour, updates and release channel.</li>
+<li><b>Update checker</b> that only reads the list of GitHub releases and never installs anything by itself.</li>
+<li><b>Experimental switch</b> for game detection and GPU fan control, off by default.</li>
+<li><b>Install scripts</b> to build a release zip and install or upgrade Ember with its two services and a Start Menu shortcut.</li>
+</ul>
+<h3 id="security">Security</h3>
+<ul>
+<li>Pipes are restricted to SYSTEM, administrators and the interactive user; control messages are size-limited, validated and rate-limited.</li>
+<li>The service refuses to install from a folder that normal users can write to.</li>
+<li>Ember uses the signed PawnIO driver, not WinRing0.</li>
+</ul>
+  </main>
+
+  <footer>Ember is free and open source under the MIT licence.<div class="legal-links"><a href="/changelog">Changelog</a><a href="/roadmap">Roadmap</a><a href="/install">Install guide</a><a href="/known-issues">Known issues</a><a href="https://github.com/Ol775/ember-pc/issues/new/choose">Report a bug</a><a href="/security">Security</a><a href="/licences">Open source licences</a><a href="/privacy">Privacy and cookies</a><a href="/terms">Terms and legal notices</a><a href="#" data-cookie-settings>Cookie settings</a></div></footer>
+</div>
+
+<script id="ember-fx">
+(function(){
+  var still=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  var $$=function(q,r){return [].slice.call((r||document).querySelectorAll(q))};
+  // nav picks up depth once you scroll
+  var nav=document.querySelector("nav");
+  function sc(){nav&&nav.classList.toggle("scrolled",scrollY>8)}
+  addEventListener("scroll",sc,{passive:true});sc();
+  var lk=nav&&nav.querySelector(".links");
+  if(lk){var mb=document.createElement("button");mb.type="button";mb.className="navbtn";mb.setAttribute("aria-label","Menu");mb.setAttribute("aria-expanded","false");mb.innerHTML="<span class=\"nb\"></span>";
+    nav.querySelector(".bar").insertBefore(mb,lk.nextSibling);
+    var tog=function(o){nav.classList.toggle("open",o);mb.setAttribute("aria-expanded",o)};
+    mb.addEventListener("click",function(){tog(!nav.classList.contains("open"))});
+    lk.addEventListener("click",function(e){if(e.target.closest("a"))tog(false)});
+    document.addEventListener("keydown",function(e){if(e.key==="Escape")tog(false)});
+    document.addEventListener("click",function(e){if(!nav.contains(e.target))tog(false)})}
+  if(still)return;
+
+  // entrance for the first screen, in reading order
+  var first=$$("header .eyebrow,header h1,header .tagline,header .lede,header .cta,header .pills,header .stats,header .win,.intro>*");
+  first.forEach(function(e,i){e.style.setProperty("--d",i);e.classList.add("fx-in")});
+
+  // scroll reveal for anything below the fold; what is already on screen stays put
+  var skip=".device,.win,.stage,.pin,.stop .card,.grid .card,.tile,.fx-in";
+  var sel=".head,.about,.pr>div,.card,.step,.fact,.build,.node,.panel,.num,.final,details,.shipped,.np,.led,.facts,.flow,.ww-note,.note";
+  var els=$$(sel).filter(function(e){return !e.closest(skip)&&!e.querySelector(".fx-in")});
+  // a parent that is revealed already covers its children
+  els=els.filter(function(e){return !els.some(function(p){return p!==e&&p.contains(e)&&["about","facts","flow","rm","led"].some(function(c){return p.classList.contains(c)})})});
+  var vh=innerHeight;
+  var below=els.filter(function(e){return e.getBoundingClientRect().top>vh*.92});
+  if("IntersectionObserver" in window){
+    below.forEach(function(e){e.classList.add("fx-hide","fx-rv")});
+    var batch=0,t;
+    var io=new IntersectionObserver(function(es){
+      es.filter(function(x){return x.isIntersecting}).forEach(function(x,i){
+        x.target.style.transitionDelay=Math.min(i,6)*70+"ms";x.target.classList.add("fx-show");io.unobserve(x.target)});
+    },{rootMargin:"0px 0px -8% 0px",threshold:.08});
+    below.forEach(function(e){io.observe(e)});
+  }
+
+  // numbers count up when they come into view
+  var nums=$$(".fact b,.num b,.stats b").filter(function(e){return /^\d+/.test(e.textContent)});
+  nums.forEach(function(e){
+    var m=/^(\d+)(.*)$/.exec(e.textContent.trim()),to=+m[1],tail=m[2];if(!to)return;
+    e.textContent=0+tail;
+    var go=function(){var t0=performance.now();(function f(t){var k=Math.min(1,(t-t0)/1100),v=1-Math.pow(1-k,3);e.textContent=Math.round(to*v)+tail;if(k<1)requestAnimationFrame(f)})(t0)};
+    if("IntersectionObserver" in window){var o=new IntersectionObserver(function(es){if(es[0].isIntersecting){o.disconnect();go()}},{threshold:.6});o.observe(e)}else e.textContent=to+tail;
+  });
+
+  // hero rings and chart fill in
+  $$(".win .ring").forEach(function(r,i){var p=+getComputedStyle(r).getPropertyValue("--p")||0,t0=performance.now()+250+i*120;
+    r.style.setProperty("--p",0);(function f(t){var k=Math.max(0,Math.min(1,(t-t0)/1200)),v=1-Math.pow(1-k,3);r.style.setProperty("--p",p*v);if(k<1)requestAnimationFrame(f)})(performance.now())});
+  $$(".win .chart path[fill=none]").forEach(function(p,i){p.setAttribute("pathLength","1");p.classList.add("fx-draw");p.style.animationDelay=.5+i*.25+"s"});
+  $$(".split i").forEach(function(b,i){b.classList.add("fx-grow");b.style.animationDelay=i*.15+"s"});
+  // draw the fan curve when a card scrolls in
+  var cl=document.getElementById("cline");
+  if(cl&&"IntersectionObserver" in window){var oc=new IntersectionObserver(function(es){if(es[0].isIntersecting){oc.disconnect();cl.setAttribute("pathLength","1");cl.classList.add("fx-draw")}},{threshold:.4});oc.observe(cl)}
+})();
+</script>
+<script id="ember-consent">
+(function(){
+  // The site sets no cookies and runs no ads; visit counts use Cloudflare Web Analytics, which stores nothing on the device. The only optional storage is the visitor's own look settings.
+  // Cloudflare Web Analytics counts visits on the live site, and is skipped when the browser sends Do Not Track or Global Privacy Control.
+  if(navigator.doNotTrack!=="1"&&!navigator.globalPrivacyControl&&location.hostname==="emberpc.uk"){var cf=document.createElement("script");cf.defer=true;cf.src="https://static.cloudflareinsights.com/beacon.min.js";cf.setAttribute("data-cf-beacon",'{"token":"371f2343903a48ae8068264cb793c71a"}');document.head.appendChild(cf)}
+  var C=window.emberConsent;if(!C)return;
+  var b=document.createElement("div");b.className="cb";b.setAttribute("role","dialog");b.setAttribute("aria-labelledby","cbt");b.setAttribute("aria-live","polite");
+  b.innerHTML='<h2 id="cbt">Your settings, your device</h2>'+
+    '<p>This site sets no cookies and has no ads. It counts visits with Cloudflare Web Analytics, which stores nothing on your device and is skipped if your browser sends Do Not Track. If you personalise the look, we can remember your choices on your device so they are still there next time. That is optional.</p>'+
+    '<p><a href="/privacy">Privacy and cookies</a></p>'+
+    '<div class="row"><button type="button" data-v="no">No thanks</button><button type="button" data-v="yes">Remember my choices</button></div>';
+  document.body.appendChild(b);
+  function show(on){b.classList.toggle("on",on);if(on)b.querySelector("button").focus({preventScroll:true})}
+  b.addEventListener("click",function(e){var v=e.target.getAttribute&&e.target.getAttribute("data-v");if(!v)return;C.set(v);show(false)});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&b.classList.contains("on"))show(false)});
+  document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-cookie-settings]");if(a){e.preventDefault();show(true)}});
+  if(!C.get())setTimeout(function(){show(true)},700);
+})();
+</script>
+<script src="/js/gsap-3.15.0.min.js" defer></script>
+<script src="/js/ScrollTrigger-3.15.0.min.js" defer></script>
+<script src="/js/lenis-1.3.27.min.js" defer></script>
+<script src="/js/fans.8fd389d969.js" defer></script>
+<script src="/js/motion.e834c67a41.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Ember Integrations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a short header, a filter, then a wall of logo cards. Same tokens as the main page. */
+:root{
+  --bg:#f6f1ee; --bg2:#ece4df; --card:#ffffff; --fg:#1d1411; --mute:#6d5f58; --line:rgba(40,20,10,.12);
+  --ember:#e8470f; --ember-hi:#ff7a3d; --on-ember:#fff; --teal:#12a39a; --glow:rgba(255,90,31,.16); --glass:rgba(246,241,238,.72);
+  --display:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --spring:cubic-bezier(.34,1.45,.5,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#120d0b; --bg2:#1a1210; --card:#1d1512; --fg:#fbece3; --mute:#b49a8c; --line:rgba(255,200,170,.12);
+  --ember:#ff5a1f; --ember-hi:#ffb347; --on-ember:#1a0c06; --teal:#3dd6c8; --glow:rgba(255,90,31,.22); --glass:rgba(18,13,11,.72); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#120d0b; --bg2:#1a1210; --card:#1d1512; --fg:#fbece3; --mute:#b49a8c; --line:rgba(255,200,170,.12);
+  --ember:#ff5a1f; --ember-hi:#ffb347; --on-ember:#1a0c06; --teal:#3dd6c8; --glow:rgba(255,90,31,.22); --glass:rgba(18,13,11,.72); color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 1.0625rem/1.55 var(--display);-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:25;background:var(--bg)}
+a{color:inherit}
+h1,h2,h3,p{margin:0;text-wrap:balance}
+.wrap{max-width:68rem;margin-inline:auto}
+.eyebrow{font:500 .75rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ember)}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;max-width:58rem;margin:1rem auto 0}
+nav .bar{display:flex;align-items:center;gap:1.5rem;height:3.5rem;padding:0 .5rem 0 1.25rem;border:1px solid var(--line);border-radius:999px;white-space:nowrap;
+  background:var(--glass);-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);box-shadow:0 .75rem 2rem -1rem rgba(0,0,0,.45)}
+.brand{display:flex;align-items:center;gap:.55rem;font-weight:650;letter-spacing:-.02em;text-decoration:none;flex:none}
+.brand svg{width:1.5rem;height:1.5rem}
+.links{display:flex;gap:.125rem;margin-inline:auto;font-size:.875rem;font-weight:500;color:var(--mute)}
+.links a{text-decoration:none;padding:.45rem .8rem;border-radius:999px;transition:color .2s,background .3s}
+.links a:hover{color:var(--fg)}
+.links a.cur{color:var(--fg);background:var(--bg2)}
+@media (max-width:640px){.links a:not(.keep){display:none}}
+.btn{display:inline-flex;align-items:center;padding:.55rem 1.15rem;border-radius:999px;border:1px solid var(--line);font:600 .875rem/1.2 var(--display);text-decoration:none;color:var(--fg);background:var(--card);
+  transition:transform .45s var(--spring);touch-action:manipulation;flex:none}
+.btn:active{transform:scale(.95);transition-duration:.08s}
+.btn.pri{background:linear-gradient(180deg,var(--ember-hi),var(--ember));color:var(--on-ember);border-color:transparent;box-shadow:0 .5rem 1.6rem -.4rem var(--glow),inset 0 1px 0 rgba(255,255,255,.35)}
+:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:.5rem}
+
+header.top{position:relative;padding-block:clamp(3.5rem,9vw,6.5rem) 2rem}
+header.top::before{content:"";position:absolute;inset:-5rem -50vw auto;height:34rem;z-index:-1;background:radial-gradient(36rem 20rem at 30% 20%,var(--glow),transparent 70%)}
+h1{font-size:clamp(2.6rem,8vw,5.5rem);line-height:1;letter-spacing:-.045em;font-weight:700;margin-top:1rem}
+.lede{font-size:clamp(1.1rem,2.2vw,1.4rem);color:var(--mute);max-width:38rem;margin-top:1.25rem;letter-spacing:-.012em}
+.stats{display:flex;flex-wrap:wrap;gap:2rem 3rem;margin-top:2rem}
+.stats div{display:grid}
+.stats b{font:500 2.4rem/1 var(--mono);letter-spacing:-.05em;color:var(--ember)}
+.stats small{font:500 .6875rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-top:.4rem}
+
+.tabs{display:flex;gap:.25rem;padding:.25rem;border-radius:999px;background:var(--bg2);border:1px solid var(--line);width:max-content;max-width:100%;overflow-x:auto;margin-top:2.5rem}
+.tabs button{border:0;background:none;color:var(--mute);font:500 .875rem var(--display);padding:.5rem 1rem;border-radius:999px;cursor:pointer;white-space:nowrap;touch-action:manipulation;transition:color .2s,background .35s var(--spring)}
+.tabs button span{font:500 .6875rem var(--mono);opacity:.7;margin-left:.3rem}
+.tabs button[aria-selected="true"]{background:linear-gradient(180deg,var(--ember-hi),var(--ember));color:var(--on-ember)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:1rem;margin-top:1.5rem}
+@keyframes in{from{opacity:0;transform:translateY(.8rem) scale(.98)}}
+.card{position:relative;display:grid;gap:.5rem;align-content:start;padding:1.35rem;border:1px solid var(--line);border-radius:1.4rem;background:var(--card);
+  animation:in .6s var(--spring) both;animation-delay:calc(var(--k)*24ms);transition:transform .45s var(--spring),border-color .3s,box-shadow .3s}
+.card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--ember) 45%,var(--line));box-shadow:0 1.5rem 3rem -1.5rem var(--glow)}
+.card.hide{display:none}
+.logo{width:3.5rem;height:3.5rem;border-radius:1rem;display:grid;place-items:center;color:var(--fg);
+  background:linear-gradient(145deg,color-mix(in srgb,var(--ember) 14%,var(--bg2)),var(--bg2));border:1px solid var(--line)}
+.logo svg{width:1.7rem;height:1.7rem;fill:currentColor}
+.logo svg.st{stroke:none;stroke-width:2.6;overflow:visible}.logo svg.st *{vector-effect:none}
+.logo .m{width:1.9rem;height:1.9rem;background:currentColor;-webkit-mask:url(/img/openrgb.png) center/contain no-repeat;mask:url(/img/openrgb.png) center/contain no-repeat}
+.logo b{font:600 1.05rem var(--mono);letter-spacing:-.03em;color:var(--ember)}
+.meta{display:flex;align-items:center;gap:.5rem;margin-top:.6rem}
+.kind{font:500 .625rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.meta em{font:500 .5938rem var(--mono);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--ember);border:1px solid color-mix(in srgb,var(--ember) 35%,var(--line));border-radius:999px;padding:.1rem .45rem}
+.meta em.ro{color:var(--teal);border-color:color-mix(in srgb,var(--teal) 35%,var(--line))}
+.card h3{font-size:1.25rem;letter-spacing:-.02em}
+.card p{color:var(--mute);font-size:.9375rem;line-height:1.45}
+.acct{margin-top:.4rem;padding-top:.75rem;border-top:1px solid var(--line);font:500 .75rem var(--mono);color:var(--mute)}
+.acct::before{content:"";display:inline-block;width:.45rem;height:.45rem;border-radius:50%;background:var(--teal);margin-right:.5rem}
+
+.more{margin-top:3rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media (max-width:760px){.more{grid-template-columns:1fr}}
+.panel{border:1px solid var(--line);border-radius:1.4rem;background:var(--card);padding:1.5rem;display:grid;gap:.6rem;align-content:start}
+.panel p{color:var(--mute)}
+.panel h2{font-size:1.5rem;letter-spacing:-.03em}
+.note{margin-top:2rem;font-size:.8125rem;color:var(--mute);max-width:46rem}
+footer{border-top:1px solid var(--line);margin-top:4rem;padding-block:2rem 3rem;color:var(--mute);font-size:.875rem}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff4d12"/><stop offset="1" stop-color="#ffb347"/></linearGradient>
+  <linearGradient id="core" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffc15a"/><stop offset="1" stop-color="#fff1c9"/></linearGradient>
+  <symbol id="mark" viewBox="0 0 256 256">
+    <path d="M128 30 C152 66 198 90 198 148 C198 190 167 222 128 222 C89 222 58 190 58 148 C58 120 73 100 88 85 C92 106 102 119 115 123 C104 86 116 58 128 30 Z" fill="url(#flame)"/>
+    <path d="M128 116 C141 138 166 149 166 178 C166 199 149 212 128 212 C107 212 90 199 90 178 C90 163 99 153 108 144 C112 155 118 160 125 160 C120 143 122 130 128 116 Z" fill="url(#core)"/>
+  </symbol></defs></svg>
+
+<div class="wrap">
+  <nav><div class="bar">
+    <a class="brand" href="./"><svg><use href="#mark"/></svg>Ember</a>
+    <div class="links"><a href="./">Home</a><a class="keep" href="demo.html">Demo</a><a class="cur keep" href="integrations.html">Integrations</a><a href="./#roadmap">Roadmap</a><a class="keep" href="./#install">Install</a></div>
+    <a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download</a>
+  </div></nav>
+
+  <header class="top">
+    <p class="eyebrow">Integrations</p>
+    <h1>Works with the gear you own.</h1>
+    <p class="lede">Ember talks to your lights, plugs and game libraries directly on your own network. Most need no account, and nothing is sent to the cloud unless you switch it on.</p>
+    <div class="stats"><div><b>23</b><small>Integrations</small></div><div><b>13</b><small>Lighting systems</small></div><div><b>4</b><small>Read-only plugs</small></div><div><b>5</b><small>Game libraries</small></div></div>
+  </header>
+
+  <div class="tabs" role="tablist" id="tabs" aria-label="Integration groups">{{TABS}}</div>
+  <div class="grid" id="grid">
+{{CARDS}}
+  </div>
+
+  <div class="more">
+    <div class="panel"><h2>Anything OpenRGB supports</h2><p>ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up in Ember when OpenRGB supports them and their own software, such as iCUE or Armoury Crate, is closed. They need no extra code in Ember.</p></div>
+    <div class="panel"><h2>Missing yours?</h2><p>Planned and in-progress integrations are on the roadmap, and ones still being proven carry a Beta tag.</p><p style="margin-top:.4rem"><a class="btn sm" href="/roadmap">See the roadmap</a></p></div>
+  </div>
+  <p class="note">Beta means written and tested in software, but not yet tried on enough real devices. Smart plugs are read only, always: Ember asks a plug what it is drawing and never switches it. Logos are trademarks of their owners and are used only to say what Ember works with. Ember is an independent project and is not affiliated with, endorsed by or sponsored by any of them.</p>
+  <footer>Ember is free and open source under the MIT licence.</footer>
+</div>
+
+<script>
+(function(){
+  var cards=[].slice.call(document.querySelectorAll("#grid .card")),tabs=[].slice.call(document.querySelectorAll("#tabs button"));
+  tabs.forEach(function(b){b.addEventListener("pointerdown",function(){
+    var c=b.dataset.c,k=0;
+    cards.forEach(function(el){var on=c==="all"||el.dataset.cat===c;el.classList.toggle("hide",!on);
+      if(on){el.style.setProperty("--k",k++);el.style.animation="none";void el.offsetWidth;el.style.animation=""}});
+    tabs.forEach(function(t){t.setAttribute("aria-selected",t===b)})})});
+})();
+</script>
+</body>
+</html>

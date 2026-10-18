@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ember Demo</title>
+<title>Ember demo: see the dashboard, fans, lights and power pages</title>
 <meta name="description" content="Scroll through Ember's dashboard, fans, lights, games and power pages.">
 <link rel="canonical" href="https://emberpc.uk/demo">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#120d0b">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Ember">
-<meta property="og:title" content="Ember Demo"><meta property="og:description" content="Scroll through Ember's dashboard, fans, lights, games and power pages."><meta property="og:url" content="https://emberpc.uk/demo">
+<meta property="og:title" content="Ember demo: see the dashboard, fans, lights and power pages"><meta property="og:description" content="Scroll through Ember's dashboard, fans, lights, games and power pages."><meta property="og:url" content="https://emberpc.uk/demo">
+<meta property="og:image" content="https://emberpc.uk/img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Ember dashboard showing CPU and GPU temperatures, fan mode and fan speeds"><meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Ember demo: see the dashboard, fans, lights and power pages"><meta name="twitter:description" content="Scroll through Ember's dashboard, fans, lights, games and power pages."><meta name="twitter:image" content="https://emberpc.uk/img/og.png">
 <link rel="preload" href="/fonts/geist-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/fonts/fonts.css">
 <script id="ember-theme">
@@ -19,7 +21,9 @@
       orig=root.getAttribute("data-theme"),def={mode:"system",tint:"warm",accent:null},touched=false;
   function consent(){try{return localStorage.getItem(CK)}catch(e){return null}}
   // choices persist on this device only after the visitor agrees; until then they last for the page view
-  function load(){var base=Object.assign({},def);try{if(consent()==="yes"){var v=JSON.parse(localStorage.getItem(K));if(v)return Object.assign(base,v)}}catch(e){}return Object.assign(base,mem||{})}
+  var MODES=["system","dark","oled","light"],TINTS=["warm","neutral","cool"];
+  function clean(v){v=v&&typeof v==="object"?v:{};var o={};if(MODES.indexOf(v.mode)>-1)o.mode=v.mode;if(TINTS.indexOf(v.tint)>-1)o.tint=v.tint;o.accent=typeof v.accent==="string"&&/^#[0-9a-f]{6}$/i.test(v.accent)?v.accent:null;return o}
+  function load(){var base=Object.assign({},def);try{if(consent()==="yes"){var v=JSON.parse(localStorage.getItem(K));if(v)return Object.assign(base,clean(v))}}catch(e){}return Object.assign(base,clean(mem))}
   function save(s){mem=s;try{if(consent()==="yes")localStorage.setItem(K,JSON.stringify(s))}catch(e){}}
   var H={warm:20,neutral:0,cool:215},S={warm:28,neutral:3,cool:26};
   var PAL=["--bg","--bg2","--card","--fg","--mute","--line","--glass"],ACC=["--ember","--ember-hi","--glow","--on-ember"];
@@ -52,7 +56,7 @@
     }else ACC.forEach(function(v){st.removeProperty(v)});
   }
   var api=window.emberTheme={def:def,get:load,
-    set:function(p){var s=Object.assign(load(),p);save(s);apply(s);return s},
+    set:function(p){var s=Object.assign(load(),clean(Object.assign({},load(),p)));save(s);apply(s);return s},
     reset:function(){save(Object.assign({},def));apply(Object.assign({},def));return Object.assign({},def)}};
   window.emberConsent={get:consent,set:function(v){try{localStorage.setItem(CK,v)}catch(e){}
     if(v==="yes")save(load());else{try{localStorage.removeItem(K)}catch(e){}}
@@ -89,7 +93,7 @@ nav.open .navbtn{color:var(--ember)}nav.open .navbtn .nb{transform:scaleY(.4)}
   nav .navbtn{display:grid;margin-left:auto}
   nav .bar>.btn{padding:.5rem 1rem!important}
   nav .links{position:absolute;top:calc(100% + .5rem);left:0;right:0;margin:0;padding:.5rem;flex-direction:column;gap:.125rem;border:1px solid var(--line);border-radius:1.25rem;
-    background:color-mix(in srgb,var(--bg) 96%,transparent);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);
+    background:var(--bg2);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);
     opacity:0;transform:translateY(-.5rem) scale(.98);pointer-events:none;transition:opacity .25s,transform .45s var(--spring,cubic-bezier(.34,1.45,.5,1))}
   nav.open .links{opacity:1;transform:none;pointer-events:auto}
   nav .links a{display:block!important;padding:.8rem 1rem!important;font-size:1rem!important}
@@ -104,14 +108,54 @@ nav.open .navbtn{color:var(--ember)}nav.open .navbtn .nb{transform:scaleY(.4)}
   nav .brand{min-height:2.75rem}
 }
 .cb{background:color-mix(in srgb,var(--bg) 95%,transparent)!important}
+/* cookie banner */
+.cb{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:60;width:min(26rem,calc(100vw - 32px));padding:1.25rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:1.25rem;color:var(--fg,#fbece3);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);font:400 .875rem/1.5 var(--display,system-ui,sans-serif);display:grid;gap:.75rem;transform:translateY(1.5rem);opacity:0;pointer-events:none;transition:opacity .35s,transform .6s cubic-bezier(.34,1.45,.5,1)}
+.cb.on{transform:none;opacity:1;pointer-events:auto}
+.cb h2{margin:0;font-size:1rem;letter-spacing:-.01em}.cb p{margin:0;color:var(--mute,#b49a8c)}.cb a{color:var(--fg,#fbece3);text-underline-offset:.15em}
+.cb .row{display:flex;gap:.5rem;flex-wrap:wrap}.cb button{flex:1 1 9rem;padding:.65rem 1rem;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.2));background:var(--card,#1d1512);color:var(--fg,#fbece3);font:600 .875rem var(--display,system-ui,sans-serif);cursor:pointer;touch-action:manipulation;transition:transform .45s cubic-bezier(.34,1.45,.5,1)}
+.cb button:active{transform:scale(.95);transition-duration:.08s}.cb button:focus-visible{outline:2px solid var(--ember,#ff5a1f);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.cb{transition:none}}
+/* smooth scroll (Lenis), reading progress, spotlight cards, shiny headline, word reveal */
+html.lenis-on,html.lenis-on body{height:auto}
+html.lenis-on{scroll-behavior:auto!important}
+.lenis-on [data-lenis-prevent]{overscroll-behavior:contain}
+.prog{position:fixed;left:0;top:0;right:0;height:2px;z-index:60;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--ember),var(--ember-hi));pointer-events:none}
+.spl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s;background:radial-gradient(16rem circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--ember) 15%,transparent),transparent 65%)}
+*:hover>.spl{opacity:1}
+.shiny{background:linear-gradient(110deg,var(--fg) 42%,var(--ember-hi) 50%,var(--fg) 58%) 100% 0/250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shiny 5s linear infinite}
+@keyframes shiny{to{background-position:-100% 0}}
+.wd{display:inline-block;will-change:transform}
+@media (prefers-reduced-motion:reduce){.shiny{animation:none;background:none;color:inherit}.prog{display:none}}
+.skip{position:fixed;left:1rem;top:-4rem;z-index:80;padding:.7rem 1.1rem;border-radius:999px;background:var(--ember);color:var(--on-ember,#1a0c06);font:600 .9375rem var(--display,sans-serif);text-decoration:none;transition:top .2s}.skip:focus{top:max(1rem,env(safe-area-inset-top,0px))}
+#main:focus{outline:none}
+/* ember atmosphere on every page: a slow glow and sparks rising behind the content */
+html.embers-on{background:var(--bg)}html.embers-on body{background:transparent}
+.emb{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.emb .gl{position:absolute;left:50%;top:-14rem;width:70rem;max-width:140vw;height:34rem;transform:translateX(-50%);background:radial-gradient(closest-side,var(--glow),transparent 72%);animation:embglow 8s ease-in-out infinite}
+@keyframes embglow{50%{opacity:.5;transform:translateX(-50%) scale(1.1)}}
+.emb i{position:absolute;bottom:-1rem;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#ffd9a0,var(--ember) 60%,transparent 72%);opacity:0;animation:embrise var(--t) linear var(--d) infinite}
+@keyframes embrise{0%{opacity:0;transform:translate(0,0) scale(1)}10%{opacity:.7}85%{opacity:.25}100%{opacity:0;transform:translate(var(--dx),-108vh) scale(.2)}}
+.brand svg{filter:drop-shadow(0 0 .45rem var(--glow));animation:brandglow 4.5s ease-in-out infinite}
+@keyframes brandglow{50%{filter:drop-shadow(0 0 .9rem var(--glow))}}
+@media (prefers-reduced-motion:reduce){.emb{display:none}.brand svg{animation:none}}
+
+/* fans */
+.fan{display:block;color:var(--ember);fill:currentColor;will-change:transform}.fan.t{color:var(--teal)}
+.fanwall{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
+.fw{display:grid;justify-items:center;gap:.45rem;font:500 .6875rem var(--mono);color:var(--mute);text-align:center}
+.fw .fan{width:min(5.2rem,100%);height:auto;aspect-ratio:1;filter:drop-shadow(0 0 1rem var(--glow))}
+.fw b{color:var(--fg);font-weight:600;font-size:.8125rem}
+.fan-sm{width:1.15rem;height:1.15rem;flex:none}
+@media (max-width:560px){.fanwall{gap:.5rem}.fw{font-size:.5625rem}.fw b{font-size:.6875rem}}
 .legal-links{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;margin-top:1rem;font-size:.8125rem}.legal-links a{color:var(--mute);text-underline-offset:.18em}.legal-links a:hover{color:var(--fg)}
+.prose ul,.prose ol{margin:.8rem 0 0;padding-left:1.25rem;color:var(--mute)}.prose li{margin-top:.45rem;text-wrap:pretty}.prose li b{color:var(--fg)}.prose h3{font-size:1.0625rem;margin-top:1.75rem;letter-spacing:-.01em}.prose pre{margin-top:1rem;padding:1rem;overflow-x:auto;background:var(--bg2);border:1px solid var(--line);border-radius:1rem;font-size:.8125rem}.prose pre code{background:none;padding:0}.prose details{margin-top:1rem;border:1px solid var(--line);border-radius:1rem;padding:.75rem 1rem}.prose summary{cursor:pointer;color:var(--fg)}.prose h2[id],.prose h3[id]{scroll-margin-top:5rem}
 </style>
 
 <style>
 /* Layout: a scroll-driven product film. Intro, one pinned stage whose window changes page as you scroll, a lit-word statement, then the numbers. Single look, dark. */
 :root{
   --bg:#0d0907; --bg2:#17100d; --fg:#fbece3; --mute:#b49a8c; --line:rgba(255,200,170,.12);
-  --ember:#ff5a1f; --ember-hi:#ffb347; --teal:#3dd6c8; --glow:rgba(255,90,31,.25);
+  --ember:#ff5a1f; --ember-hi:#ffb347; --teal:#3dd6c8; --glow:color-mix(in srgb,var(--ember) 25%,transparent);
   --display:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"Geist Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
   --spring:cubic-bezier(.34,1.45,.5,1);
@@ -120,7 +164,7 @@ nav.open .navbtn{color:var(--ember)}nav.open .navbtn .nb{transform:scaleY(.4)}
 *{box-sizing:border-box}
 html{background:var(--bg)}
 body{margin:0;background:var(--bg);color:var(--fg);font:400 1.0625rem/1.5 var(--display);-webkit-font-smoothing:antialiased;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow-x:hidden}
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 a{color:inherit}
 p,h1,h2,h3{margin:0;text-wrap:balance}
 .wrap{max-width:72rem;margin-inline:auto}
@@ -135,7 +179,11 @@ nav .bar{display:flex;align-items:center;gap:1rem;padding:.5rem .5rem .5rem 1rem
   transition:transform .45s var(--spring);touch-action:manipulation}
 .btn:active{transform:scale(.95);transition-duration:.08s}
 .btn.pri{background:linear-gradient(180deg,var(--ember-hi),var(--ember));color:#1a0c06;border-color:transparent;box-shadow:0 .5rem 1.6rem -.4rem var(--glow),inset 0 1px 0 rgba(255,255,255,.35)}
-nav .btn{margin-left:auto}
+nav .links{display:flex;gap:.125rem;margin-inline:auto;font-size:.875rem;font-weight:500;color:var(--mute);min-width:0}
+nav .links a{text-decoration:none;padding:.45rem .8rem;border-radius:999px;transition:color .2s,background .3s}
+nav .links a:hover{color:var(--fg)}
+nav .links a.cur{color:var(--fg);background:var(--bg2)}
+@media (max-width:560px){nav .links a:not(.keep){display:none}}
 :focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:.5rem}
 
 /* intro */
@@ -147,8 +195,27 @@ nav .btn{margin-left:auto}
 .intro .scroll{margin-top:2.5rem;font:500 .75rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
 .intro .scroll::after{content:"";display:block;width:1px;height:2.5rem;margin:.75rem auto 0;background:linear-gradient(var(--ember),transparent)}
 
+/* intro motion: a breathing flame, rising embers, a title that resolves out of blur and then shimmers */
+.intro{isolation:isolate}
+.intro .flame{width:clamp(3.5rem,9vw,5.5rem);height:clamp(3.5rem,9vw,5.5rem);display:block;margin:0 auto 1.25rem;filter:drop-shadow(0 0 1.6rem var(--glow));animation:flameIn 1.2s var(--spring) both,breathe 3.6s ease-in-out 1.2s infinite}
+@keyframes flameIn{from{opacity:0;transform:translateY(1.5rem) scale(.6)}}
+@keyframes breathe{50%{transform:translateY(-.35rem) scale(1.05);filter:drop-shadow(0 0 2.6rem var(--glow))}}
+.intro h1.fx-in{background-size:260% 100%;background-image:linear-gradient(100deg,#fff6ef 38%,var(--ember-hi) 46%,#fff 50%,var(--ember-hi) 54%,#fff6ef 62%);background-position:100% 0;
+  animation:titleIn 1.3s cubic-bezier(.2,.8,.2,1) .15s both,shimmer 6s ease-in-out 1.6s infinite}
+@keyframes titleIn{from{opacity:0;filter:blur(14px);transform:translateY(1.6rem) scale(.94);letter-spacing:.01em}}
+@keyframes shimmer{0%,55%{background-position:100% 0}100%{background-position:0 0}}
+.intro::before{animation:glow 7s ease-in-out infinite}
+@keyframes glow{50%{opacity:.55;transform:scale(1.12)}}
+.pxs{position:absolute;inset:0;pointer-events:none;z-index:-1}
+.px{position:absolute;bottom:3rem;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#ffd9a0,var(--ember) 60%,transparent 72%);opacity:0;pointer-events:none;z-index:-1;animation:rise var(--t) linear var(--d) infinite}
+@keyframes rise{0%{opacity:0;transform:translate(0,0) scale(1)}12%{opacity:.85}100%{opacity:0;transform:translate(var(--dx),-30rem) scale(.15)}}
+.intro .btn{animation:pulse 3.2s ease-in-out 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 .5rem color-mix(in srgb,var(--ember) 14%,transparent)}}
+.intro .scroll::after{background:linear-gradient(var(--ember),transparent) 0 0/100% 200%;animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{0%{background-position:0 100%;opacity:.3}50%{opacity:1}100%{background-position:0 0;opacity:.3}}
+@media (prefers-reduced-motion:reduce){.intro .flame,.intro h1.fx-in,.intro::before,.px,.intro .btn,.intro .scroll::after{animation:none!important}.px{display:none}}
 /* pinned film */
-.film{height:520vh;position:relative}
+.film{height:920vh;position:relative}
 .pin{position:sticky;top:0;height:100vh;height:100svh;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);gap:clamp(1rem,4vw,4rem);align-items:center;padding-top:4.5rem}
 .caps{position:relative;height:16rem}
 .cap{position:absolute;inset:0;display:grid;align-content:center;gap:1rem;opacity:0;will-change:opacity,transform}
@@ -162,7 +229,22 @@ nav .btn{margin-left:auto}
 .top{height:2rem;display:flex;align-items:center;gap:.4rem;padding-inline:.9rem;border-bottom:1px solid var(--line);font:500 .6875rem var(--mono);color:var(--mute)}
 .top i{width:.6rem;height:.6rem;border-radius:50%;background:rgba(255,255,255,.14)}
 .top span{margin-left:.6rem}
-.scr{position:absolute;inset:2rem 0 0;padding:1.25rem 1.5rem;display:grid;gap:.9rem;align-content:start;opacity:0;will-change:opacity,transform}
+.fside{position:absolute;left:0;top:2rem;bottom:0;width:8.5rem;display:flex;flex-direction:column;gap:.15rem;padding:.7rem .5rem;border-right:1px solid var(--line);background:rgba(0,0,0,.2);font-size:.75rem;color:var(--mute)}
+.fside span{display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem;border-radius:.6rem}.fside .ico{width:.9rem;height:.9rem}
+.fside span.on{background:color-mix(in srgb,var(--ember) 17%,transparent);color:var(--ember-hi)}
+.fdeck{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;padding:.7rem;border-radius:.9rem;background:#060403;border:1px solid var(--line)}
+.fdeck i{aspect-ratio:1;border-radius:.5rem;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,#1b1511,#0f0b09);font:500 .5rem/1.1 var(--display);font-style:normal;color:var(--fg);display:grid;place-items:center;text-align:center;transition:border-color .25s,box-shadow .25s,transform .3s}
+.fdeck i.on{border-color:color-mix(in srgb,var(--ember) 60%,transparent)}.fdeck i.hit{transform:scale(.92);border-color:var(--ember);box-shadow:0 0 1rem -.2rem var(--glow)}
+.frow{display:flex;justify-content:space-between;align-items:center;gap:.7rem;padding:.6rem .8rem;border:1px solid var(--line);border-radius:.8rem;background:rgba(255,255,255,.03);font-size:.8125rem}
+.frow small{display:block;color:var(--mute);font-size:.6875rem}
+.fac{width:1rem;height:1rem;border-radius:50%;display:block;border:2px solid transparent;transition:border-color .3s}.fac.on{border-color:var(--fg)}
+.frow.sr{opacity:var(--o,1);transform:translateY(calc((1 - var(--o,1))*.8rem))}
+.fsw{width:2.2rem;height:1.25rem;border-radius:99px;background:rgba(255,255,255,.14);position:relative;transition:background .3s;flex:none}
+.fsw::after{content:"";position:absolute;top:.17rem;left:.17rem;width:.9rem;height:.9rem;border-radius:50%;background:#fff;transition:transform .4s var(--spring)}
+.fsw.on{background:var(--ember)}.fsw.on::after{transform:translateX(.95rem)}
+.ftoast{display:flex;gap:.6rem;align-items:center;margin-left:auto;width:max-content;max-width:100%;padding:.7rem .9rem;border-radius:.8rem;background:#1d1613;border:1px solid rgba(255,255,255,.14);font-size:.75rem;opacity:var(--o,1);transform:translateX(calc((1 - var(--o,1))*1.5rem))}
+.ftoast svg{width:1.2rem;height:1.2rem}.ftoast b{display:block}.ftoast span{color:var(--mute)}
+.scr{position:absolute;inset:2rem 0 0 8.5rem;padding:1.25rem 1.5rem;display:grid;gap:.9rem;align-content:start;opacity:0;will-change:opacity,transform}
 .scr h4{margin:0;font-size:1.25rem;letter-spacing:-.025em}
 .lbl{font:500 .625rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
 .card{border:1px solid var(--line);border-radius:.9rem;padding:.9rem;background:rgba(255,255,255,.025);min-width:0}
@@ -196,6 +278,162 @@ nav .btn{margin-left:auto}
 .leg{display:grid;gap:.5rem;font:500 .8125rem var(--mono)}
 .leg span::before{content:"";display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--c);margin-right:.5rem}
 
+/* try it: a small simulated Ember you can drive, laid out like the real window */
+.ico{width:1.05rem;height:1.05rem;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.try{padding-block:clamp(3rem,8vw,6rem) 2rem;scroll-margin-top:5rem}
+.try .head{text-align:center;display:grid;gap:1rem;justify-items:center;margin-bottom:2rem}
+.try .head h2{font-size:clamp(2.2rem,6vw,4.2rem);letter-spacing:-.045em;line-height:1;font-weight:700}
+.try .head p{color:var(--mute);max-width:34rem}
+.app{position:relative;display:grid;grid-template-columns:13.5rem minmax(0,1fr);border:1px solid var(--line);border-radius:1.25rem;background:var(--bg);overflow:hidden;
+  box-shadow:0 4rem 8rem -2rem rgba(0,0,0,.7),0 0 6rem -2rem var(--glow);min-height:36rem}
+.side{display:flex;flex-direction:column;gap:.2rem;padding:1rem .7rem;border-right:1px solid var(--line);background:rgba(0,0,0,.2)}
+.side .logo{display:flex;align-items:center;gap:.55rem;padding:.2rem .6rem 1rem;font-weight:650;letter-spacing:-.02em}
+.side .logo svg{width:1.4rem;height:1.4rem}
+.side button{white-space:nowrap;display:flex;align-items:center;gap:.7rem;border:0;border-radius:.75rem;padding:.6rem .75rem;background:none;color:var(--mute);font:500 .875rem var(--display);text-align:left;cursor:pointer;
+  transition:background .25s,color .25s,transform .45s var(--spring);touch-action:manipulation}
+.side button:active{transform:scale(.96);transition-duration:.08s}
+.side button:hover{color:var(--fg)}
+.side button[aria-selected=true]{background:color-mix(in srgb,var(--ember) 17%,transparent);color:var(--ember-hi)}
+.side .tag{margin-left:auto;font:500 .5rem var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:.1rem .35rem;border-radius:999px;border:1px solid var(--line);color:var(--mute)}
+.svc{margin-top:auto;padding:.7rem .8rem;border:1px solid var(--line);border-radius:.8rem;font-size:.75rem;line-height:1.5;color:var(--mute)}
+.svc b{display:flex;align-items:center;gap:.45rem;font-weight:500;color:var(--fg)}
+.svc b::before{content:"";width:.5rem;height:.5rem;border-radius:50%;background:#42d77d}
+.pgs{padding:1.4rem 1.6rem;min-width:0;position:relative}
+.pg{display:none;gap:1rem;align-content:start}
+.pg.on{display:grid;animation:pgin .5s var(--spring)}
+@keyframes pgin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.pg h4{margin:0;font-size:1.5rem;letter-spacing:-.03em}
+.pg .sub{margin-top:.3rem;text-transform:none;letter-spacing:0;font:400 .8125rem var(--display)}
+.pill{display:inline-flex;align-items:center;gap:.45rem;padding:.4rem .8rem;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);font:500 .6875rem var(--display);color:var(--mute)}
+.pill::before{content:"";width:.45rem;height:.45rem;border-radius:50%;background:#42d77d;animation:blip 2s ease-in-out infinite}
+@keyframes blip{50%{opacity:.35}}
+.pg .card{padding:1rem 1.1rem;border-radius:1rem;background:rgba(255,255,255,.03)}
+.pg .card>.lbl:first-child{font-weight:600;letter-spacing:.1em}
+.pg .card>.lbl.c{color:var(--ember-hi)}.pg .card>.lbl.g{color:var(--teal)}
+.alert{padding:.65rem .9rem;border-radius:.8rem;border:1px solid color-mix(in srgb,var(--ember) 50%,transparent);background:color-mix(in srgb,var(--ember) 14%,transparent);color:var(--ember-hi);font-size:.875rem;display:none}
+.alert.on{display:block;animation:pgin .4s var(--spring)}
+.dgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.9rem}
+.dgrid .wide{grid-column:span 2}.dgrid .full{grid-column:1/-1}
+.temp{display:flex;align-items:center;gap:1rem;margin-top:.7rem}
+.temp .ring{margin:0;width:4.6rem;height:4.6rem}.temp .ring::before{inset:.42rem}
+.temp .ring b{font-size:1.05rem}
+.temp .st{font:500 .8125rem var(--mono)}.temp .st small{display:block;font:400 .6875rem var(--display);color:var(--mute);margin-top:.15rem}
+.stats{display:flex;gap:1rem;margin-top:.8rem;font:500 .8125rem var(--mono)}
+.stats small{display:block;font:500 .5625rem var(--mono);letter-spacing:.06em;color:var(--mute);margin-bottom:.1rem}
+.modes{display:grid;gap:.15rem;margin-top:.6rem}
+.modes button{display:flex;justify-content:space-between;border:1px solid transparent;border-radius:.6rem;padding:.5rem .6rem;background:none;color:var(--fg);font:400 .8125rem var(--display);cursor:pointer;transition:background .25s,border-color .25s,transform .45s var(--spring);touch-action:manipulation}
+.modes button:active{transform:scale(.97);transition-duration:.08s}
+.modes button em{font:400 .625rem var(--mono);font-style:normal;color:var(--mute)}
+.modes button[aria-pressed=true]{background:color-mix(in srgb,var(--ember) 14%,transparent);border-color:color-mix(in srgb,var(--ember) 55%,transparent)}
+.legend{display:flex;gap:.9rem;font:500 .625rem var(--display);color:var(--mute)}
+.legend span::before{content:"";display:inline-block;width:.45rem;height:.45rem;border-radius:50%;background:var(--c);margin-right:.35rem}
+.cardh{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.fanrow{display:grid;gap:.3rem;margin-top:.7rem;font-size:.75rem}
+.fanrow>div>div{display:flex;justify-content:space-between}.fanrow b{font:600 .75rem var(--mono)}
+.fanrow i{display:block;height:.25rem;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.fanrow i::after{content:"";display:block;height:100%;width:var(--w,0%);background:var(--ember);border-radius:inherit;transition:width .6s}
+.fanrow .dead i::after{background:#e5484d}.fanrow .dead b{color:#e5484d}
+.tseg{display:flex;flex-wrap:wrap;gap:.3rem;padding:.25rem;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);width:max-content;max-width:100%}
+.tseg button{border:0;border-radius:999px;padding:.6rem 1rem;background:none;color:var(--mute);font:500 .8125rem var(--display);cursor:pointer;transition:background .3s,color .3s,transform .45s var(--spring);touch-action:manipulation}
+.tseg button:active{transform:scale(.95);transition-duration:.08s}
+.tseg button[aria-pressed=true]{background:linear-gradient(180deg,var(--ember-hi),var(--ember));color:#1a0c06;font-weight:600}
+.tseg.teal button[aria-pressed=true]{background:linear-gradient(180deg,#7ff0e4,var(--teal))}
+.tseg.sm{flex-wrap:nowrap}.tseg.sm button{padding:.4rem .75rem;font-size:.75rem;white-space:nowrap}
+.cardh{flex-wrap:wrap}
+.hist{width:100%;height:8rem;display:block;margin-top:.5rem}
+.tkeys{display:grid;grid-template-columns:repeat(14,1fr);gap:.25rem}
+.tkeys i{aspect-ratio:1;border-radius:.25rem;cursor:pointer;background:#2a1f1a}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:.9rem 1.5rem}
+.ctl label,.rowt label{display:flex;align-items:center;gap:.6rem;font:500 .625rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.ctl input[type=range],.rowt input[type=range]{accent-color:var(--ember);width:9rem}
+.sw{border:0;flex:none;width:2.6rem;height:1.5rem;border-radius:999px;background:rgba(255,255,255,.14);position:relative;cursor:pointer;transition:background .3s}
+.sw::after{content:"";position:absolute;top:.2rem;left:.2rem;width:1.1rem;height:1.1rem;border-radius:50%;background:#fff;transition:transform .45s var(--spring)}
+.sw[aria-checked=true]{background:var(--ember)}.sw[aria-checked=true]::after{transform:translateX(1.1rem)}
+.cover{aspect-ratio:3/4;border-radius:.8rem;padding:.55rem;display:flex;flex-direction:column;justify-content:flex-end;gap:.3rem;font-size:.75rem;font-weight:600;line-height:1.15;background:linear-gradient(160deg,var(--a),var(--b));position:relative;overflow:hidden;
+  cursor:pointer;border:0;color:var(--fg);font-family:var(--display);text-align:left;transition:transform .45s var(--spring),box-shadow .3s}
+.cover:active{transform:scale(.96)}
+.cover.run{box-shadow:0 0 0 2px var(--ember),0 0 2rem -.3rem var(--glow)}
+.cover em{position:relative;z-index:1;font:500 .5rem var(--mono);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--ember-hi);display:none}
+.cover.run em{display:block}
+.pw{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:.9rem}
+.pw .hero{background:linear-gradient(160deg,color-mix(in srgb,var(--ember) 14%,transparent),rgba(255,255,255,.02));border-color:color-mix(in srgb,var(--ember) 40%,transparent)}
+.watt{font:500 3.2rem/1 var(--mono);letter-spacing:-.05em;margin-top:.7rem}.watt small{font-size:1.1rem;color:var(--mute);margin-left:.3rem}
+.watt span{font:400 .75rem var(--display);color:var(--mute);letter-spacing:0;margin-left:.8rem}
+.spark{width:100%;height:4.5rem;display:block;margin-top:.7rem}
+.cost{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.7rem;font:600 1.05rem var(--mono)}
+.cost small{display:block;font:400 .6875rem var(--display);color:var(--mute);margin-bottom:.15rem}
+.cost b{color:var(--ember-hi);font-weight:600}
+.rowt{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.7rem;padding:.65rem .8rem;border:1px solid var(--line);border-radius:.8rem;background:rgba(0,0,0,.25);font-size:.8125rem;margin-top:.6rem}
+.rowt input[type=number]{width:4.4rem;background:none;border:0;border-bottom:1px solid var(--line);color:var(--fg);font:600 .875rem var(--mono);text-align:right}
+.split{display:flex;height:.55rem;border-radius:99px;overflow:hidden;gap:2px;margin:.7rem 0}
+.split i{display:block;transition:width .6s}
+table.pt{width:100%;border-collapse:collapse;font:500 .75rem var(--mono)}
+table.pt th{font:500 .5625rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);text-align:right;padding:.35rem 0}
+table.pt th:first-child,table.pt td:first-child{text-align:left;font-family:var(--display);font-size:.8125rem}
+table.pt td{text-align:right;padding:.5rem 0;border-top:1px solid var(--line)}
+table.pt td:first-child::before{content:"";display:inline-block;width:.5rem;height:.5rem;border-radius:50%;background:var(--c,var(--mute));margin-right:.6rem}
+table.pt tr.tot td::before{display:none}table.pt tr.tot td:last-child{color:var(--ember-hi)}
+.tip{padding:.7rem .9rem;border:1px solid var(--line);border-radius:.8rem;background:rgba(255,255,255,.03);font-size:.8125rem;color:var(--mute)}.tip b{color:var(--ember-hi);font-weight:600}
+.deck{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.55rem;padding:.9rem;border-radius:1rem;background:#060403;border:1px solid var(--line);max-width:36rem}
+.dk{aspect-ratio:1;border-radius:.7rem;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,#1b1511,#0f0b09);color:var(--fg);display:grid;place-items:center;align-content:center;gap:.25rem;padding:.3rem;font:500 .625rem/1.15 var(--display);text-align:center;cursor:pointer;
+  transition:transform .3s var(--spring),border-color .25s,box-shadow .25s;touch-action:manipulation}
+.dk:active,.dk.hit{transform:scale(.92);border-color:var(--ember);box-shadow:0 0 1.2rem -.2rem var(--glow)}
+.dk svg{width:1.3rem;height:1.3rem}
+.dk b{font:600 1.1rem var(--mono);letter-spacing:-.04em}
+.dk.on{border-color:color-mix(in srgb,var(--ember) 70%,transparent)}
+.dk.live b{color:var(--ember-hi)}.dk.live.g b{color:var(--teal)}
+.dk i{display:block;width:100%;height:.8rem;border-radius:.3rem}
+.dkl{font:500 .75rem var(--mono);color:var(--mute);min-height:1.2rem}.dkl b{color:var(--ember-hi);font-weight:500}
+.sched{display:grid;gap:.5rem}
+.sched .rowt{margin:0}.sched .rowt>div{display:grid;gap:.1rem}.sched .rowt small{color:var(--mute);font-size:.75rem}
+.sched .rowt.dim{opacity:.55}
+.clock{font:500 .75rem var(--mono);color:var(--mute)}.clock b{color:var(--fg)}
+.log{display:grid;gap:.35rem;margin-top:.6rem;font-size:.8125rem;color:var(--mute);max-height:9rem;overflow:auto}
+.log div{display:flex;gap:.7rem}.log b{font:500 .6875rem var(--mono);color:var(--ember-hi);flex:none}
+.btn.sm2{padding:.4rem .9rem;font-size:.8125rem;cursor:pointer;background:none}
+.toasts{position:absolute;right:1rem;bottom:1rem;display:grid;gap:.5rem;z-index:5;pointer-events:none;max-width:min(20rem,calc(100% - 2rem))}
+.toast{pointer-events:auto;display:flex;gap:.7rem;padding:.8rem .9rem;border-radius:.8rem;background:#1d1613;border:1px solid rgba(255,255,255,.14);box-shadow:0 1rem 2.5rem -.8rem rgba(0,0,0,.8);font-size:.8125rem;line-height:1.35;animation:tin .5s var(--spring)}
+.toast svg{width:1.4rem;height:1.4rem;flex:none}.toast b{display:block;font-weight:600}.toast span{color:var(--mute)}
+.toast.out{opacity:0;transform:translateX(1rem);transition:opacity .3s,transform .3s}
+@keyframes tin{from{opacity:0;transform:translateX(1.5rem)}to{opacity:1;transform:none}}
+.fine{font-size:.8125rem;color:var(--mute);text-align:center;margin-top:1rem}
+@media (max-width:860px){
+  .dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.dgrid .wide,.dgrid>:nth-child(3),.dgrid>:nth-child(5),.dgrid>:last-child{grid-column:span 2}.dgrid .full{grid-column:1/-1}.pw{grid-template-columns:1fr}
+}
+@media (max-width:720px){
+  .app{grid-template-columns:1fr;min-height:0}
+  .side,.sn{scrollbar-width:none}.side::-webkit-scrollbar,.sn::-webkit-scrollbar{display:none}
+  .side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:.5rem}
+  .side .logo,.svc,.side .tag{display:none}
+  .side button{white-space:nowrap;padding:.55rem .8rem}
+  .pgs{padding:1rem}
+  .dgrid{grid-template-columns:1fr}.dgrid .wide{grid-column:auto}
+  .tkeys{grid-template-columns:repeat(7,1fr)}
+  .app .games{grid-template-columns:repeat(2,1fr)}
+  .deck{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .watt{font-size:2.4rem}.cost{font-size:.9rem}
+  .toasts{left:1rem}
+}
+@media (prefers-reduced-motion:reduce){.pg.on,.alert.on,.toast,.pill::before{animation:none}}
+
+.specs{display:grid;gap:.9rem}
+.sg h5{margin:0 0 .4rem;font:600 .625rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ember-hi)}
+.sg .rowt{margin:0 0 .35rem}.sg .rowt small{display:block;color:var(--mute);font-size:.75rem}
+.sg .rowt>b{font:500 .75rem var(--mono);text-align:right;color:var(--mute)}
+.sg .rowt>b.ok{color:#42d77d}.sg .rowt>b.warn{color:var(--ember-hi)}
+.specs.busy{opacity:.4;transition:opacity .2s}
+.setw{display:grid;grid-template-columns:10rem minmax(0,1fr);gap:1rem}
+.sn{display:grid;align-content:start;gap:.2rem}
+.sn button{border:0;border-radius:.65rem;padding:.55rem .75rem;background:none;color:var(--mute);font:500 .8125rem var(--display);text-align:left;cursor:pointer;touch-action:manipulation}
+.sn button:hover{color:var(--fg)}.sn button[aria-selected=true]{background:color-mix(in srgb,var(--ember) 17%,transparent);color:var(--ember-hi)}
+.sp{display:none;gap:.6rem;align-content:start}.sp.on{display:grid;animation:pgin .4s var(--spring)}
+.sp .rowt{margin:0}.sp .rowt>div:first-child{display:grid;gap:.1rem}.sp .rowt small{color:var(--mute);font-size:.75rem}
+.acc{display:flex;gap:.5rem}
+.acc button{width:1.6rem;height:1.6rem;border-radius:50%;border:2px solid transparent;background:var(--c);cursor:pointer;box-shadow:0 0 0 1px var(--line);transition:transform .45s var(--spring)}
+.acc button:active{transform:scale(.85)}.acc button[aria-pressed=true]{border-color:var(--fg)}
+.app[data-th=oled]{--bg:#000;--bg2:#080605}
+@media (max-width:720px){.setw{grid-template-columns:1fr}.sn{display:flex;overflow-x:auto}.sn button{white-space:nowrap}}
 /* statement */
 .say{padding-block:clamp(5rem,14vw,11rem);max-width:56rem;margin-inline:auto}
 .say p{font-size:clamp(1.9rem,5.2vw,3.6rem);line-height:1.12;letter-spacing:-.04em;font-weight:650}
@@ -214,16 +452,17 @@ nav .btn{margin-left:auto}
 footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute);font-size:.8125rem}
 
 /* small screens and reduced motion: the film becomes a plain stack, complete at rest */
-@media (max-width:860px){
-  .film{height:auto}
-  .pin{position:static;height:auto;grid-template-columns:1fr;padding-top:2rem}
-  .caps{height:auto;display:grid;gap:2rem}
-  .cap,.scr{position:static;opacity:1!important;transform:none!important}
-  .scr{position:relative;inset:auto;border-bottom:1px solid var(--line)}
-  .device{aspect-ratio:auto;max-height:none;transform:none}
-  .dots{display:none}
-  .row3{grid-template-columns:1fr}
+.fcard{display:flex;align-items:center;justify-content:space-between;gap:.5rem}.fcard .fan{width:2.8rem;height:2.8rem;flex:none}
+.devw{display:contents}
+@media (max-width:860px) and (prefers-reduced-motion:no-preference){
+  .pin{grid-template-columns:minmax(0,1fr);align-content:center;gap:1.1rem;padding-top:4.5rem}
+  .devw{display:block;order:-1;width:100%;height:calc(420px*var(--fit,.56));position:relative}
+  .device{position:absolute;left:0;top:0;width:640px;height:420px;max-height:none;aspect-ratio:auto;transform-origin:0 0;transform:scale(var(--fit,.56))}
+  .caps{height:12.5rem}
+  .cap{gap:.7rem}.cap h2{font-size:clamp(1.7rem,7.5vw,2.4rem)}.cap p{font-size:1rem}
+  .dots{margin-top:1rem}
 }
+@media (max-width:860px) and (prefers-reduced-motion:reduce){.fside{display:none}.row3{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){
   .film{height:auto}
   .pin{position:static;height:auto;grid-template-columns:1fr;padding-top:2rem}
@@ -232,11 +471,14 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
   .scr{position:relative;inset:auto;opacity:1!important;transform:none!important;border-bottom:1px solid var(--line)}
   .device{aspect-ratio:auto;max-height:none;transform:none}
   .dots{display:none}
+  .fside{display:none}
   .say .w{opacity:1}
 }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fan" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" stroke-width="3" opacity=".55"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(0.00 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(51.43 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(102.86 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(154.29 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(205.71 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(257.14 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(308.57 50 50)"/><circle cx="50" cy="50" r="11" fill="var(--bg2,#17100d)"/><circle cx="50" cy="50" r="5" fill="currentColor"/></symbol></svg>
+<a class="skip" href="#main">Skip to content</a>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff4d12"/><stop offset="1" stop-color="#ffb347"/></linearGradient>
@@ -245,16 +487,28 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
       <path d="M128 30 C152 66 198 90 198 148 C198 190 167 222 128 222 C89 222 58 190 58 148 C58 120 73 100 88 85 C92 106 102 119 115 123 C104 86 116 58 128 30 Z" fill="url(#flame)"/>
       <path d="M128 116 C141 138 166 149 166 178 C166 199 149 212 128 212 C107 212 90 199 90 178 C90 163 99 153 108 144 C112 155 118 160 125 160 C120 143 122 130 128 116 Z" fill="url(#core)"/>
     </symbol>
+    <symbol id="i-dash" viewBox="0 0 24 24"><path d="M3 3h7v9H3z M14 3h7v5h-7z M14 12h7v9h-7z M3 16h7v5H3z"/></symbol>
+    <symbol id="i-fans" viewBox="0 0 24 24"><path d="M10 12a2 2 0 1 0 4 0 2 2 0 1 0-4 0 M12 10c0-4 1-7 4-7 2 0 3 2 1 4l-5 3 M14 12c4 0 7 1 7 4 0 2-2 3-4 1l-3-5 M12 14c0 4-1 7-4 7-2 0-3-2-1-4l5-3 M10 12c-4 0-7-1-7-4 0-2 2-3 4-1l3 5"/></symbol>
+    <symbol id="i-lights" viewBox="0 0 24 24"><path d="M9 18h6 M10 21h4 M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></symbol>
+    <symbol id="i-games" viewBox="0 0 24 24"><path d="M7 7h10a5.5 5.5 0 0 1 0 11H7A5.5 5.5 0 0 1 7 7z M7 10v5 M4.5 12.5h5 M16 11h.01 M18 14h.01"/></symbol>
+    <symbol id="i-power" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-deck" viewBox="0 0 24 24"><path d="M4 4h4v4H4z M10 4h4v4h-4z M16 4h4v4h-4z M4 10h4v4H4z M10 10h4v4h-4z M16 10h4v4h-4z M4 16h4v4H4z M10 16h4v4h-4z M16 16h4v4h-4z"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7 M10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-specs" viewBox="0 0 24 24"><path d="M8 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z M9 2v4 M15 2v4 M9 18v4 M15 18v4 M2 9h4 M2 15h4 M18 9h4 M18 15h4"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M15 12a3 3 0 1 0-6 0 3 3 0 0 0 6 0z M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2 M19 5l-2 2 M7 17l-2 2"/></symbol>
   </defs>
 </svg>
 
 <div class="wrap">
-  <nav><div class="bar"><a class="brand" href="/"><svg><use href="#mark"/></svg>Ember</a><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download</a></div></nav>
+  <nav><div class="bar"><a class="brand" href="/"><svg><use href="#mark"/></svg>Ember</a>
+    <div class="links"><a href="/">Home</a><a class="cur keep" href="/demo">Demo</a><a href="/integrations">Integrations</a><a href="/roadmap">Roadmap</a><a class="keep" href="/install">Install</a></div>
+    <a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download</a></div></nav>
 
-  <header class="intro">
+  <header id="main" tabindex="-1" class="intro">
+    <svg class="flame" aria-hidden="true"><use href="#mark"/></svg>
     <p class="eyebrow">The demo</p>
     <h1 style="margin-top:1rem">Meet Ember.</h1>
-    <p>Five pages. One calm window. Scroll to watch your PC settle.</p>
+    <p>Nine pages. One calm window. Scroll to watch your PC settle, then take the controls yourself.</p><p style="margin-top:1.5rem"><a class="btn" href="#try">Jump to the working demo</a></p>
     <div class="scroll">Scroll</div>
   </header>
 
@@ -267,12 +521,17 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
           <div class="cap"><span class="eyebrow">Lights</span><h2>Light up the whole desk.</h2><p>Stack effects, paint single LEDs and watch a live preview before anything changes.</p></div>
           <div class="cap"><span class="eyebrow">Games</span><h2>A fan mode for every game.</h2><p>Your Steam, Epic, GOG, Ubisoft Connect and EA app libraries, found for you.</p></div>
           <div class="cap"><span class="eyebrow">Power</span><h2>What the wall socket sees.</h2><p>A read-only smart plug measures the whole PC. Ember shows you the rest.</p></div>
+          <div class="cap"><span class="eyebrow">Stream Deck</span><h2>Your desk, one key away.</h2><p>Lighting scenes, fan modes and live readings on the keys of a Stream Deck. Beta.</p></div>
+          <div class="cap"><span class="eyebrow">Alerts</span><h2>Quiet at night. Loud when it matters.</h2><p>Switch fan mode on a schedule, and get a Windows notice when a part runs hot or a fan stops. Beta.</p></div>
+          <div class="cap"><span class="eyebrow">Specs</span><h2>Everything inside, on one page.</h2><p>Processor, graphics card, memory, drives with health, displays and Windows. Copy it for a support request. Beta.</p></div>
+          <div class="cap"><span class="eyebrow">Settings</span><h2>Make it yours.</h2><p>Start with Windows, pick a theme and an accent colour, and keep the 90° safety rule always on.</p></div>
         </div>
-        <div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       </div>
 
-      <div class="device" id="device" role="img" aria-label="The Ember app moving through Dashboard, Fans, Lights, Games and Power">
+      <div class="devw" id="devw"><div class="device" id="device" role="img" aria-label="The Ember app moving through Dashboard, Fans, Lights, Games, Power, Stream Deck, Alerts, Specs and Settings">
         <div class="top"><i></i><i></i><i></i><span id="ttl">Ember · Dashboard</span></div>
+        <div class="fside" id="fside"><span class="on"><svg class="ico"><use href="#i-dash"/></svg>Dashboard</span><span><svg class="ico"><use href="#i-fans"/></svg>Fans</span><span><svg class="ico"><use href="#i-lights"/></svg>Lights</span><span><svg class="ico"><use href="#i-games"/></svg>Games</span><span><svg class="ico"><use href="#i-power"/></svg>Power</span><span><svg class="ico"><use href="#i-deck"/></svg>Stream Deck</span><span><svg class="ico"><use href="#i-bell"/></svg>Alerts</span><span><svg class="ico"><use href="#i-specs"/></svg>Specs</span><span><svg class="ico"><use href="#i-settings"/></svg>Settings</span></div>
 
         <div class="scr">
           <div><h4>Dashboard</h4><div class="lbl" style="margin-top:.2rem">All calm. Fans are on Normal.</div></div>
@@ -282,7 +541,7 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
             <div class="card"><div class="ring" id="r3" style="--c:var(--ember-hi)"><b id="t3">0</b></div><div class="lbl">Watts at the wall</div></div>
           </div>
           <div class="card"><div class="lbl">Last 10 minutes</div>
-            <svg class="curve" viewBox="0 0 600 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 70 C60 66 90 44 150 48 S250 78 310 56 S420 24 470 38 S560 58 600 50" fill="none" stroke="#ff5a1f" stroke-width="2.5"/><path d="M0 84 C80 80 160 86 240 78 S380 74 470 76 S560 80 600 74" fill="none" stroke="#3dd6c8" stroke-width="2.5"/></svg></div>
+            <svg class="curve" viewBox="0 0 600 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 70 C60 66 90 44 150 48 S250 78 310 56 S420 24 470 38 S560 58 600 50" fill="none" style="stroke:var(--ember)" stroke-width="2.5"/><path d="M0 84 C80 80 160 86 240 78 S380 74 470 76 S560 80 600 74" fill="none" stroke="#3dd6c8" stroke-width="2.5"/></svg></div>
         </div>
 
         <div class="scr">
@@ -290,10 +549,10 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
           <div class="seg" id="fseg"><span class="th"></span><span><b class="f">Super quiet</b><b class="s">Silent</b></span><span><b class="f">Quiet</b><b class="s">Quiet</b></span><span><b class="f">Normal</b><b class="s">Normal</b></span><span><b class="f">Performance</b><b class="s">Fast</b></span><span><b class="f">Extreme</b><b class="s">Max</b></span></div>
           <div class="row3">
             <div class="card"><div class="big" id="frpm">0</div><div class="lbl">Fan rpm</div></div>
-            <div class="card"><div class="big" id="fpct">0%</div><div class="lbl">Fan speed</div></div>
+            <div class="card fcard"><div><div class="big" id="fpct">0%</div><div class="lbl">Fan speed</div></div><svg class="fan" id="ffan" viewBox="0 0 100 100" aria-hidden="true"><use href="#fan"/></svg></div>
             <div class="card"><div class="big">90°</div><div class="lbl">Forced to 100%</div></div>
           </div>
-          <div class="card"><svg class="curve" viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true"><path id="fline" fill="none" stroke="#ff5a1f" stroke-width="3" stroke-linecap="round"/></svg></div>
+          <div class="card"><svg class="curve" viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true"><path id="fline" fill="none" style="stroke:var(--ember)" stroke-width="3" stroke-linecap="round"/></svg></div>
         </div>
 
         <div class="scr">
@@ -317,9 +576,192 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
           <div class="card pwr"><div class="donut" id="dn"><b><span id="dw">0</span><small>WATTS</small></b></div>
             <div class="leg"><span style="--c:var(--ember)">CPU 40 W</span><span style="--c:var(--teal)">GPU 21 W</span><span style="--c:var(--ember-hi)">Everything else 35 W</span><span style="color:var(--mute)">About 0.9 kWh a day</span></div></div>
         </div>
-      </div>
+
+        <div class="scr">
+          <div><h4>Stream Deck</h4><div class="lbl" style="margin-top:.2rem">Keys for lights, fans and live readings</div></div>
+          <div class="fdeck" id="fdeck"></div>
+        </div>
+
+        <div class="scr">
+          <div><h4>Schedule and alerts</h4><div class="lbl" style="margin-top:.2rem">Quiet at night, and a notice when something runs hot</div></div>
+          <div class="frow"><div>Quiet fans at night<small>Quiet from 22:00 to 07:00</small></div><span class="fsw" id="fs1"></span></div>
+          <div class="frow"><div>Tell me when the CPU stays hot<small>Above 80° for a few seconds</small></div><span class="fsw" id="fs2"></span></div>
+          <div class="frow"><div>Tell me when a fan stops<small>While the PC is warm</small></div><span class="fsw" id="fs3"></span></div>
+          <div class="ftoast" id="ftoast"><svg viewBox="0 0 256 256"><use href="#mark"/></svg><div><b>CPU running hot</b><span>Above 80° for a few seconds.</span></div></div>
+        </div>
+
+        <div class="scr">
+          <div><h4>Specs</h4><div class="lbl" style="margin-top:.2rem">Your PC on one page</div></div>
+          <div class="frow sr"><div>Processor<small>8 cores, 16 threads</small></div><b class="lbl">Ryzen 7 7700</b></div>
+          <div class="frow sr"><div>Graphics card<small>12 GB memory</small></div><b class="lbl">GeForce RTX 4070</b></div>
+          <div class="frow sr"><div>Memory<small>2 sticks at 6000 MT/s</small></div><b class="lbl">32 GB DDR5</b></div>
+          <div class="frow sr"><div>Drives<small>Health from S.M.A.R.T.</small></div><b class="lbl">Good</b></div>
+          <div class="frow sr"><div>Windows<small>Version 24H2</small></div><b class="lbl">Windows 11 Pro</b></div>
+        </div>
+
+        <div class="scr">
+          <div><h4>Settings</h4><div class="lbl" style="margin-top:.2rem">General, Appearance, Fan control</div></div>
+          <div class="frow"><div>Start Ember with Windows<small>Fans and lights set before you sit down</small></div><span class="fsw" id="fs4"></span></div>
+          <div class="frow"><div>Theme<small>Dark or OLED black</small></div><span class="lbl" id="fth">Dark</span></div>
+          <div class="frow"><div>Accent colour<small>Buttons, rings and the selected page</small></div><span style="display:flex;gap:.35rem"><i class="fac" style="background:#ff5a1f"></i><i class="fac" style="background:#3dd6c8"></i><i class="fac" style="background:#8b7bff"></i><i class="fac" style="background:#4cc46a"></i></span></div>
+          <div class="frow"><div>Safety limit<small>Every fan to 100% at 90°</small></div><span class="lbl">Always on</span></div>
+        </div>
+      </div></div>
     </div>
   </div>
+
+  <section class="try" id="try">
+    <div class="head"><p class="eyebrow">Your turn</p><h2>Now take the controls.</h2><p>This is a small working Ember, laid out like the real window. Change the fan mode, start a game, press Stream Deck keys, set an alert, and push the PC until the safety rule steps in. It is all simulated in your browser.</p></div>
+    <div class="app" id="app">
+      <div class="side" role="tablist" aria-label="Ember pages">
+        <div class="logo"><svg><use href="#mark"/></svg>Ember</div>
+        <button type="button" role="tab" aria-selected="true" data-pg="dash"><svg class="ico"><use href="#i-dash"/></svg>Dashboard</button>
+        <button type="button" role="tab" aria-selected="false" data-pg="fans"><svg class="ico"><use href="#i-fans"/></svg>Fans</button>
+        <button type="button" role="tab" aria-selected="false" data-pg="lights"><svg class="ico"><use href="#i-lights"/></svg>Lights</button>
+        <button type="button" role="tab" aria-selected="false" data-pg="games"><svg class="ico"><use href="#i-games"/></svg>Games</button>
+        <button type="button" role="tab" aria-selected="false" data-pg="power"><svg class="ico"><use href="#i-power"/></svg>Power</button>
+        <button type="button" role="tab" aria-selected="false" data-pg="deck"><svg class="ico"><use href="#i-deck"/></svg>Stream Deck<span class="tag">Beta</span></button>
+        <button type="button" role="tab" aria-selected="false" data-pg="alerts"><svg class="ico"><use href="#i-bell"/></svg>Alerts<span class="tag">Beta</span></button>
+        <button type="button" role="tab" aria-selected="false" data-pg="specs"><svg class="ico"><use href="#i-specs"/></svg>Specs<span class="tag">Beta</span></button>
+        <button type="button" role="tab" aria-selected="false" data-pg="settings"><svg class="ico"><use href="#i-settings"/></svg>Settings</button>
+        <div class="svc"><b>Service running</b>Beta build 1.6.0-beta.2</div>
+      </div>
+      <div class="pgs">
+        <div class="pg on" id="pg-dash" role="tabpanel">
+          <div class="ph"><div><h4>Dashboard</h4><div class="lbl sub" id="dstatus">All calm. Fans are on Normal.</div></div><span class="pill">Live, updated just now</span></div>
+          <div class="alert" id="alert" role="status">Safety rule: a sensor reached 90°, so every fan is forced to 100% until it cools.</div>
+          <div class="card"><div class="cardh"><div class="lbl">What is the PC doing? <span style="text-transform:none;letter-spacing:0;font-family:var(--display)">(demo control)</span></div>
+            <div class="tseg sm" id="loadseg"><button type="button" data-load="0" aria-pressed="true">Idle</button><button type="button" data-load="1" aria-pressed="false">Gaming</button><button type="button" data-load="2" aria-pressed="false">Stress test</button></div></div></div>
+          <div class="dgrid">
+            <div class="card"><div class="lbl c">CPU</div><div class="temp"><div class="ring" id="tr1"><b id="tt1">0°</b></div><div class="st" id="cst">Healthy<small id="cnote">Well under the 90° limit</small></div></div>
+              <div class="stats"><div><small>LOAD</small><span id="cl">0%</span></div><div><small>CLOCK</small><span id="cc">0 GHz</span></div><div><small>POWER</small><span id="cp">0 W</span></div></div></div>
+            <div class="card"><div class="lbl g">GPU</div><div class="temp"><div class="ring" id="tr2" style="--c:var(--teal)"><b id="tt2">0°</b></div><div class="st" id="gst">Idle<small id="gnote">Resting</small></div></div>
+              <div class="stats"><div><small>LOAD</small><span id="gl">0%</span></div><div><small>CLOCK</small><span id="gc">0 MHz</span></div><div><small>POWER</small><span id="gp">0 W</span></div></div></div>
+            <div class="card"><div class="lbl">Fan mode</div>
+              <div class="modes" id="dmodes"><button type="button" data-md="0" aria-pressed="false">Super quiet<em>silent</em></button><button type="button" data-md="1" aria-pressed="false">Quiet<em>everyday</em></button><button type="button" data-md="2" aria-pressed="true">Normal<em>balanced</em></button><button type="button" data-md="3" aria-pressed="false">Performance<em>cooler</em></button><button type="button" data-md="4" aria-pressed="false">Extreme<em>full speed</em></button></div></div>
+            <div class="card wide"><div class="cardh"><div class="lbl">Recent history</div><div class="legend"><span style="--c:#ff5a1f">CPU</span><span style="--c:#3dd6c8">GPU</span></div></div>
+              <svg class="hist" viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true"><path id="hcpu" fill="none" style="stroke:var(--ember)" stroke-width="2.5" vector-effect="non-scaling-stroke"/><path id="hgpu" fill="none" stroke="#3dd6c8" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg></div>
+            <div class="card"><div class="lbl">Fans</div><div class="fanrow" id="fr1"></div></div>
+          </div>
+        </div>
+
+        <div class="pg" id="pg-fans" role="tabpanel">
+          <div class="ph"><div><h4>Fans</h4><div class="lbl sub" id="tfnote">Chosen by you</div></div>
+            <div class="tseg sm" id="modeseg"><button type="button" data-md="0" aria-pressed="false">Super quiet</button><button type="button" data-md="1" aria-pressed="false">Quiet</button><button type="button" data-md="2" aria-pressed="true">Normal</button><button type="button" data-md="3" aria-pressed="false">Performance</button><button type="button" data-md="4" aria-pressed="false">Extreme</button></div></div>
+          <div class="alert" id="alert2" role="status">Safety rule: every fan is forced to 100% until the CPU cools.</div>
+          <div class="dgrid">
+            <div class="card"><div class="lbl">Fan speed</div><div class="watt" id="tpct">0<small>%</small></div></div>
+            <div class="card"><div class="lbl">Fan rpm</div><div class="watt" id="trpm">0</div></div>
+            <div class="card"><div class="lbl">CPU now</div><div class="watt" id="tcpu2">0<small>°</small></div></div>
+            <div class="card full"><div class="lbl">Airflow</div><div class="fanwall" id="fw" style="margin-top:.8rem"></div></div>
+            <div class="card wide"><div class="lbl">Fan curve, speed against CPU temperature</div>
+              <svg class="hist" viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true"><path id="tcurve" fill="none" style="stroke:var(--ember)" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/><line id="tmark" y1="0" y2="100" stroke="#3dd6c8" stroke-width="2" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/></svg></div>
+            <div class="card"><div class="lbl">Fans</div><div class="fanrow" id="fr2"></div></div>
+          </div>
+        </div>
+
+        <div class="pg" id="pg-lights" role="tabpanel">
+          <div class="ph"><div><h4>Lights</h4><div class="lbl sub">Live preview. Click a key to send a ripple.</div></div></div>
+          <div class="card"><div class="lbl">Preview</div><div class="tkeys" id="tkeys" style="margin-top:.7rem"></div></div>
+          <div class="tseg teal" id="sceneseg"><button type="button" data-s="0" aria-pressed="true">Ember</button><button type="button" data-s="1" aria-pressed="false">Aurora</button><button type="button" data-s="2" aria-pressed="false">Ocean</button><button type="button" data-s="3" aria-pressed="false">Rainbow</button></div>
+          <div class="ctl"><label>Lights on <button type="button" class="sw" id="lon" role="switch" aria-checked="true" aria-label="Lights on"></button></label><label>Brightness <input type="range" id="bri" min="10" max="100" value="80" aria-label="Brightness"></label><label>Speed <input type="range" id="spd" min="20" max="200" value="100" aria-label="Speed"></label></div>
+        </div>
+
+        <div class="pg" id="pg-games" role="tabpanel">
+          <div class="ph"><div><h4>Games</h4><div class="lbl sub" id="gstat">Pick a game to start it. The library shown is made up.</div></div></div>
+          <div class="games" id="tgames">
+            <button type="button" class="cover" data-g="0" data-m="3" style="--a:#7a2a12;--b:#1c0f0a"><span>Performance</span>Ashfall Run<em>Playing</em></button>
+            <button type="button" class="cover" data-g="1" data-m="1" style="--a:#0e5a62;--b:#0b1a1d"><span>Quiet</span>Tidewatch<em>Playing</em></button>
+            <button type="button" class="cover" data-g="2" data-m="2" style="--a:#5a3a8a;--b:#14101c"><span>Normal</span>Low Orbit<em>Playing</em></button>
+            <button type="button" class="cover" data-g="3" data-m="4" style="--a:#8a6a12;--b:#1c1608"><span>Extreme</span>Gravel Kings<em>Playing</em></button>
+          </div>
+          <p class="lbl" style="text-transform:none;letter-spacing:0;font-family:var(--display);font-size:.8125rem">Each game remembers its own fan mode. Starting one switches to it, and closing it brings your old mode back.</p>
+        </div>
+
+        <div class="pg" id="pg-power" role="tabpanel">
+          <div class="ph"><div><h4>Power</h4><div class="lbl sub">What your PC draws at the wall, where it goes, and roughly what it costs.</div></div></div>
+          <div class="pw">
+            <div class="card hero"><div class="lbl c">Whole PC, right now</div><div class="watt"><span style="margin:0;font:inherit;color:inherit;letter-spacing:inherit" id="tdw">0</span><small>W</small><span id="wavg">avg 0 W · peak 0 W</span></div>
+              <svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path id="wfill" style="fill:color-mix(in srgb,var(--ember) 22%,transparent)"/><path id="wline" fill="none" style="stroke:var(--ember)" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg></div>
+            <div class="card"><div class="lbl">Cost estimate</div>
+              <div class="cost"><div><small>Today so far</small><b id="cday">£0.00</b></div><div><small>This month</small><b id="cmon">£0</b></div><div><small>Per year</small><b id="cyr">£0</b></div></div>
+              <div class="rowt"><label for="price">Price per kWh</label><span>£ <input type="number" id="price" min="0.05" max="1" step="0.01" value="0.28" aria-label="Price per kWh in pounds"></span></div></div>
+          </div>
+          <div class="card"><div class="lbl">Where the power goes</div>
+            <div class="split" aria-hidden="true"><i id="sc" style="background:var(--ember)"></i><i id="sg" style="background:var(--teal)"></i><i id="so" style="background:#6b5a50"></i></div>
+            <table class="pt"><thead><tr><th>Part</th><th>Average</th><th>kWh a day</th><th>Cost a month</th></tr></thead><tbody>
+              <tr style="--c:var(--ember)"><td>CPU</td><td id="pc1">0 W</td><td id="pk1">0</td><td id="pm1">£0</td></tr>
+              <tr style="--c:var(--teal)"><td>Graphics card</td><td id="pc2">0 W</td><td id="pk2">0</td><td id="pm2">£0</td></tr>
+              <tr style="--c:#6b5a50"><td>Board and the rest</td><td id="pc3">0 W</td><td id="pk3">0</td><td id="pm3">£0</td></tr>
+              <tr class="tot"><td>Total</td><td id="pc4">0 W</td><td id="pk4">0</td><td id="pm4">£0</td></tr></tbody></table></div>
+          <div class="tip" id="ptip"><b>Tip.</b> Plugs are read only.</div>
+        </div>
+
+        <div class="pg" id="pg-deck" role="tabpanel">
+          <div class="ph"><div><h4>Stream Deck</h4><div class="lbl sub">Keys for lighting, fan modes and live readings. Press them like the real thing.</div></div></div>
+          <div class="deck" id="deck"></div>
+          <div class="dkl" id="dkl" aria-live="polite">Press a key.</div>
+          <p class="lbl" style="text-transform:none;letter-spacing:0;font-family:var(--display);font-size:.8125rem">The Ember Stream Deck plugin is in beta builds. The keys with numbers show live readings.</p>
+        </div>
+
+        <div class="pg" id="pg-alerts" role="tabpanel">
+          <div class="ph"><div><h4>Schedule and alerts</h4><div class="lbl sub">Quiet fans at night, and a notice when something runs hot or stops.</div></div></div>
+          <div class="card sched"><div class="lbl">Schedule</div>
+            <div class="rowt"><div>Quiet fans at night<small id="schnote">Fans go to Quiet from 22:00 to 07:00.</small></div><button type="button" class="sw" id="schon" role="switch" aria-checked="false" aria-label="Quiet fans at night"></button></div>
+            <div class="rowt"><label>Pretend it is <input type="range" id="hour" min="0" max="23" value="14" aria-label="Pretend time of day"></label><span class="clock"><b id="hourt">14:00</b></span></div></div>
+          <div class="card sched"><div class="lbl">Alerts</div>
+            <div class="rowt"><div>Tell me when the CPU stays hot<small>Above <b id="thrt" style="color:var(--fg)">80°</b> for a few seconds.</small></div><span style="display:flex;gap:.8rem;align-items:center"><input type="range" id="thr" min="60" max="88" value="80" style="accent-color:var(--ember);width:6rem" aria-label="Alert temperature"><button type="button" class="sw" id="hoton" role="switch" aria-checked="true" aria-label="CPU hot alert"></button></span></div>
+            <div class="rowt"><div>Tell me when a fan stops while the PC is warm<small>Try it: stop a fan, then run the Stress test.</small></div><span style="display:flex;gap:.8rem;align-items:center"><button type="button" class="btn sm2" id="killfan" aria-pressed="false">Stop fan #2</button><button type="button" class="sw" id="stopon" role="switch" aria-checked="true" aria-label="Fan stopped alert"></button></span></div></div>
+          <div class="card"><div class="lbl">Recent alerts</div><div class="log" id="log"><div><b>--:--</b>Nothing yet.</div></div></div>
+        </div>
+
+        <div class="pg" id="pg-specs" role="tabpanel">
+          <div class="ph"><div><h4>Specs</h4><div class="lbl sub" id="spstat">Read just now. This PC is made up.</div></div>
+            <div style="display:flex;gap:.5rem"><button type="button" class="btn sm2" id="sprefresh">Refresh</button><button type="button" class="btn sm2" id="spcopy">Copy specs</button></div></div>
+          <div class="specs" id="specs"></div>
+          <p class="lbl" style="text-transform:none;letter-spacing:0;font-family:var(--display);font-size:.8125rem">Specs never include the PC name or your user name.</p>
+        </div>
+
+        <div class="pg" id="pg-settings" role="tabpanel">
+          <div class="ph"><div><h4>Settings</h4><div class="lbl sub">Changes here apply to this demo window straight away.</div></div></div>
+          <div class="setw">
+            <div class="sn" id="sn" role="tablist" aria-label="Settings sections"><button type="button" role="tab" aria-selected="true" data-sec="general">General</button><button type="button" role="tab" aria-selected="false" data-sec="appearance">Appearance</button><button type="button" role="tab" aria-selected="false" data-sec="fan">Fan control</button><button type="button" role="tab" aria-selected="false" data-sec="lighting">Lighting</button><button type="button" role="tab" aria-selected="false" data-sec="updates">Updates</button><button type="button" role="tab" aria-selected="false" data-sec="about">About</button></div>
+            <div class="sps">
+              <div class="sp on" data-sec="general">
+                <div class="rowt"><div>Start Ember with Windows<small>So your fans and lights are set before you sit down.</small></div><button type="button" class="sw" role="switch" aria-checked="true" aria-label="Start with Windows" data-tg="start"></button></div>
+                <div class="rowt"><div>Start minimised<small>Ember waits in the tray until you open it.</small></div><button type="button" class="sw" role="switch" aria-checked="true" aria-label="Start minimised" data-tg="min"></button></div>
+                <div class="rowt"><div>Show a notice when Ember changes the fan mode<small>For example when a game starts.</small></div><button type="button" class="sw" role="switch" aria-checked="false" aria-label="Notice on fan mode change" data-tg="notice"></button></div>
+                <div class="rowt"><div>Opening page<small>The page Ember opens on.</small></div><div class="tseg sm" id="startseg"><button type="button" data-st="dash" aria-pressed="true">Dashboard</button><button type="button" data-st="fans" aria-pressed="false">Fans</button><button type="button" data-st="lights" aria-pressed="false">Lights</button></div></div>
+              </div>
+              <div class="sp" data-sec="appearance">
+                <div class="rowt"><div>Theme<small>OLED black makes the background pure black.</small></div><div class="tseg sm" id="themeseg"><button type="button" data-th="dark" aria-pressed="true">Dark</button><button type="button" data-th="oled" aria-pressed="false">OLED black</button></div></div>
+                <div class="rowt"><div>Accent colour<small>Used for buttons, rings and the selected page.</small></div><div class="acc" id="accseg" role="group" aria-label="Accent colour"><button type="button" data-ac="#ff5a1f" style="--c:#ff5a1f" aria-pressed="true" aria-label="Ember orange"></button><button type="button" data-ac="#3dd6c8" style="--c:#3dd6c8" aria-pressed="false" aria-label="Teal"></button><button type="button" data-ac="#8b7bff" style="--c:#8b7bff" aria-pressed="false" aria-label="Violet"></button><button type="button" data-ac="#4cc46a" style="--c:#4cc46a" aria-pressed="false" aria-label="Green"></button><button type="button" data-ac="#ff5c8a" style="--c:#ff5c8a" aria-pressed="false" aria-label="Rose"></button></div></div>
+              </div>
+              <div class="sp" data-sec="fan">
+                <div class="rowt"><div>Take over the fans when Ember starts<small>Ember sets your chosen mode as soon as it is running.</small></div><button type="button" class="sw" role="switch" aria-checked="true" aria-label="Take over fans" data-tg="take"></button></div>
+                <div class="rowt"><div>Safety limit<small>Every controlled fan goes to 100% at 90° on any sensor.</small></div><b class="clock"><b>90°, always on</b></b></div>
+                <div class="rowt"><div>Smooth fan changes<small>Avoids fans speeding up and down on short spikes.</small></div><button type="button" class="sw" role="switch" aria-checked="true" aria-label="Smooth fan changes" data-tg="smooth"></button></div>
+              </div>
+              <div class="sp" data-sec="lighting">
+                <div class="rowt"><div>Lights off when the PC sleeps<small>Ember darkens every enabled device.</small></div><button type="button" class="sw" role="switch" aria-checked="true" aria-label="Lights off on sleep" data-tg="sleep"></button></div>
+                <div class="rowt"><div>Find lights on my network<small>Local discovery only. Nothing is sent to the internet.</small></div><button type="button" class="sw" role="switch" aria-checked="true" aria-label="Find lights on network" data-tg="find"></button></div>
+              </div>
+              <div class="sp" data-sec="updates">
+                <div class="rowt"><div>Beta build 1.6.0-beta.2<small id="upnote">Last checked just now.</small></div><button type="button" class="btn sm2" id="upcheck">Check for updates</button></div>
+                <div class="rowt"><div>Join the beta channel<small>Get new builds a little earlier.</small></div><button type="button" class="sw" role="switch" aria-checked="true" aria-label="Beta channel" data-tg="beta"></button></div>
+              </div>
+              <div class="sp" data-sec="about">
+                <div class="tip"><b>Ember</b> is free, open source and local only. It never sends a byte on its own. This demo is a made-up PC with made-up numbers, built for emberpc.uk.</div>
+                <div class="rowt"><div>Licence<small>MIT, with third-party notices.</small></div><a class="btn sm2" href="/licences">Read it</a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="toasts" id="toasts" aria-live="polite"></div>
+    </div>
+    <p class="fine">Made-up numbers from a tiny model: more load makes heat, more fan takes it away. The real Ember reads your actual sensors.</p>
+  </section>
 
   <section class="say" id="say">
     <p id="statement">Ember reads your sensors, runs your fans and lights your desk. It never sends a byte on its own, never switches your plugs, and never lets a fan stop while the CPU is hot.</p>
@@ -336,17 +778,17 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
     <svg><use href="#mark"/></svg>
     <h2>Give your PC a calmer window.</h2>
     <p>Free, open source and local only, for Windows 10 and 11.</p>
-    <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center"><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a><a class="btn" href="/">Back to Ember</a></div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center"><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a><a class="btn" href="/">Back to Ember</a><a class="btn" href="https://github.com/Ol775/ember-pc/issues/new/choose">Report a bug</a></div>
   </section>
 
-  <footer>Ember is an independent project by Ol775, MIT licensed, and is not affiliated with any hardware maker named on this site. Screens are drawn for this demo with made-up figures and a made-up game library.<div class="legal-links"><a href="/privacy">Privacy and cookies</a><a href="/terms">Terms and legal notices</a><a href="#" data-cookie-settings>Cookie settings</a></div></footer>
+  <footer>Ember is an independent project by Ol775, MIT licensed, and is not affiliated with any hardware maker named on this site. Screens are drawn for this demo with made-up figures and a made-up game library.<div class="legal-links"><a href="/changelog">Changelog</a><a href="/roadmap">Roadmap</a><a href="/install">Install guide</a><a href="/known-issues">Known issues</a><a href="https://github.com/Ol775/ember-pc/issues/new/choose">Report a bug</a><a href="/security">Security</a><a href="/licences">Open source licences</a><a href="/privacy">Privacy and cookies</a><a href="/terms">Terms and legal notices</a><a href="#" data-cookie-settings>Cookie settings</a></div></footer>
 </div>
 
 <script>
 (function(){
-  var N=5,film=document.getElementById("film"),caps=[].slice.call(document.querySelectorAll(".cap")),scrs=[].slice.call(document.querySelectorAll(".scr")),
+  var N=9,film=document.getElementById("film"),caps=[].slice.call(document.querySelectorAll(".cap")),scrs=[].slice.call(document.querySelectorAll(".scr")),
       dots=[].slice.call(document.querySelectorAll("#dots i")),device=document.getElementById("device"),ttl=document.getElementById("ttl"),
-      names=["Dashboard","Fans","Lights","Games","Power"];
+      names=["Dashboard","Fans","Lights","Games","Power","Stream Deck","Alerts","Specs","Settings"],fside=[].slice.call(document.querySelectorAll("#fside span")),pin=document.querySelector(".pin"),devw=document.getElementById("devw");
   function cl(x,a,b){return Math.max(a,Math.min(b,x))}
   function ease(x){return x*x*(3-2*x)}
   function lerp(a,b,t){return a+(b-a)*t}
@@ -360,15 +802,21 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
   var keys=document.getElementById("keys");
   for(var q=0;q<56;q++){var k=document.createElement("i");keys.appendChild(k)}
   var kk=[].slice.call(keys.children);
+  var fk=[],fl=["Ember","Aurora","Ocean","Rainbow","Lights","Dimmer","Brighter","Quiet","Normal","Perform.","Extreme","CPU 58°","GPU 49°","Fans 46%","Open"];
+  fl.forEach(function(t){var e=document.createElement("i");e.textContent=t;document.getElementById("fdeck").appendChild(e);fk.push(e)});
+  var srows=[].slice.call(document.querySelectorAll(".frow.sr")),facs=[].slice.call(document.querySelectorAll(".fac"));
+  (window.__fans=window.__fans||[]).push([document.getElementById("ffan"),function(){return (window.__ffp||0)*9}]);
   var covers=[].slice.call(document.querySelectorAll("#games .cover"));
   var $=function(id){return document.getElementById(id)};
 
   function frame(){
     var r=film.getBoundingClientRect(),span=r.height-innerHeight;
     var p=span>0?cl(-r.top/span,0,1):0, s=p*N;
+    if(devw.offsetWidth&&innerWidth<=860)devw.style.setProperty("--fit",(devw.offsetWidth/640).toFixed(4));
+    var pinned=getComputedStyle(pin).position==="sticky",q=function(i){return pinned?s-i:.95};
     device.style.setProperty("--sc",(.9+.1*ease(cl(p*10,0,1))).toFixed(3));
     var cur=cl(Math.floor(s),0,N-1);
-    ttl.textContent="Ember · "+names[cur];
+    ttl.textContent="Ember · "+names[cur];fside.forEach(function(e,i){e.classList.toggle("on",i===cur)});
     for(var i=0;i<N;i++){
       var u=s-i,o=vis(u,i===0,i===N-1);
       caps[i].style.opacity=o;caps[i].style.transform="translateY("+((1-o)*(u<.5?18:-18)).toFixed(1)+"px)";
@@ -377,26 +825,34 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
       dots[i].style.setProperty("--f",cl(u,0,1).toFixed(3));
     }
     // 0 dashboard: rings fill, numbers count up
-    var t0=ease(cl(s/.55,0,1));
+    var t0=ease(cl(q(0)/.55,0,1));
     $("r1").style.setProperty("--p",58*t0);$("t1").textContent=Math.round(58*t0)+"°";
     $("r2").style.setProperty("--p",49*t0);$("t2").textContent=Math.round(49*t0)+"°";
     $("r3").style.setProperty("--p",62*t0);$("t3").textContent=Math.round(96*t0)+"W";
     // 1 fans: the mode steps through, curve and readouts follow
-    var f=cl(s-1,0,1),mi=cl(Math.floor(f*5),0,4),mt=f*5-mi;
+    var f=cl(q(1),0,1),mi=cl(Math.floor(f*5),0,4),mt=f*5-mi;
     $("fseg").style.setProperty("--i",mi);[].forEach.call($("fseg").children,function(c,x){if(x>0)c.classList.toggle("on",x-1===mi)});
     $("fmode").textContent=["Super quiet","Quiet","Normal","Performance","Extreme"][mi];
     var m=modes[mi],d="";for(var t=0;t<=100;t+=2){d+=(t?"L":"M")+(t*4)+" "+(96-at(m,t)*.9)+" "}
     $("fline").setAttribute("d",d);
-    var pct=Math.round(at(m,60));$("fpct").textContent=pct+"%";$("frpm").textContent=Math.round(pct*27/10)*10;
+    var pct=Math.round(at(m,60));window.__ffp=pct;$("fpct").textContent=pct+"%";$("frpm").textContent=Math.round(pct*27/10)*10;
     // 2 lights: a hue wave travels across the keys
-    var ls=s-2;
+    var ls=q(2);
     kk.forEach(function(e,n){e.style.background="hsl("+((n*6+ls*240)%360)+",90%,"+(52+10*Math.sin(n*.5+ls*6))+"%)"});
     // 3 games: covers rise in one after another
-    var g=cl(s-3,0,1);
+    var g=cl(q(3),0,1);
     covers.forEach(function(c,n){var e=ease(cl(g*3.2-n*.5,0,1));c.style.setProperty("--o",e.toFixed(3));c.style.setProperty("--y",((1-e)*26).toFixed(1)+"px")});
     // 4 power: the donut sweeps to its split and the wattage counts up
-    var w=ease(cl((s-4)/.5+.4,0,1));
+    var w=ease(cl(q(4)/.5+.4,0,1));
     $("dn").style.setProperty("--a",42*w);$("dn").style.setProperty("--b",(42+22)*w+(1-w)*0);$("dw").textContent=Math.round(96*w);
+    // 5 stream deck: keys light up one after another, then a few get pressed
+    var dg=cl(q(5),0,1),nk=Math.round(dg*1.15*fk.length);fk.forEach(function(e,i){e.classList.toggle("on",i<nk);e.classList.toggle("hit",i===nk-1&&dg<1)});
+    // 6 alerts: the switches flip, then the notice slides in
+    var ag=cl(q(6),0,1);$("fs1").classList.toggle("on",ag>.12);$("fs2").classList.toggle("on",ag>.3);$("fs3").classList.toggle("on",ag>.45);$("ftoast").style.setProperty("--o",ease(cl((ag-.55)/.25,0,1)).toFixed(3));
+    // 7 specs: rows slide in one by one
+    var sg=cl(q(7),0,1);srows.forEach(function(e,i){e.style.setProperty("--o",ease(cl(sg*2.2-i*.25,0,1)).toFixed(3))});
+    // 8 settings: the switch flips, the theme changes, accents are picked
+    var tg=cl(q(8),0,1);$("fs4").classList.toggle("on",tg>.15);$("fth").textContent=tg>.45?"OLED black":"Dark";facs.forEach(function(e,i){e.classList.toggle("on",i===(tg>.7?2:0))});
   }
   var tick=false;function req(){if(!tick){tick=true;requestAnimationFrame(function(){tick=false;frame()})}}
   addEventListener("scroll",req,{passive:true});addEventListener("resize",req);frame();
@@ -408,6 +864,229 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
     var n=Math.round(prog*ws.length);ws.forEach(function(e,i){e.classList.toggle("lit",i<n)})}
   addEventListener("scroll",lit,{passive:true});addEventListener("resize",lit);lit();
   if(matchMedia("(prefers-reduced-motion:reduce)").matches)ws.forEach(function(e){e.classList.add("lit")});
+})();
+</script>
+<script>
+/* The "Your turn" window: a tiny heat model (load makes heat, fans take it away) behind a working copy of Ember's pages. */
+(function(){
+  var app=document.getElementById("app");if(!app)return;
+  var $=function(id){return document.getElementById(id)},still=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  function cl(x,a,b){return Math.max(a,Math.min(b,x))}
+  function pad(n){return(n<10?"0":"")+n}
+  function rnd(a){return Math.round(a)}
+  var NAMES=["Super quiet","Quiet","Normal","Performance","Extreme"],GAMES=["Ashfall Run","Tidewatch","Low Orbit","Gravel Kings"];
+  var MODES=[[[0,10],[60,22],[80,60],[100,100]],[[0,16],[55,30],[75,70],[100,100]],[[0,22],[50,38],[70,78],[100,100]],[[0,30],[45,52],[65,88],[100,100]],[[0,45],[40,70],[60,100],[100,100]]];
+  function at(p,t){for(var i=1;i<p.length;i++){if(t<=p[i][0]){var a=p[i-1],b=p[i];return a[1]+(b[1]-a[1])*(t-a[0])/(b[0]-a[0])}}return 100}
+  var S={mode:2,saved:2,load:0,game:-1,cpu:38,gpu:34,fan:25,ov:false,scene:0,on:true,bri:.8,spd:1,hc:[],hg:[],hw:[],w:{c:0,g:0,o:0,t:0},
+    hour:14,sched:false,thr:80,hoton:true,stopon:true,fail:false,hotN:0,hotFired:false,stopFired:false,nl:[0,0],price:.28};
+  var LOAD=[.25,.75,1.4],FANF=[1,.9,1.12,1.05];
+  function night(){return S.hour>=22||S.hour<7}
+  function eff(){return S.sched&&night()&&S.game<0?1:S.mode}
+
+  // toasts and the alert log
+  function toast(title,msg){
+    var t=document.createElement("div");t.className="toast";t.innerHTML='<svg viewBox="0 0 256 256"><use href="#mark"/></svg>';
+    var d=document.createElement("div"),b=document.createElement("b"),s=document.createElement("span");b.textContent=title;s.textContent=msg;d.appendChild(b);d.appendChild(s);t.appendChild(d);
+    var box=$("toasts");box.appendChild(t);while(box.children.length>3)box.removeChild(box.firstChild);
+    setTimeout(function(){t.classList.add("out");setTimeout(function(){t.parentNode&&t.parentNode.removeChild(t)},320)},6500);
+    var lg=$("log");if(lg.firstChild&&lg.firstChild.firstChild.textContent==="--:--")lg.innerHTML="";
+    var r=document.createElement("div"),tm=document.createElement("b");tm.textContent=pad(S.hour)+":"+pad(new Date().getMinutes());r.appendChild(tm);r.appendChild(document.createTextNode(title+". "+msg));lg.insertBefore(r,lg.firstChild);
+  }
+
+  function tick(){
+    var lv=LOAD[S.load],hot=Math.max(S.cpu,S.gpu);
+    if(hot>=90)S.ov=true;else if(hot<85)S.ov=false;
+    var target=S.ov?100:at(MODES[eff()],S.cpu),cool=S.fail?.85:1;
+    S.fan+=(target-S.fan)*.4;
+    S.cpu=cl(S.cpu+((30+lv*60-S.fan*.3*cool+(Math.random()-.5)*1.6)-S.cpu)*.15,25,95);
+    S.gpu=cl(S.gpu+((28+lv*42-S.fan*.15*cool+(Math.random()-.5)*1.6)-S.gpu)*.15,25,90);
+    S.nl=[cl([7,46,99][S.load]+(Math.random()-.5)*5,1,100),cl([3,93,58][S.load]+(Math.random()-.5)*5,0,100)];
+    var c=rnd(10+lv*45+(S.cpu-40)*.1),g=rnd(6+lv*80),o=28+S.fan*.12+(S.on?4:0),t=rnd((c+g+o)/.9);
+    S.w={c:c,g:g,o:t-c-g,t:t};
+    S.hc.push(S.cpu);S.hg.push(S.gpu);S.hw.push(t);if(S.hc.length>60){S.hc.shift();S.hg.shift();S.hw.shift()}
+    // alerts
+    if(S.hoton&&S.cpu>S.thr){S.hotN++;if(S.hotN>=3&&!S.hotFired){S.hotFired=true;toast("CPU running hot","The CPU has stayed above "+S.thr+"° (now "+rnd(S.cpu)+"°).")}}
+    else if(S.cpu<S.thr-4){S.hotN=0;S.hotFired=false}
+    if(S.stopon&&S.fail&&S.cpu>60&&!S.stopFired){S.stopFired=true;toast("A fan has stopped","Fan #2 is not turning while the CPU is at "+rnd(S.cpu)+"°.")}
+    if(!S.fail)S.stopFired=false;
+  }
+  function path(a){var d="";a.forEach(function(v,i){d+=(i?"L":"M")+(i*300/59).toFixed(1)+" "+(100-cl((v-20)/80,0,1)*100).toFixed(1)+" "});return d}
+  var NS="http://www.w3.org/2000/svg",FRW=[];
+  function rpmOf(i){return S.fail&&i===1?0:Math.min(2900,Math.round(S.fan*27*FANF[i]/10)*10)}
+  function mkFan(cls,i){var s=document.createElementNS(NS,"svg");s.setAttribute("class",cls);s.setAttribute("viewBox","0 0 100 100");s.setAttribute("aria-hidden","true");s.innerHTML='<use href="#fan"/>';(window.__fans=window.__fans||[]).push([s,function(){return rpmOf(i)/3}]);return s}
+  function mkRows(box){for(var i=0;i<4;i++){var row=document.createElement("div"),top=document.createElement("div"),nm=document.createElement("span"),b=document.createElement("b"),bar=document.createElement("i");
+    nm.style.cssText="display:inline-flex;align-items:center;gap:.4rem";nm.appendChild(mkFan("fan fan-sm",i));nm.appendChild(document.createTextNode("Fan #"+(i+1)));top.appendChild(nm);top.appendChild(b);row.appendChild(top);row.appendChild(bar);box.appendChild(row);FRW.push({row:row,b:b})}}
+  function mkWall(box){for(var i=0;i<4;i++){var d=document.createElement("div");d.className="fw";var n=document.createElement("span"),b=document.createElement("b");n.textContent="Fan #"+(i+1);d.appendChild(mkFan("fan",i));d.appendChild(n);d.appendChild(b);box.appendChild(d);FRW.push({wall:true,b:b,d:d})}}
+  function fans(){
+    if(!FRW.length){mkRows($("fr1"));mkRows($("fr2"));mkWall($("fw"))}
+    FRW.forEach(function(r,k){var i=k%4,dead=S.fail&&i===1,rpm=rpmOf(i);r.b.textContent=rpm+" rpm";
+      if(r.wall){r.d.style.opacity=dead?.45:1}else{r.row.className=dead?"dead":"";r.row.style.setProperty("--w",(dead?0:Math.min(100,S.fan*FANF[i])).toFixed(0)+"%")}});
+  }
+  function money(x){return"£"+(x<10?x.toFixed(2):rnd(x))}
+
+  function render(){
+    var cpu=rnd(S.cpu),gpu=rnd(S.gpu),w=S.w,m=eff();
+    $("tr1").style.setProperty("--p",cpu);$("tt1").textContent=cpu+"°";
+    $("tr2").style.setProperty("--p",gpu);$("tt2").textContent=gpu+"°";
+    $("cst").firstChild.nodeValue=S.ov?"Forced":cpu<60?"Healthy":cpu<80?"Warm":"Hot";
+    $("cnote").textContent=S.ov?"Every fan at 100%":cpu<60?"Well under the 90° limit":cpu<80?"Fans are working":"Close to the 90° limit";
+    $("gst").firstChild.nodeValue=S.load?"Working":"Idle";$("gnote").textContent=S.load?"Under load":"Resting";
+    $("cl").textContent=rnd(S.nl[0])+"%";$("cc").textContent=[1.9,4.3,4.8][S.load]+" GHz";$("cp").textContent=w.c+" W";
+    $("gl").textContent=rnd(S.nl[1])+"%";$("gc").textContent=[420,1850,1500][S.load]+" MHz";$("gp").textContent=w.g+" W";
+    $("alert").classList.toggle("on",S.ov);$("alert2").classList.toggle("on",S.ov);
+    $("dstatus").textContent=S.ov?"Hot. Every fan is forced to 100%.":S.load===0?"All calm. Fans are on "+NAMES[m]+".":S.load===1?"Gaming. Fans are on "+NAMES[m]+".":"Working hard. CPU at "+cpu+"°.";
+    $("hcpu").setAttribute("d",path(S.hc));$("hgpu").setAttribute("d",path(S.hg));
+    $("tfnote").textContent=S.ov?"Safety rule: forced to 100%":m!==S.mode?"Schedule: Quiet until 07:00":S.game>=0?"Chosen by "+GAMES[S.game]:"Chosen by you";
+    $("trpm").textContent=rnd(S.fan*27/10)*10;$("tpct").innerHTML=rnd(S.fan)+"<small>%</small>";$("tcpu2").innerHTML=cpu+"<small>°</small>";
+    $("tmark").setAttribute("x1",cl(S.cpu,0,100)*4);$("tmark").setAttribute("x2",cl(S.cpu,0,100)*4);
+    fans();
+    // power
+    var n=S.hw.length||1,avg=rnd(S.hw.reduce(function(a,b){return a+b},0)/n),peak=Math.max.apply(null,S.hw.concat([0])),p=S.price;
+    $("tdw").textContent=w.t;$("wavg").textContent="avg "+avg+" W · peak "+peak+" W";
+    var top=Math.max(peak*1.1,60),sp="";S.hw.forEach(function(v,i){sp+=(i?"L":"M")+(i*300/59).toFixed(1)+" "+(58-v/top*54).toFixed(1)+" "});
+    $("wline").setAttribute("d",sp);$("wfill").setAttribute("d",sp+"L"+((S.hw.length-1)*300/59).toFixed(1)+" 60 L0 60 Z");
+    var kd=avg*24/1000;$("cday").textContent=money(avg*(S.hour+.5)/1000*p);$("cmon").textContent=money(kd*30*p);$("cyr").textContent="£"+rnd(kd*365*p);
+    var parts=[w.c,w.g,w.o];["1","2","3"].forEach(function(k,i){var kk=parts[i]*24/1000;$("pc"+k).textContent=parts[i]+" W";$("pk"+k).textContent=kk.toFixed(2);$("pm"+k).textContent=money(kk*30*p)});
+    var kt=w.t*24/1000;$("pc4").textContent=w.t+" W";$("pk4").textContent=kt.toFixed(2);$("pm4").textContent=money(kt*30*p);
+    $("sc").style.width=(w.c/w.t*100).toFixed(1)+"%";$("sg").style.width=(w.g/w.t*100).toFixed(1)+"%";$("so").style.width=(w.o/w.t*100).toFixed(1)+"%";
+    var big=w.c>=w.g?["CPU",w.c]:["graphics card",w.g];
+    $("ptip").innerHTML="<b>Tip.</b> The "+big[0]+" takes the most, about "+rnd(big[1]/w.t*100)+" % ("+big[1]+" W). Using a tenth less of it would save roughly "+money(big[1]*.1*24/1000*30*p)+" a month. Plugs are read only.";
+    // stream deck live keys
+    dkLive[0].textContent=cpu+"°";dkLive[1].textContent=gpu+"°";dkLive[2].textContent=rnd(S.fan)+"%";
+    dkEls.forEach(function(k,i){var d=DK[i];if(d.on)k.classList.toggle("on",!!d.on())});
+  }
+  function curve(){var d="",m=MODES[eff()];for(var t=0;t<=100;t+=2)d+=(t?"L":"M")+(t*4)+" "+(96-at(m,t)*.9)+" ";$("tcurve").setAttribute("d",d)}
+  function press(group,attr,val){[].forEach.call($(group).children,function(b){b.setAttribute("aria-pressed",String(b.getAttribute(attr)===String(val)))})}
+  function sync(){
+    var m=eff();
+    [].forEach.call(app.querySelectorAll("[data-md]"),function(b){b.setAttribute("aria-pressed",String(+b.getAttribute("data-md")===m))});
+    press("loadseg","data-load",S.load);press("sceneseg","data-s",S.scene);
+    [].forEach.call($("tgames").children,function(b,i){b.classList.toggle("run",i===S.game)});
+    $("gstat").textContent=S.game<0?"Pick a game to start it. The library shown is made up.":"Playing "+GAMES[S.game]+" on "+NAMES[S.mode]+". Close it to go back to "+NAMES[S.saved]+".";
+    $("hourt").textContent=pad(S.hour)+":00";
+    $("schnote").textContent=S.sched?(night()?"Active now: fans are on Quiet until 07:00.":"Waiting for 22:00. Fans go to Quiet from 22:00 to 07:00."):"Fans go to Quiet from 22:00 to 07:00.";
+    $("thrt").textContent=S.thr+"°";
+    curve();render();
+  }
+  function endGame(){if(S.game>=0){S.game=-1;S.mode=S.saved}}
+  function setMode(m){S.mode=m;sync()}
+
+  // tabs
+  var tabs=[].slice.call(app.querySelectorAll(".side button")),pgs=[].slice.call(app.querySelectorAll(".pg")),onLights=false;
+  function show(id){tabs.forEach(function(b){b.setAttribute("aria-selected",String(b.getAttribute("data-pg")===id))});pgs.forEach(function(p){p.classList.toggle("on",p.id==="pg-"+id)});onLights=id==="lights";loop()}
+  tabs.forEach(function(b){b.addEventListener("click",function(){show(b.getAttribute("data-pg"))})});
+
+  app.addEventListener("click",function(e){var b=e.target.closest("[data-md]");if(b&&!b.closest("#tgames")){S.mode=+b.getAttribute("data-md");if(S.game>=0){S.saved=S.mode}sync()}});
+  $("loadseg").addEventListener("click",function(e){var l=e.target.getAttribute("data-load");if(l===null)return;if(+l!==1)endGame();S.load=+l;sync()});
+  $("tgames").addEventListener("click",function(e){var b=e.target.closest(".cover");if(!b)return;var i=+b.getAttribute("data-g");
+    if(S.game===i){endGame();S.load=0}else{if(S.game<0)S.saved=S.mode;S.game=i;S.load=1;S.mode=+b.getAttribute("data-m")}sync()});
+
+  // lights
+  var keys=$("tkeys"),K=[],COLS=14,ROWS=4,rip=[],inView=false,raf=0,t0=performance.now();
+  for(var q=0;q<COLS*ROWS;q++){var k=document.createElement("i");k.setAttribute("data-k",q);keys.appendChild(k);K.push(k)}
+  function hue(c,r,t){
+    switch(S.scene){
+      case 0:var a=Math.sin(c*.45-t*1.6+r*.3);return[14+30*(.5+.5*a),95,46+14*a];
+      case 1:return[150+120*(.5+.5*Math.sin(c*.3+t*.8)),80,50+12*Math.sin(r+t*2)];
+      case 2:return[190+30*Math.sin(c*.4+t),85,40+18*Math.sin(c*.5-t*2.2+r)];
+      default:return[(c*14+t*120)%360,90,55]}
+  }
+  function draw(now){
+    var t=(now-t0)/1000*S.spd;
+    for(var n=0;n<K.length;n++){
+      var c=n%COLS,r=(n/COLS)|0;
+      if(!S.on){K[n].style.background="#2a1f1a";continue}
+      var h=hue(c,r,still?0:t),l=h[2],s=h[1];
+      for(var j=0;j<rip.length;j++){var p=rip[j],age=(now-p.t)/1000,d=Math.hypot(c-p.c,r-p.r),add=Math.max(0,1-Math.abs(d-age*9)/1.6)*Math.max(0,1-age/1.5);l+=38*add;s-=30*add}
+      K[n].style.background="hsl("+h[0].toFixed(0)+","+cl(s,20,100).toFixed(0)+"%,"+cl(l*(.15+.85*S.bri),4,92).toFixed(0)+"%)";
+    }
+    rip=rip.filter(function(p){return now-p.t<1500});
+  }
+  function frame(now){raf=0;draw(now);if(!still&&onLights&&inView&&!document.hidden)raf=requestAnimationFrame(frame);else if(rip.length)raf=requestAnimationFrame(frame)}
+  function loop(){if(!raf)raf=requestAnimationFrame(frame)}
+  keys.addEventListener("click",function(e){var n=e.target.getAttribute("data-k");if(n===null||!S.on)return;n=+n;rip.push({c:n%COLS,r:(n/COLS)|0,t:performance.now()});loop()});
+  function setScene(s){S.scene=s;sync();loop()}
+  function setOn(v){S.on=v;$("lon").setAttribute("aria-checked",String(v));loop()}
+  function setBri(v){S.bri=cl(v,.1,1);$("bri").value=Math.round(S.bri*100);loop()}
+  $("sceneseg").addEventListener("click",function(e){var s=e.target.getAttribute("data-s");if(s===null)return;setScene(+s)});
+  $("lon").addEventListener("click",function(){setOn(!S.on)});
+  $("bri").addEventListener("input",function(){S.bri=this.value/100;loop()});
+  $("spd").addEventListener("input",function(){S.spd=this.value/100;loop()});
+
+  // power
+  $("price").addEventListener("input",function(){var v=parseFloat(this.value);if(v>0&&v<=1){S.price=v;render()}});
+
+  // stream deck
+  var SC=["linear-gradient(90deg,#ff4d12,#ffb347)","linear-gradient(90deg,#2fd6a3,#6a5cff)","linear-gradient(90deg,#1fb6d6,#2b4fd6)","linear-gradient(90deg,#f33,#fc3,#3d6,#39f,#c3f)"];
+  var DK=[],dkEls=[],dkLive=[];
+  ["Ember","Aurora","Ocean","Rainbow"].forEach(function(n,i){DK.push({l:n,sub:SC[i],on:function(){return S.on&&S.scene===i},go:function(){setScene(i);setOn(true);return"lights scene "+n}})});
+  DK.push({l:"Lights",ic:"i-lights",on:function(){return S.on},go:function(){setOn(!S.on);return"lights "+(S.on?"on":"off")}});
+  DK.push({l:"Dimmer",ic:"i-lights",go:function(){setBri(S.bri-.15);return"brightness "+rnd(S.bri*100)+"%"}});
+  DK.push({l:"Brighter",ic:"i-lights",go:function(){setBri(S.bri+.15);return"brightness "+rnd(S.bri*100)+"%"}});
+  [1,2,3,4].forEach(function(m){DK.push({l:NAMES[m],ic:"i-fans",on:function(){return eff()===m},go:function(){S.mode=m;if(S.game>=0)S.saved=m;sync();return"fan mode "+NAMES[m]}})});
+  DK.push({l:"CPU",live:0});DK.push({l:"GPU",live:1,g:1});DK.push({l:"Fans",live:2});
+  DK.push({l:"Open Ember",ic:"i-dash",go:function(){show("dash");return"opening Ember on the Dashboard"}});
+  var deck=$("deck");
+  DK.forEach(function(d){
+    var b=document.createElement("button");b.type="button";b.className="dk"+(d.live!==undefined?" live"+(d.g?" g":""):"");
+    if(d.sub){var s=document.createElement("i");s.style.background=d.sub;b.appendChild(s)}
+    if(d.ic){b.innerHTML='<svg class="ico"><use href="#'+d.ic+'"/></svg>'}
+    if(d.live!==undefined){var v=document.createElement("b");v.textContent="0";b.appendChild(v);dkLive.push(v)}
+    b.appendChild(document.createTextNode(d.l));
+    b.addEventListener("click",function(){
+      b.classList.add("hit");setTimeout(function(){b.classList.remove("hit")},220);
+      $("dkl").innerHTML="";var r=d.go?d.go():"live reading, "+(d.l==="Fans"?"fan speed":d.l+" temperature");
+      var bb=document.createElement("b");bb.textContent=d.l;$("dkl").appendChild(document.createTextNode("Pressed "));$("dkl").appendChild(bb);$("dkl").appendChild(document.createTextNode(": "+r+"."));
+    });
+    deck.appendChild(b);dkEls.push(b);
+  });
+
+  // schedule and alerts
+  function sw(id,fn){var e=$(id);e.addEventListener("click",function(){var v=e.getAttribute("aria-checked")!=="true";e.setAttribute("aria-checked",String(v));fn(v)})}
+  sw("schon",function(v){S.sched=v;sync()});sw("hoton",function(v){S.hoton=v;S.hotN=0;S.hotFired=false});sw("stopon",function(v){S.stopon=v;S.stopFired=false});
+  $("hour").addEventListener("input",function(){S.hour=+this.value;sync()});
+  $("thr").addEventListener("input",function(){S.thr=+this.value;S.hotFired=false;S.hotN=0;sync()});
+  $("killfan").addEventListener("click",function(){S.fail=!S.fail;this.setAttribute("aria-pressed",String(S.fail));this.textContent=S.fail?"Restart fan #2":"Stop fan #2";render()});
+
+  // specs: a made-up PC, read once and again on Refresh
+  var SPECS=[["Processor",[["AMD Ryzen 7 7700","8 cores, 16 threads, up to 5.3 GHz"]]],["Graphics card",[["NVIDIA GeForce RTX 4070","12 GB graphics memory"]]],["Memory",[["32 GB DDR5","2 sticks of 16 GB at 6000 MT/s"]]],
+    ["Drives",[["NVMe SSD 1 TB","412 GB free of 931 GB","Health: Good","ok"],["SATA SSD 2 TB","1.4 TB free of 1.8 TB","Health: Good","ok"],["Hard drive 4 TB","210 GB free of 3.6 TB · almost full","Health: Good","warn"]]],
+    ["Displays",[["Main display","2560 x 1440 at 165 Hz"],["Second display","1920 x 1080 at 60 Hz"]]],["Windows",[["Windows 11 Pro","Version 24H2"]]]];
+  var sbox=$("specs"),stxt="";
+  SPECS.forEach(function(g){var d=document.createElement("div");d.className="sg";var h=document.createElement("h5");h.textContent=g[0];d.appendChild(h);stxt+=g[0]+"\n";
+    g[1].forEach(function(r){var row=document.createElement("div");row.className="rowt";var l=document.createElement("div");l.appendChild(document.createTextNode(r[0]));var sm=document.createElement("small");sm.textContent=r[1];l.appendChild(sm);row.appendChild(l);
+      if(r[2]){var b=document.createElement("b");b.className=r[3];b.textContent=r[2];row.appendChild(b)}d.appendChild(row);stxt+="  "+r[0]+", "+r[1]+(r[2]?", "+r[2]:"")+"\n"});sbox.appendChild(d)});
+  $("sprefresh").addEventListener("click",function(){sbox.classList.add("busy");$("spstat").textContent="Reading the specs...";setTimeout(function(){sbox.classList.remove("busy");$("spstat").textContent="Read just now. This PC is made up."},still?0:700)});
+  $("spcopy").addEventListener("click",function(){var ok=function(){$("spstat").textContent="Copied. Paste it into a support request or a problem report."},no=function(){$("spstat").textContent="This browser blocked copying. The real Ember copies the specs as text."};
+    try{navigator.clipboard.writeText(stxt).then(ok,no)}catch(e){no()}});
+
+  // settings
+  [].forEach.call(app.querySelectorAll("[data-tg]"),function(e){e.addEventListener("click",function(){e.setAttribute("aria-checked",String(e.getAttribute("aria-checked")!=="true"))})});
+  function pick(id,attr,fn){$(id).addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;var v=b.getAttribute(attr);[].forEach.call($(id).children,function(c){c.setAttribute("aria-pressed",String(c===b))});fn(v)})}
+  pick("startseg","data-st",function(){});
+  pick("themeseg","data-th",function(v){app.setAttribute("data-th",v)});
+  pick("accseg","data-ac",function(c){var st=app.style;st.setProperty("--ember",c);st.setProperty("--ember-hi","color-mix(in srgb,"+c+" 62%,#fff)");st.setProperty("--glow","color-mix(in srgb,"+c+" 25%,transparent)")});
+  $("sn").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;var v=b.getAttribute("data-sec");
+    [].forEach.call($("sn").children,function(c){c.setAttribute("aria-selected",String(c===b))});[].forEach.call(app.querySelectorAll(".sp"),function(p){p.classList.toggle("on",p.getAttribute("data-sec")===v)})});
+  $("upcheck").addEventListener("click",function(){$("upnote").textContent="Checking...";setTimeout(function(){$("upnote").textContent="You are up to date. Last checked just now."},still?0:900)});
+
+  // run the model only while the window is on screen
+  var timer=0;
+  function run(){if(inView&&!document.hidden){if(!timer)timer=setInterval(function(){tick();render()},700)}else{clearInterval(timer);timer=0}loop()}
+  for(var w=0;w<60;w++)tick();
+  S.hotFired=false;S.hotN=0;
+  sync();draw(performance.now());
+  if("IntersectionObserver"in window)new IntersectionObserver(function(en){inView=en[0].isIntersecting;run()},{threshold:.1}).observe(app);else{inView=true;run()}
+  document.addEventListener("visibilitychange",run);
+})();
+</script>
+<script>
+(function(){
+  var h=document.querySelector(".intro");if(!h||matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+  var w=document.createElement("div");w.className="pxs";w.setAttribute("aria-hidden","true");h.appendChild(w);
+  for(var i=0;i<22;i++){var p=document.createElement("i");p.className="px";var st=p.style;
+    st.setProperty("--x",(8+Math.random()*84).toFixed(1)+"%");st.setProperty("--s",(.25+Math.random()*.5).toFixed(2)+"rem");
+    st.setProperty("--t",(5+Math.random()*5).toFixed(1)+"s");st.setProperty("--d",(Math.random()*-9).toFixed(1)+"s");st.setProperty("--dx",((Math.random()-.5)*8).toFixed(1)+"rem");w.appendChild(p)}
 })();
 </script>
 <script id="ember-fx">
@@ -471,24 +1150,13 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
 </script>
 <script id="ember-consent">
 (function(){
-  // The site sets no cookies and runs no analytics or ads. The only optional storage is the visitor's own look settings.
+  // The site sets no cookies and runs no ads; visit counts use Cloudflare Web Analytics, which stores nothing on the device. The only optional storage is the visitor's own look settings.
+  // Cloudflare Web Analytics counts visits on the live site, and is skipped when the browser sends Do Not Track or Global Privacy Control.
+  if(navigator.doNotTrack!=="1"&&!navigator.globalPrivacyControl&&location.hostname==="emberpc.uk"){var cf=document.createElement("script");cf.defer=true;cf.src="https://static.cloudflareinsights.com/beacon.min.js";cf.setAttribute("data-cf-beacon",'{"token":"371f2343903a48ae8068264cb793c71a"}');document.head.appendChild(cf)}
   var C=window.emberConsent;if(!C)return;
-  var st=document.createElement("style");
-  st.textContent=".cb{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:60;width:min(26rem,calc(100vw - 32px));"+
-    "padding:1.25rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:1.25rem;background:var(--glass,rgba(18,13,11,.86));color:var(--fg,#fbece3);"+
-    "-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);"+
-    "font:400 .875rem/1.5 var(--display,system-ui,sans-serif);display:grid;gap:.75rem;transform:translateY(1.5rem);opacity:0;pointer-events:none;"+
-    "transition:opacity .35s,transform .6s cubic-bezier(.34,1.45,.5,1)}"+
-    ".cb.on{transform:none;opacity:1;pointer-events:auto}"+
-    ".cb h2{margin:0;font-size:1rem;letter-spacing:-.01em}.cb p{margin:0;color:var(--mute,#b49a8c)}.cb a{color:var(--fg,#fbece3);text-underline-offset:.15em}"+
-    ".cb .row{display:flex;gap:.5rem;flex-wrap:wrap}.cb button{flex:1 1 9rem;padding:.65rem 1rem;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.2));background:var(--card,#1d1512);color:var(--fg,#fbece3);"+
-    "font:600 .875rem var(--display,system-ui,sans-serif);cursor:pointer;touch-action:manipulation;transition:transform .45s cubic-bezier(.34,1.45,.5,1)}"+
-    ".cb button:active{transform:scale(.95);transition-duration:.08s}.cb button:focus-visible{outline:2px solid var(--ember,#ff5a1f);outline-offset:2px}"+
-    "@media (prefers-reduced-motion:reduce){.cb{transition:none}}";
-  document.head.appendChild(st);
   var b=document.createElement("div");b.className="cb";b.setAttribute("role","dialog");b.setAttribute("aria-labelledby","cbt");b.setAttribute("aria-live","polite");
   b.innerHTML='<h2 id="cbt">Your settings, your device</h2>'+
-    '<p>This site sets no cookies and has no analytics, ads or tracking. If you personalise the look, we can remember your choices on your device so they are still there next time. That is optional.</p>'+
+    '<p>This site sets no cookies and has no ads. It counts visits with Cloudflare Web Analytics, which stores nothing on your device and is skipped if your browser sends Do Not Track. If you personalise the look, we can remember your choices on your device so they are still there next time. That is optional.</p>'+
     '<p><a href="/privacy">Privacy and cookies</a></p>'+
     '<div class="row"><button type="button" data-v="no">No thanks</button><button type="button" data-v="yes">Remember my choices</button></div>';
   document.body.appendChild(b);
@@ -499,5 +1167,10 @@ footer{border-top:1px solid var(--line);padding-block:2rem 3rem;color:var(--mute
   if(!C.get())setTimeout(function(){show(true)},700);
 })();
 </script>
+<script src="/js/gsap-3.15.0.min.js" defer></script>
+<script src="/js/ScrollTrigger-3.15.0.min.js" defer></script>
+<script src="/js/lenis-1.3.27.min.js" defer></script>
+<script src="/js/fans.8fd389d969.js" defer></script>
+<script src="/js/motion.e834c67a41.js" defer></script>
 </body>
 </html>

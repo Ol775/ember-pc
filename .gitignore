@@ -8,3 +8,4 @@ third-party/openrgb/
 third-party/icue/
 dist/
 third-party/prereqs/
+.cloudflare/

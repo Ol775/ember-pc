@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Roadmap · Ember</title>
+<meta name="description" content="What Ember has shipped, what is being tested in beta, and what is planned next for the free Windows PC fan, lights and power app.">
+<link rel="canonical" href="https://emberpc.uk/roadmap">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#120d0b">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Ember">
+<meta property="og:title" content="Roadmap · Ember"><meta property="og:description" content="What Ember has shipped, what is being tested in beta, and what is planned next for the free Windows PC fan, lights and power app."><meta property="og:url" content="https://emberpc.uk/roadmap">
+<meta property="og:image" content="https://emberpc.uk/img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Ember dashboard showing CPU and GPU temperatures, fan mode and fan speeds"><meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Roadmap · Ember"><meta name="twitter:description" content="What Ember has shipped, what is being tested in beta, and what is planned next for the free Windows PC fan, lights and power app."><meta name="twitter:image" content="https://emberpc.uk/img/og.png">
+<link rel="preload" href="/fonts/geist-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script id="ember-theme">
+(function(){
+  // Site-wide look: theme, tint and accent chosen on the page are kept for every page of the site.
+  var K="ember-site-theme",CK="ember-consent",mem=null,root=document.documentElement,mq=matchMedia("(prefers-color-scheme:dark)"),
+      orig=root.getAttribute("data-theme"),def={mode:"system",tint:"warm",accent:null},touched=false;
+  function consent(){try{return localStorage.getItem(CK)}catch(e){return null}}
+  // choices persist on this device only after the visitor agrees; until then they last for the page view
+  var MODES=["system","dark","oled","light"],TINTS=["warm","neutral","cool"];
+  function clean(v){v=v&&typeof v==="object"?v:{};var o={};if(MODES.indexOf(v.mode)>-1)o.mode=v.mode;if(TINTS.indexOf(v.tint)>-1)o.tint=v.tint;o.accent=typeof v.accent==="string"&&/^#[0-9a-f]{6}$/i.test(v.accent)?v.accent:null;return o}
+  function load(){var base=Object.assign({},def);try{if(consent()==="yes"){var v=JSON.parse(localStorage.getItem(K));if(v)return Object.assign(base,clean(v))}}catch(e){}return Object.assign(base,clean(mem))}
+  function save(s){mem=s;try{if(consent()==="yes")localStorage.setItem(K,JSON.stringify(s))}catch(e){}}
+  var H={warm:20,neutral:0,cool:215},S={warm:28,neutral:3,cool:26};
+  var PAL=["--bg","--bg2","--card","--fg","--mute","--line","--glass"],ACC=["--ember","--ember-hi","--glow","--on-ember"];
+  function lum(hex){var m=/^#?([0-9a-f]{6})$/i.exec(hex);if(!m)return 0;var n=parseInt(m[1],16);return(.2126*(n>>16)+.7152*(n>>8&255)+.0722*(n&255))/255}
+  function apply(s){
+    var isDef=s.mode===def.mode&&s.tint===def.tint&&!s.accent;
+    if(isDef&&!touched)return;
+    touched=true;
+    if(root.hasAttribute("data-accent-only")){accent(s);return}
+    var dark=s.mode==="dark"||s.mode==="oled"||(s.mode==="system"&&(orig?orig==="dark":mq.matches));
+    if(s.mode==="system"){orig?root.setAttribute("data-theme",orig):root.removeAttribute("data-theme")}
+    else root.setAttribute("data-theme",dark?"dark":"light");
+    var st=root.style,h=H[s.tint]||20,sat=S[s.tint]||28,oled=s.mode==="oled";
+    if(s.tint==="warm"&&!oled){PAL.forEach(function(v){st.removeProperty(v)})}
+    else{
+      var bg,bg2,card;
+      if(dark){bg=oled?"#000":"hsl("+h+" "+sat+"% 6%)";bg2=oled?"#0d0d0d":"hsl("+h+" "+sat+"% 9%)";card=oled?"#121212":"hsl("+h+" "+sat+"% 11%)";
+        st.setProperty("--fg","hsl("+h+" "+Math.min(55,sat*2)+"% 95%)");st.setProperty("--mute","hsl("+h+" "+Math.min(18,sat)+"% 66%)");st.setProperty("--line","hsl("+h+" 40% 85% / .12)")}
+      else{bg="hsl("+h+" "+Math.round(sat*.9)+"% 95%)";bg2="hsl("+h+" "+Math.round(sat*.8)+"% 91%)";card="#fff";
+        st.setProperty("--fg","hsl("+h+" "+(sat+10)+"% 10%)");st.setProperty("--mute","hsl("+h+" 10% 40%)");st.setProperty("--line","hsl("+h+" 40% 15% / .12)")}
+      st.setProperty("--bg",bg);st.setProperty("--bg2",bg2);st.setProperty("--card",card);
+      st.setProperty("--glass",bg.charAt(0)==="#"?"rgba(0,0,0,.72)":bg.replace(")"," / .72)"));
+    }
+    accent(s);
+  }
+  function accent(s){var st=root.style;
+    if(s.accent){var a=s.accent;
+      st.setProperty("--ember",a);st.setProperty("--ember-hi","color-mix(in srgb,"+a+" 62%,#fff)");
+      st.setProperty("--glow","color-mix(in srgb,"+a+" 24%,transparent)");st.setProperty("--on-ember",lum(a)>.62?"#1a0c06":"#fff");
+    }else ACC.forEach(function(v){st.removeProperty(v)});
+  }
+  var api=window.emberTheme={def:def,get:load,
+    set:function(p){var s=Object.assign(load(),clean(Object.assign({},load(),p)));save(s);apply(s);return s},
+    reset:function(){save(Object.assign({},def));apply(Object.assign({},def));return Object.assign({},def)}};
+  window.emberConsent={get:consent,set:function(v){try{localStorage.setItem(CK,v)}catch(e){}
+    if(v==="yes")save(load());else{try{localStorage.removeItem(K)}catch(e){}}
+    document.dispatchEvent(new Event("ember-consent"))}};
+  mq.addEventListener&&mq.addEventListener("change",function(){var s=load();if(s.mode==="system")apply(s)});
+  apply(load());
+})();
+</script>
+<style id="ember-fx-css">
+/* motion shared by every page: all of it starts from a visible resting state */
+@keyframes fxUp{from{opacity:0;transform:translateY(1.4rem)}}
+@keyframes fxFade{from{opacity:0}}
+@keyframes fxDraw{from{stroke-dashoffset:1}}
+.fx-in{animation:fxUp .9s var(--spring,cubic-bezier(.34,1.45,.5,1)) both;animation-delay:calc(var(--d,0)*90ms)}
+.fx-hide{opacity:0;transform:translateY(1.4rem)}
+.fx-rv{transition:opacity .7s ease,transform .9s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+.fx-show{opacity:1!important;transform:none!important}
+nav .bar,nav>.bar{transition:box-shadow .35s,background .35s,border-color .35s}
+nav.scrolled .bar{box-shadow:0 1rem 2.5rem -1rem rgba(0,0,0,.6);border-color:color-mix(in srgb,var(--ember) 22%,var(--line,rgba(255,255,255,.12)))}
+.fx-draw{stroke-dasharray:1;stroke-dashoffset:0;animation:fxDraw 1.6s cubic-bezier(.4,0,.2,1) both}
+.fx-grow{transform-origin:left;animation:fxGrow 1.1s var(--spring,cubic-bezier(.34,1.45,.5,1)) both}
+@keyframes fxGrow{from{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.fx-in,.fx-draw,.fx-grow{animation:none!important}.fx-hide{opacity:1;transform:none}}
+/* phones: never scroll sideways, and the bar keeps to what fits */
+html{overflow-x:hidden}
+body{overflow-x:clip}
+.navbtn{display:none;flex:none;width:2.5rem;height:2.5rem;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;place-items:center;touch-action:manipulation;transition:transform .45s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+.navbtn:active{transform:scale(.9);transition-duration:.08s}
+.navbtn .nb{display:block;width:1rem;height:.5rem;background:linear-gradient(currentColor,currentColor) 0 0/100% 2px no-repeat,linear-gradient(currentColor,currentColor) 0 100%/100% 2px no-repeat;transition:transform .4s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+nav.open .navbtn{color:var(--ember)}nav.open .navbtn .nb{transform:scaleY(.4)}
+@media (max-width:560px){
+  nav .bar{gap:.5rem!important;padding:0 .5rem 0 1rem!important}
+  nav .brand{font-size:1rem}
+  nav .navbtn{display:grid;margin-left:auto}
+  nav .bar>.btn{padding:.5rem 1rem!important}
+  nav .links{position:absolute;top:calc(100% + .5rem);left:0;right:0;margin:0;padding:.5rem;flex-direction:column;gap:.125rem;border:1px solid var(--line);border-radius:1.25rem;
+    background:var(--bg2);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);
+    opacity:0;transform:translateY(-.5rem) scale(.98);pointer-events:none;transition:opacity .25s,transform .45s var(--spring,cubic-bezier(.34,1.45,.5,1))}
+  nav.open .links{opacity:1;transform:none;pointer-events:auto}
+  nav .links a{display:block!important;padding:.8rem 1rem!important;font-size:1rem!important}
+  .cb{padding:.9rem!important;font-size:.78rem!important;gap:.4rem!important;border-radius:1rem!important}.cb h2{font-size:.9rem!important}.cb button{padding:.5rem .75rem!important;font-size:.8125rem!important;flex-basis:7rem!important}
+}
+.tabs{scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+@media (max-width:560px){.tabs{flex-wrap:wrap!important;width:auto!important;border-radius:1.25rem!important}.tabs button{padding:.45rem .85rem!important}}
+/* comfortable tap targets on touch screens */
+@media (pointer:coarse),(max-width:560px){
+  footer a,.legal-links a{display:inline-flex;align-items:center;min-height:2.75rem}
+  summary{min-height:2.75rem;align-items:center}
+  nav .brand{min-height:2.75rem}
+}
+.cb{background:color-mix(in srgb,var(--bg) 95%,transparent)!important}
+/* cookie banner */
+.cb{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:60;width:min(26rem,calc(100vw - 32px));padding:1.25rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:1.25rem;color:var(--fg,#fbece3);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);font:400 .875rem/1.5 var(--display,system-ui,sans-serif);display:grid;gap:.75rem;transform:translateY(1.5rem);opacity:0;pointer-events:none;transition:opacity .35s,transform .6s cubic-bezier(.34,1.45,.5,1)}
+.cb.on{transform:none;opacity:1;pointer-events:auto}
+.cb h2{margin:0;font-size:1rem;letter-spacing:-.01em}.cb p{margin:0;color:var(--mute,#b49a8c)}.cb a{color:var(--fg,#fbece3);text-underline-offset:.15em}
+.cb .row{display:flex;gap:.5rem;flex-wrap:wrap}.cb button{flex:1 1 9rem;padding:.65rem 1rem;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.2));background:var(--card,#1d1512);color:var(--fg,#fbece3);font:600 .875rem var(--display,system-ui,sans-serif);cursor:pointer;touch-action:manipulation;transition:transform .45s cubic-bezier(.34,1.45,.5,1)}
+.cb button:active{transform:scale(.95);transition-duration:.08s}.cb button:focus-visible{outline:2px solid var(--ember,#ff5a1f);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.cb{transition:none}}
+/* smooth scroll (Lenis), reading progress, spotlight cards, shiny headline, word reveal */
+html.lenis-on,html.lenis-on body{height:auto}
+html.lenis-on{scroll-behavior:auto!important}
+.lenis-on [data-lenis-prevent]{overscroll-behavior:contain}
+.prog{position:fixed;left:0;top:0;right:0;height:2px;z-index:60;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--ember),var(--ember-hi));pointer-events:none}
+.spl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s;background:radial-gradient(16rem circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--ember) 15%,transparent),transparent 65%)}
+*:hover>.spl{opacity:1}
+.shiny{background:linear-gradient(110deg,var(--fg) 42%,var(--ember-hi) 50%,var(--fg) 58%) 100% 0/250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shiny 5s linear infinite}
+@keyframes shiny{to{background-position:-100% 0}}
+.wd{display:inline-block;will-change:transform}
+@media (prefers-reduced-motion:reduce){.shiny{animation:none;background:none;color:inherit}.prog{display:none}}
+.skip{position:fixed;left:1rem;top:-4rem;z-index:80;padding:.7rem 1.1rem;border-radius:999px;background:var(--ember);color:var(--on-ember,#1a0c06);font:600 .9375rem var(--display,sans-serif);text-decoration:none;transition:top .2s}.skip:focus{top:max(1rem,env(safe-area-inset-top,0px))}
+#main:focus{outline:none}
+/* ember atmosphere on every page: a slow glow and sparks rising behind the content */
+html.embers-on{background:var(--bg)}html.embers-on body{background:transparent}
+.emb{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.emb .gl{position:absolute;left:50%;top:-14rem;width:70rem;max-width:140vw;height:34rem;transform:translateX(-50%);background:radial-gradient(closest-side,var(--glow),transparent 72%);animation:embglow 8s ease-in-out infinite}
+@keyframes embglow{50%{opacity:.5;transform:translateX(-50%) scale(1.1)}}
+.emb i{position:absolute;bottom:-1rem;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#ffd9a0,var(--ember) 60%,transparent 72%);opacity:0;animation:embrise var(--t) linear var(--d) infinite}
+@keyframes embrise{0%{opacity:0;transform:translate(0,0) scale(1)}10%{opacity:.7}85%{opacity:.25}100%{opacity:0;transform:translate(var(--dx),-108vh) scale(.2)}}
+.brand svg{filter:drop-shadow(0 0 .45rem var(--glow));animation:brandglow 4.5s ease-in-out infinite}
+@keyframes brandglow{50%{filter:drop-shadow(0 0 .9rem var(--glow))}}
+@media (prefers-reduced-motion:reduce){.emb{display:none}.brand svg{animation:none}}
+
+/* fans */
+.fan{display:block;color:var(--ember);fill:currentColor;will-change:transform}.fan.t{color:var(--teal)}
+.fanwall{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
+.fw{display:grid;justify-items:center;gap:.45rem;font:500 .6875rem var(--mono);color:var(--mute);text-align:center}
+.fw .fan{width:min(5.2rem,100%);height:auto;aspect-ratio:1;filter:drop-shadow(0 0 1rem var(--glow))}
+.fw b{color:var(--fg);font-weight:600;font-size:.8125rem}
+.fan-sm{width:1.15rem;height:1.15rem;flex:none}
+@media (max-width:560px){.fanwall{gap:.5rem}.fw{font-size:.5625rem}.fw b{font-size:.6875rem}}
+.legal-links{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;margin-top:1rem;font-size:.8125rem}.legal-links a{color:var(--mute);text-underline-offset:.18em}.legal-links a:hover{color:var(--fg)}
+.prose ul,.prose ol{margin:.8rem 0 0;padding-left:1.25rem;color:var(--mute)}.prose li{margin-top:.45rem;text-wrap:pretty}.prose li b{color:var(--fg)}.prose h3{font-size:1.0625rem;margin-top:1.75rem;letter-spacing:-.01em}.prose pre{margin-top:1rem;padding:1rem;overflow-x:auto;background:var(--bg2);border:1px solid var(--line);border-radius:1rem;font-size:.8125rem}.prose pre code{background:none;padding:0}.prose details{margin-top:1rem;border:1px solid var(--line);border-radius:1rem;padding:.75rem 1rem}.prose summary{cursor:pointer;color:var(--fg)}.prose h2[id],.prose h3[id]{scroll-margin-top:5rem}
+</style>
+
+<style>
+/* Layout: one readable column. Same tokens as the main page. */
+:root{
+  --bg:#f6f1ee; --bg2:#ece4df; --card:#ffffff; --fg:#1d1411; --mute:#6d5f58; --line:rgba(40,20,10,.12);
+  --ember:#e8470f; --ember-hi:#ff7a3d; --on-ember:#fff; --teal:#12a39a; --glow:rgba(255,90,31,.16); --glass:rgba(246,241,238,.72);
+  --display:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --spring:cubic-bezier(.34,1.45,.5,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#120d0b; --bg2:#1a1210; --card:#1d1512; --fg:#fbece3; --mute:#b49a8c; --line:rgba(255,200,170,.12);
+  --ember:#ff5a1f; --ember-hi:#ffb347; --on-ember:#1a0c06; --teal:#3dd6c8; --glow:rgba(255,90,31,.22); --glass:rgba(18,13,11,.72); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#120d0b; --bg2:#1a1210; --card:#1d1512; --fg:#fbece3; --mute:#b49a8c; --line:rgba(255,200,170,.12);
+  --ember:#ff5a1f; --ember-hi:#ffb347; --on-ember:#1a0c06; --teal:#3dd6c8; --glow:rgba(255,90,31,.22); --glass:rgba(18,13,11,.72); color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 1.0625rem/1.55 var(--display);-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:25;background:var(--bg)}
+a{color:inherit}
+h1,h2,h3,p{margin:0;text-wrap:balance}
+.wrap{max-width:68rem;margin-inline:auto}
+.eyebrow{font:500 .75rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ember)}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;max-width:58rem;margin:1rem auto 0}
+nav .bar{display:flex;align-items:center;gap:1.5rem;height:3.5rem;padding:0 .5rem 0 1.25rem;border:1px solid var(--line);border-radius:999px;white-space:nowrap;
+  background:var(--glass);-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);box-shadow:0 .75rem 2rem -1rem rgba(0,0,0,.45)}
+.brand{display:flex;align-items:center;gap:.55rem;font-weight:650;letter-spacing:-.02em;text-decoration:none;flex:none}
+.brand svg{width:1.5rem;height:1.5rem}
+.links{display:flex;gap:.125rem;margin-inline:auto;font-size:.875rem;font-weight:500;color:var(--mute)}
+.links a{text-decoration:none;padding:.45rem .8rem;border-radius:999px;transition:color .2s,background .3s}
+.links a:hover{color:var(--fg)}
+.links a.cur{color:var(--fg);background:var(--bg2)}
+@media (max-width:640px){.links a:not(.keep){display:none}}
+.btn{display:inline-flex;align-items:center;padding:.55rem 1.15rem;border-radius:999px;border:1px solid var(--line);font:600 .875rem/1.2 var(--display);text-decoration:none;color:var(--fg);background:var(--card);
+  transition:transform .45s var(--spring);touch-action:manipulation;flex:none}
+.btn:active{transform:scale(.95);transition-duration:.08s}
+.btn.pri{background:linear-gradient(180deg,var(--ember-hi),var(--ember));color:var(--on-ember);border-color:transparent;box-shadow:0 .5rem 1.6rem -.4rem var(--glow),inset 0 1px 0 rgba(255,255,255,.35)}
+:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:.5rem}
+
+header.top{position:relative;padding-block:clamp(3.5rem,9vw,6.5rem) 2rem}
+header.top::before{content:"";position:absolute;inset:-5rem -50vw auto;height:34rem;z-index:-1;background:radial-gradient(36rem 20rem at 30% 20%,var(--glow),transparent 70%)}
+h1{font-size:clamp(2.6rem,8vw,5.5rem);line-height:1;letter-spacing:-.045em;font-weight:700;margin-top:1rem}
+.lede{font-size:clamp(1.1rem,2.2vw,1.4rem);color:var(--mute);max-width:38rem;margin-top:1.25rem;letter-spacing:-.012em}
+.stats{display:flex;flex-wrap:wrap;gap:2rem 3rem;margin-top:2rem}
+.stats div{display:grid}
+.stats b{font:500 2.4rem/1 var(--mono);letter-spacing:-.05em;color:var(--ember)}
+.stats small{font:500 .6875rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-top:.4rem}
+
+.tabs{display:flex;gap:.25rem;padding:.25rem;border-radius:999px;background:var(--bg2);border:1px solid var(--line);width:max-content;max-width:100%;overflow-x:auto;margin-top:2.5rem}
+.tabs button{border:0;background:none;color:var(--mute);font:500 .875rem var(--display);padding:.5rem 1rem;border-radius:999px;cursor:pointer;white-space:nowrap;touch-action:manipulation;transition:color .2s,background .35s var(--spring)}
+.tabs button span{font:500 .6875rem var(--mono);opacity:.7;margin-left:.3rem}
+.tabs button[aria-selected="true"]{background:linear-gradient(180deg,var(--ember-hi),var(--ember));color:var(--on-ember)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:1rem;margin-top:1.5rem}
+@keyframes in{from{opacity:0;transform:translateY(.8rem) scale(.98)}}
+.card{position:relative;display:grid;gap:.5rem;align-content:start;padding:1.35rem;border:1px solid var(--line);border-radius:1.4rem;background:var(--card);
+  animation:in .6s var(--spring) both;animation-delay:calc(var(--k)*24ms);transition:transform .45s var(--spring),border-color .3s,box-shadow .3s}
+.card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--ember) 45%,var(--line));box-shadow:0 1.5rem 3rem -1.5rem var(--glow)}
+.card.hide{display:none}
+.logo{width:3.5rem;height:3.5rem;border-radius:1rem;display:grid;place-items:center;color:var(--fg);
+  background:linear-gradient(145deg,color-mix(in srgb,var(--ember) 14%,var(--bg2)),var(--bg2));border:1px solid var(--line)}
+.logo svg{width:1.7rem;height:1.7rem;fill:currentColor}
+.logo b{font:600 1.05rem var(--mono);letter-spacing:-.03em;color:var(--ember)}
+.meta{display:flex;align-items:center;gap:.5rem;margin-top:.6rem}
+.kind{font:500 .625rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.meta em{font:500 .5938rem var(--mono);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--ember);border:1px solid color-mix(in srgb,var(--ember) 35%,var(--line));border-radius:999px;padding:.1rem .45rem}
+.meta em.ro{color:var(--teal);border-color:color-mix(in srgb,var(--teal) 35%,var(--line))}
+.card h3{font-size:1.25rem;letter-spacing:-.02em}
+.card p{color:var(--mute);font-size:.9375rem;line-height:1.45}
+.acct{margin-top:.4rem;padding-top:.75rem;border-top:1px solid var(--line);font:500 .75rem var(--mono);color:var(--mute)}
+.acct::before{content:"";display:inline-block;width:.45rem;height:.45rem;border-radius:50%;background:var(--teal);margin-right:.5rem}
+
+.more{margin-top:3rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media (max-width:760px){.more{grid-template-columns:1fr}}
+.panel{border:1px solid var(--line);border-radius:1.4rem;background:var(--card);padding:1.5rem;display:grid;gap:.6rem;align-content:start}
+.panel p{color:var(--mute)}
+.panel h2{font-size:1.5rem;letter-spacing:-.03em}
+.note{margin-top:2rem;font-size:.8125rem;color:var(--mute);max-width:46rem}
+footer{border-top:1px solid var(--line);margin-top:4rem;padding-block:2rem 3rem;color:var(--mute);font-size:.875rem}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+.prose{max-width:46rem;overflow-wrap:anywhere;padding-block:clamp(3rem,8vw,5rem) 2rem}.prose h1{font-size:clamp(2.2rem,6vw,3.4rem);letter-spacing:-.04em;margin-top:.75rem}.prose h2{font-size:1.35rem;letter-spacing:-.02em;margin-top:2.25rem}.prose p{margin-top:.8rem;color:var(--mute);text-wrap:pretty}.prose p b{color:var(--fg)}.prose a{color:var(--fg);text-underline-offset:.18em;text-decoration-color:var(--ember)}.prose .lede{color:var(--fg);font-size:1.1875rem;max-width:none;margin-top:1.25rem}.upd{margin-top:.6rem;font:500 .75rem var(--mono);color:var(--mute);letter-spacing:.04em}.tbl{overflow-x:auto;margin-top:1rem;border:1px solid var(--line);border-radius:1rem}table{border-collapse:collapse;width:100%;min-width:38rem;font-size:.875rem}th,td{text-align:left;padding:.75rem 1rem;vertical-align:top;border-bottom:1px solid var(--line);color:var(--mute)}th{font:500 .6875rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}tr:last-child td{border-bottom:0}code{font:500 .85em var(--mono);color:var(--fg);background:var(--bg2);padding:.1em .4em;border-radius:.4em}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fan" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" stroke-width="3" opacity=".55"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(0.00 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(51.43 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(102.86 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(154.29 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(205.71 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(257.14 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(308.57 50 50)"/><circle cx="50" cy="50" r="11" fill="var(--bg2,#17100d)"/><circle cx="50" cy="50" r="5" fill="currentColor"/></symbol></svg>
+<a class="skip" href="#main">Skip to content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff4d12"/><stop offset="1" stop-color="#ffb347"/></linearGradient>
+  <linearGradient id="core" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffc15a"/><stop offset="1" stop-color="#fff1c9"/></linearGradient>
+  <symbol id="mark" viewBox="0 0 256 256">
+    <path d="M128 30 C152 66 198 90 198 148 C198 190 167 222 128 222 C89 222 58 190 58 148 C58 120 73 100 88 85 C92 106 102 119 115 123 C104 86 116 58 128 30 Z" fill="url(#flame)"/>
+    <path d="M128 116 C141 138 166 149 166 178 C166 199 149 212 128 212 C107 212 90 199 90 178 C90 163 99 153 108 144 C112 155 118 160 125 160 C120 143 122 130 128 116 Z" fill="url(#core)"/>
+  </symbol></defs></svg>
+
+<div class="wrap">
+  <nav><div class="bar">
+    <a class="brand" href="/"><svg><use href="#mark"/></svg>Ember</a>
+    <div class="links"><a href="/">Home</a><a class="keep" href="/demo">Demo</a><a class="keep" href="/integrations">Integrations</a><a href="/#roadmap">Roadmap</a><a class="keep" href="/#install">Install</a></div>
+    <a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download</a>
+  </div></nav>
+
+  <main id="main" tabindex="-1" class="prose">
+<p class="eyebrow">Docs</p>
+<h1>Roadmap</h1>
+<p class="lede">What has shipped and what is next.</p>
+<p>Where Ember is and where it is going. Done work is folded away at the bottom. See <a href="/changelog">CHANGELOG.md</a> for what changed in each version. Plans can change.</p>
+<h2 id="being-checked-on-real-hardware">Being checked on real hardware</h2>
+<ul>
+<li>WiZ, LIFX, Yeelight, Kasa and Shelly (new, marked Beta): written from the makers' documented local protocols and tested against simulated devices only; no one has tried them on real hardware yet</li>
+<li>Nanoleaf, Razer Chroma, Meross and Tapo (marked Beta in every build): written and unit-tested, but not yet tried on enough real devices</li>
+<li>Game detection (Beta, in the production build behind Experimental features) and GPU fan control (beta builds only): working on the test PC, to be tried on other PCs and graphics cards before they leave Experimental</li>
+<li>Scheduled fan modes and scenes, and Windows alerts for a hot part or a stopped fan (beta builds only)</li>
+<li>The new look, gradient layers, game covers and last played, and renaming devices: tried in a simulation and partly on the test PC, not yet on other PCs</li>
+<li>Logitech G keys and badge (beta.3): the keyboard and G keys staying lit together after updating, and the badge on its own</li>
+<li>Stream Deck plugin (beta builds only): hold actions, the readout keys, and Update and Remove from the Devices page</li>
+<li>Per-key keyboard layouts and Govee segments on more keyboards and lamps</li>
+<li>A clean install on a PC that never had Ember</li>
+</ul>
+<h2 id="next">Next</h2>
+<ul>
+<li>Take Nanoleaf, Razer Chroma, Meross, Tapo and game detection out of Beta, and bring GPU fan control into the production build, once the hardware checks above are done</li>
+<li>Razer devices: only show the ones that are plugged in, once Synapse offers a way to tell (waiting on Razer)</li>
+<li>Windows Dynamic Lighting (the built-in Windows lighting standard) as another source of devices: waiting on Windows, which lets only the foreground app (or an app Windows lists for background control) drive the lamps, and a tray app is neither</li>
+</ul>
+<h2 id="later-ideas-no-promise">Later (ideas, no promise)</h2>
+<ul>
+<li>More fan sources, such as other fan controllers, if their makers publish a way to talk to them</li>
+<li>Code signing, so Windows stops warning about an unknown publisher and Smart App Control stops blocking Ember</li>
+</ul>
+<h2 id="works-through-openrgb">Works through OpenRGB</h2>
+<p>ASUS, MSI, Gigabyte, ASRock, HyperX, SteelSeries and many other brands show up in Ember when OpenRGB supports them and their own software (iCUE, Armoury Crate and so on) is closed. They need no extra code in Ember.</p>
+<h2 id="not-planned">Not planned</h2>
+<ul>
+<li>Overclocking or voltage control</li>
+<li>Cloud accounts or telemetry</li>
+</ul>
+<h2 id="done">Done</h2>
+<h3 id="monitoring-and-fans">Monitoring and fans</h3>
+<ul>
+<li>Live sensor dashboard with history</li>
+<li>Fan modes: Super quiet, Quiet, Normal, Performance, Extreme, and Manual curves with an editor</li>
+<li>Safety rules, header testing, conflict detection, watchdog service, stall recovery for fans that stop at low speed</li>
+<li>AI assist: learns your temperatures and noise preference to suggest a curve you approve</li>
+<li>Experimental game detection and GPU fan control, made to suit a graphics card</li>
+<li>A Power page: CPU, GPU, motherboard and the rest, and other plugs, with a wall plug (Meross, Tapo, Kasa or Shelly, read only) for the whole PC, a choice of currency, and a CSV export of the daily figures</li>
+<li>The redesigned look in every build, and a tray tooltip with the temperatures and the draw</li>
+<li>A Games page that scans Steam, Epic, GOG, Ubisoft Connect and the EA app, with a fan mode per game (off by default)</li>
+<li>A schedule for fan modes and lights (for example quiet fans and dim lights at night), and Windows notifications for a hot part or a stopped fan (beta)</li>
+<li>A Specs page with S.M.A.R.T. drive health, a Power cost estimate with a daily and monthly split, and a last played date and cover for each game (beta)</li>
+</ul>
+<h3 id="lighting">Lighting</h3>
+<ul>
+<li>Lighting through OpenRGB and Govee (LAN and cloud), layered effects, scenes, screen sync, music-reactive effects</li>
+<li>Logitech G keyboards and mice through G HUB, per key, with the programmable G keys and the LIGHTSPEED badge as a device of their own</li>
+<li>Corsair devices through iCUE (keep iCUE up to date)</li>
+<li>A Stream Deck plugin (beta): keys for scenes, lights, brightness, fan mode and live temperature and fan readouts</li>
+<li>Philips Hue lights through the bridge, Nanoleaf light panels through the controller, Razer Chroma through Synapse, Meross and Tapo bulbs on the local network</li>
+<li>Scenes and manual fan curves as shareable files, and a compact always-on-top window</li>
+<li>A lighting scene per game next to the fan mode per game, global hotkeys (Ctrl+Alt+Shift with L, S and F), Nanoleaf panels laid out as they sit on the wall, the G keys device only on keyboards that have G keys, and no second listing of a keyboard G HUB already drives</li>
+<li>WiZ, LIFX, Yeelight and Kasa bulbs, found on the local network with no account (beta)</li>
+<li>Per-LED painting, gradients, rainbow, import and export, a paint library, and paint for several devices at once</li>
+<li>Effects: spectrum bars, ripples, reactive keys, key highlight, fire, rain, and an effect per key group</li>
+<li>Own lighting for one device, switching a device off, and arranging devices on the canvas</li>
+<li>Govee segments and segment detection, and Govee over a VPN</li>
+</ul>
+<h3 id="the-app">The app</h3>
+<ul>
+<li>Themes: dark, OLED black, light and match Windows, with colour schemes, accent colours and highlight strength</li>
+<li>Tray icon, keep running in the tray, and start minimised</li>
+<li>Update checker with Stable and Beta channels, and Update now with a checksum</li>
+<li>Changelog, roadmap, terms, privacy and third-party notices inside the app</li>
+</ul>
+<h3 id="the-project">The project</h3>
+<ul>
+<li>An installer with terms, runtimes included, upgrade and uninstall from Windows</li>
+<li>Continuous integration builds and a release workflow</li>
+<li>The first production release, 1.0.0, with beta builds continuing alongside it</li>
+<li>The repository is public, with a safety audit and cleaned history</li>
+</ul>
+  </main>
+
+  <footer>Ember is free and open source under the MIT licence.<div class="legal-links"><a href="/changelog">Changelog</a><a href="/roadmap">Roadmap</a><a href="/install">Install guide</a><a href="/known-issues">Known issues</a><a href="https://github.com/Ol775/ember-pc/issues/new/choose">Report a bug</a><a href="/security">Security</a><a href="/licences">Open source licences</a><a href="/privacy">Privacy and cookies</a><a href="/terms">Terms and legal notices</a><a href="#" data-cookie-settings>Cookie settings</a></div></footer>
+</div>
+
+<script id="ember-fx">
+(function(){
+  var still=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  var $$=function(q,r){return [].slice.call((r||document).querySelectorAll(q))};
+  // nav picks up depth once you scroll
+  var nav=document.querySelector("nav");
+  function sc(){nav&&nav.classList.toggle("scrolled",scrollY>8)}
+  addEventListener("scroll",sc,{passive:true});sc();
+  var lk=nav&&nav.querySelector(".links");
+  if(lk){var mb=document.createElement("button");mb.type="button";mb.className="navbtn";mb.setAttribute("aria-label","Menu");mb.setAttribute("aria-expanded","false");mb.innerHTML="<span class=\"nb\"></span>";
+    nav.querySelector(".bar").insertBefore(mb,lk.nextSibling);
+    var tog=function(o){nav.classList.toggle("open",o);mb.setAttribute("aria-expanded",o)};
+    mb.addEventListener("click",function(){tog(!nav.classList.contains("open"))});
+    lk.addEventListener("click",function(e){if(e.target.closest("a"))tog(false)});
+    document.addEventListener("keydown",function(e){if(e.key==="Escape")tog(false)});
+    document.addEventListener("click",function(e){if(!nav.contains(e.target))tog(false)})}
+  if(still)return;
+
+  // entrance for the first screen, in reading order
+  var first=$$("header .eyebrow,header h1,header .tagline,header .lede,header .cta,header .pills,header .stats,header .win,.intro>*");
+  first.forEach(function(e,i){e.style.setProperty("--d",i);e.classList.add("fx-in")});
+
+  // scroll reveal for anything below the fold; what is already on screen stays put
+  var skip=".device,.win,.stage,.pin,.stop .card,.grid .card,.tile,.fx-in";
+  var sel=".head,.about,.pr>div,.card,.step,.fact,.build,.node,.panel,.num,.final,details,.shipped,.np,.led,.facts,.flow,.ww-note,.note";
+  var els=$$(sel).filter(function(e){return !e.closest(skip)&&!e.querySelector(".fx-in")});
+  // a parent that is revealed already covers its children
+  els=els.filter(function(e){return !els.some(function(p){return p!==e&&p.contains(e)&&["about","facts","flow","rm","led"].some(function(c){return p.classList.contains(c)})})});
+  var vh=innerHeight;
+  var below=els.filter(function(e){return e.getBoundingClientRect().top>vh*.92});
+  if("IntersectionObserver" in window){
+    below.forEach(function(e){e.classList.add("fx-hide","fx-rv")});
+    var batch=0,t;
+    var io=new IntersectionObserver(function(es){
+      es.filter(function(x){return x.isIntersecting}).forEach(function(x,i){
+        x.target.style.transitionDelay=Math.min(i,6)*70+"ms";x.target.classList.add("fx-show");io.unobserve(x.target)});
+    },{rootMargin:"0px 0px -8% 0px",threshold:.08});
+    below.forEach(function(e){io.observe(e)});
+  }
+
+  // numbers count up when they come into view
+  var nums=$$(".fact b,.num b,.stats b").filter(function(e){return /^\d+/.test(e.textContent)});
+  nums.forEach(function(e){
+    var m=/^(\d+)(.*)$/.exec(e.textContent.trim()),to=+m[1],tail=m[2];if(!to)return;
+    e.textContent=0+tail;
+    var go=function(){var t0=performance.now();(function f(t){var k=Math.min(1,(t-t0)/1100),v=1-Math.pow(1-k,3);e.textContent=Math.round(to*v)+tail;if(k<1)requestAnimationFrame(f)})(t0)};
+    if("IntersectionObserver" in window){var o=new IntersectionObserver(function(es){if(es[0].isIntersecting){o.disconnect();go()}},{threshold:.6});o.observe(e)}else e.textContent=to+tail;
+  });
+
+  // hero rings and chart fill in
+  $$(".win .ring").forEach(function(r,i){var p=+getComputedStyle(r).getPropertyValue("--p")||0,t0=performance.now()+250+i*120;
+    r.style.setProperty("--p",0);(function f(t){var k=Math.max(0,Math.min(1,(t-t0)/1200)),v=1-Math.pow(1-k,3);r.style.setProperty("--p",p*v);if(k<1)requestAnimationFrame(f)})(performance.now())});
+  $$(".win .chart path[fill=none]").forEach(function(p,i){p.setAttribute("pathLength","1");p.classList.add("fx-draw");p.style.animationDelay=.5+i*.25+"s"});
+  $$(".split i").forEach(function(b,i){b.classList.add("fx-grow");b.style.animationDelay=i*.15+"s"});
+  // draw the fan curve when a card scrolls in
+  var cl=document.getElementById("cline");
+  if(cl&&"IntersectionObserver" in window){var oc=new IntersectionObserver(function(es){if(es[0].isIntersecting){oc.disconnect();cl.setAttribute("pathLength","1");cl.classList.add("fx-draw")}},{threshold:.4});oc.observe(cl)}
+})();
+</script>
+<script id="ember-consent">
+(function(){
+  // The site sets no cookies and runs no ads; visit counts use Cloudflare Web Analytics, which stores nothing on the device. The only optional storage is the visitor's own look settings.
+  // Cloudflare Web Analytics counts visits on the live site, and is skipped when the browser sends Do Not Track or Global Privacy Control.
+  if(navigator.doNotTrack!=="1"&&!navigator.globalPrivacyControl&&location.hostname==="emberpc.uk"){var cf=document.createElement("script");cf.defer=true;cf.src="https://static.cloudflareinsights.com/beacon.min.js";cf.setAttribute("data-cf-beacon",'{"token":"371f2343903a48ae8068264cb793c71a"}');document.head.appendChild(cf)}
+  var C=window.emberConsent;if(!C)return;
+  var b=document.createElement("div");b.className="cb";b.setAttribute("role","dialog");b.setAttribute("aria-labelledby","cbt");b.setAttribute("aria-live","polite");
+  b.innerHTML='<h2 id="cbt">Your settings, your device</h2>'+
+    '<p>This site sets no cookies and has no ads. It counts visits with Cloudflare Web Analytics, which stores nothing on your device and is skipped if your browser sends Do Not Track. If you personalise the look, we can remember your choices on your device so they are still there next time. That is optional.</p>'+
+    '<p><a href="/privacy">Privacy and cookies</a></p>'+
+    '<div class="row"><button type="button" data-v="no">No thanks</button><button type="button" data-v="yes">Remember my choices</button></div>';
+  document.body.appendChild(b);
+  function show(on){b.classList.toggle("on",on);if(on)b.querySelector("button").focus({preventScroll:true})}
+  b.addEventListener("click",function(e){var v=e.target.getAttribute&&e.target.getAttribute("data-v");if(!v)return;C.set(v);show(false)});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&b.classList.contains("on"))show(false)});
+  document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-cookie-settings]");if(a){e.preventDefault();show(true)}});
+  if(!C.get())setTimeout(function(){show(true)},700);
+})();
+</script>
+<script src="/js/gsap-3.15.0.min.js" defer></script>
+<script src="/js/ScrollTrigger-3.15.0.min.js" defer></script>
+<script src="/js/lenis-1.3.27.min.js" defer></script>
+<script src="/js/fans.8fd389d969.js" defer></script>
+<script src="/js/motion.e834c67a41.js" defer></script>
+</body>
+</html>

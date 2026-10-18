@@ -3,13 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ember</title>
-<meta name="description" content="Ember is a free, open source Windows app that shows your PC's temperatures and power draw, runs your fans on quiet-to-extreme curves, and lights your RGB gear. Local only, no telemetry.">
+<title>Ember: PC fan, RGB lighting and power control for Windows</title>
+<meta name="description" content="Ember is a free, open source Windows app for PC temperatures, power draw, fan curves and RGB lighting. Local only, no telemetry.">
 <link rel="canonical" href="https://emberpc.uk/">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#120d0b">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Ember">
-<meta property="og:title" content="Ember"><meta property="og:description" content="Ember is a free, open source Windows app that shows your PC's temperatures and power draw, runs your fans on quiet-to-extreme curves, and lights your RGB gear. Local only, no telemetry."><meta property="og:url" content="https://emberpc.uk/">
+<meta property="og:title" content="Ember: PC fan, RGB lighting and power control for Windows"><meta property="og:description" content="Ember is a free, open source Windows app for PC temperatures, power draw, fan curves and RGB lighting. Local only, no telemetry."><meta property="og:url" content="https://emberpc.uk/">
+<meta property="og:image" content="https://emberpc.uk/img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Ember dashboard showing CPU and GPU temperatures, fan mode and fan speeds"><meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Ember: PC fan, RGB lighting and power control for Windows"><meta name="twitter:description" content="Ember is a free, open source Windows app for PC temperatures, power draw, fan curves and RGB lighting. Local only, no telemetry."><meta name="twitter:image" content="https://emberpc.uk/img/og.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Ember","url":"https://emberpc.uk/","description":"Ember is a free, open source Windows app for PC temperatures, power draw, fan curves and RGB lighting. Local only, no telemetry.","applicationCategory":"UtilitiesApplication","operatingSystem":"Windows 10, Windows 11","offers":{"@type":"Offer","price":"0","priceCurrency":"GBP"},"isAccessibleForFree":true,"codeRepository":"https://github.com/Ol775/ember-pc","sameAs":["https://github.com/Ol775/ember-pc"],"image":"https://emberpc.uk/img/og.png"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is Ember free?","acceptedAnswer":{"@type":"Answer","text":"Yes. It is open source under the MIT licence, with no accounts, no ads and no paid tier."}},{"@type":"Question","name":"Which versions of Windows does it need?","acceptedAnswer":{"@type":"Answer","text":"Windows 10 or 11 (x64) and administrator rights to install the services and the driver. The installer adds the .NET 8 runtime if it is missing."}},{"@type":"Question","name":"Which lights and devices does it work with?","acceptedAnswer":{"@type":"Answer","text":"Govee, Philips Hue, Nanoleaf, Razer Chroma, Logitech G HUB, Meross bulbs and light strips, and anything OpenRGB supports. Tapo and Meross plugs are read for power draw only. The integrations page lists them all."}},{"@type":"Question","name":"Why does the Power page say my motherboard has no sensor?","acceptedAnswer":{"@type":"Answer","text":"No motherboard reports how much power it uses. CPU and GPU report their own watts. For the rest, Ember reads a smart plug on your PC and subtracts CPU and GPU. Without a plug it shows CPU and GPU only."}},{"@type":"Question","name":"Why are some of my fans at 0 RPM in Super quiet?","acceptedAnswer":{"@type":"Answer","text":"Some fans stop below about 20% speed. Pick Quiet, or use Manual to set a higher minimum."}},{"@type":"Question","name":"Is it safe to run?","acceptedAnswer":{"@type":"Answer","text":"Fan control has unit tests and has been checked on one real PC, and the safety rules above are enforced in the service. Test one header at a time and watch your temperatures."}},{"@type":"Question","name":"Does it work on my motherboard?","acceptedAnswer":{"@type":"Answer","text":"It is built and tested on an MSI B550-A PRO. Other chips supported by LibreHardwareMonitor may work. The verification page lists what has been checked."}},{"@type":"Question","name":"Will it switch my smart plugs?","acceptedAnswer":{"@type":"Answer","text":"No. It only asks a plug what it is drawing."}},{"@type":"Question","name":"Does it send data anywhere?","acceptedAnswer":{"@type":"Answer","text":"Not on its own. The only network use is what you switch on, such as update checks against GitHub."}},{"@type":"Question","name":"Can I use it with SignalRGB or NZXT CAM?","acceptedAnswer":{"@type":"Answer","text":"Not at the same time on the same devices. Ember warns you about fan-control programs by name and can close them."}}]}</script>
 <link rel="preload" href="/fonts/geist-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/fonts/fonts.css">
 <script id="ember-theme">
@@ -19,7 +23,9 @@
       orig=root.getAttribute("data-theme"),def={mode:"system",tint:"warm",accent:null},touched=false;
   function consent(){try{return localStorage.getItem(CK)}catch(e){return null}}
   // choices persist on this device only after the visitor agrees; until then they last for the page view
-  function load(){var base=Object.assign({},def);try{if(consent()==="yes"){var v=JSON.parse(localStorage.getItem(K));if(v)return Object.assign(base,v)}}catch(e){}return Object.assign(base,mem||{})}
+  var MODES=["system","dark","oled","light"],TINTS=["warm","neutral","cool"];
+  function clean(v){v=v&&typeof v==="object"?v:{};var o={};if(MODES.indexOf(v.mode)>-1)o.mode=v.mode;if(TINTS.indexOf(v.tint)>-1)o.tint=v.tint;o.accent=typeof v.accent==="string"&&/^#[0-9a-f]{6}$/i.test(v.accent)?v.accent:null;return o}
+  function load(){var base=Object.assign({},def);try{if(consent()==="yes"){var v=JSON.parse(localStorage.getItem(K));if(v)return Object.assign(base,clean(v))}}catch(e){}return Object.assign(base,clean(mem))}
   function save(s){mem=s;try{if(consent()==="yes")localStorage.setItem(K,JSON.stringify(s))}catch(e){}}
   var H={warm:20,neutral:0,cool:215},S={warm:28,neutral:3,cool:26};
   var PAL=["--bg","--bg2","--card","--fg","--mute","--line","--glass"],ACC=["--ember","--ember-hi","--glow","--on-ember"];
@@ -52,7 +58,7 @@
     }else ACC.forEach(function(v){st.removeProperty(v)});
   }
   var api=window.emberTheme={def:def,get:load,
-    set:function(p){var s=Object.assign(load(),p);save(s);apply(s);return s},
+    set:function(p){var s=Object.assign(load(),clean(Object.assign({},load(),p)));save(s);apply(s);return s},
     reset:function(){save(Object.assign({},def));apply(Object.assign({},def));return Object.assign({},def)}};
   window.emberConsent={get:consent,set:function(v){try{localStorage.setItem(CK,v)}catch(e){}
     if(v==="yes")save(load());else{try{localStorage.removeItem(K)}catch(e){}}
@@ -89,7 +95,7 @@ nav.open .navbtn{color:var(--ember)}nav.open .navbtn .nb{transform:scaleY(.4)}
   nav .navbtn{display:grid;margin-left:auto}
   nav .bar>.btn{padding:.5rem 1rem!important}
   nav .links{position:absolute;top:calc(100% + .5rem);left:0;right:0;margin:0;padding:.5rem;flex-direction:column;gap:.125rem;border:1px solid var(--line);border-radius:1.25rem;
-    background:color-mix(in srgb,var(--bg) 96%,transparent);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);
+    background:var(--bg2);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);
     opacity:0;transform:translateY(-.5rem) scale(.98);pointer-events:none;transition:opacity .25s,transform .45s var(--spring,cubic-bezier(.34,1.45,.5,1))}
   nav.open .links{opacity:1;transform:none;pointer-events:auto}
   nav .links a{display:block!important;padding:.8rem 1rem!important;font-size:1rem!important}
@@ -104,7 +110,47 @@ nav.open .navbtn{color:var(--ember)}nav.open .navbtn .nb{transform:scaleY(.4)}
   nav .brand{min-height:2.75rem}
 }
 .cb{background:color-mix(in srgb,var(--bg) 95%,transparent)!important}
+/* cookie banner */
+.cb{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:60;width:min(26rem,calc(100vw - 32px));padding:1.25rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:1.25rem;color:var(--fg,#fbece3);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);font:400 .875rem/1.5 var(--display,system-ui,sans-serif);display:grid;gap:.75rem;transform:translateY(1.5rem);opacity:0;pointer-events:none;transition:opacity .35s,transform .6s cubic-bezier(.34,1.45,.5,1)}
+.cb.on{transform:none;opacity:1;pointer-events:auto}
+.cb h2{margin:0;font-size:1rem;letter-spacing:-.01em}.cb p{margin:0;color:var(--mute,#b49a8c)}.cb a{color:var(--fg,#fbece3);text-underline-offset:.15em}
+.cb .row{display:flex;gap:.5rem;flex-wrap:wrap}.cb button{flex:1 1 9rem;padding:.65rem 1rem;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.2));background:var(--card,#1d1512);color:var(--fg,#fbece3);font:600 .875rem var(--display,system-ui,sans-serif);cursor:pointer;touch-action:manipulation;transition:transform .45s cubic-bezier(.34,1.45,.5,1)}
+.cb button:active{transform:scale(.95);transition-duration:.08s}.cb button:focus-visible{outline:2px solid var(--ember,#ff5a1f);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.cb{transition:none}}
+/* smooth scroll (Lenis), reading progress, spotlight cards, shiny headline, word reveal */
+html.lenis-on,html.lenis-on body{height:auto}
+html.lenis-on{scroll-behavior:auto!important}
+.lenis-on [data-lenis-prevent]{overscroll-behavior:contain}
+.prog{position:fixed;left:0;top:0;right:0;height:2px;z-index:60;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--ember),var(--ember-hi));pointer-events:none}
+.spl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s;background:radial-gradient(16rem circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--ember) 15%,transparent),transparent 65%)}
+*:hover>.spl{opacity:1}
+.shiny{background:linear-gradient(110deg,var(--fg) 42%,var(--ember-hi) 50%,var(--fg) 58%) 100% 0/250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shiny 5s linear infinite}
+@keyframes shiny{to{background-position:-100% 0}}
+.wd{display:inline-block;will-change:transform}
+@media (prefers-reduced-motion:reduce){.shiny{animation:none;background:none;color:inherit}.prog{display:none}}
+.skip{position:fixed;left:1rem;top:-4rem;z-index:80;padding:.7rem 1.1rem;border-radius:999px;background:var(--ember);color:var(--on-ember,#1a0c06);font:600 .9375rem var(--display,sans-serif);text-decoration:none;transition:top .2s}.skip:focus{top:max(1rem,env(safe-area-inset-top,0px))}
+#main:focus{outline:none}
+/* ember atmosphere on every page: a slow glow and sparks rising behind the content */
+html.embers-on{background:var(--bg)}html.embers-on body{background:transparent}
+.emb{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.emb .gl{position:absolute;left:50%;top:-14rem;width:70rem;max-width:140vw;height:34rem;transform:translateX(-50%);background:radial-gradient(closest-side,var(--glow),transparent 72%);animation:embglow 8s ease-in-out infinite}
+@keyframes embglow{50%{opacity:.5;transform:translateX(-50%) scale(1.1)}}
+.emb i{position:absolute;bottom:-1rem;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#ffd9a0,var(--ember) 60%,transparent 72%);opacity:0;animation:embrise var(--t) linear var(--d) infinite}
+@keyframes embrise{0%{opacity:0;transform:translate(0,0) scale(1)}10%{opacity:.7}85%{opacity:.25}100%{opacity:0;transform:translate(var(--dx),-108vh) scale(.2)}}
+.brand svg{filter:drop-shadow(0 0 .45rem var(--glow));animation:brandglow 4.5s ease-in-out infinite}
+@keyframes brandglow{50%{filter:drop-shadow(0 0 .9rem var(--glow))}}
+@media (prefers-reduced-motion:reduce){.emb{display:none}.brand svg{animation:none}}
+
+/* fans */
+.fan{display:block;color:var(--ember);fill:currentColor;will-change:transform}.fan.t{color:var(--teal)}
+.fanwall{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
+.fw{display:grid;justify-items:center;gap:.45rem;font:500 .6875rem var(--mono);color:var(--mute);text-align:center}
+.fw .fan{width:min(5.2rem,100%);height:auto;aspect-ratio:1;filter:drop-shadow(0 0 1rem var(--glow))}
+.fw b{color:var(--fg);font-weight:600;font-size:.8125rem}
+.fan-sm{width:1.15rem;height:1.15rem;flex:none}
+@media (max-width:560px){.fanwall{gap:.5rem}.fw{font-size:.5625rem}.fw b{font-size:.6875rem}}
 .legal-links{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;margin-top:1rem;font-size:.8125rem}.legal-links a{color:var(--mute);text-underline-offset:.18em}.legal-links a:hover{color:var(--fg)}
+.prose ul,.prose ol{margin:.8rem 0 0;padding-left:1.25rem;color:var(--mute)}.prose li{margin-top:.45rem;text-wrap:pretty}.prose li b{color:var(--fg)}.prose h3{font-size:1.0625rem;margin-top:1.75rem;letter-spacing:-.01em}.prose pre{margin-top:1rem;padding:1rem;overflow-x:auto;background:var(--bg2);border:1px solid var(--line);border-radius:1rem;font-size:.8125rem}.prose pre code{background:none;padding:0}.prose details{margin-top:1rem;border:1px solid var(--line);border-radius:1rem;padding:.75rem 1rem}.prose summary{cursor:pointer;color:var(--fg)}.prose h2[id],.prose h3[id]{scroll-margin-top:5rem}
 </style>
 <style>
 /* Layout: one calm column, a glass nav, a hero with the app window, then a bento of what Ember does. Dark first, like the app. */
@@ -312,7 +358,7 @@ footer small{font-size:.75rem;line-height:1.5;max-width:46rem}
 .ww-note{margin-top:1.25rem;font-size:.8125rem;color:var(--mute);max-width:46rem}
 
 /* personalise */
-.pz{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1.25rem 2rem;margin-top:.5rem}
+.pz{display:flex;flex-wrap:wrap;gap:1.25rem 2.5rem;margin-top:.5rem}.pz>*{min-width:0;max-width:100%}
 .lbl3{font:500 .6875rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-bottom:.5rem}
 .pzrow{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-top:.5rem}
 .hex{display:flex;align-items:center;gap:.6rem;font-size:.875rem;color:var(--mute)}
@@ -341,6 +387,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
 .tabs{display:flex;gap:.25rem;padding:.25rem;border-radius:999px;background:var(--bg2);border:1px solid var(--line);width:max-content;max-width:100%;overflow-x:auto;position:relative}
 .tabs button{position:relative;z-index:1;border:0;background:none;color:var(--mute);font:500 .875rem var(--display);padding:.5rem 1.1rem;border-radius:999px;cursor:pointer;white-space:nowrap;touch-action:manipulation;transition:color .2s,background .35s var(--spring)}
 .tabs button[aria-selected="true"]{background:linear-gradient(180deg,var(--ember-hi),var(--ember));color:var(--on-ember)}
+@media (max-width:480px){.tabs{flex-wrap:nowrap}.tabs button{padding:.5rem .8rem;font-size:.8125rem}}
 .stage{margin-top:1.5rem;border:1px solid var(--line);border-radius:1.5rem;background:#17100d;color:#fbece3;padding:clamp(1rem,3vw,2rem);min-height:21rem;overflow:hidden}
 .pane{display:none;gap:1.25rem;grid-template-columns:1fr 1fr;align-items:center;animation:in .6s var(--spring)}
 .pane.on{display:grid}
@@ -350,6 +397,9 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
 .pane p{color:#b49a8c;margin-top:.5rem}
 .panel{border:1px solid rgba(255,200,170,.1);border-radius:1rem;padding:1rem;background:rgba(255,255,255,.025);display:grid;gap:.65rem}
 .lbl{font:500 .625rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#b49a8c}
+.fstrip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem}
+.fs{display:flex;align-items:center;gap:.5rem;padding:.5rem .6rem;border:1px solid rgba(255,255,255,.08);border-radius:.7rem;font:500 .5625rem var(--mono);color:#b49a8c;min-width:0}
+.fs .fan{width:1.5rem;height:1.5rem;flex:none}.fs b{display:block;color:#fbece3;font-weight:600;font-size:.6875rem}
 .fanrow{display:grid;grid-template-columns:4.5rem 1fr 4.5rem;gap:.75rem;align-items:center;font-size:.8125rem}
 .fanrow b{font:500 .8125rem var(--mono);text-align:right}
 .fanrow .bar{height:.4rem;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
@@ -444,6 +494,8 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fan" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" stroke-width="3" opacity=".55"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(0.00 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(51.43 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(102.86 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(154.29 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(205.71 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(257.14 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(308.57 50 50)"/><circle cx="50" cy="50" r="11" fill="var(--bg2,#17100d)"/><circle cx="50" cy="50" r="5" fill="currentColor"/></symbol></svg>
+<a class="skip" href="#top">Skip to content</a>
 
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -472,7 +524,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
     <div class="cta">
       <a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a>
       <a class="btn" href="/demo">Watch the demo</a>
-      <a class="btn" href="https://github.com/Ol775/ember-pc">View on GitHub</a>
+      
       <span class="note">Version 1.5.0 · MIT licence</span>
     </div>
     <div class="pills"><span class="pill">Local only</span><span class="pill">No telemetry</span><span class="pill">No account</span><span class="pill">Fan safety limits enforced</span></div>
@@ -493,6 +545,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
             <path d="M0 62 C60 60 90 40 150 44 S250 70 310 50 S420 22 470 34 S560 52 600 46" fill="none" stroke="#ff5a1f" stroke-width="2"/>
             <path d="M0 74 C80 72 160 76 240 70 S380 66 470 68 S560 70 600 66" fill="none" stroke="#3dd6c8" stroke-width="2"/>
           </svg></div>
+        <div class="fstrip" id="hstrip"></div>
       </div>
     </div>
   </header>
@@ -552,7 +605,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
     <div class="head"><p class="eyebrow">What it does</p><h2>Everything a gaming PC reports, in one place.</h2><p>A small background service reads the sensors and writes fan speeds. The app only displays and asks.</p></div>
     <div class="bento">
       <div class="card c4"><span class="tag">Fans</span><h3>Five modes, or your own curve</h3><p>Super quiet to Extreme in one click, with the safety limits always on.</p>
-        <div id="fans"></div>
+        <div id="fans" class="fanwall" role="img" aria-label="Four case fans that spin faster or slower as you change the mode"></div>
         <div class="seg" role="radiogroup" aria-label="Fan mode" id="seg"><span class="thumb"></span></div>
         <div class="readout"><div><b id="rpm">1200</b><small>Fan rpm at 60°</small></div><div><b id="pct">45%</b><small>Fan speed</small></div><div><b>90°</b><small>Forced to 100%</small></div></div>
         <svg class="curve" viewBox="0 0 400 140" preserveAspectRatio="none" aria-label="Fan curve for the chosen mode">
@@ -569,8 +622,8 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
         <div class="led" aria-hidden="true"></div></div>
       <div class="card c3"><span class="tag">Games</span><h3>A fan mode for every game</h3><p>Ember reads your Steam, Epic, GOG, Ubisoft Connect and EA app libraries and switches modes when a game starts, even in a window.</p></div>
       <div class="card c6" id="personalise"><span class="tag">Make it yours</span><h3>Try it on this site</h3><p>Pick a theme, a tint and an accent. Every page of this site changes with you, and remembers it next time.</p><div class="pz"><div><div class="lbl3">Theme</div><div class="tabs" data-k="mode" role="radiogroup" aria-label="Theme"></div></div><div><div class="lbl3">Tint</div><div class="tabs" data-k="tint" role="radiogroup" aria-label="Tint"></div></div><div><div class="lbl3">Accent</div><div class="sw" id="sw"></div></div></div><div class="pzrow"><label class="hex" for="hex">Your own colour<input id="hex" type="text" inputmode="text" maxlength="7" placeholder="#ff5a1f" autocomplete="off"></label><button class="btn sm" type="button" id="pzreset">Reset to Ember</button></div></div>
-      <div class="card c2"><span class="tag">Alerts · Beta</span><h3>Quiet at night</h3><p>Schedule a mode, and get told when a part runs hot or a fan stops.</p></div>
-      <div class="card c2"><span class="tag">Stream Deck · Beta</span><h3>Keys for scenes and modes</h3><p>Live CPU and GPU temperature on a key.</p></div>
+      <div class="card c3"><span class="tag">Alerts · Beta</span><h3>Quiet at night</h3><p>Schedule a mode, and get told when a part runs hot or a fan stops.</p></div>
+      <div class="card c3"><span class="tag">Stream Deck · Beta</span><h3>Keys for scenes and modes</h3><p>Live CPU and GPU temperature on a key.</p></div>
     </div>
   </section>
 
@@ -589,7 +642,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
     <div class="head"><p class="eyebrow">Two builds</p><h2>Stable, or try what is next.</h2><p>Both share the same look. They differ in how much has been proven on real hardware.</p></div>
     <div class="builds">
       <div class="build"><span class="tag">Latest</span><div class="v">1.5.0</div><h3>Stable</h3><ul><li>Dashboard, Fans, Lights, Devices, Games, Power, Specs and Settings</li><li>Scenes and fan curves saved as files, compact view</li><li>Unproven features stay hidden</li></ul><a class="btn pri" style="margin-top:.75rem;width:max-content" href="https://github.com/Ol775/ember-pc/releases/latest">Download stable</a></div>
-      <div class="build beta"><span class="tag">Pre-release</span><div class="v">1.6.0-beta.1</div><h3>Beta</h3><ul><li>Everything in stable, plus the features still being proven</li><li>Schedule and alerts, Stream Deck plugin, GPU fan control, roadmap page</li><li>Switch in Settings, Updates, Release channel</li></ul><a class="btn" style="margin-top:.75rem;width:max-content" href="https://github.com/Ol775/ember-pc/releases">See pre-releases</a></div>
+      <div class="build beta"><span class="tag">Pre-release</span><div class="v">1.6.0-beta.2</div><h3>Beta</h3><ul><li>Everything in stable, plus the features still being proven</li><li>Schedule and alerts, Stream Deck plugin, GPU fan control, roadmap page</li><li>Switch in Settings, Updates, Release channel</li></ul><a class="btn" style="margin-top:.75rem;width:max-content" href="https://github.com/Ol775/ember-pc/releases">See pre-releases</a></div>
     </div>
   </section>
 
@@ -610,7 +663,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
 
       <article class="stop done"><i class="dot"></i><div class="card"><span class="st">Shipped</span><h3>1.0.0 · First production release</h3><p>Live dashboard, five fan modes with the safety rules, header testing, the installer with terms, and a public repository after a safety audit.</p></div></article>
       <article class="stop done"><i class="dot"></i><div class="card"><span class="st">Shipped</span><h3>1.5.0 · Stable today</h3><p>The new look, Games, Power at the wall, lights through OpenRGB, Govee, Logitech, Hue and Corsair, scenes and fan curves as files, and a compact window.</p></div></article>
-      <article class="stop now"><i class="dot"></i><div class="card"><span class="st">You are here</span><h3>1.6.0-beta.1 · Beta</h3><p>Schedule and alerts, the Stream Deck plugin, GPU fan control, a lighting scene per game and global hotkeys. Switch on the Beta channel to try them.</p></div></article>
+      <article class="stop now"><i class="dot"></i><div class="card"><span class="st">You are here</span><h3>1.6.0-beta.2 · Beta</h3><p>Schedule and alerts, the Stream Deck plugin, GPU fan control, a lighting scene per game and global hotkeys. beta.2 fixes Lights off so it reaches every device, and tidies small-window layouts. Switch on the Beta channel to try them.</p></div></article>
       <article class="stop check"><i class="dot"></i><div class="card"><span class="st">Being checked on real hardware</span><h3>Proving it works on more PCs</h3>
         <ul><li>WiZ, LIFX, Yeelight, Kasa and Shelly, tested against simulated devices only</li><li>Nanoleaf, Razer Chroma, Meross and Tapo, not yet tried on enough devices</li><li>Game detection and GPU fan control on other graphics cards</li><li>A clean install on a PC that never had Ember</li></ul></div></article>
       <article class="stop next"><i class="dot"></i><div class="card"><span class="st">Next</span><h3>When the checks pass</h3>
@@ -619,7 +672,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
         <ul><li>More fan sources, if other controller makers publish a way to talk to them</li><li>Code signing, so Windows stops warning about an unknown publisher</li></ul></div></article>
     </div>
     <div class="np"><span class="lbl2">Not planned, on purpose</span><span class="chip">Overclocking or voltage control</span><span class="chip">Cloud accounts or telemetry</span><span class="chip">Switching smart plugs</span></div>
-    <p style="margin-top:1.5rem"><a class="btn sm" href="https://github.com/Ol775/ember-pc/blob/main/ROADMAP.md">Read the full roadmap</a></p>
+    <p style="margin-top:1.5rem"><a class="btn sm" href="/roadmap">Read the full roadmap</a></p>
   </section>
 
   <section id="install">
@@ -629,11 +682,16 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
       <div class="step"><h3>Run the installer</h3><p>Accept the Terms, follow the pages. It adds the services and a signed driver, checked before it runs. Windows shows an unknown publisher warning because the installer is not code-signed yet.</p></div>
       <div class="step"><h3>Test one fan header</h3><p>Open Fans, test a System Fan header, then enable it. Nothing is written to a fan header before you do.</p></div>
     </div>
-    <div class="cta" style="display:flex;gap:.75rem;margin-top:1.75rem;flex-wrap:wrap"><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a><a class="btn" href="https://github.com/Ol775/ember-pc/blob/main/docs/install.md">Install options</a></div>
+    <div class="cta" style="display:flex;gap:.75rem;margin-top:1.75rem;flex-wrap:wrap"><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a><a class="btn" href="/install">Install options</a></div>
   </section>
 
   <section id="faq">
     <div class="head"><p class="eyebrow">Questions</p><h2>Before you install.</h2></div>
+    <details><summary>Is Ember free?</summary><p>Yes. It is open source under the MIT licence, with no accounts, no ads and no paid tier.</p></details>
+    <details><summary>Which versions of Windows does it need?</summary><p>Windows 10 or 11 (x64) and administrator rights to install the services and the driver. The installer adds the .NET 8 runtime if it is missing.</p></details>
+    <details><summary>Which lights and devices does it work with?</summary><p>Govee, Philips Hue, Nanoleaf, Razer Chroma, Logitech G HUB, Meross bulbs and light strips, and anything OpenRGB supports. Tapo and Meross plugs are read for power draw only. The <a href="/integrations">integrations page</a> lists them all.</p></details>
+    <details><summary>Why does the Power page say my motherboard has no sensor?</summary><p>No motherboard reports how much power it uses. CPU and GPU report their own watts. For the rest, Ember reads a smart plug on your PC and subtracts CPU and GPU. Without a plug it shows CPU and GPU only.</p></details>
+    <details><summary>Why are some of my fans at 0 RPM in Super quiet?</summary><p>Some fans stop below about 20% speed. Pick Quiet, or use Manual to set a higher minimum.</p></details>
     <details><summary>Is it safe to run?</summary><p>Fan control has unit tests and has been checked on one real PC, and the safety rules above are enforced in the service. Test one header at a time and watch your temperatures.</p></details>
     <details><summary>Does it work on my motherboard?</summary><p>It is built and tested on an MSI B550-A PRO. Other chips supported by LibreHardwareMonitor may work. The verification page lists what has been checked.</p></details>
     <details><summary>Will it switch my smart plugs?</summary><p>No. It only asks a plug what it is drawing.</p></details>
@@ -643,13 +701,12 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
 
   <section>
     <div class="final"><svg><use href="#mark"/></svg><h2>Give your PC a calmer window.</h2><p>Free, open source and local only. Download it, test one fan header, and watch the temperatures settle.</p>
-      <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center"><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a><a class="btn" href="https://github.com/Ol775/ember-pc/issues">Report a bug</a></div></div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center"><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a><a class="btn" href="/install">Install guide</a><a class="btn" href="https://github.com/Ol775/ember-pc/issues/new/choose">Report a bug</a></div></div>
   </section>
 
   <footer>
-    <div class="row"><a href="https://github.com/Ol775/ember-pc">GitHub</a><a href="https://github.com/Ol775/ember-pc/blob/main/CHANGELOG.md">Changelog</a><a href="https://github.com/Ol775/ember-pc/blob/main/ROADMAP.md">Roadmap</a><a href="https://github.com/Ol775/ember-pc/blob/main/PRIVACY.md">Privacy</a><a href="https://github.com/Ol775/ember-pc/blob/main/TERMS.md">Terms</a><a href="https://github.com/Ol775/ember-pc/blob/main/SECURITY.md">Security</a></div>
     <small>Ember is an independent project by Ol775, MIT licensed. It is not affiliated with, endorsed by or sponsored by NZXT, MSI, Govee, Logitech, Philips Hue (Signify), Nanoleaf, Razer, OpenRGB, SignalRGB, Noctua, AMD, Intel or NVIDIA. Product names are trademarks of their respective owners. Use at your own risk: you are responsible for your hardware.</small>
-  <div class="legal-links"><a href="/privacy">Privacy and cookies</a><a href="/terms">Terms and legal notices</a><a href="#" data-cookie-settings>Cookie settings</a></div></footer>
+  <div class="legal-links"><a href="/changelog">Changelog</a><a href="/roadmap">Roadmap</a><a href="/install">Install guide</a><a href="/known-issues">Known issues</a><a href="https://github.com/Ol775/ember-pc/issues/new/choose">Report a bug</a><a href="/security">Security</a><a href="/licences">Open source licences</a><a href="/privacy">Privacy and cookies</a><a href="/terms">Terms and legal notices</a><a href="#" data-cookie-settings>Cookie settings</a></div></footer>
 </div>
 
 <script>
@@ -662,6 +719,15 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
     {n:"Extreme",pts:[[0,45],[40,70],[60,100],[100,100]]}
   ];
   var seg=document.getElementById("seg"),btns=[];
+  // spinning fans: speed follows the chosen mode, like the real thing (the GPU fan stops when it is cool)
+  var FW=[["CPU fan",1],["System 1",.9],["System 2",1.1],["GPU fan",.85]],fwEls=[],curPct=45,fanHost=document.getElementById("fans"),NS="http://www.w3.org/2000/svg";
+  function rpmOf(k){if(k===3&&curPct<35)return 0;return Math.min(2900,Math.round(curPct*FW[k][1]*27/10)*10)}
+  function mkFan(cls,get){var s=document.createElementNS(NS,"svg");s.setAttribute("class",cls);s.setAttribute("viewBox","0 0 100 100");s.setAttribute("aria-hidden","true");s.innerHTML='<use href="#fan"/>';(window.__fans=window.__fans||[]).push([s,get]);return s}
+  FW.forEach(function(f,k){var d=document.createElement("div");d.className="fw";var n=document.createElement("span");n.textContent=f[0];var b=document.createElement("b");
+    d.appendChild(mkFan("fan"+(k===3?" t":""),function(){return rpmOf(k)/3}));d.appendChild(n);d.appendChild(b);fanHost.appendChild(d);fwEls.push(b)});
+  var hs=document.getElementById("hstrip");
+  if(hs)[["CPU fan",880],["System 1",760],["System 2",1210],["GPU fan",0]].forEach(function(f,k){var d=document.createElement("div");d.className="fs";d.appendChild(mkFan("fan fan-sm"+(k===3?" t":""),function(){return f[1]/3}));
+    var t=document.createElement("span");t.textContent=f[0];var b=document.createElement("b");b.textContent=f[1]+" rpm";var w=document.createElement("div");w.appendChild(t);w.appendChild(b);d.appendChild(w);hs.appendChild(d)});
   function at(m,t){var p=m.pts;for(var i=1;i<p.length;i++){if(t<=p[i][0]){var a=p[i-1],b=p[i];return a[1]+(b[1]-a[1])*(t-a[0])/(b[0]-a[0]);}}return 100}
   function draw(i){
     var m=modes[i],d="",f="";
@@ -671,6 +737,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
     var pct=Math.round(at(m,60));
     document.getElementById("pct").textContent=pct+"%";
     document.getElementById("rpm").textContent=Math.round(pct*27/10)*10;
+    curPct=pct;fwEls.forEach(function(b,k){b.textContent=rpmOf(k)+" rpm"});
     seg.style.setProperty("--i",i);
     btns.forEach(function(b,k){b.setAttribute("aria-checked",k===i)});
   }
@@ -788,24 +855,13 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
 </script>
 <script id="ember-consent">
 (function(){
-  // The site sets no cookies and runs no analytics or ads. The only optional storage is the visitor's own look settings.
+  // The site sets no cookies and runs no ads; visit counts use Cloudflare Web Analytics, which stores nothing on the device. The only optional storage is the visitor's own look settings.
+  // Cloudflare Web Analytics counts visits on the live site, and is skipped when the browser sends Do Not Track or Global Privacy Control.
+  if(navigator.doNotTrack!=="1"&&!navigator.globalPrivacyControl&&location.hostname==="emberpc.uk"){var cf=document.createElement("script");cf.defer=true;cf.src="https://static.cloudflareinsights.com/beacon.min.js";cf.setAttribute("data-cf-beacon",'{"token":"371f2343903a48ae8068264cb793c71a"}');document.head.appendChild(cf)}
   var C=window.emberConsent;if(!C)return;
-  var st=document.createElement("style");
-  st.textContent=".cb{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:60;width:min(26rem,calc(100vw - 32px));"+
-    "padding:1.25rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:1.25rem;background:var(--glass,rgba(18,13,11,.86));color:var(--fg,#fbece3);"+
-    "-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);box-shadow:0 1.5rem 3rem -1rem rgba(0,0,0,.6);"+
-    "font:400 .875rem/1.5 var(--display,system-ui,sans-serif);display:grid;gap:.75rem;transform:translateY(1.5rem);opacity:0;pointer-events:none;"+
-    "transition:opacity .35s,transform .6s cubic-bezier(.34,1.45,.5,1)}"+
-    ".cb.on{transform:none;opacity:1;pointer-events:auto}"+
-    ".cb h2{margin:0;font-size:1rem;letter-spacing:-.01em}.cb p{margin:0;color:var(--mute,#b49a8c)}.cb a{color:var(--fg,#fbece3);text-underline-offset:.15em}"+
-    ".cb .row{display:flex;gap:.5rem;flex-wrap:wrap}.cb button{flex:1 1 9rem;padding:.65rem 1rem;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.2));background:var(--card,#1d1512);color:var(--fg,#fbece3);"+
-    "font:600 .875rem var(--display,system-ui,sans-serif);cursor:pointer;touch-action:manipulation;transition:transform .45s cubic-bezier(.34,1.45,.5,1)}"+
-    ".cb button:active{transform:scale(.95);transition-duration:.08s}.cb button:focus-visible{outline:2px solid var(--ember,#ff5a1f);outline-offset:2px}"+
-    "@media (prefers-reduced-motion:reduce){.cb{transition:none}}";
-  document.head.appendChild(st);
   var b=document.createElement("div");b.className="cb";b.setAttribute("role","dialog");b.setAttribute("aria-labelledby","cbt");b.setAttribute("aria-live","polite");
   b.innerHTML='<h2 id="cbt">Your settings, your device</h2>'+
-    '<p>This site sets no cookies and has no analytics, ads or tracking. If you personalise the look, we can remember your choices on your device so they are still there next time. That is optional.</p>'+
+    '<p>This site sets no cookies and has no ads. It counts visits with Cloudflare Web Analytics, which stores nothing on your device and is skipped if your browser sends Do Not Track. If you personalise the look, we can remember your choices on your device so they are still there next time. That is optional.</p>'+
     '<p><a href="/privacy">Privacy and cookies</a></p>'+
     '<div class="row"><button type="button" data-v="no">No thanks</button><button type="button" data-v="yes">Remember my choices</button></div>';
   document.body.appendChild(b);
@@ -816,5 +872,10 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
   if(!C.get())setTimeout(function(){show(true)},700);
 })();
 </script>
+<script src="/js/gsap-3.15.0.min.js" defer></script>
+<script src="/js/ScrollTrigger-3.15.0.min.js" defer></script>
+<script src="/js/lenis-1.3.27.min.js" defer></script>
+<script src="/js/fans.8fd389d969.js" defer></script>
+<script src="/js/motion.e834c67a41.js" defer></script>
 </body>
 </html>
