@@ -6,7 +6,9 @@
 <title>Ember: PC fan, RGB lighting and power control for Windows</title>
 <meta name="description" content="Ember is a free, open source Windows app for PC temperatures, power draw, fan curves and RGB lighting. Local only, no telemetry.">
 <link rel="canonical" href="https://emberpc.uk/">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#120d0b">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Ember">
 <meta property="og:title" content="Ember: PC fan, RGB lighting and power control for Windows"><meta property="og:description" content="Ember is a free, open source Windows app for PC temperatures, power draw, fan curves and RGB lighting. Local only, no telemetry."><meta property="og:url" content="https://emberpc.uk/">
@@ -16,6 +18,7 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is Ember free?","acceptedAnswer":{"@type":"Answer","text":"Yes. It is open source under the MIT licence, with no accounts, no ads and no paid tier."}},{"@type":"Question","name":"Which versions of Windows does it need?","acceptedAnswer":{"@type":"Answer","text":"Windows 10 or 11 (x64) and administrator rights to install the services and the driver. The installer adds the .NET 8 runtime if it is missing."}},{"@type":"Question","name":"Which lights and devices does it work with?","acceptedAnswer":{"@type":"Answer","text":"Govee, Philips Hue, Nanoleaf, Razer Chroma, Logitech G HUB, Meross bulbs and light strips, and anything OpenRGB supports. Tapo and Meross plugs are read for power draw only. The integrations page lists them all."}},{"@type":"Question","name":"Why does the Power page say my motherboard has no sensor?","acceptedAnswer":{"@type":"Answer","text":"No motherboard reports how much power it uses. CPU and GPU report their own watts. For the rest, Ember reads a smart plug on your PC and subtracts CPU and GPU. Without a plug it shows CPU and GPU only."}},{"@type":"Question","name":"Why are some of my fans at 0 RPM in Super quiet?","acceptedAnswer":{"@type":"Answer","text":"Some fans stop below about 20% speed. Pick Quiet, or use Manual to set a higher minimum."}},{"@type":"Question","name":"Is it safe to run?","acceptedAnswer":{"@type":"Answer","text":"Fan control has unit tests and has been checked on one real PC, and the safety rules above are enforced in the service. Test one header at a time and watch your temperatures."}},{"@type":"Question","name":"Does it work on my motherboard?","acceptedAnswer":{"@type":"Answer","text":"It is built and tested on an MSI B550-A PRO. Other chips supported by LibreHardwareMonitor may work. The verification page lists what has been checked."}},{"@type":"Question","name":"Will it switch my smart plugs?","acceptedAnswer":{"@type":"Answer","text":"No. It only asks a plug what it is drawing."}},{"@type":"Question","name":"Does it send data anywhere?","acceptedAnswer":{"@type":"Answer","text":"Not on its own. The only network use is what you switch on, such as update checks against GitHub."}},{"@type":"Question","name":"Can I use it with SignalRGB or NZXT CAM?","acceptedAnswer":{"@type":"Answer","text":"Not at the same time on the same devices. Ember warns you about fan-control programs by name and can close them."}}]}</script>
 <link rel="preload" href="/fonts/geist-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="stylesheet" href="/css/inline.5197db2aed.css">
 <script id="ember-theme">
 (function(){
   // Site-wide look: theme, tint and accent chosen on the page are kept for every page of the site.
@@ -494,11 +497,11 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fan" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" stroke-width="3" opacity=".55"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(0.00 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(51.43 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(102.86 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(154.29 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(205.71 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(257.14 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(308.57 50 50)"/><circle cx="50" cy="50" r="11" fill="var(--bg2,#17100d)"/><circle cx="50" cy="50" r="5" fill="currentColor"/></symbol></svg>
+<svg width="0" height="0" aria-hidden="true" class="s1"><symbol id="fan" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" stroke-width="3" opacity=".55"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(0.00 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(51.43 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(102.86 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(154.29 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(205.71 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(257.14 50 50)"/><path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(308.57 50 50)"/><circle cx="50" cy="50" r="11" fill="var(--bg2,#17100d)"/><circle cx="50" cy="50" r="5" fill="currentColor"/></symbol></svg>
 <a class="skip" href="#top">Skip to content</a>
 
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<svg width="0" height="0" aria-hidden="true" class="s1">
   <defs>
     <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff4d12"/><stop offset="1" stop-color="#ffb347"/></linearGradient>
     <linearGradient id="core" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffc15a"/><stop offset="1" stop-color="#fff1c9"/></linearGradient>
@@ -534,11 +537,11 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
       <div class="main">
         <div><h4>Dashboard</h4><div class="sub">All calm. Fans are on Normal and the lights are off.</div></div>
         <div class="gauges">
-          <div class="g"><div class="ring" style="--p:58"><i>58°</i></div><div><small>CPU</small><span>Healthy<br><span class="mute" style="color:#b49a8c">21% load · 4.6 GHz</span></span></div></div>
-          <div class="g"><div class="ring" style="--p:49;--c:#3dd6c8"><i>49°</i></div><div><small>GPU</small><span>Working<br><span style="color:#b49a8c">14% load · 26 W</span></span></div></div>
-          <div class="g"><div class="ring" style="--p:62;--c:#ffb347"><i>96<small style="display:inline;font-size:.6rem">W</small></i></div><div><small>At the wall</small><span>Whole PC<br><span style="color:#b49a8c">plug, read only</span></span></div></div>
+          <div class="g"><div class="ring s2"><i>58°</i></div><div><small>CPU</small><span>Healthy<br><span class="mute s3">21% load · 4.6 GHz</span></span></div></div>
+          <div class="g"><div class="ring s4"><i>49°</i></div><div><small>GPU</small><span>Working<br><span class="s3">14% load · 26 W</span></span></div></div>
+          <div class="g"><div class="ring s5"><i>96<small class="s6">W</small></i></div><div><small>At the wall</small><span>Whole PC<br><span class="s3">plug, read only</span></span></div></div>
         </div>
-        <div class="chart"><small style="font:500 .625rem var(--mono);letter-spacing:.1em;color:#b49a8c">LAST 10 MINUTES</small>
+        <div class="chart"><small class="s7">LAST 10 MINUTES</small>
           <svg viewBox="0 0 600 90" preserveAspectRatio="none" aria-hidden="true">
             <defs><linearGradient id="a1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5a1f" stop-opacity=".35"/><stop offset="1" stop-color="#ff5a1f" stop-opacity="0"/></linearGradient></defs>
             <path d="M0 62 C60 60 90 40 150 44 S250 70 310 50 S420 22 470 34 S560 52 600 46 L600 90 L0 90Z" fill="url(#a1)"/>
@@ -552,7 +555,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
 
   <section id="about">
     <div class="about">
-      <div class="head" style="margin:0"><p class="eyebrow">About</p><h2>A fan and lighting app that stays out of your way.</h2>
+      <div class="head s8"><p class="eyebrow">About</p><h2>A fan and lighting app that stays out of your way.</h2>
         <p>Ember started because PC control software is usually loud: bloated, cloud-linked and always asking for an account. This is one calm window that reads your sensors, runs your fans and lights your desk, and keeps everything on your own machine.</p></div>
       <div class="pr">
         <div><b>Local only</b><p>No accounts and no telemetry. The only network use is what you switch on, such as checking GitHub for an update.</p></div>
@@ -569,11 +572,11 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
       <div class="pane" data-n="Fans">
         <div><h3>A fan mode in one click</h3><p>Switch between Super quiet and Extreme, or shape your own curve. Ember never lets a fan stop while the CPU is hot.</p></div>
         <div class="panel"><div class="lbl">Fans</div>
-          <div class="fanrow"><span>CPU fan</span><div class="bar"><i style="--w:46%"></i></div><b>880 rpm</b></div>
-          <div class="fanrow"><span>System 1</span><div class="bar"><i style="--w:38%"></i></div><b>760 rpm</b></div>
-          <div class="fanrow"><span>System 2</span><div class="bar"><i style="--w:60%"></i></div><b>1210 rpm</b></div>
-          <div class="fanrow"><span>System 3</span><div class="bar"><i style="--w:59%"></i></div><b>1180 rpm</b></div>
-          <div class="fanrow"><span>GPU fan</span><div class="bar"><i style="--w:30%"></i></div><b>0 rpm</b></div></div>
+          <div class="fanrow"><span>CPU fan</span><div class="bar"><i class="s9"></i></div><b>880 rpm</b></div>
+          <div class="fanrow"><span>System 1</span><div class="bar"><i class="s10"></i></div><b>760 rpm</b></div>
+          <div class="fanrow"><span>System 2</span><div class="bar"><i class="s11"></i></div><b>1210 rpm</b></div>
+          <div class="fanrow"><span>System 3</span><div class="bar"><i class="s12"></i></div><b>1180 rpm</b></div>
+          <div class="fanrow"><span>GPU fan</span><div class="bar"><i class="s13"></i></div><b>0 rpm</b></div></div>
       </div>
       <div class="pane" data-n="Lights">
         <div><h3>Light up your whole desk</h3><p>Stack effects, paint single LEDs and watch a live preview of every device before anything changes.</p></div>
@@ -583,15 +586,15 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
       <div class="pane" data-n="Games">
         <div><h3>A fan mode for every game</h3><p>Your Steam, Epic, GOG, Ubisoft Connect and EA app libraries, with a last played line and a fan mode for each. The titles here are made up.</p></div>
         <div class="games">
-          <div class="cover" style="--a:#7a2a12;--b:#1c0f0a"><span>Performance</span>Ashfall Run</div>
-          <div class="cover" style="--a:#0e5a62;--b:#0b1a1d"><span>Quiet</span>Tidewatch</div>
-          <div class="cover" style="--a:#5a3a8a;--b:#14101c"><span>Normal</span>Low Orbit</div>
+          <div class="cover s14"><span>Performance</span>Ashfall Run</div>
+          <div class="cover s15"><span>Quiet</span>Tidewatch</div>
+          <div class="cover s16"><span>Normal</span>Low Orbit</div>
         </div>
       </div>
       <div class="pane" data-n="Power">
         <div><h3>Power at the wall</h3><p>A read-only plug measures the whole PC. Ember takes away the CPU and GPU and shows you the rest, with a daily and monthly cost.</p></div>
         <div class="panel"><div class="donut"><b>96<small>WATTS</small></b></div>
-          <div class="lbl">Last 7 days</div><div class="days"><i style="--h:55%"></i><i style="--h:70%"></i><i style="--h:42%"></i><i style="--h:88%"></i><i style="--h:64%"></i><i style="--h:100%"></i><i style="--h:48%"></i></div></div>
+          <div class="lbl">Last 7 days</div><div class="days"><i class="s17"></i><i class="s18"></i><i class="s19"></i><i class="s20"></i><i class="s21"></i><i class="s22"></i><i class="s23"></i></div></div>
       </div>
       <div class="pane" data-n="Settings">
         <div><h3>Make it yours</h3><p>Dark, OLED black, light or match Windows. A warm, neutral or cool tint, nine accents, interface size, and where the window opens.</p></div>
@@ -616,8 +619,8 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
         </svg>
       </div>
       <div class="card c2"><span class="tag">Power</span><h3>Watts at the wall</h3><p>A read-only smart plug shows what the whole PC draws, split into CPU, GPU and the rest, with a running cost. Ember never switches a plug.</p>
-        <div class="split" aria-hidden="true"><i style="width:42%;background:var(--ember)"></i><i style="width:22%;background:var(--teal)"></i><i style="width:36%;background:var(--ember-hi)"></i></div>
-        <div class="legend"><span style="--c:var(--ember)">CPU 40 W</span><span style="--c:var(--teal)">GPU 21 W</span><span style="--c:var(--ember-hi)">Rest 35 W</span></div></div>
+        <div class="split" aria-hidden="true"><i class="s24"></i><i class="s25"></i><i class="s26"></i></div>
+        <div class="legend"><span class="s27">CPU 40 W</span><span class="s28">GPU 21 W</span><span class="s29">Rest 35 W</span></div></div>
       <div class="card c3"><span class="tag">Lights</span><h3>OpenRGB, Govee, Hue, Logitech, Corsair</h3><p>Stack effects with blend modes, paint single LEDs, sync to music or your screen, and save scenes.</p>
         <div class="led" aria-hidden="true"></div></div>
       <div class="card c3"><span class="tag">Games</span><h3>A fan mode for every game</h3><p>Ember reads your Steam, Epic, GOG, Ubisoft Connect and EA app libraries and switches modes when a game starts, even in a window.</p></div>
@@ -641,8 +644,8 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
     <section id="builds">
     <div class="head"><p class="eyebrow">Two builds</p><h2>Stable, or try what is next.</h2><p>Both share the same look. They differ in how much has been proven on real hardware.</p></div>
     <div class="builds">
-      <div class="build"><span class="tag">Latest</span><div class="v">1.5.0</div><h3>Stable</h3><ul><li>Dashboard, Fans, Lights, Devices, Games, Power, Specs and Settings</li><li>Scenes and fan curves saved as files, compact view</li><li>Unproven features stay hidden</li></ul><a class="btn pri" style="margin-top:.75rem;width:max-content" href="https://github.com/Ol775/ember-pc/releases/latest">Download stable</a></div>
-      <div class="build beta"><span class="tag">Pre-release</span><div class="v">1.6.0-beta.2</div><h3>Beta</h3><ul><li>Everything in stable, plus the features still being proven</li><li>Schedule and alerts, Stream Deck plugin, GPU fan control, roadmap page</li><li>Switch in Settings, Updates, Release channel</li></ul><a class="btn" style="margin-top:.75rem;width:max-content" href="https://github.com/Ol775/ember-pc/releases">See pre-releases</a></div>
+      <div class="build"><span class="tag">Latest</span><div class="v">1.5.0</div><h3>Stable</h3><ul><li>Dashboard, Fans, Lights, Devices, Games, Power, Specs and Settings</li><li>Scenes and fan curves saved as files, compact view</li><li>Unproven features stay hidden</li></ul><a class="btn pri s30" href="https://github.com/Ol775/ember-pc/releases/latest">Download stable</a></div>
+      <div class="build beta"><span class="tag">Pre-release</span><div class="v">1.6.0-beta.2</div><h3>Beta</h3><ul><li>Everything in stable, plus the features still being proven</li><li>Schedule and alerts, Stream Deck plugin, GPU fan control, roadmap page</li><li>Switch in Settings, Updates, Release channel</li></ul><a class="btn s30" href="https://github.com/Ol775/ember-pc/releases">See pre-releases</a></div>
     </div>
   </section>
 
@@ -672,7 +675,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
         <ul><li>More fan sources, if other controller makers publish a way to talk to them</li><li>Code signing, so Windows stops warning about an unknown publisher</li></ul></div></article>
     </div>
     <div class="np"><span class="lbl2">Not planned, on purpose</span><span class="chip">Overclocking or voltage control</span><span class="chip">Cloud accounts or telemetry</span><span class="chip">Switching smart plugs</span></div>
-    <p style="margin-top:1.5rem"><a class="btn sm" href="/roadmap">Read the full roadmap</a></p>
+    <p class="s31"><a class="btn sm" href="/roadmap">Read the full roadmap</a></p>
   </section>
 
   <section id="install">
@@ -682,7 +685,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
       <div class="step"><h3>Run the installer</h3><p>Accept the Terms, follow the pages. It adds the services and a signed driver, checked before it runs. Windows shows an unknown publisher warning because the installer is not code-signed yet.</p></div>
       <div class="step"><h3>Test one fan header</h3><p>Open Fans, test a System Fan header, then enable it. Nothing is written to a fan header before you do.</p></div>
     </div>
-    <div class="cta" style="display:flex;gap:.75rem;margin-top:1.75rem;flex-wrap:wrap"><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a><a class="btn" href="/install">Install options</a></div>
+    <div class="cta s32"><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a><a class="btn" href="/install">Install options</a></div>
   </section>
 
   <section id="faq">
@@ -701,7 +704,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
 
   <section>
     <div class="final"><svg><use href="#mark"/></svg><h2>Give your PC a calmer window.</h2><p>Free, open source and local only. Download it, test one fan header, and watch the temperatures settle.</p>
-      <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center"><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a><a class="btn" href="/install">Install guide</a><a class="btn" href="https://github.com/Ol775/ember-pc/issues/new/choose">Report a bug</a></div></div>
+      <div class="s33"><a class="btn pri" href="https://github.com/Ol775/ember-pc/releases/latest">Download for Windows</a><a class="btn" href="/install">Install guide</a><a class="btn" href="https://github.com/Ol775/ember-pc/issues/new/choose">Report a bug</a></div></div>
   </section>
 
   <footer>

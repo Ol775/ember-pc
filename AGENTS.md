@@ -48,7 +48,7 @@ node site/src/build-site.js      # builds site/public from site/src and the repo
 cd site; cf deploy               # needs `cf auth login`
 ```
 
-- `build-site.js` makes every page, the sitemap, `robots.txt` and `_headers`. The Content Security Policy is built per page from sha256 hashes of the inline scripts and styles, so any new inline script or style needs a rebuild and nothing may create a `<style>` at runtime.
+- `build-site.js` makes every page, the sitemap, `robots.txt` and `_headers`. The Content Security Policy is built per page from sha256 hashes of the inline scripts and styles, so any new inline script or style needs a rebuild and nothing may create a `<style>` at runtime. Inline `style=""` attributes are refused too (`style-src-attr 'none'`): the build moves every one into a generated `/css/inline.*.css` file, so write styles as classes or set them from script with `element.style`, never with `setAttribute("style")` or markup built in script.
 - Docs pages (`/changelog`, `/roadmap`, `/install`, `/security`, `/known-issues`, `/licences`, and the app sections of `/privacy` and `/terms`) come from the repo's markdown through `site/src/md.js`. Rebuild after changing a doc.
 - Scripts are self-hosted in `site/src/vendor` (GSAP, Lenis) plus `motion.js` and `fans.js`. Do not load code or fonts from a CDN.
 - The only third-party script is Cloudflare Web Analytics, loaded from `consent.js` on the live host and skipped when the browser sends Do Not Track or Global Privacy Control. Anything new that stores or sends data must be added to the site's privacy page first.
