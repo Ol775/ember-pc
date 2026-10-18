@@ -123,7 +123,8 @@ public sealed class LightingManager : IAsyncDisposable
 
     // ---- commands ----
 
-    public void SetOn(bool on) => Mutate(s => s with { On = on });
+    /// <summary>Switching off is the owner asking: every device Ember may use gets black, even one it never lit (it may be showing its own effect).</summary>
+    public void SetOn(bool on) { if (!on) _engine.BlackoutAll(); Mutate(s => s with { On = on }); }
 
     public void SetBrightness(double brightness) =>
         EditScene(sc => sc with { Brightness = Math.Clamp(brightness, 0, 1) });

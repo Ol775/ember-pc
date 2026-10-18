@@ -40,6 +40,13 @@ public sealed class LightingEngine(TimeProvider clock)
         get { lock (_gate) return new Dictionary<string, Exception>(_failures); }
     }
 
+    bool _blackoutAll;
+    readonly Dictionary<string, int> _blackout = new();
+    const int BlackoutFrames = 3; // a device in its own effect mode can miss a single frame
+
+    /// <summary>The next step while off sends a few black frames to every device, lit by Ember or not.</summary>
+    public void BlackoutAll() { lock (_gate) _blackoutAll = true; }
+
     /// <summary>Forget what was sent (after a reconnect), so the next step sends everything again.</summary>
     public void Reset()
     {
@@ -63,6 +70,12 @@ public sealed class LightingEngine(TimeProvider clock)
             lock (_gate) lit = _sent.Where(kv => kv.Value.Leds.Any(c => c.R > 0 || c.G > 0 || c.B > 0)).ToDictionary(kv => kv.Key, kv => kv.Value);
             foreach (var id in lit.Keys)
                 if (byId.TryGetValue(id, out var sink)) frame[id] = new Color[sink.LedCount];
+            lock (_gate)
+            {
+                if (_blackoutAll) { foreach (var s in sinks) _blackout[s.Id] = BlackoutFrames; _blackoutAll = false; }
+                foreach (var id in _blackout.Keys.ToList())
+                    if (byId.TryGetValue(id, out var sink)) frame[id] = new Color[sink.LedCount]; else _blackout.Remove(id);
+            }
         }
 
         var now = clock.GetUtcNow();
@@ -73,13 +86,15 @@ public sealed class LightingEngine(TimeProvider clock)
             lock (_gate)
             {
                 if (_inFlight.Contains(id)) continue;
+                var forced = !on && _blackout.ContainsKey(id);
                 if (_sent.TryGetValue(id, out var last))
                 {
                     var age = now - last.At;
                     if (age < sink.MinInterval) continue;
-                    if (Same(last.Leds, leds) && (!sink.Keepalive || age < KeepaliveEvery)) continue;
+                    if (!forced && Same(last.Leds, leds) && (!sink.Keepalive || age < KeepaliveEvery)) continue;
                 }
-                else if (!on) continue;
+                else if (!on && !forced) continue;
+                if (forced && --_blackout[id] <= 0) _blackout.Remove(id);
                 _inFlight.Add(id);
             }
             sends.Add(SendOne(sink, leds, now, ct));

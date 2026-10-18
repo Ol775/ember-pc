@@ -134,6 +134,18 @@ public class EngineTests
     }
 
     [Fact]
+    public async Task A_switch_off_darkens_every_device_with_a_few_frames_even_one_never_lit_then_stops()
+    {
+        var clock = new Clock();
+        var a = new Sink("a", minMs: 0);
+        var e = new LightingEngine(clock);
+        e.BlackoutAll();
+        for (var i = 0; i < 6; i++) { await e.StepAsync(Scene(Red, "a"), false, In, [a]); clock.Now += TimeSpan.FromMilliseconds(50); }
+        Assert.Equal(3, a.Sent.Count);
+        Assert.All(a.Sent, f => Assert.All(f, c => Assert.Equal(0, c.R)));
+    }
+
+    [Fact]
     public async Task A_failing_device_is_reported_and_retried_later_without_stopping_the_others()
     {
         var clock = new Clock();
