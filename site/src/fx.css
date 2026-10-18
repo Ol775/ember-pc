@@ -79,3 +79,4 @@ html.embers-on{background:var(--bg)}html.embers-on body{background:transparent}
 .fw b{color:var(--fg);font-weight:600;font-size:.8125rem}
 .fan-sm{width:1.15rem;height:1.15rem;flex:none}
 @media (max-width:560px){.fanwall{gap:.5rem}.fw{font-size:.5625rem}.fw b{font-size:.6875rem}}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}

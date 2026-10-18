@@ -15,14 +15,14 @@ const WEBLIBS = `\n<h2 id="website">This website</h2>\n<p>The pages at emberpc.u
 // a seven-blade fan, drawn once and reused wherever a page shows fans
 const FANSYM = '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fan" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" stroke-width="3" opacity=".55"/>' + [0,1,2,3,4,5,6].map(k => '<path d="M50 50C43 43 39 27 45 11C55 9 62 21 58 35C56 43 53 48 50 50Z" fill="currentColor" opacity=".92" transform="rotate(' + (k * 360 / 7).toFixed(2) + ' 50 50)"/>').join('') + '<circle cx="50" cy="50" r="11" fill="var(--bg2,#17100d)"/><circle cx="50" cy="50" r="5" fill="currentColor"/></symbol></svg>';
 const PAGES = [
-  ['privacy.html', 'Privacy and cookies · Ember', read('privacy.frag.html').trim() + '\n<h2 id="app">The Ember app</h2>\n' + md(doc('PRIVACY.md'), { dropH1: true, demote: 1 })],
-  ['terms.html', 'Terms and legal notices · Ember', read('terms.frag.html').trim() + '\n<h2 id="app">The Ember app</h2>\n' + md(doc('TERMS.md'), { dropH1: true, demote: 1 })],
-  ['changelog.html', 'Changelog · Ember', head('Changelog', 'Every Ember release, newest first.') + md(doc('CHANGELOG.md'), { dropH1: true })],
-  ['roadmap.html', 'Roadmap · Ember', head('Roadmap', 'What has shipped and what is next.') + md(doc('ROADMAP.md'), { dropH1: true })],
-  ['install.html', 'Install guide · Ember', head('Install guide', 'Requirements, installer options and updating.') + md(doc('docs/install.md'), { dropH1: true })],
-  ['security.html', 'Security · Ember', head('Security', 'How Ember is locked down, and how to report a problem.') + md(doc('SECURITY.md'), { dropH1: true })],
-  ['known-issues.html', 'Known issues · Ember', head('Known issues', 'Problems we know about and how to work around them.') + md(doc('docs/known-issues.md'), { dropH1: true })],
-  ['licences.html', 'Open source licences · Ember', head('Open source licences', 'The third-party parts Ember is built on.') + '<h2 id="mit">Ember licence (MIT)</h2>\n<pre><code>' + doc('LICENSE').trim().replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</code></pre>\n' + md(doc('THIRD-PARTY.md'), { dropH1: true }) + WEBLIBS],
+  ['privacy.html', 'Privacy and cookies · Ember PC', read('privacy.frag.html').trim() + '\n<h2 id="app">The Ember app</h2>\n' + md(doc('PRIVACY.md'), { dropH1: true, demote: 1 })],
+  ['terms.html', 'Terms and legal notices · Ember PC', read('terms.frag.html').trim() + '\n<h2 id="app">The Ember app</h2>\n' + md(doc('TERMS.md'), { dropH1: true, demote: 1 })],
+  ['changelog.html', 'Changelog · Ember PC', head('Changelog', 'Every Ember release, newest first.') + md(doc('CHANGELOG.md'), { dropH1: true })],
+  ['roadmap.html', 'Roadmap · Ember PC', head('Roadmap', 'What has shipped and what is next.') + md(doc('ROADMAP.md'), { dropH1: true })],
+  ['install.html', 'Install guide · Ember PC', head('Install guide', 'Requirements, installer options and updating.') + md(doc('docs/install.md'), { dropH1: true })],
+  ['security.html', 'Security · Ember PC', head('Security', 'How Ember is locked down, and how to report a problem.') + md(doc('SECURITY.md'), { dropH1: true })],
+  ['known-issues.html', 'Known issues · Ember PC', head('Known issues', 'Problems we know about and how to work around them.') + md(doc('docs/known-issues.md'), { dropH1: true })],
+  ['licences.html', 'Open source licences · Ember PC', head('Open source licences', 'The third-party parts Ember is built on.') + '<h2 id="mit">Ember licence (MIT)</h2>\n<pre><code>' + doc('LICENSE').trim().replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</code></pre>\n' + md(doc('THIRD-PARTY.md'), { dropH1: true }) + WEBLIBS],
 ];
 for (const [file, title, body] of PAGES) fs.writeFileSync(d + file, read('legal.tpl.html').replace('{{TITLE}}', title).replace('{{BODY}}', () => body));
 
