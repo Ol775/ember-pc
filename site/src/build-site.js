@@ -144,6 +144,8 @@ for (const [out, h] of Object.entries(HASHES)) {
 }
 hdr += '/fonts/*\n  Cache-Control: public, max-age=31536000, immutable\n\n/js/*\n  Cache-Control: public, max-age=31536000, immutable\n';
 fs.writeFileSync(OUT + '_headers', hdr);
+fs.mkdirSync(OUT + '.well-known', { recursive: true });
+fs.writeFileSync(OUT + '.well-known/security.txt', ['Contact: https://github.com/Ol775/ember-pc/security/advisories/new', 'Expires: ' + new Date(Date.now() + 330 * 864e5).toISOString().replace(/\.\d+Z$/, '.000Z'), 'Preferred-Languages: en', 'Canonical: https://emberpc.uk/.well-known/security.txt', 'Policy: https://emberpc.uk/security', ''].join('\n'));
 fs.writeFileSync(OUT + 'robots.txt', 'User-agent: *\nAllow: /\nSitemap: https://emberpc.uk/sitemap.xml\n');
 fs.writeFileSync(OUT + 'sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
   Object.values(CANON).map(u => `  <url><loc>https://emberpc.uk${u}</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url>`).join('\n') + '\n</urlset>\n');

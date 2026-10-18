@@ -1,0 +1,5 @@
+Contact: https://github.com/Ol775/ember-pc/security/advisories/new
+Expires: 2027-09-13T14:16:46.000Z
+Preferred-Languages: en
+Canonical: https://emberpc.uk/.well-known/security.txt
+Policy: https://emberpc.uk/security

@@ -11,6 +11,7 @@ function inline(t) {
   t = esc(t).replace(/`([^`]+)`/g, (_, c) => '\u0000' + (codes.push('<code>' + c + '</code>') - 1) + '\u0000');
   t = t.replace(/&lt;(https?:[^&\s]+)&gt;/g, '<a href="$1">$1</a>');
   t = t.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, text, url) => {
+    url = url.replace(/"/g, '%22');
     if (url.endsWith('/blob/main/LICENSE')) url = '/licences#mit';
     if (/^https?:/.test(url)) return `<a href="${url}">${text}</a>`;
     if (url.startsWith('#')) return `<a href="${url}">${text}</a>`;
