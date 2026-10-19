@@ -382,8 +382,9 @@ footer small{font-size:.75rem;line-height:1.5;max-width:46rem}
 .pr p{color:var(--mute);font-size:.9688rem}
 
 /* title lockup */
-h1.title{display:flex;align-items:center;gap:clamp(.8rem,2.4vw,1.5rem);font-size:clamp(4rem,15vw,9rem);letter-spacing:-.055em;margin-top:1rem;
-  background:linear-gradient(180deg,var(--fg) 40%,color-mix(in srgb,var(--fg) 55%,var(--ember)));-webkit-background-clip:text;background-clip:text;color:transparent}
+h1.title{display:flex;align-items:center;gap:clamp(.8rem,2.4vw,1.5rem);font-size:clamp(4rem,15vw,9rem);letter-spacing:-.055em;margin-top:1rem}
+/* the gradient sits on the visible word only: Chrome paints background-clip:text through hidden descendants too */
+h1.title .tt{background:linear-gradient(180deg,var(--fg) 40%,color-mix(in srgb,var(--fg) 55%,var(--ember)));-webkit-background-clip:text;background-clip:text;color:transparent}
 h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em var(--glow))}
 .tagline{font-size:clamp(1.6rem,4.4vw,2.75rem);line-height:1.1;letter-spacing:-.03em;font-weight:600;margin-top:.5rem}
 
@@ -522,7 +523,7 @@ h1.title svg{width:.85em;height:.85em;flex:none;filter:drop-shadow(0 .1em .35em 
 
   <header class="hero" id="top">
     <p class="eyebrow">Free and open source · Windows 10 and 11</p>
-    <h1 class="title"><svg><use href="#mark"/></svg>Ember<span class="sr-only">: free PC fan control, RGB lighting and power monitoring for Windows</span></h1>
+    <h1 class="title"><svg><use href="#mark"/></svg><span class="tt">Ember</span><span class="sr-only">: free PC fan control, RGB lighting and power monitoring for Windows</span></h1>
     <p class="tagline">Temperatures, fans, power and lights.</p>
     <p class="lede">Free, open source fan control and RGB lighting for Windows PCs, in one calm window. Ember reads the sensors, runs your fans on quiet-to-extreme curves, measures what the wall socket sees, and lights your RGB gear. Nothing leaves your PC.</p>
     <div class="cta">
