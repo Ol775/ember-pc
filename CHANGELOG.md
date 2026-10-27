@@ -2,7 +2,7 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
-## Unreleased
+## 1.6.0-beta.3 (2026-10-27)
 
 ### Fixed
 
