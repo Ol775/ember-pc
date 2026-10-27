@@ -44,6 +44,8 @@ public sealed class LightingManager : IAsyncDisposable
     }
 
     public event Action? Changed;
+    /// <summary>Raised on every frame (about 30 a second) with a new <see cref="Preview"/>; <see cref="Changed"/> is held to 10 a second.</summary>
+    public event Action? PreviewChanged;
 
     string? _solo;
 
@@ -434,6 +436,7 @@ public sealed class LightingManager : IAsyncDisposable
             _preview = frame;
             if (now - _lastChanged >= ChangedEvery) { _lastChanged = now; raise = true; }
         }
+        PreviewChanged?.Invoke();
         if (raise) Changed?.Invoke();
     }
 

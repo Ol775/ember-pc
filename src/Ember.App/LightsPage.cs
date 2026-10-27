@@ -66,6 +66,13 @@ public sealed partial class LightsPage : UserControl
         _m = manager;
         BuildSkeleton();
         manager.Changed += () => Dispatcher.InvokeAsync(OnChanged);
+        // One repaint queued at a time, and none while the page is hidden, so a slow UI thread never builds a backlog.
+        var paintQueued = 0;
+        manager.PreviewChanged += () =>
+        {
+            if (Interlocked.Exchange(ref paintQueued, 1) == 1) return;
+            Dispatcher.InvokeAsync(() => { Volatile.Write(ref paintQueued, 0); if (IsVisible) UpdatePreview(); }, System.Windows.Threading.DispatcherPriority.Render);
+        };
         OnChanged();
     }
 

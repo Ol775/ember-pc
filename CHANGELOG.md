@@ -2,6 +2,12 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## 1.6.0-beta.4 (2026-10-27)
+
+### Fixed
+
+- **The lights preview moves smoothly.** It now redraws with every frame instead of ten times a second.
+
 ## 1.6.0-beta.3 (2026-10-27)
 
 ### Fixed
