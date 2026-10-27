@@ -56,7 +56,7 @@ public sealed class LightingEngine(TimeProvider clock)
     /// <returns>The picture for the canvas preview (empty while the lights are off).</returns>
     public async Task<Dictionary<string, Color[]>> StepAsync(
         Scene scene, bool on, LightingInputs inputs, IReadOnlyList<IDeviceSink> sinks, CancellationToken ct = default,
-        IReadOnlyList<Scene>? profiles = null)
+        IReadOnlyList<Scene>? profiles = null, bool wait = true)
     {
         var byId = sinks.ToDictionary(s => s.Id);
         var counts = sinks.ToDictionary(s => s.Id, s => s.LedCount);
@@ -99,7 +99,8 @@ public sealed class LightingEngine(TimeProvider clock)
             }
             sends.Add(SendOne(sink, leds, now, ct));
         }
-        await Task.WhenAll(sends).ConfigureAwait(false);
+        // The live loop does not wait: one slow device must not hold back the preview or the others (_inFlight stops overlapping sends).
+        if (wait) await Task.WhenAll(sends).ConfigureAwait(false);
         return on ? frame : [];
     }
 

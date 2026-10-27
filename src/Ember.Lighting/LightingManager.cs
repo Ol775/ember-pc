@@ -423,7 +423,7 @@ public sealed class LightingManager : IAsyncDisposable
             inputs = new LightingInputs(seconds, _cpu, _gpu, _screen, _audio, _pulses.Count == 0 ? null : _pulses.ToList());
         }
         var shown = SoloLayer is { } solo && state.Current.Layers.FirstOrDefault(l => l.Id == solo) is { } only ? state.Current with { Layers = [only with { Enabled = true }] } : state.Current;
-        var frame = await _engine.StepAsync(shown, state.On, inputs, sinks, ct, state.Scenes).ConfigureAwait(false);
+        var frame = await _engine.StepAsync(shown, state.On, inputs, sinks, ct, state.Scenes, wait: false).ConfigureAwait(false);
         foreach (var (id, why) in _engine.Failures) Ember.Core.DiagLog.Changed("Lighting device", id, "send failed: " + why.Message);
         foreach (var id in _engine.Failures.Keys)
             foreach (var source in _sources) source.ReportFailure(id);

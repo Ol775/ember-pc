@@ -2,6 +2,12 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## Unreleased
+
+### Fixed
+
+- **Light effects run smoothly on the devices and in the preview.** One slow device, such as a Wi-Fi bulb, no longer holds back the preview or the other devices.
+
 ## 1.6.0-beta.2 (2026-10-18)
 
 ### Fixed
