@@ -31,7 +31,7 @@ public sealed class LogitechContext(ILogitechLed api, TimeProvider? clock = null
         lock (_gate)
         {
             if (!_ready) throw new InvalidOperationException("G HUB is not ready");
-            if (!api.SetTargetDevice(LogitechTarget.PerKeyRgb) || !api.SetLightingFromBitmap(bgra)) { _ready = false; throw new IOException("G HUB did not accept the keyboard colours"); }
+            if (!api.SetTargetDevice(LogitechTarget.PerKeyRgb) || !api.SetLightingFromBitmap(bgra)) { Stop(); throw new IOException("G HUB did not accept the keyboard colours"); }
         }
     }
 
@@ -60,7 +60,7 @@ public sealed class LogitechContext(ILogitechLed api, TimeProvider? clock = null
             // send them only when they change, and now and then in case G HUB let go of them.
             var now = timeProvider.GetTimestamp();
             if (_lastGKeys is { } last && last.SequenceEqual(percents) && timeProvider.GetElapsedTime(_lastGKeysAt, now) < GKeysRefresh) return;
-            if (!api.SetTargetDevice(LogitechTarget.PerKeyRgb)) { _ready = false; throw new IOException("G HUB did not accept the G key colours"); }
+            if (!api.SetTargetDevice(LogitechTarget.PerKeyRgb)) { Stop(); throw new IOException("G HUB did not accept the G key colours"); }
             for (var i = 0; i < percents.Count; i++) api.SetLightingForKeyName(LogitechGKeysSink.KeyNames[i], percents[i].R, percents[i].G, percents[i].B);
             (_lastGKeys, _lastGKeysAt) = (percents.ToArray(), now);
         }
@@ -71,7 +71,7 @@ public sealed class LogitechContext(ILogitechLed api, TimeProvider? clock = null
         lock (_gate)
         {
             if (!_ready) throw new InvalidOperationException("G HUB is not ready");
-            if (!api.SetTargetDevice(LogitechTarget.Rgb) || !api.SetLighting(r, g, b)) { _ready = false; throw new IOException("G HUB did not accept the colours"); }
+            if (!api.SetTargetDevice(LogitechTarget.Rgb) || !api.SetLighting(r, g, b)) { Stop(); throw new IOException("G HUB did not accept the colours"); }
         }
     }
 

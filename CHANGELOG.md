@@ -2,6 +2,12 @@
 
 All notable changes to Ember. Newest first. Ember follows [semantic versioning](https://semver.org); versions with a label such as `beta.1` are pre-releases.
 
+## Unreleased
+
+### Fixed
+
+- **Logitech keyboards come back after G HUB stops answering.** If G HUB refused a frame, Ember tried to reconnect without closing the old session first, so the keyboard stayed dark until Ember was restarted.
+
 ## 1.6.0-beta.4 (2026-10-27)
 
 ### Fixed

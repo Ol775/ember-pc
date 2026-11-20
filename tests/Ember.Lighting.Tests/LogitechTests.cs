@@ -122,6 +122,19 @@ public class LogitechTests
     }
 
     [Fact]
+    public async Task A_refused_keyboard_frame_closes_the_sdk_session_before_the_next_start()
+    {
+        var api = new FakeLed(accepts: false);
+        var ctx = new LogitechContext(api);
+        ctx.Start();
+        await Assert.ThrowsAsync<IOException>(() => new LogitechKeyboardSink(ctx).SendAsync([Color.Black], default));
+        ctx.Stop(); // what the manager does after a failed send
+        ctx.Start();
+        // without the shutdown, G HUB's engine refuses every later init and the keyboard never comes back
+        Assert.Equal(["init", "target PerKeyRgb", "shutdown", "init"], api.Calls);
+    }
+
+    [Fact]
     public void Sending_before_G_HUB_is_ready_fails_instead_of_calling_the_sdk()
     {
         var api = new FakeLed(initOk: false);
