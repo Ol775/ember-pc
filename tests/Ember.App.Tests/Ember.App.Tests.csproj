@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
-    <RollForward>LatestMajor</RollForward>
+    <RollForward>Major</RollForward>
     <IsPackable>false</IsPackable>
     <Platforms>x64;AnyCPU</Platforms>
   </PropertyGroup>
